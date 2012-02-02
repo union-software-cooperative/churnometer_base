@@ -3,14 +3,10 @@ require 'sinatra'
 require 'erb'
 require 'pg'
 require 'sass'
+require 'ir_b'
 
 get '/' do
   erb :index  
-end
-
-post '/get_data' do
-  @data = db.ex params[:sql]
-  erb :summary
 end
 
 get '/get_data' do
@@ -22,27 +18,60 @@ get '/stylesheets/:name.css' do |name|
   scss name.to_sym, :style => :expanded
 end
 
-
 get '/summary' do
+  @defaults = defaults
   @data = db.ex summary_sql
   erb :summary
 end
 
-def summary_sql
+
+def defaults
+  {
+    'group_by' => 'org',
+    'startDate' => '2011-10-6',
+    'endDate' => '2012-1-3',
+    'filter' => {
+      'branchid' => 'NG',
+      'status' => [1, 14]      
+    }
+  }.merge(params)
+end
+
+def summary_sql  
+  # xml = filter_xml defaults['filter']
   xml = "<search><branchid>NG</branchid><status>1</status><status>14</status></search>"
+  # xml = "<search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>"
   
   # org branchid companyid status lead area del hsr
   # nuwelectorate state feegroup
   
+  # org companyid branchid
+  
   <<-SQL 
     select * 
-    from churnsummarydyn7('org', 
-                          '2011-10-6', 
-                          '2012-1-3',
+    
+    from churnsummarydyn7('#{defaults['group_by']}', 
+                          '#{defaults['startDate']}', 
+                          '#{defaults['endDate']}',
                           true, 
                           '#{xml}'
                           )
   SQL
+end
+
+def filter_xml(options)
+  result = "<search>"
+  options.each do |k, v|
+    if v.is_a?(Array)
+      v.each do |item|
+        result += "<#{k}>#{item}</#{k}>"
+      end
+    else
+      result += "<#{k}>#{v}</#{k}>"
+    end
+  end
+  result += "</search>"
+  result
 end
 
 def db
