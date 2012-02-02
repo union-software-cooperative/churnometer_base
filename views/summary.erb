@@ -64,9 +64,9 @@
               <td>
                 <% if k == 'row_header' %>
                   <% if params != {} %>
-                      <a href="<%= "#{request.url}&#{drill_down(row)}" %>"><%= v %></a>
+                      <a href="<%= "#{request.url}&#{drill_down(row)}&#{next_group_by}" %>"><%= v %></a>
                     <% else %>
-                      <a href="<%= "#{request.url}?#{drill_down(row)}" %>"><%= v %></a>
+                      <a href="<%= "#{request.url}?#{drill_down(row)}&#{next_group_by}" %>"><%= v %></a>
                     <% end %>
                 <% else %>
                   <%= v %>

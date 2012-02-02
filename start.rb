@@ -53,7 +53,7 @@ helpers do
   end
   
   def next_group_by
-    {
+    hash = {
       'branchid'      => 'lead',
       'lead'          => 'org',
       'org'           => 'companyid',
@@ -64,6 +64,8 @@ helpers do
       'del'           => 'companyid',
       'hsr'           => 'companyid'
     }
+    
+    "group_by=#{hash[defaults['group_by']]}"
   end
   
   def filter_names
