@@ -13,11 +13,15 @@
       </li>
       <li>
         <label>group by</label>
-        <input type="text" name="group_by" value="<%= @defaults['group_by'] %>">
-      </li>
-      <li>
-        <label>branch id</label>
-        <input type="text" name="filter[branchid]" value="<%= @defaults['filter']['branchid'] %>">
+        <select name="group_by">
+          <% groups_by_collection.each do |column_name, name| %>
+            <% if column_name == @defaults['group_by'] %>
+              <option value="<%= column_name %>" selected="selected"><%= name %></option>
+            <% else %>
+              <option value="<%= column_name %>"><%= name %></option>
+            <% end %>
+          <% end %>
+        </select>
       </li>
     </ul>
     <ul>

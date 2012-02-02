@@ -25,6 +25,24 @@ get '/summary' do
   erb :summary
 end
 
+helpers do
+  def groups_by_collection
+    [
+      ["branchid", "Branch"],
+      ["lead", "Lead Organizer"],
+      ["org", "Organizer"],
+      ["areaid", "Area"],
+      ["companyid", "Work Site"],
+      ["industryid", "Industry"],
+      ["del", "Delegate Training"],
+      ["hsr", "HSR Training"],
+      ["nuwelectorate", "Electorate"],
+      ["state", "State"],
+      ["feegroup", "Fee Group"]
+    ]
+  end
+end
+
 
 def defaults
   {
@@ -32,7 +50,6 @@ def defaults
     'startDate' => '2011-10-6',
     'endDate' => '2012-1-3',
     'filter' => {
-      'branchid' => 'NG',
       'status' => [1, 14]      
     }
   }.merge(params)
