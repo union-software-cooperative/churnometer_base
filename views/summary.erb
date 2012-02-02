@@ -30,6 +30,14 @@
     
   </form>
 </section>
+<section>
+  <h2>Filters</h2>
+  <ul>
+    <% filter_names.each do |row_header_id, row_header| %>
+      <li><strong><%= row_header %></strong></li>
+    <% end %>
+  </ul>
+</section>
 
 <section>
   <% if @data && @data[0] %>
@@ -56,9 +64,9 @@
               <td>
                 <% if k == 'row_header' %>
                   <% if params != {} %>
-                    <a href="<%= request.url + "&filter[#{@defaults['group_by']}]=#{row['row_header_id']}" %>"><%= v %></a>
+                      <a href="<%= "#{request.url}&#{drill_down(row)}" %>"><%= v %></a>
                     <% else %>
-                      <a href="<%= request.url + "?filter[#{@defaults['group_by']}]=#{row['row_header_id']}" %>"><%= v %></a>
+                      <a href="<%= "#{request.url}?#{drill_down(row)}" %>"><%= v %></a>
                     <% end %>
                 <% else %>
                   <%= v %>
@@ -80,5 +88,10 @@
     <p>No data</p>
   <% end %>
 </section>
-
+<section>
+  <h2>SQL sent</h2>
+  <pre>
+    <%= h @sql %>
+  </pre>
+</section>
 

@@ -21,11 +21,15 @@ end
 
 get '/summary' do
   @defaults = defaults
-  @data = db.ex summary_sql
+  @sql = summary_sql
+  @data = db.ex @sql
   erb :summary
 end
 
 helpers do
+  include Rack::Utils
+  alias_method :h, :escape_html
+  
   def groups_by_collection
     [
       ["branchid", "Branch"],
@@ -41,12 +45,38 @@ helpers do
       ["feegroup", "Fee Group"]
     ]
   end
+  
+  def drill_down(row)
+    row_header_id = row['row_header_id']
+    row_header = row['row_header']
+    "filter[#{@defaults['group_by']}]=#{row_header_id}&filter_names[#{row_header_id}]=#{row_header}"
+  end
+  
+  def next_group_by
+    {
+      'branchid'      => 'lead',
+      'lead'          => 'org',
+      'org'           => 'companyid',
+      'state'         => 'area',
+      'area'          => 'companyid',
+      'feegroup'      => 'companyid',
+      'nuwelectorate' => 'org',
+      'del'           => 'companyid',
+      'hsr'           => 'companyid'
+    }
+  end
+  
+  def filter_names
+    (params['filter_names'] || []).inject([]) do |row_header_id, row_header|
+      [row_header_id, row_header]
+    end
+  end
 end
 
 
 def defaults
   {
-    'group_by' => 'org',
+    'group_by' => 'branchid',
     'startDate' => '2011-10-6',
     'endDate' => '2012-1-3',
     'filter' => {
@@ -61,14 +91,14 @@ def summary_sql
   xml = filter_xml defaults['filter']
   
   <<-SQL 
-    select * 
-    
-    from churnsummarydyn8('#{defaults['group_by']}', 
-                          '#{defaults['startDate']}', 
-                          '#{defaults['endDate']}',
-                          true, 
-                          '#{xml}'
-                          )
+select * 
+
+from churnsummarydyn8('#{defaults['group_by']}', 
+                      '#{defaults['startDate']}', 
+                      '#{defaults['endDate']}',
+                      true, 
+                      '#{xml}'
+                      )
   SQL
 end
 
