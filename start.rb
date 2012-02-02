@@ -10,6 +10,7 @@ get '/' do
 end
 
 get '/get_data' do
+  @defaults = defaults
   @data = db.ex params[:sql]
   erb :summary
 end
@@ -37,9 +38,11 @@ def defaults
   }.merge(params)
 end
 
+# select displaytext from displaytext where attribute = 'org' and id='dpegg'
+
 def summary_sql  
-  # xml = filter_xml defaults['filter']
-  xml = "<search><branchid>NG</branchid><status>1</status><status>14</status></search>"
+  xml = filter_xml defaults['filter']
+  # xml = "<search><branchid>NG</branchid><status>1</status><status>14</status></search>"
   # xml = "<search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>"
   
   # org branchid companyid status lead area del hsr
@@ -50,7 +53,7 @@ def summary_sql
   <<-SQL 
     select * 
     
-    from churnsummarydyn7('#{defaults['group_by']}', 
+    from churnsummarydyn8('#{defaults['group_by']}', 
                           '#{defaults['startDate']}', 
                           '#{defaults['endDate']}',
                           true, 
@@ -59,9 +62,9 @@ def summary_sql
   SQL
 end
 
-def filter_xml(options)
+def filter_xml(filters)
   result = "<search>"
-  options.each do |k, v|
+  filters.each do |k, v|
     if v.is_a?(Array)
       v.each do |item|
         result += "<#{k}>#{item}</#{k}>"
@@ -70,6 +73,11 @@ def filter_xml(options)
       result += "<#{k}>#{v}</#{k}>"
     end
   end
+  
+  if defaults['row_header_id']
+    result += "<#{defaults['group_by']}>#{defaults['row_header_id']}</#{defaults['group_by']}>"
+  end
+  
   result += "</search>"
   result
 end

@@ -4,11 +4,20 @@
   <form action="/summary">
     <ul>
       <li>
+        <label>Start Date</label>
+        <input type="text" name="startDate" value="<%= @defaults['startDate'] %>">
+      </li>
+      <li>
+        <label>End Date</label>
+        <input type="text" name="endDate" value="<%= @defaults['endDate'] %>">
+      </li>
+      <li>
         <label>group by</label>
         <input type="text" name="group_by" value="<%= @defaults['group_by'] %>">
       </li>
       <li>
-        
+        <label>branch id</label>
+        <input type="text" name="filter[branchid]" value="<%= @defaults['filter']['branchid'] %>">
       </li>
     </ul>
     <ul>
@@ -29,7 +38,17 @@
       <% @data.each do |row| %>
         <tr>
           <% row.each do |k, v| %>
-            <td><%= v %></td>
+            <td>
+              <% if k == 'row_header' %>
+                <% if params != {} %>
+                  <a href="<%= request.url + "&row_header_id=#{row['row_header_id']}" %>"><%= v %></a>
+                  <% else %>
+                    <a href="<%= request.url + "?row_header_id=#{row['row_header_id']}" %>"><%= v %></a>
+                  <% end %>
+              <% else %>
+                <%= v %>
+              <% end %>
+            </td>
           <% end %>
         </tr>
       <% end %>
