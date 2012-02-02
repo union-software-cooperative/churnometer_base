@@ -69,9 +69,7 @@ helpers do
   end
   
   def filter_names
-    (params['filter_names'] || []).inject([]) do |row_header_id, row_header|
-      [row_header_id, row_header]
-    end
+    params['filter_names'] || []
   end
 end
 
