@@ -4,6 +4,7 @@ require 'erb'
 require 'pg'
 require 'sass'
 require 'ir_b'
+require 'uri'
 
 get '/' do
   erb :index  
@@ -49,7 +50,7 @@ helpers do
   def drill_down(row)
     row_header_id = row['row_header_id']
     row_header = row['row_header']
-    "filter[#{@defaults['group_by']}]=#{row_header_id}&filter_names[#{row_header_id}]=#{row_header}"
+    URI.escape "filter[#{@defaults['group_by']}]=#{row_header_id}&filter_names[#{row_header_id}]=#{row_header}"
   end
   
   def next_group_by
@@ -65,7 +66,7 @@ helpers do
       'hsr'           => 'companyid'
     }
     
-    "group_by=#{hash[defaults['group_by']]}"
+    URI.escape "group_by=#{hash[defaults['group_by']]}"
   end
   
   def filter_names
@@ -83,8 +84,6 @@ def defaults
       'status' => [1, 14]      
     }
   }.rmerge(params)
-  
-  
 end
 
 # select displaytext from displaytext where attribute = 'org' and id='dpegg'
