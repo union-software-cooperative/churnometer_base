@@ -1,10 +1,14 @@
 require 'rubygems'
+require 'bundler/setup'
+
 require 'sinatra'
-require 'erb'
+
 require 'pg'
 require 'sass'
-require 'ir_b'
+require 'erb'
 require 'uri'
+require 'ir_b'
+
 
 # Short names to help shorten URL
 FilterNames = "fn"
