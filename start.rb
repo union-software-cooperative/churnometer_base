@@ -32,6 +32,7 @@ get '/summary' do
   @defaults = defaults
   @sql = summary_sql
   @data = db.ex @sql
+  # @data = []
   erb :summary
 end
 
@@ -95,7 +96,20 @@ def defaults
   }.rmerge(params)
 end
 
-# select displaytext from displaytext where attribute = 'org' and id='dpegg'
+def member_sql
+  xml = filter_xml defaults[Filter]
+
+    <<-SQL 
+  select * 
+
+  from churndetailfriendly2('#{defaults['group_by']}', 
+                        '#{defaults['startDate']}', 
+                        '#{defaults['endDate']}',
+                        true, 
+                        '#{xml}'
+                        )
+    SQL
+end
 
 def summary_sql  
   xml = filter_xml defaults[Filter]
