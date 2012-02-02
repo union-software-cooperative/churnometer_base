@@ -6,6 +6,10 @@ require 'sass'
 require 'ir_b'
 require 'uri'
 
+# Short names to help shorten URL
+FilterNames = "fn"
+Filter = "f"
+
 get '/' do
   erb :index  
 end
@@ -50,7 +54,7 @@ helpers do
   def drill_down(row)
     row_header_id = row['row_header_id']
     row_header = row['row_header']
-    URI.escape "filter[#{@defaults['group_by']}]=#{row_header_id}&filter_names[#{row_header_id}]=#{row_header}"
+    URI.escape "#{Filter}[#{@defaults['group_by']}]=#{row_header_id}&#{FilterNames}[#{row_header_id}]=#{row_header}"
   end
   
   def next_group_by
@@ -70,7 +74,7 @@ helpers do
   end
   
   def filter_names
-    params['filter_names'] || []
+    params[FilterNames] || []
   end
 end
 
@@ -80,7 +84,7 @@ def defaults
     'group_by' => 'branchid',
     'startDate' => '2011-10-6',
     'endDate' => '2012-1-3',
-    'filter' => {
+    Filter => {
       'status' => [1, 14]      
     }
   }.rmerge(params)
@@ -89,7 +93,7 @@ end
 # select displaytext from displaytext where attribute = 'org' and id='dpegg'
 
 def summary_sql  
-  xml = filter_xml defaults['filter']
+  xml = filter_xml defaults[Filter]
   
   <<-SQL 
 select * 
