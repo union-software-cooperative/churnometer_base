@@ -5,11 +5,11 @@
     <ul>
       <li>
         <label>Start Date</label>
-        <input type="text" name="startDate" value="<%= @defaults['startDate'] %>">
+        <input class="datepicker" type="text" name="startDate" value="<%= @defaults['startDate'] %>">
       </li>
       <li>
         <label>End Date</label>
-        <input type="text" name="endDate" value="<%= @defaults['endDate'] %>">
+        <input class="datepicker" type="text" name="endDate" value="<%= @defaults['endDate'] %>">
       </li>
       <li>
         <label>group by</label>
@@ -95,3 +95,8 @@
   </pre>
 </section>
 
+<script>
+  $(function() {
+  		$(".datepicker").datepicker({dateFormat: 'yy-mm-dd'});
+  	});
+</script>

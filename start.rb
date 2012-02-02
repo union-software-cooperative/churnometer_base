@@ -24,7 +24,7 @@ get '/get_data' do
   erb :summary
 end
 
-get '/stylesheets/:name.css' do |name|
+get '/scss/:name.css' do |name|
   scss name.to_sym, :style => :expanded
 end
 
