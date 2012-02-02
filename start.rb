@@ -85,11 +85,7 @@ def filter_xml(filters)
       result += "<#{k}>#{v}</#{k}>"
     end
   end
-  
-  if defaults['row_header_id']
-    result += "<#{defaults['group_by']}>#{defaults['row_header_id']}</#{defaults['group_by']}>"
-  end
-  
+    
   result += "</search>"
   result
 end
