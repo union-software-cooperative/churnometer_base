@@ -67,7 +67,8 @@ helpers do
       'feegroup'      => 'companyid',
       'nuwelectorate' => 'org',
       'del'           => 'companyid',
-      'hsr'           => 'companyid'
+      'hsr'           => 'companyid',
+      'companyid'     => 'companyid'
     }
     
     URI.escape "group_by=#{hash[defaults['group_by']]}"
