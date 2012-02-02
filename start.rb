@@ -42,13 +42,6 @@ end
 
 def summary_sql  
   xml = filter_xml defaults['filter']
-  # xml = "<search><branchid>NG</branchid><status>1</status><status>14</status></search>"
-  # xml = "<search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>"
-  
-  # org branchid companyid status lead area del hsr
-  # nuwelectorate state feegroup
-  
-  # org companyid branchid
   
   <<-SQL 
     select * 
@@ -63,6 +56,8 @@ def summary_sql
 end
 
 def filter_xml(filters)
+  # Example XML
+  # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>
   result = "<search>"
   filters.each do |k, v|
     if v.is_a?(Array)
