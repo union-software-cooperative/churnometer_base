@@ -33,29 +33,48 @@
 
 <section>
   <% if @data && @data[0] %>
+    <%
+      totals = {}
+    %>
+  
     <table>
-      <tr>
-        <% @data[0].each do |k, v| %>
-          <th><%= k %></th>
-        <% end %>
-      </tr>
-      <% @data.each do |row| %>
+      <thead>
         <tr>
-          <% row.each do |k, v| %>
-            <td>
-              <% if k == 'row_header' %>
-                <% if params != {} %>
-                  <a href="<%= request.url + "&row_header_id=#{row['row_header_id']}" %>"><%= v %></a>
-                  <% else %>
-                    <a href="<%= request.url + "?row_header_id=#{row['row_header_id']}" %>"><%= v %></a>
-                  <% end %>
-              <% else %>
-                <%= v %>
-              <% end %>
-            </td>
+          <% @data[0].each do |k, v| %>
+            <th><%= k %></th>
           <% end %>
         </tr>
-      <% end %>
+      </thead>
+      <tbody>
+        <% @data.each do |row| %>
+          <tr>
+            <% row.each do |k, v| %>
+              <%
+                totals[k] ||= 0
+                totals[k] += v.gsub(/[\$\,]/, '').to_i
+              %>
+              <td>
+                <% if k == 'row_header' %>
+                  <% if params != {} %>
+                    <a href="<%= request.url + "&row_header_id=#{row['row_header_id']}" %>"><%= v %></a>
+                    <% else %>
+                      <a href="<%= request.url + "?row_header_id=#{row['row_header_id']}" %>"><%= v %></a>
+                    <% end %>
+                <% else %>
+                  <%= v %>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <% totals.each do |k, total| %>
+            <td><%= total %></td>
+          <% end %>
+        </tr>
+      </tfoot>
     </table>
   <% else %>
     <p>No data</p>

@@ -1,4 +1,23 @@
-table tr td {
-  border: 1px solid #aaa;
+table {
+  border-collapse: collapse;
+  tr {
+    margin: 0;
+    padding: 0;
+  }
+  td {
+    margin: 0;
+    padding: 2px 5px;
+    border: 1px solid #aaa;
+  }
+  thead {
+    
+  }
+  tbody {
+  }
+  tfoot {
+    text-align:right;
+    font-weight:bold;
+  }
 }
+
 
