@@ -13,8 +13,8 @@ require 'ir_b'
 
 
 # Short names to help shorten URL
-FilterNames = "fn"
 Filter = "f"
+FilterNames = "fn"
 
 get '/' do
   erb :index  
@@ -154,7 +154,7 @@ def summary_sql
   <<-SQL 
 select * 
 
-from churnsummarydyn8('#{defaults['group_by']}', 
+from churnsummarydyn9('#{defaults['group_by']}', 
                       '#{defaults['startDate']}', 
                       '#{defaults['endDate']}',
                       true, 
