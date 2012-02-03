@@ -52,7 +52,7 @@ module Churnobyl
     def drill_down(row)
       row_header_id = row['row_header_id']
       row_header = row['row_header']
-      URI.escape "#{Filter}[#{@defaults['group_by']}]=#{row_header_id}&#{FilterNames}[#{row_header_id}]=#{row_header}"
+      URI.escape "#{Filter}[#{@query['group_by']}]=#{row_header_id}&#{FilterNames}[#{row_header_id}]=#{row_header}"
     end
 
     def next_group_by
@@ -69,7 +69,7 @@ module Churnobyl
         'companyid'     => 'companyid'
       }
 
-      URI.escape "group_by=#{hash[defaults['group_by']]}"
+      URI.escape "group_by=#{hash[query['group_by']]}"
     end
 
     def filter_names

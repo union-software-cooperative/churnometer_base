@@ -28,7 +28,7 @@ get '/' do
 end
 
 get '/get_data' do
-  @defaults = defaults
+  @query = query
   @data = db.ex params[:sql]
   erb :summary
 end
@@ -38,7 +38,7 @@ get '/scss/:name.css' do |name|
 end
 
 get '/summary' do
-  @defaults = defaults
+  @query = query
   @sql = summary_sql
   @data = db.ex @sql
   # @data = []
