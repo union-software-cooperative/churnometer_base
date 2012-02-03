@@ -33,9 +33,9 @@ module Churnobyl
     end
     
     def can_export_cell?(column_name, value)
-      (value.to_i != 0) && (
+      (
         %w{a1p_gain a1p_loss paying_gain paying_loss other_gain other_loss}.include? column_name
-      )
+      ) && (value.to_i != 0)
     end
 
     def groups_by_collection
@@ -81,5 +81,12 @@ module Churnobyl
       params[FilterNames] || []
     end
     
+    def safe_add(a, b)
+      if (a =~ /\$/) || (b =~ /\$/ )
+        a.to_money + b.to_money
+      else
+        a.to_i + b.to_i
+      end
+    end
   end
 end

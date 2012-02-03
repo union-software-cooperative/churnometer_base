@@ -7,9 +7,10 @@ gem 'spreadsheet'
 gem 'shotgun'
 gem 'tilt'
 gem 'ruby-ole'
+gem 'money'
 
 # For debugging
 
-# group :development do
-#   gem 'ir_b'
-# end
+group :development do
+  gem 'ir_b'
+end

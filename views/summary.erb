@@ -73,7 +73,7 @@
             <% row.each do |column_name, v| %>
               <%
                 totals[column_name] ||= 0
-                totals[column_name] += (v || '').gsub(/[\$\,]/, '').to_i
+                totals[column_name] = safe_add totals[column_name], v
               %>
               <td>
                 <% if column_name == 'row_header' %>

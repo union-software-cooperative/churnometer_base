@@ -1,10 +1,10 @@
 require 'rubygems'
 require 'bundler/setup'
 
+require './lib/ruby_changes'
 require './lib/helpers'
 require './lib/db'
 require './lib/data_sql'
-require './lib/ruby_changes'
 
 require 'sinatra'
 
@@ -13,8 +13,9 @@ require 'sass'
 require 'erb'
 require 'uri'
 require 'spreadsheet'
+require 'money'
 
-# require 'ir_b'
+require 'ir_b'
 
 
 # Short names to help shorten URL
