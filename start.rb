@@ -27,7 +27,7 @@ FilterNames = "fn"
 include Churnobyl::DataSql
 include Churnobyl::Authorization
 
-get '/' do
+get '/dev' do
   erb :index  
 end
 
@@ -41,7 +41,7 @@ get '/scss/:name.css' do |name|
   scss name.to_sym, :style => :expanded
 end
 
-get '/summary' do
+get '/' do
   protected!
   
   @query = query
