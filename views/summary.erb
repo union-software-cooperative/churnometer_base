@@ -4,7 +4,7 @@
 
   <div class="span-24 last">
     <section class="form span-18">
-      <form action="/summary">
+      <form action="/">
         <% (params[Filter] || []).each do |column_name, value| %>
           <input type="hidden" name="<%= "#{Filter}[#{column_name}]" %>" value="<%= value %>">
           <input type="hidden" name="<%= "#{FilterNames}[#{value}]" %>" value="<%= params[FilterNames][value] %>">
