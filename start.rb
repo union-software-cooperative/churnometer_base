@@ -14,6 +14,7 @@ require 'erb'
 require 'uri'
 require 'spreadsheet'
 require 'money'
+require "addressable/uri"
 
 require 'ir_b'
 

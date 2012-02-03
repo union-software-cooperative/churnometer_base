@@ -41,8 +41,8 @@
     <section class="span-10 last">
       <h2>Filters</h2>
       <ul>
-        <% filter_names.each do |row_header_id, row_header| %>
-          <li><strong><%= row_header %></strong></li>
+        <% filter_names.each do |filter_value, filter_name| %>
+          <li><strong><%= filter_name %></strong> <a href="<%= remove_filter_link(filter_value) %>">remove</a></li>
         <% end %>
       </ul>
     </section>

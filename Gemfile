@@ -8,6 +8,7 @@ gem 'shotgun'
 gem 'tilt'
 gem 'ruby-ole'
 gem 'money'
+gem 'addressable'
 
 # For debugging
 

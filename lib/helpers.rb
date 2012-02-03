@@ -81,6 +81,21 @@ module Churnobyl
       params[FilterNames] || []
     end
     
+    def remove_filter_link(filter_value)
+      f = params[Filter].reject { |field, value| value == filter_value }
+      fn = params[FilterNames].reject { |value, name| value == filter_value }
+      p = params
+      p[Filter] = f
+      p[FilterNames] = fn
+      
+      temp = Addressable::URI.new
+      temp.query_values = p
+      
+      uri = URI.parse(request.url)
+      uri.query = temp.query
+      uri.to_s
+    end
+    
     def safe_add(a, b)
       if (a =~ /\$/) || (b =~ /\$/ )
         a.to_money + b.to_money
