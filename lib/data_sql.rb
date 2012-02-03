@@ -5,6 +5,7 @@ module Churnobyl
         'group_by' => 'branchid',
         'startDate' => '2011-10-6',
         'endDate' => '2012-1-3',
+        'column' => '',
         Filter => {
           'status' => [1, 14]      
         }
@@ -13,12 +14,12 @@ module Churnobyl
 
     def member_sql
       xml = filter_xml defaults[Filter]
-
+      
         <<-SQL 
       select * 
 
       from churndetailfriendly3('#{defaults['group_by']}', 
-                            '',  
+                            '#{defaults['column']}',  
                             '#{defaults['startDate']}', 
                             '#{defaults['endDate']}',
                             true, 

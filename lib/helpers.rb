@@ -1,7 +1,36 @@
 module Churnobyl
   module Helpers
+    def has_data?
+      @data && @data.count > 0
+    end
+    
     def query_string
       URI.parse(request.url).query
+    end
+
+    def drill_down_link(row)
+      uri_join_queries drill_down(row), next_group_by
+    end
+    
+    def uri_join_queries(*queries)
+      if params == {}
+        request.url + '?' + queries.join('&')
+      else
+        request.url + '&' + queries.join('&')
+      end
+    end
+    
+    def export_cell(row, column_name)
+      row_filter = "#{Filter}[#{params['group_by']}]=#{row['row_header_id']}"
+      column_filter = "column=#{column_name}"
+      
+      "/export?#{query_string}&#{row_filter}&#{column_filter}"
+    end
+    
+    def can_export_cell?(column_name, value)
+      (value.to_i != 0) && (
+        %w{a1p_gain a1p_loss paying_gain paying_loss other_gain other_loss}.include? column_name
+      )
     end
 
     def groups_by_collection

@@ -46,26 +46,21 @@ get '/summary' do
 end
 
 get '/export' do
-  # @defaults = defaults
-  # @sql = member_sql
-  # @data = db.ex @sql
-  # erb :summary
-  
-  data = db.ex member_sql
+  @data = db.ex member_sql
   book = Spreadsheet::Excel::Workbook.new
   sheet = book.create_worksheet
   
-  # Add header
-  if data && data[0]
-    data[0].each_with_index do |hash, x|
+  if has_data?
+    # Add header
+    @data[0].each_with_index do |hash, x|
       sheet[0, x] = hash.first
     end
-  end
   
-  # Add data
-  data.each_with_index do |row, y|
-    row.each_with_index do |hash, x|
-      sheet[y + 1, x] = hash.last
+    # Add data
+    @data.each_with_index do |row, y|
+      row.each_with_index do |hash, x|
+        sheet[y + 1, x] = hash.last
+      end
     end
   end
   
