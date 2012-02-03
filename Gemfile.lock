@@ -1,7 +1,6 @@
 GEM
   remote: http://rubygems.org/
   specs:
-    ir_b (1.4.0)
     pg (0.12.2)
     rack (1.4.1)
     rack-protection (1.2.0)
@@ -22,7 +21,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  ir_b
   pg
   sass
   shotgun

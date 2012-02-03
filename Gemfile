@@ -7,4 +7,7 @@ gem 'spreadsheet'
 gem 'shotgun'
 
 # For debugging
-gem 'ir_b'
+
+# group :development do
+#   gem 'ir_b'
+# end
