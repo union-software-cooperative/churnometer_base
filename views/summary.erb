@@ -1,46 +1,53 @@
-<h1>Summary</h1>
+<div class="container">
 
-<div class="span-24 last">
-  <section class="form span-14">
-    <form action="/summary">
-      <ul>
-        <li class="datepicker span-4">
-          <label>Start Date</label>
-          <input type="text" name="startDate" value="<%= @defaults['startDate'] %>">
-        </li>
-        <li class="datepicker span-4">
-          <label>End Date</label>
-          <input type="text" name="endDate" value="<%= @defaults['endDate'] %>">
-        </li>
-        <li class="group_by span-5 last">
-          <label>group by</label>
-          <select name="group_by">
-            <% groups_by_collection.each do |column_name, name| %>
-              <% if column_name == @defaults['group_by'] %>
-                <option value="<%= column_name %>" selected="selected"><%= name %></option>
-              <% else %>
-                <option value="<%= column_name %>"><%= name %></option>
+  <h1>Summary</h1>
+
+  <div class="span-24 last">
+    <section class="form span-14">
+      <form action="/summary">
+        <ul>
+          <li class="datepicker span-4">
+            <label>Start Date</label>
+            <input type="text" name="startDate" value="<%= @defaults['startDate'] %>">
+          </li>
+          <li class="datepicker span-4">
+            <label>End Date</label>
+            <input type="text" name="endDate" value="<%= @defaults['endDate'] %>">
+          </li>
+          <li class="group_by span-5 last">
+            <label>group by</label>
+            <select name="group_by">
+              <% groups_by_collection.each do |column_name, name| %>
+                <% if column_name == @defaults['group_by'] %>
+                  <option value="<%= column_name %>" selected="selected"><%= name %></option>
+                <% else %>
+                  <option value="<%= column_name %>"><%= name %></option>
+                <% end %>
               <% end %>
-            <% end %>
-          </select>
-        </li>
-      </ul>
+            </select>
+          </li>
+        </ul>
+        <ul>
+          <li><input type="submit" value="Refresh"></li>
+        </ul>
+      </form>
+    </section>
+    <section class="span-10 last">
+      <h2>Filters</h2>
       <ul>
-        <li><input type="submit" value="Refresh"></li>
+        <% filter_names.each do |row_header_id, row_header| %>
+          <li><strong><%= row_header %></strong></li>
+        <% end %>
       </ul>
-    </form>
-  </section>
-  <section class="span-10 last">
-    <h2>Filters</h2>
-    <ul>
-      <% filter_names.each do |row_header_id, row_header| %>
-        <li><strong><%= row_header %></strong></li>
-      <% end %>
-    </ul>
-  </section>
+    </section>
+  </div>
 </div>
 
-<section class="span-24">
+<section id="data">
+  <p>
+    <a href="/export?<%= query_string %>" class="button">Export</a>
+  </p>
+  
   <% if @data && @data[0] %>
     <%
       totals = {}
@@ -60,7 +67,7 @@
             <% row.each do |k, v| %>
               <%
                 totals[k] ||= 0
-                totals[k] += v.gsub(/[\$\,]/, '').to_i
+                totals[k] += (v || '').gsub(/[\$\,]/, '').to_i
               %>
               <td>
                 <% if k == 'row_header' %>

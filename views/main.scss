@@ -26,25 +26,28 @@ $line: 18px;
   }
 }
 
-table {
-  border-collapse: collapse;
-  tr {
-    margin: 0;
-    padding: 0;
-  }
-  td {
-    margin: 0;
-    padding: 2px 5px;
-    border: 1px solid #aaa;
-  }
-  thead {
+#data {
+  margin:0 20px;
+  table {
+    border-collapse: collapse;
+    tr {
+      margin: 0;
+      padding: 0;
+    }
+    td {
+      margin: 0;
+      padding: 2px 5px;
+      border: 1px solid #aaa;
+    }
+    thead {
     
-  }
-  tbody {
-  }
-  tfoot {
-    text-align:right;
-    font-weight:bold;
+    }
+    tbody {
+    }
+    tfoot {
+      text-align:right;
+      font-weight:bold;
+    }
   }
 }
 

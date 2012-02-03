@@ -7,6 +7,8 @@ require 'pg'
 require 'sass'
 require 'erb'
 require 'uri'
+require 'spreadsheet'
+
 require 'ir_b'
 
 
@@ -36,9 +38,43 @@ get '/summary' do
   erb :summary
 end
 
+get '/export' do
+  # @defaults = defaults
+  # @sql = member_sql
+  # @data = db.ex @sql
+  # erb :summary
+  
+  data = db.ex member_sql
+  book = Spreadsheet::Excel::Workbook.new
+  sheet = book.create_worksheet
+  
+  # Add header
+  if data && data[0]
+    data[0].each_with_index do |hash, x|
+      sheet[0, x] = hash.first
+    end
+  end
+  
+  # Add data
+  data.each_with_index do |row, y|
+    row.each_with_index do |hash, x|
+      sheet[y + 1, x] = hash.last
+    end
+  end
+  
+  path = "tmp/data.xls"
+  book.write path
+  
+  send_file(path, :disposition => 'attachment', :filename => File.basename(path))
+end
+
 helpers do
   include Rack::Utils
   alias_method :h, :escape_html
+  
+  def query_string
+    URI.parse(request.url).query
+  end
   
   def groups_by_collection
     [
@@ -102,7 +138,8 @@ def member_sql
     <<-SQL 
   select * 
 
-  from churndetailfriendly2('#{defaults['group_by']}', 
+  from churndetailfriendly3('#{defaults['group_by']}', 
+                        '',  
                         '#{defaults['startDate']}', 
                         '#{defaults['endDate']}',
                         true, 
