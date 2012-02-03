@@ -22,7 +22,9 @@ PLATFORMS
 
 DEPENDENCIES
   pg
+  ruby-ole
   sass
   shotgun
   sinatra
   spreadsheet
+  tilt

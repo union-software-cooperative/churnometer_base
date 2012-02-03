@@ -5,6 +5,8 @@ gem 'pg'
 gem 'sass'
 gem 'spreadsheet'
 gem 'shotgun'
+gem 'tilt'
+gem 'ruby-ole'
 
 # For debugging
 
