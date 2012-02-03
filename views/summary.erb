@@ -3,7 +3,7 @@
   <h1>Summary</h1>
 
   <div class="span-24 last">
-    <section class="form span-14">
+    <section class="form span-18">
       <form action="/summary">
         <% (params[Filter] || []).each do |column_name, value| %>
           <input type="hidden" name="<%= "#{Filter}[#{column_name}]" %>" value="<%= value %>">
@@ -12,11 +12,11 @@
         
         
         <ul>
-          <li class="datepicker span-4">
+          <li class="datepicker span-5">
             <label>Start Date</label>
             <input type="text" name="startDate" value="<%= @query['startDate'] %>">
           </li>
-          <li class="datepicker span-4">
+          <li class="datepicker span-5">
             <label>End Date</label>
             <input type="text" name="endDate" value="<%= @query['endDate'] %>">
           </li>
@@ -38,7 +38,7 @@
         </ul>
       </form>
     </section>
-    <section class="span-10 last">
+    <section class="span-6 last">
       <h2>Filters</h2>
       <ul>
         <% filter_names.each do |filter_value, filter_name| %>
@@ -59,7 +59,7 @@
       totals = {}
     %>
   
-    <table>
+    <table class="tablesorter">
       <thead>
         <tr>
           <% @data[0].each do |column_name, v| %>
@@ -116,5 +116,6 @@
 <script>
   $(function() {
   		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
+  		$("table").tablesorter();
   	});
 </script>
