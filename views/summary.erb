@@ -21,7 +21,7 @@
             <input type="text" name="endDate" value="<%= @defaults['endDate'] %>">
           </li>
           <li class="group_by span-5 last">
-            <label>group by</label>
+            <label>Sub-total on</label>
             <select name="group_by">
               <% groups_by_collection.each do |column_name, name| %>
                 <% if column_name == @defaults['group_by'] %>
