@@ -91,7 +91,13 @@
       <tfoot>
         <tr>
           <% totals.each do |column_name, total| %>
-            <td><%= total %></td>
+            <td>
+              <% if can_export_cell? column_name, total %>
+                <a href="<%= export_column(column_name) %>"><%= total %></a>
+              <% else %>
+                <%= total %>
+              <% end %>
+            </td>
           <% end %>
         </tr>
       </tfoot>

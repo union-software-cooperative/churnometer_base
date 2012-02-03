@@ -22,9 +22,14 @@ module Churnobyl
     
     def export_cell(row, column_name)
       row_filter = "#{Filter}[#{params['group_by']}]=#{row['row_header_id']}"
+      
+      export_column(column_name) + "&" + row_filter
+    end
+    
+    def export_column(column_name)
       column_filter = "column=#{column_name}"
       
-      "/export_member_details?#{query_string}&#{row_filter}&#{column_filter}"
+      "/export_member_details?#{query_string}&#{column_filter}"
     end
     
     def can_export_cell?(column_name, value)
