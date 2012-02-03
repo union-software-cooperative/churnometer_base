@@ -59,14 +59,6 @@ get '/export_member_details' do
   data_to_excel db.ex(member_sql)
 end
 
-get '/log_out' do
-  @auth = nil
-  session.clear
-  
-  redirect to('/summary')
-end
-
-
 helpers do
   include Rack::Utils
   alias_method :h, :escape_html
