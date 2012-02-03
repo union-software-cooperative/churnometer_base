@@ -24,7 +24,7 @@ module Churnobyl
       row_filter = "#{Filter}[#{params['group_by']}]=#{row['row_header_id']}"
       column_filter = "column=#{column_name}"
       
-      "/export?#{query_string}&#{row_filter}&#{column_filter}"
+      "/export_member_details?#{query_string}&#{row_filter}&#{column_filter}"
     end
     
     def can_export_cell?(column_name, value)

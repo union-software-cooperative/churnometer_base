@@ -50,8 +50,9 @@
 </div>
 
 <section id="data">
-  <p>
-    <a href="/export?<%= query_string %>" class="button">Export</a>
+  <ul>
+    <li><a href="/export_summary?<%= query_string %>" class="button">Export Summary</a></li>
+    <li><a href="/export_member_details?<%= query_string %>" class="button">Export Member Details</a></li>
   </p>
   <% if has_data? %>
     <%

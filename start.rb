@@ -45,8 +45,23 @@ get '/summary' do
   erb :summary
 end
 
-get '/export' do
-  @data = db.ex member_sql
+get '/export_summary' do
+  data_to_excel db.ex(summary_sql)
+end
+
+get '/export_member_details' do
+  data_to_excel db.ex(member_sql)
+end
+
+helpers do
+  include Rack::Utils
+  alias_method :h, :escape_html
+  
+  include Churnobyl::Helpers
+end
+
+def data_to_excel(data)
+  @data = data
   book = Spreadsheet::Excel::Workbook.new
   sheet = book.create_worksheet
   
@@ -68,13 +83,6 @@ get '/export' do
   book.write path
   
   send_file(path, :disposition => 'attachment', :filename => File.basename(path))
-end
-
-helpers do
-  include Rack::Utils
-  alias_method :h, :escape_html
-  
-  include Churnobyl::Helpers
 end
 
 
