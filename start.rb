@@ -5,6 +5,7 @@ require './lib/ruby_changes'
 require './lib/helpers'
 require './lib/db'
 require './lib/data_sql'
+require './lib/authorization'
 
 require 'sinatra'
 
@@ -24,10 +25,7 @@ Filter = "f"
 FilterNames = "fn"
 
 include Churnobyl::DataSql
-
-use Rack::Auth::Basic do |username, password|
-  username == 'admin' && password == 'adminpass'
-end
+include Churnobyl::Authorization
 
 get '/' do
   erb :index  
@@ -44,6 +42,8 @@ get '/scss/:name.css' do |name|
 end
 
 get '/summary' do
+  protected!
+  
   @query = query
   @sql = summary_sql
   @data = db.ex @sql
@@ -58,6 +58,14 @@ end
 get '/export_member_details' do
   data_to_excel db.ex(member_sql)
 end
+
+get '/log_out' do
+  @auth = nil
+  session.clear
+  
+  redirect to('/summary')
+end
+
 
 helpers do
   include Rack::Utils

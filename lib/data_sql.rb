@@ -22,7 +22,7 @@ module Churnobyl
                             '#{query['column']}',  
                             '#{query['startDate']}', 
                             '#{query['endDate']}',
-                            true, 
+                            #{leader?.to_s}, 
                             '#{xml}'
                             )
         SQL
@@ -37,7 +37,7 @@ module Churnobyl
     from churnsummarydyn9('#{query['group_by']}', 
                           '#{query['startDate']}', 
                           '#{query['endDate']}',
-                          true, 
+                          #{leader?.to_s}, 
                           '#{xml}'
                           )
       SQL

@@ -106,12 +106,14 @@
     <p>No data</p>
   <% end %>
 </section>
-<section>
-  <h2>SQL sent</h2>
-  <pre>
-    <%= h @sql %>
-  </pre>
-</section>
+<div class="container">
+  <section>
+    <h2>SQL sent</h2>
+    <pre>
+      <%= h @sql %>
+    </pre>
+  </section>
+</div>
 
 <script>
   $(function() {
