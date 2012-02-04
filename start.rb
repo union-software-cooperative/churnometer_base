@@ -45,7 +45,11 @@ get '/' do
   protected!
   
   @query = query
-  @sql = summary_sql
+  if @query['column'].empty?
+    @sql = summary_sql
+  else
+    @sql = member_sql
+  end 
   @data = db.ex @sql
   # @data = []
   erb :summary

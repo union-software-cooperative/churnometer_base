@@ -3,8 +3,8 @@ module Churnobyl
     def query
       {
         'group_by' => 'branchid',
-        'startDate' => '2011-10-6',
-        'endDate' => '2012-1-3',
+        'startDate' => '2011-8-14',
+        'endDate' => Time.now.strftime("%Y-%m-%d"),
         'column' => '',
         Filter => {
           'status' => [1, 14]      
@@ -17,8 +17,7 @@ module Churnobyl
       
         <<-SQL 
       select * 
-
-      from churndetailfriendly3('#{query['group_by']}', 
+      from churndetailfriendly10('#{query['group_by']}', 
                             '#{query['column']}',  
                             '#{query['startDate']}', 
                             '#{query['endDate']}',
@@ -33,8 +32,7 @@ module Churnobyl
 
       <<-SQL 
     select * 
-
-    from churnsummarydyn9('#{query['group_by']}', 
+    from churnsummarydyn10('#{query['group_by']}', 
                           '#{query['startDate']}', 
                           '#{query['endDate']}',
                           #{leader?.to_s}, 

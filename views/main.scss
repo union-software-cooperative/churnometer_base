@@ -4,12 +4,11 @@ $line: 18px;
   margin-top: $line;
   margin-bottom: $line;
   ul {
-    padding: 0;
     margin: 0;
     overflow:hidden;
     li {
-      list-style-type:none;
       display:inline;
+      list-style-type:none;
     }
     li.right {
       float:right;
@@ -18,15 +17,25 @@ $line: 18px;
 }
 
 .form {
-  label, input {
+  label, input, select {
     display:block;
+    padding:0.5em;
   }
   ul {
     overflow:hidden;
+    list-style-type:none;
     li {
-      height:3*$line;
+      height:4*$line;
     }
   }
+}
+
+#filter, #data {
+   ul {
+    li {
+      padding:0.5em;
+    }
+  } 
 }
 
 #data {

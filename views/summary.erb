@@ -1,15 +1,15 @@
 <div class="container">
 
-  <h1>Churnobyl</h1>
+  <h1>churnobyl prototype</h1>
 
   <div class="span-24 last">
     <section class="form span-18">
       <form action="/">
-        <% (params[Filter] || []).each do |column_name, value| %>
-          <input type="hidden" name="<%= "#{Filter}[#{column_name}]" %>" value="<%= value %>">
-          <input type="hidden" name="<%= "#{FilterNames}[#{value}]" %>" value="<%= params[FilterNames][value] %>">
-        <% end %>
-        
+	  <% (params[Filter] || []).each do |column_name, value| %>
+	    <input type="hidden" name="<%= "#{Filter}[#{column_name}]" %>" value="<%= value %>">
+  	    <input type="hidden" name="<%= "#{FilterNames}[#{value}]" %>" value="<%= (params[FilterNames])[value] %>">
+	  <% end %>
+	  <input type="hidden" name="column" value="<%= @query['column'] %>">
         
         <ul>
           <li class="datepicker span-5">
@@ -32,26 +32,44 @@
               <% end %>
             </select>
           </li>
+	  <li class="from span-18">
+	    <label>Show all columns</label>
+	    <input type="checkbox" name="adv" value="1" <%= params['adv'] == '1' ? "checked" : "" %>>
+
+	  </li>
         </ul>
         <ul>
           <li><input type="submit" value="Refresh"></li>
         </ul>
       </form>
     </section>
-    <section class="span-6 last">
-      <h2>Filters</h2>
+ </div>
+ <div>
+    <section id="filter">
+      <h2>Selections</h2>
       <ul>
+	<li>
+	  <strong><%= @query['startDate'] %> &nbsp;&nbsp;to&nbsp;&nbsp; <%= @query['endDate'] %></strong>
+	</li>
+	<% if filter_names.count == 0 %>
+	  <li>Nothing else selected </li>
+	<% end %>
         <% filter_names.each do |filter_value, filter_name| %>
           <li><strong><%= filter_name %></strong> <a href="<%= remove_filter_link(filter_value) %>">remove</a></li>
         <% end %>
+        <% if !@query['column'].empty? %>
+	  <li><strong><%= @query['column'] %></li>
+	<% end %>
       </ul>
     </section>
-  </div>
+ </div>
 </div>
-
 <section id="data">
+  <h2>Data</h2>
   <ul>
-    <li><a href="/export_summary?<%= query_string %>" class="button">Export Summary</a></li>
+    <% if @query['column'].empty? %>
+      <li><a href="/export_summary?<%= query_string %>" class="button">Export Summary</a></li>
+    <% end %>
     <li><a href="/export_member_details?<%= query_string %>" class="button">Export Member Details</a></li>
   </p>
   <% if has_data? %>
@@ -63,7 +81,9 @@
       <thead>
         <tr>
           <% @data[0].each do |column_name, v| %>
-            <th><%= column_name %></th>
+            <% if show_col(column_name) %>
+	      <th><%= column_name %></th>
+	    <% end %>
           <% end %>
         </tr>
       </thead>
@@ -71,19 +91,23 @@
         <% @data.each do |row| %>
           <tr>
             <% row.each do |column_name, v| %>
-              <%
-                totals[column_name] ||= 0
-                totals[column_name] = safe_add totals[column_name], v
-              %>
-              <td>
-                <% if column_name == 'row_header' %>
-                  <a href="<%= drill_down_link(row) %>"><%= v %></a>
-                <% elsif can_export_cell? column_name, v %>
-                  <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
-                <% else %>
-                  <%= v %>
-                <% end %>
-              </td>
+	      <% if show_col(column_name) %>
+		<%
+		  totals[column_name] ||= 0
+		  totals[column_name] = safe_add totals[column_name], v
+		%>
+		<td>
+		  <% if column_name == 'row_header' %>
+		    <a href="<%= drill_down_link(row) %>"><%= v %></a>
+		  <% elsif can_detail_cell? column_name, v %>
+		    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>
+		  <% elsif can_export_cell? column_name, v %>
+		    <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
+		  <% else %>
+		    <%= v %>
+		  <% end %>
+		</td>
+	      <% end %>
             <% end %>
           </tr>
         <% end %>
@@ -92,12 +116,14 @@
         <tr>
           <% totals.each do |column_name, total| %>
             <td>
-              <% if can_export_cell? column_name, total %>
-                <a href="<%= export_column(column_name) %>"><%= total %></a>
-              <% else %>
-                <%= total %>
+	      <% if !no_total.include?(column_name) %>
+                <% if can_export_cell? column_name, total %>
+                  <a href="<%= export_column(column_name) %>"><%= total %></a>
+                <% else %>
+                  <%= total %>
+                <% end %>
               <% end %>
-            </td>
+	    </td>
           <% end %>
         </tr>
       </tfoot>

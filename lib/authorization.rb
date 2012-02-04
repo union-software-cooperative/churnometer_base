@@ -1,7 +1,7 @@
 module Churnobyl
   module Authorization
     def leader?
-      auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leader', 'adminpass']
+      auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']
     end
 
     def user?
