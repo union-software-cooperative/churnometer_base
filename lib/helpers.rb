@@ -20,6 +20,10 @@ module Churnobyl
       result
     end
 
+    def getdimstart(dim)
+       @data = db.ex(dimstart_sql)
+    end
+
     def drill_down_link(row)
       uri_join_queries drill_down(row), next_group_by
     end
@@ -89,6 +93,7 @@ module Churnobyl
       [
         'row_header',
 	'a1p_real_gain',
+	'paying_start_count',
 	'paying_real_gain',
 	'paying_real_loss',
 	'paying_end_count',
@@ -134,7 +139,8 @@ module Churnobyl
         'nuwelectorate' => 'org',
         'del'           => 'companyid',
         'hsr'           => 'companyid',
-        'companyid'     => 'companyid'
+        'industryid'	=> 'companyid',
+	'companyid'     => 'companyid'
       }
 
       URI.escape "group_by=#{hash[query['group_by']]}"

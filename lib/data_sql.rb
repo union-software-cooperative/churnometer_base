@@ -41,6 +41,13 @@ module Churnobyl
       SQL
     end
 
+    def getdimstart_sql
+      <<-SQL
+        select getdimstart('#{(query['group_by'] || 'branchid')}')
+      SQL
+    end
+
+
     def filter_xml(filters)
       # Example XML
       # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>

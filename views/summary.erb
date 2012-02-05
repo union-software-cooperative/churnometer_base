@@ -51,8 +51,11 @@
 	<li>
 	  <strong><%= @query['startDate'] %> &nbsp;&nbsp;to&nbsp;&nbsp; <%= @query['endDate'] %></strong>
 	</li>
+	<% if !@warning.nil? %>
+	  <li><%= @warning %></li>
+	<% end %>
 	<% if filter_names.count == 0 %>
-	  <li>Nothing else selected </li>
+	  <li>Nothing selected </li>
 	<% end %>
         <% filter_names.each do |filter_value, filter_name| %>
           <li><strong><%= filter_name %></strong> <a href="<%= remove_filter_link(filter_value) %>">remove</a></li>

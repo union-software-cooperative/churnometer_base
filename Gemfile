@@ -7,7 +7,7 @@ gem 'spreadsheet'
 gem 'shotgun'
 gem 'tilt'
 gem 'ruby-ole'
-gem 'money'
+gem 'money', '3.7.1'
 gem 'addressable'
 
 # For debugging

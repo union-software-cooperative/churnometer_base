@@ -27,6 +27,10 @@ FilterNames = "fn"
 include Churnobyl::DataSql
 include Churnobyl::Authorization
 
+before do
+  #cache_control :public, :must_revalidate, :max_age => 60
+end
+
 get '/dev' do
   erb :index  
 end
@@ -42,14 +46,24 @@ get '/scss/:name.css' do |name|
 end
 
 get '/' do
+  cache_control :public, :max_age => 43200
   protected!
+   
   
+  @start = Date.parse((db.ex getdimstart_sql)[0]['getdimstart'])+1
+  if @start > Date.parse(params['startDate'])
+    @warning = 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')' 
+    params['startDate'] = @start.to_s
+  end
+
   @query = query
   if @query['column'].empty?
     @sql = summary_sql
   else
     @sql = member_sql
   end 
+ 
+ 
   @data = db.ex @sql
   # @data = []
   erb :summary
