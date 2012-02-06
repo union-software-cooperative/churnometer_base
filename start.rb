@@ -50,10 +50,12 @@ get '/' do
   protected!
    
   
-  @start = Date.parse((db.ex getdimstart_sql)[0]['getdimstart'])+1
-  if @start > Date.parse(params['startDate'])
-    @warning = 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')' 
-    params['startDate'] = @start.to_s
+  if !params['startDate'].nil?
+    @start = Date.parse((db.ex getdimstart_sql)[0]['getdimstart'])+1
+    if @start > Date.parse(params['startDate'])
+      @warning = 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')' 
+      params['startDate'] = @start.to_s
+    end
   end
 
   @query = query
