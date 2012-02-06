@@ -8,7 +8,7 @@ module Churnobyl
       URI.parse(request.url).query
     end
 
-    def show_col(column_name)
+    def show_col?(column_name)
       result=true
       if params['adv'] == '1'
         result=true
@@ -133,7 +133,7 @@ module Churnobyl
         'branchid'      => 'lead',
         'lead'          => 'org',
         'org'           => 'companyid',
-        'state'         => 'area',
+        'state'         => 'areaid',
         'area'          => 'companyid',
         'feegroup'      => 'companyid',
         'nuwelectorate' => 'org',

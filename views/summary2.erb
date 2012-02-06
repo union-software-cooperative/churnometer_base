@@ -31,6 +31,12 @@
                 <% end %>
               <% end %>
             </select>
+          </li>
+	  <li class="from span-18">
+	    <label>Show all columns</label>
+	    <input type="checkbox" name="adv" value="1" <%= params['adv'] == '1' ? "checked" : "" %>>
+
+	  </li>
         </ul>
         <ul>
           <li><input type="submit" value="Refresh"></li>
@@ -68,8 +74,7 @@
       <li><a href="/export_summary?<%= query_string %>" class="button">Export Summary</a></li>
     <% end %>
     <li><a href="/export_member_details?<%= query_string %>" class="button">Export Member Details</a></li>
-    <li><a id='toggle' onclick="$('.advcol').toggle();if ($('#toggle').text()=='Show more') $('#toggle').text('Show less'); else $('#toggle').text('Show more');">Show more</a></li>
- </p>
+  </p>
   <% if has_data? %>
     <%
       totals = {}
@@ -79,7 +84,9 @@
       <thead>
         <tr>
           <% @data[0].each do |column_name, v| %>
-	    <th <%= show_col?(column_name) ? '' : 'class="advcol"' %>><%= column_name %></th>
+            <% if show_col(column_name) %>
+	      <th><%= column_name %></th>
+	    <% end %>
           <% end %>
         </tr>
       </thead>
@@ -87,11 +94,12 @@
         <% @data.each do |row| %>
           <tr>
             <% row.each do |column_name, v| %>
+	      <% if show_col(column_name) %>
 		<%
 		  totals[column_name] ||= 0
 		  totals[column_name] = safe_add totals[column_name], v
 		%>
-		<td <%= show_col?(column_name) ? '' : 'class="advcol"' %>>
+		<td>
 		  <% if column_name == 'row_header' %>
 		    <a href="<%= drill_down_link(row) %>"><%= v %></a>
 		  <% elsif can_detail_cell? column_name, v %>
@@ -102,6 +110,7 @@
 		    <%= v %>
 		  <% end %>
 		</td>
+	      <% end %>
             <% end %>
           </tr>
         <% end %>
@@ -109,7 +118,7 @@
       <tfoot>
         <tr>
           <% totals.each do |column_name, total| %>
-            <td <%= show_col?(column_name) ? '' : 'class="advcol"' %>>
+            <td>
 	      <% if !no_total.include?(column_name) %>
                 <% if can_export_cell? column_name, total %>
                   <a href="<%= export_column(column_name) %>"><%= total %></a>
@@ -139,6 +148,5 @@
   $(function() {
   		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
   		$("table").tablesorter();
-		$(".advcol").hide();
   	});
 </script>
