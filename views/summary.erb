@@ -92,7 +92,7 @@
 		  totals[column_name] = safe_add totals[column_name], v
 		%>
 		<td <%= show_col?(column_name) ? '' : 'class="advcol"' %>>
-		  <% if column_name == 'row_header' %>
+		  <% if column_name == 'row_header1' %>
 		    <a href="<%= drill_down_link(row) %>"><%= v %></a>
 		  <% elsif can_detail_cell? column_name, v %>
 		    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>

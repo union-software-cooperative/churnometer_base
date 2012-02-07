@@ -8,6 +8,24 @@ module Churnobyl
       URI.parse(request.url).query
     end
 
+    def fix_date_params
+      if !params['startDate'].nil?
+        @start = Date.parse((db.ex getdimstart_sql)[0]['getdimstart'])+1
+        if @start > Date.parse(params['startDate'])
+          @warning = 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')' 
+          params['startDate'] = @start.to_s
+        end
+      end
+
+      if !params['endDate'].nil?
+        @end = Date.parse(params['endDate'])
+        if DateTime.now < @end
+          @end = Time.now
+        end
+        params['endDate'] = @end.strftime("%Y-%m-%d")
+      end
+    end
+
     def show_col?(column_name)
       result=true
       if params['adv'] == '1'
@@ -37,14 +55,14 @@ module Churnobyl
     end
     
     def export_cell(row, column_name)
-      row_filter = "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header_id']}"
+      row_filter = "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header1_id']}"
       
       export_column(column_name) + "&" + row_filter
     end
     
     def detail_cell(row, column_name)
-      row_filter = "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header_id']}"
-      row_filter_name = "#{FilterNames}[#{row['row_header_id']}]=#{row['row_header']}"
+      row_filter = "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header1_id']}"
+      row_filter_name = "#{FilterNames}[#{row['row_header1_id']}]=#{row['row_header1']}"
 
       detail_column(column_name) + "&" + row_filter + "&" + row_filter_name
     end
@@ -92,24 +110,28 @@ module Churnobyl
     def simple_summary
       [
         'row_header',
-	'a1p_real_gain',
-	'paying_start_count',
-	'paying_real_gain',
-	'paying_real_loss',
-	'paying_end_count',
-	'contributors', 
-	'annualisedavgcontribution'
+        'row_header1',
+        'row_header2',
+        'a1p_real_gain',
+        'paying_start_count',
+        'paying_real_gain',
+        'paying_real_loss',
+        'paying_end_count',
+        'contributors', 
+        'posted'
       ]
     end
 
     def simple_member
       [
-	'row_header',
-	'member',
-	'oldstatus',
-	'newstatus',
-	'oldcompany',
-	'newcompany'
+        'row_header',
+        'row_header1',
+        'row_header2',
+        'member',
+        'oldstatus',
+        'newstatus',
+        'oldcompany',
+        'newcompany'
       ]
     end
       
@@ -117,15 +139,19 @@ module Churnobyl
       [
         'row_header',
         'row_header_id',
+        'row_header1',
+        'row_header1_id',
+        'row_header2',
+        'row_header2_id',
         'contributors', 
         'annualisedavgcontribution'
       ]
     end
    
     def drill_down(row)
-      row_header_id = row['row_header_id']
-      row_header = row['row_header']
-      URI.escape "#{Filter}[#{@query['group_by']}]=#{row_header_id}&#{FilterNames}[#{row_header_id}]=#{row_header}"
+      row_header1_id = row['row_header1_id']
+      row_header1 = row['row_header1']
+      URI.escape "#{Filter}[#{@query['group_by']}]=#{row_header1_id}&#{FilterNames}[#{row_header1_id}]=#{row_header1}"
     end
 
     def next_group_by

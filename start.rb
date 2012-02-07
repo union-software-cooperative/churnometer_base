@@ -48,16 +48,9 @@ end
 get '/' do
   cache_control :public, :max_age => 43200
   protected!
-   
   
-  if !params['startDate'].nil?
-    @start = Date.parse((db.ex getdimstart_sql)[0]['getdimstart'])+1
-    if @start > Date.parse(params['startDate'])
-      @warning = 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')' 
-      params['startDate'] = @start.to_s
-    end
-  end
-
+  fix_date_params
+   
   @query = query
   if @query['column'].empty?
     @sql = summary_sql

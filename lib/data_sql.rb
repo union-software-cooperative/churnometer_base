@@ -20,7 +20,7 @@ module Churnobyl
       from churndetailfriendly10('#{query['group_by']}', 
                             '#{query['column']}',  
                             '#{query['startDate']}', 
-                            '#{query['endDate']}',
+                            '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
                             #{leader?.to_s}, 
                             '#{xml}'
                             )
@@ -30,11 +30,15 @@ module Churnobyl
     def summary_sql  
       xml = filter_xml query[Filter]
 
+      
       <<-SQL 
     select * 
-    from churnsummarydyn10('#{query['group_by']}', 
+    from churnsummarydyn14(
+                          'memberfacthelper3',
+                          '#{query['group_by']}', 
+                          'week',
                           '#{query['startDate']}', 
-                          '#{query['endDate']}',
+                          '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
                           #{leader?.to_s}, 
                           '#{xml}'
                           )
