@@ -180,7 +180,7 @@ module Churnobyl
         'annualisedavgcontribution'
       ]
       
-      if query['interval'] = 'none'
+      if query['interval'] != 'none'
         nt += [
           'paying_start_count',
           'paying_end_count',
