@@ -9,6 +9,16 @@ module Churnobyl
     end
 
     def fix_date_params
+      # override date filters with interval filters
+      if !params['intervalStart'].nil?
+        params['startDate'] = params['intervalStart'] 
+      end
+      
+      if !params['intervalEnd'].nil? 
+        params['endDate'] = params['intervalEnd']
+      end
+      
+      # make sure startDate isn't before data began
       if !params['startDate'].nil?
         @start = Date.parse((db.ex getdimstart_sql)[0]['getdimstart'])+1
         if @start > Date.parse(params['startDate'])
@@ -17,6 +27,7 @@ module Churnobyl
         end
       end
 
+      # make sure endDate is in the future
       if !params['endDate'].nil?
         @end = Date.parse(params['endDate'])
         if DateTime.now < @end
@@ -43,7 +54,7 @@ module Churnobyl
     end
 
     def drill_down_link(row)
-      uri_join_queries drill_down(row), next_group_by
+      uri_join_queries drill_down(row), next_group_by, row_interval(row)
     end
     
     def uri_join_queries(*queries)
@@ -54,17 +65,25 @@ module Churnobyl
       end
     end
     
+    
+    def can_detail_cell?(column_name, value)
+      (
+        %w{a1p_real_gain a1p_real_loss a1p_other_gain a1p_other_loss paying_real_gain paying_real_loss paying_other_gain paying_other_loss other_other_gain other_other_loss}.include? column_name
+      ) && (value.to_i != 0 && value.to_i.abs < 100)
+    end
+
+    def can_export_cell?(column_name, value)
+      (
+        %w{a1p_real_gain a1p_real_loss a1p_other_gain a1p_other_loss paying_real_gain paying_real_loss paying_other_gain paying_other_loss other_other_gain other_other_loss}.include? column_name
+      ) && (value.to_i != 0)
+    end
+    
     def export_cell(row, column_name)
-      row_filter = "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header1_id']}"
-      
-      export_column(column_name) + "&" + row_filter
+      export_column(column_name) + drill_down_cell(row)
     end
     
     def detail_cell(row, column_name)
-      row_filter = "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header1_id']}"
-      row_filter_name = "#{FilterNames}[#{row['row_header1_id']}]=#{row['row_header1']}"
-
-      detail_column(column_name) + "&" + row_filter + "&" + row_filter_name
+      detail_column(column_name) + drill_down_cell(row)
     end
     
     def export_column(column_name)
@@ -79,18 +98,23 @@ module Churnobyl
       "/?#{query_string}&#{column_filter}"
     end
  
-     def can_detail_cell?(column_name, value)
-      (
-        %w{a1p_real_gain a1p_real_loss a1p_other_gain a1p_other_loss paying_real_gain paying_real_loss paying_other_gain paying_other_loss other_other_gain other_other_loss}.include? column_name
-      ) && (value.to_i != 0 && value.to_i.abs < 100)
-    end
+     def drill_down_cell(row)
+       row_filter = "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header1_id']}"
+       row_filter_name = "#{FilterNames}[#{row['row_header1_id']}]=#{row['row_header1']}"
 
-    def can_export_cell?(column_name, value)
-      (
-        %w{a1p_real_gain a1p_real_loss a1p_other_gain a1p_other_loss paying_real_gain paying_real_loss paying_other_gain paying_other_loss other_other_gain other_other_loss}.include? column_name
-      ) && (value.to_i != 0)
-    end
+       "&" + row_filter + "&" + row_filter_name  + "&" + (row_interval(row))
+     end
+     
+    def row_interval(row)
+      row_interval = ""
 
+      if query["interval"] != "none" 
+        row_interval = "&intervalStart=#{row['period_start']}&intervalEnd=#{row['period_end']}"
+      end
+
+      row_interval
+    end
+     
     def groups_by_collection
       [
         ["branchid", "Branch"],
@@ -103,7 +127,15 @@ module Churnobyl
         ["hsr", "HSR Training"],
         ["nuwelectorate", "Electorate"],
         ["state", "State"],
-        ["feegroup", "Fee Group"]
+        ["feegroupid", "Fee Group"]
+      ]
+    end
+    
+    def interval_collection
+      [
+        ["none", "No time interval"],
+        ["week", "Weekly intervals"],
+        ["month", "Monthly intervals"],
       ]
     end
     
@@ -111,7 +143,7 @@ module Churnobyl
       [
         'row_header',
         'row_header1',
-        'row_header2',
+        'period_header',
         'a1p_real_gain',
         'paying_start_count',
         'paying_real_gain',
@@ -136,7 +168,8 @@ module Churnobyl
     end
       
     def no_total
-      [
+      
+      nt = [
         'row_header',
         'row_header_id',
         'row_header1',
@@ -146,6 +179,16 @@ module Churnobyl
         'contributors', 
         'annualisedavgcontribution'
       ]
+      
+      if query['interval'] = 'none'
+        nt += [
+          'paying_start_count',
+          'paying_end_count',
+          'period_header'
+        ]
+      end
+      
+      nt
     end
    
     def drill_down(row)
@@ -161,7 +204,7 @@ module Churnobyl
         'org'           => 'companyid',
         'state'         => 'areaid',
         'area'          => 'companyid',
-        'feegroup'      => 'companyid',
+        'feegroupid'      => 'companyid',
         'nuwelectorate' => 'org',
         'del'           => 'companyid',
         'hsr'           => 'companyid',
@@ -192,8 +235,8 @@ module Churnobyl
     end
     
     def safe_add(a, b)
-      if (a =~ /\$/) || (b =~ /\$/ )
-        a.to_money + b.to_money
+      if (a =~ /\./) || (b =~ /\./ )
+        a.to_f + b.to_f
       else
         a.to_i + b.to_i
       end

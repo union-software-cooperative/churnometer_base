@@ -6,10 +6,12 @@ module Churnobyl
         'startDate' => '2011-8-14',
         'endDate' => Time.now.strftime("%Y-%m-%d"),
         'column' => '',
+        'interval' => 'none',
         Filter => {
           'status' => [1, 14]      
         }
       }.rmerge(params)
+    
     end
 
     def member_sql
@@ -30,19 +32,33 @@ module Churnobyl
     def summary_sql  
       xml = filter_xml query[Filter]
 
-      
-      <<-SQL 
-    select * 
-    from churnsummarydyn14(
-                          'memberfacthelper3',
-                          '#{query['group_by']}', 
-                          'week',
-                          '#{query['startDate']}', 
-                          '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
-                          #{leader?.to_s}, 
-                          '#{xml}'
-                          )
-      SQL
+      if query['interval'] == 'none'
+        <<-SQL
+        select * 
+        from churnsummarydyn14(
+                              'memberfacthelperpaying',
+                              '#{query['group_by']}', 
+                              '',
+                              '#{query['startDate']}', 
+                              '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
+                              #{leader?.to_s}, 
+                              '#{xml}'
+                              )
+        SQL
+      else
+        <<-SQL
+        select * 
+        from churnsummarydyn17(
+                              'memberfacthelperpaying',
+                              '#{query['group_by']}', 
+                              '#{query['interval']}', 
+                              '#{query['startDate']}', 
+                              '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
+                              #{leader?.to_s}, 
+                              '#{xml}'
+                              )
+        SQL
+      end
     end
 
     def getdimstart_sql
