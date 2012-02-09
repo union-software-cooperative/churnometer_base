@@ -35,8 +35,8 @@ module Churnobyl
       if query['interval'] == 'none'
         <<-SQL
         select * 
-        from churnsummarydyn18(
-                              'memberfacthelperpaying',
+        from churnsummarydyn19(
+                              'memberfacthelperpaying2',
                               '#{query['group_by']}', 
                               '',
                               '#{query['startDate']}', 
@@ -48,8 +48,8 @@ module Churnobyl
       else
         <<-SQL
         select * 
-        from churnsummarydyn17(
-                              'memberfacthelperpaying',
+        from churnrunningdyn19(
+                              'memberfacthelperpaying2',
                               '#{query['group_by']}', 
                               '#{query['interval']}', 
                               '#{query['startDate']}', 
