@@ -92,7 +92,15 @@
       <thead>
         <tr>
           <% @data[0].each do |column_name, v| %>
-	    <th <%= show_col?(column_name) ? '' : 'class="advcol"' %>><%= column_name %></th>
+	    	<th <%= show_col?(column_name) ? '' : 'class="advcol"' %> id="<%=column_name %>head">
+				<% if bold_col?(column_name) %> 
+					<strong>
+				<% end %>
+					<%= col_names[column_name] || column_name %>
+				<% if bold_col?(column_name) %> 
+					</strong>
+				<% end %>
+			</th>
           <% end %>
         </tr>
       </thead>
@@ -105,15 +113,22 @@
 		  totals[column_name] = safe_add totals[column_name], v
 		%>
 		<td <%= show_col?(column_name) ? '' : 'class="advcol"' %>>
-		  <% if column_name == 'row_header1' %>
-		    <a href="<%= drill_down_link(row) %>"><%= v %></a>
-		  <% elsif can_detail_cell? column_name, v %>
-		    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>
-		  <% elsif can_export_cell? column_name, v %>
-		    <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
-		  <% else %>
-		    <%= v %>
-		  <% end %>
+			<% if bold_col?(column_name) %> 
+				<strong>
+			<% end %>
+			
+		  		<% if column_name == 'row_header1' %>
+				    <a href="<%= drill_down_link(row) %>"><%= v %></a>
+				  <% elsif can_detail_cell? column_name, v %>
+				    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>
+				  <% elsif can_export_cell? column_name, v %>
+				    <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
+				  <% else %>
+				    <%= v %>
+				<% end %>
+			<% if bold_col?(column_name) %> 
+				<strong>
+			<% end %>
 		</td>
             <% end %>
           </tr>
@@ -123,13 +138,20 @@
         <tr>
           <% totals.each do |column_name, total| %>
             <td <%= show_col?(column_name) ? '' : 'class="advcol"' %>>
-	      <% if !no_total.include?(column_name) %>
-                <% if can_export_cell? column_name, total %>
-                  <a href="<%= export_column(column_name) %>"><%= total %></a>
-                <% else %>
-                  <%= total %>
-                <% end %>
-              <% end %>
+				<% if bold_col?(column_name) %> 
+					<strong>
+				<% end %>
+			
+	      		<% if !no_total.include?(column_name) %>
+                	<% if can_export_cell? column_name, total %>
+	                  <a href="<%= export_column(column_name) %>"><%= total %></a>
+	                <% else %>
+	                  <%= total %>
+	                <% end %>
+	            <% end %>
+			<% if bold_col?(column_name) %> 
+				<strong>
+			<% end %>
 	    </td>
           <% end %>
         </tr>
@@ -148,10 +170,31 @@
   </section>
 </div>
 
+<% @data[0].each do | column_name, v | %>
+	<% if (tips[column_name] || "") != "" %>
+		<div id="<%=column_name %>tip" class="tooltip">
+			<%=tips[column_name]%>
+		</div>
+	<% end %>
+<% end %>
+
+
 <script>
   $(function() {
   		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
   		$("table").tablesorter();
 		$(".advcol").hide();
+		// setup tooltip for a single DIV element
+		<% @data[0].each do | column_name, v | %>
+			<% if (tips[column_name] || "") != "" %>
+		
+				$("#<%=column_name %>head").tooltip({
+					tip: '#<%=column_name %>tip',
+					position: 'top center',
+					offset: [-25, 0],
+					delay: 0
+				});
+			<% end %>
+		<% end %>
   	});
 </script>

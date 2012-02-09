@@ -115,21 +115,38 @@ module Churnobyl
       row_interval
     end
      
+    # def groups_by_collection
+    #       [
+    #         ["branchid", "Branch"],
+    #         ["lead", "Lead Organizer"],
+    #         ["org", "Organizer"],
+    #         ["areaid", "Area"],
+    #         ["companyid", "Work Site"],
+    #         ["industryid", "Industry"],
+    #         ["del", "Delegate Training"],
+    #         ["hsr", "HSR Training"],
+    #         ["nuwelectorate", "Electorate"],
+    #         ["state", "State"],
+    #         ["feegroupid", "Fee Group"]
+    #       ]
+    #     end
+    
     def groups_by_collection
-      [
-        ["branchid", "Branch"],
-        ["lead", "Lead Organizer"],
-        ["org", "Organizer"],
-        ["areaid", "Area"],
-        ["companyid", "Work Site"],
-        ["industryid", "Industry"],
-        ["del", "Delegate Training"],
-        ["hsr", "HSR Training"],
-        ["nuwelectorate", "Electorate"],
-        ["state", "State"],
-        ["feegroupid", "Fee Group"]
-      ]
+      {
+        "branchid"      => "Branch",
+        "lead"          => "Lead Organizer",
+        "org"           => "Organizer",
+        "areaid"        => "Area",
+        "companyid"     => "Work Site",
+        "industryid"    => "Industry",
+        "del"           => "Delegate Training",
+        "hsr"           => "HSR Training",
+        "nuwelectorate" => "Electorate",
+        "state"         => "State",
+        "feegroupid"    => "Fee Group"
+      }
     end
+    
     
     def interval_collection
       [
@@ -137,6 +154,35 @@ module Churnobyl
         ["week", "Weekly intervals"],
         ["month", "Monthly intervals"],
       ]
+    end
+    
+    def col_names 
+      hash = {
+        'row_header1'     => groups_by_collection[(params['group_by'] || 'branchid')],
+        'a1p_real_gain'   => 'cards in',
+        'a1p_to_other'    => 'never paid',
+        'paying_start_count' => 'paying at start',
+        'paying_real_gain'  => 'started paying',
+        'paying_real_loss'  => 'stopped paying',
+        'paying_real_net'   => 'paying net',
+        'paying_end_count'  => 'paying at end',
+        'income_net'            => 'income',
+        'running_paying_net'  => 'running paying net',
+        'paying_other_loss'   => 'paying transfers out',
+        'paying_other_gain'   => 'paying transfers in',
+        'a1p_newjoins'        => 'cards in (new)',
+        'a1p_rejoins'         => 'cards in (rejoin)',
+        'period_header'       => 'interval',
+        'start_date'          => 'start date',
+        'end_date'          => 'end date'
+        }
+    end
+    
+    def bold_col?(column_name)
+      [
+        'paying_real_net',
+        'running_paying_net'
+      ].include?(column_name)
     end
     
     def simple_summary
@@ -150,9 +196,10 @@ module Churnobyl
         'paying_start_count',
         'paying_real_gain',
         'paying_real_loss',
+        'paying_real_net',
         'paying_end_count',
         'contributors', 
-        'posted'
+        'income_net'
       ]
     end
 
@@ -168,7 +215,23 @@ module Churnobyl
         'newcompany'
       ]
     end
-      
+    
+    def tips
+      {
+        'paying_real_net' => "The number of members whose status became 'paying' during the period minus those that lost the 'paying' status", 
+        'paying_end_count' => "The number of members with the 'paying' status at the end of the period.  '#{col_names['paying_end_count']}' is equal to '#{col_names['paying_start_count']}' plus '#{col_names['paying_real_gain']}' minus '#{col_names['paying_real_loss']}' plus '#{col_names['paying_other_gain']}' minus '#{col_names['paying_other_loss']}'.",
+        'a1p_real_gain' => "The number of people who became 'awaiting first payment' during the period.  Most of these are new joiners (see '#{col_names['a1p_newjoins']}') but some may have already been members or become 'awaiting first payment' for administrative reasons (see '#{col_names['a1p_rejoins']}') .",
+        'a1p_to_other' => "The number of 'awaiting first payment' members who were struck off during the period before they paid any dues.",
+        'paying_start_count' => "The number of members with the 'paying' status at the beginning of the period.",
+        'paying_real_gain' => "The number of members whose status become 'paying' during the period.",
+        'paying_real_loss' => "The number of members whose status ceased to be 'paying' during the period.",
+        'income_net' => 'The amount of money posted against members by support staff during the period (without regard to the period the payment was remitted for).',
+        'contributors' => 'The number of unique members to have contributed dues during the period.',
+        'running_paying_net' => "The running total of '#{col_names['paying_real_net']}'.  Be careful to sort by the row header then '#{col_names['period_header']}' (the default sort) otherwise this column won't make sense.",
+        'period_header' => "The intervals dividing '#{col_names['start_date']}' and '#{col_names['end_date']}' as selected by the user.  Beware that if '#{col_names['start_date']}' or '#{col_names['end_date']}' don't align to standard interval boundaries, the first or last interval will be shorter in duration."
+      }
+    end
+    
     def no_total
       
       nt = [
@@ -179,7 +242,8 @@ module Churnobyl
         'row_header2',
         'row_header2_id',
         'contributors', 
-        'annualisedavgcontribution'
+        'annualisedavgcontribution',
+        'running_paying_net'
       ]
       
       if query['interval'] != 'none'
@@ -211,7 +275,7 @@ module Churnobyl
         'del'           => 'companyid',
         'hsr'           => 'companyid',
         'industryid'	=> 'companyid',
-	'companyid'     => 'companyid'
+	      'companyid'     => 'companyid'
       }
 
       URI.escape "group_by=#{hash[query['group_by']]}"

@@ -89,5 +89,18 @@ table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSo
 background-color: #8dbdd8;
 }
 
-
-
+/* tooltip styling */
+.tooltip {
+	display:none;
+	#background:url(/images/tooltip/black_arrow.png);
+	font-size:12px;
+	width:200px;
+	padding:25px;
+	color:#aaa;
+	background-color:#222;
+	padding:10px;
+	font-size:12px;
+	-moz-border-radius-bottomright: 50px 25px;
+	border-bottom-right-radius: 50px 25px;
+	
+}
