@@ -67,6 +67,49 @@ module Churnobyl
       SQL
     end
 
+    def periods(data)
+        # data.each do |row|
+        #           row.each do |column_name, v|
+        #             if column_name == 'period_header'
+        data.group_by{ |row| row['period_header'] }
+    end
+    
+    def pivot(data)
+      series = Hash.new
+      
+      rows = data.group_by{ |row| row['row_header1'] }
+      rows.each do | row |
+        series[row[0]] = Array.new
+        periods(data).sort.each do | period |
+          intersection = row[1].find { | r | r['period_header'] == period[0] }
+          if intersection.nil? 
+            series[row[0]] << 'null'
+          else
+            series[row[0]] << intersection['running_paying_net'] 
+          end
+        end
+      end
+    
+      series
+    end
+
+    def paying_start_total(data)
+      # can't figure out enumerable way to sume this
+      t=0
+      data.each do | row |
+        t += row['paying_start_count'].to_i
+      end
+      t
+    end
+
+    def paying_end_total(data)
+      t=0
+      data.each do | row |
+        t += row['paying_end_count'].to_i
+      end
+      t
+    end
+    
 
     def filter_xml(filters)
       # Example XML

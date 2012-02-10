@@ -1,7 +1,8 @@
 <div class="container">
 
   <h1>churnobyl prototype</h1>
-
+	
+	
   <div class="span-24 last">
     <section class="form span-18">
       <form action="/">
@@ -74,6 +75,52 @@
     </section>
  </div>
 </div>
+<section>
+	<div id="chart">
+	<% if query['interval'] != 'none' %>
+		LINE GRAPH GOES HERE
+	<% else %>
+	  <% if @data.count <= 20 %>
+	  	<table id="waterfall">
+			<caption>Paying gain vs loss</caption>
+			<thead>
+				<tr>
+					<th>Item</th>
+					<th>Change</th>
+				</tr>
+
+			</thead>
+			<tfoot>
+				<tr>
+					<td>End Difference</td>
+					<td><%= paying_end_total(@data) - paying_end_total(@data)%></td>
+				</tr>
+			</tfoot>
+			<tbody>
+				<tr>
+						<td></td>
+						<td>0</td>
+				</tr>
+				<% @data.each do |row| %>
+		            <tr>
+						<td><%= "#{row['row_header1']} gain" %></td>
+						<td><%= row['paying_real_gain'] %></td>
+					</tr>
+					<tr>
+						<td><%= "#{row['row_header1']} loss" %></td>
+						<td><%= row['paying_real_loss'] %></td>
+					</tr>
+				<% end %>
+				<tr>
+						<td></td>
+						<td><%= paying_end_total(@data) - paying_end_total(@data)%> </td>
+				</tr>
+			</tbody>
+		</table>
+	  <% end %>
+	<% end %>
+	<div>
+</section>
 <section id="data">
   <h2>Data</h2>
   <ul>
@@ -179,8 +226,68 @@
 <% end %>
 
 
+
+
 <script>
-  $(function() {
+	var chart;
+	function setupchart() {
+	   chart = new Highcharts.Chart({
+	      chart: {
+	         renderTo: 'chart',
+	         defaultSeriesType: 'line',
+	         marginRight: 130,
+	         marginBottom: 130
+	      },
+	      title: {
+	         text: 'Net Paying',
+	         x: -20 //center
+	      },
+	      subtitle: {
+	         text: 'Gain and Decline',
+	         x: -20
+	      },
+	      xAxis: {
+	         categories: [
+				<%= periods(@data).collect { | k | "'#{k[0]}'"}.join(",") %>
+			] ,
+			labels: {
+			            rotation: -45,
+			            align: 'right',
+			         }
+	      },
+	      yAxis: {
+	         title: {
+	            text: "<%= col_names['row_header1'] %>"
+	         },
+	         plotLines: [{
+	            value: 0,
+	            width: 1,
+	            color: '#808080'
+	         }]
+	      },
+	      tooltip: {
+	         formatter: function() {
+	                   return '<b>'+ this.series.name +'</b><br/>'+
+	               this.x +': '+ this.y;
+	         }
+	      },
+	      legend: {
+	         layout: 'vertical',
+	         align: 'right',
+	         verticalAlign: 'top',
+	         x: -10,
+	         y: 100,
+	         borderWidth: 0
+	      },
+		  series: [
+			<%= pivot(@data).collect { | k, v | "{ name: '#{k}', data: [#{v.collect{ | i | i}.join(',')}] }" }.join(",\n") %>
+		  ]
+	   });
+   
+   
+	};
+
+	$(function() {
   		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
   		$("table").tablesorter();
 		$(".advcol").hide();
@@ -194,6 +301,15 @@
 					offset: [-25, 0],
 					delay: 0
 				});
+				
+			<% end %>
+		<% end %>
+		
+		<% if (query['interval'] != 'none') %>
+			setupchart();
+		<% else %>
+			<% if (@data.count <= 20) %>
+				$("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#FFFFFF", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
 			<% end %>
 		<% end %>
   	});

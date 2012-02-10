@@ -52,15 +52,10 @@ get '/' do
   fix_date_params
    
   @query = query
-  if @query['column'].empty?
-    @sql = summary_sql
-  else
-    @sql = member_sql
-  end 
- 
- 
+  @sql = @query['column'].empty? ? summary_sql : member_sql
+  
   @data = db.ex @sql
-  # @data = []
+  
   erb :summary
 end
 
