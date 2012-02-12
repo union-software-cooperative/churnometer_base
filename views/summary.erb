@@ -2,7 +2,6 @@
 
   <h1>churnobyl prototype</h1>
 	
-	
   <div class="span-24 last">
     <section class="form span-18">
       <form action="/">
@@ -45,7 +44,21 @@
               <% end %>
             </select>
 		  </li>
-        </ul>
+        <!-- <% filter_names.each do |filter_value, filter_name| %>
+                  <li>
+        			<strong>
+        				<%= filter_name %>
+        			</strong> 
+        			<input type="radio" name="group1" value="Include" checked>Include
+        			<input type="radio" name="group1" value="Exclude" >Exclude
+        			<input type="radio" name="group1" value="Remove">Remove 
+        		</li>
+                <% end %> -->
+	
+
+		</ul>
+
+		
         <ul>
           <li><input type="submit" value="Refresh"></li>
         </ul>
@@ -56,21 +69,21 @@
     <section id="filter">
       <h2>Selections</h2>
       <ul>
-	<li>
-	  <strong><%= @query['startDate'] %> &nbsp;&nbsp;to&nbsp;&nbsp; <%= @query['endDate'] %></strong>
-	</li>
-	<% if !@warning.nil? %>
-	  <li><%= @warning %></li>
-	<% end %>
-	<% if filter_names.count == 0 %>
-	  <li>Nothing selected </li>
-	<% end %>
+		<li>
+			<strong><%= @query['startDate'] %> &nbsp;&nbsp;to&nbsp;&nbsp; <%= @query['endDate'] %></strong>
+		</li>
+		<% if !@warning.nil? %>
+			<li><%= @warning %></li>
+		<% end %>
+		<% if filter_names.count == 0 %>
+			<li>Nothing selected </li>
+		<% end %>
         <% filter_names.each do |filter_value, filter_name| %>
           <li><strong><%= filter_name %></strong> <a href="<%= remove_filter_link(filter_value) %>">remove</a></li>
         <% end %>
         <% if !@query['column'].empty? %>
-	  <li><strong><%= @query['column'] %></li>
-	<% end %>
+	  		<li><strong><%= @query['column'] %></li>
+		<% end %>
       </ul>
     </section>
  </div>

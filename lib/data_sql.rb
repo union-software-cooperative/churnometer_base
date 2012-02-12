@@ -71,7 +71,7 @@ module Churnobyl
         # data.each do |row|
         #           row.each do |column_name, v|
         #             if column_name == 'period_header'
-        data.group_by{ |row| row['period_header'] }
+        data.group_by{ |row| row['period_header'] }.sort{|a,b| a[0] <=> b[0] }
     end
     
     def pivot(data)
@@ -80,7 +80,7 @@ module Churnobyl
       rows = data.group_by{ |row| row['row_header1'] }
       rows.each do | row |
         series[row[0]] = Array.new
-        periods(data).sort.each do | period |
+        periods(data).each do | period |
           intersection = row[1].find { | r | r['period_header'] == period[0] }
           if intersection.nil? 
             series[row[0]] << 'null'

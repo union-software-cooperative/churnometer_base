@@ -154,7 +154,7 @@
 			return output;
 		}
 		
-		function GetWaterfallOutput(labelArray, valueArray, totalValue, largestValue, labelTextArray) {
+		function GetWaterfallOutput(labelArray, valueArray, totalValue, smallestValue, largestValue, labelTextArray) {
 			var output = "";
 			var colourIndex = 0;
 			var leftShim = 0;
@@ -180,7 +180,7 @@
 				}
 			
 				var percent = RoundToTwoDecimalPlaces((positiveValue / totalValue) * 100);
-				var barHeight = RoundToTwoDecimalPlaces((positiveValue / largestValue) * 100);
+				var barHeight = RoundToTwoDecimalPlaces((positiveValue / (largestValue-=smallestValue)) * 100);
 				
 				var bottomPosition = runningTotal - barHeight; // Negative column
 				if (i == 0 || i == (valueArray.length - 1)) {
@@ -189,6 +189,8 @@
 				} else if (isPositive) {
 					bottomPosition = runningTotal;
 				}
+
+				//bottomPosition += 100 - (largestValue/(largestValue-=smallestValue) * 100);
 
 				// Labels
 				var displayLabel = "";
@@ -258,15 +260,16 @@
 					labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
 					valueArray[valueArray.length] = valueAmount;
 					totalValue = totalValue + valueAmount;
-					if (valueAmount > largestValue) {
+					if (totalValue > largestValue) {
 						largestValue = valueAmount;
 					}
-					if (valueAmount < smallestValue) {
+					// include smallest value in range
+					if (totalValue < smallestValue) {
 						smallestValue = valueAmount;
 					}
 				}
 			}
-			if (largestValue< -1 * smallestValue) largestValue = smallestValue * -1;
+			//if (largestValue< -1 * smallestValue) largestValue = smallestValue * -1; 
 			
 			// Containing division
 			var output = "<h3>" + caption + "</h3>" +
@@ -304,7 +307,7 @@
 
 						case 'vertical':
 							// Waterfall chart
-							output += GetWaterfallOutput(labelArray, valueArray, totalValue, largestValue, labelTextArray);
+							output += GetWaterfallOutput(labelArray, valueArray, totalValue, smallestValue, largestValue, labelTextArray);
 							break;
 					}
 					break;
