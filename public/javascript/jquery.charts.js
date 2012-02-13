@@ -166,11 +166,6 @@
 			
 			var runningTotal = 0;
 			
-			alert(smallestValue);
-			alert(largestValue);
-			alert(totalValue);
-			alert(100 - (largestValue/totalValue * 100))
-			
 			for (var i = 0; i < valueArray.length; i++) {
 				
 				var positiveValue = valueArray[i];

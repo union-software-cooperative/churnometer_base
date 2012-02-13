@@ -92,6 +92,10 @@ module Churnobyl
     
       series
     end
+    
+    def series_count(data)
+      rows = data.group_by{ |row| row['row_header1'] }.count
+    end
 
     def paying_start_total(data)
       # can't figure out enumerable way to sume this

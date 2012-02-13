@@ -89,51 +89,51 @@
  </div>
 </div>
 <section>
+	<% if series_count(@data) <= 40 %>
 	<a id='hidechart' onclick="$('#chart').toggle();if ($('#hidechart').text()=='Show chart') $('#hidechart').text('Hide chart'); else $('#hidechart').text('Show chart');">Hide chart</a>
 	<div id="chart">
-	<% if query['interval'] != 'none' %>
-		LINE GRAPH GOES HERE
-	<% else %>
-	  <% if @data.count <= 20 %>
-	  	<table id="waterfall">
-			<caption>Paying gain vs loss</caption>
-			<thead>
-				<tr>
-					<th>Item</th>
-					<th>Change</th>
-				</tr>
-
-			</thead>
-			<tfoot>
-				<tr>
-					<td>End Difference</td>
-					<td><%= paying_end_total(@data) - paying_end_total(@data)%></td>
-				</tr>
-			</tfoot>
-			<tbody>
-				<tr>
-						<td></td>
-						<td>0</td>
-				</tr>
-				<% @data.each do |row| %>
-		            <tr>
-						<td><%= "#{row['row_header1']} gain" %></td>
-						<td><%= row['paying_real_gain'] %></td>
-					</tr>
+		<% if query['interval'] != 'none' %>
+			LINE GRAPH GOES HERE
+		<% else %>
+		  	<table id="waterfall">
+				<caption>Paying gain vs loss</caption>
+				<thead>
 					<tr>
-						<td><%= "#{row['row_header1']} loss" %></td>
-						<td><%= row['paying_real_loss'] %></td>
+						<th>Item</th>
+						<th>Change</th>
 					</tr>
-				<% end %>
-				<tr>
-						<td></td>
-						<td><%= paying_end_total(@data) - paying_end_total(@data)%> </td>
-				</tr>
-			</tbody>
-		</table>
-	  <% end %>
-	<% end %>
+
+				</thead>
+				<tfoot>
+					<tr>
+						<td>End Difference</td>
+						<td><%= paying_end_total(@data) - paying_end_total(@data)%></td>
+					</tr>
+				</tfoot>
+				<tbody>
+					<tr>
+							<td></td>
+							<td>0</td>
+					</tr>
+					<% @data.each do |row| %>
+			            <tr>
+							<td><%= "#{row['row_header1']} gain" %></td>
+							<td><%= row['paying_real_gain'] %></td>
+						</tr>
+						<tr>
+							<td><%= "#{row['row_header1']} loss" %></td>
+							<td><%= row['paying_real_loss'] %></td>
+						</tr>
+					<% end %>
+					<tr>
+							<td></td>
+							<td><%= paying_end_total(@data) - paying_end_total(@data)%> </td>
+					</tr>
+				</tbody>
+			</table>
+		<% end %>
 	<div>
+	<% end %>
 </section>
 <section id="data">
   <h2>Data</h2>
@@ -243,63 +243,65 @@
 
 
 <script>
-	var chart;
-	function setupchart() {
-	   chart = new Highcharts.Chart({
-	      chart: {
-	         renderTo: 'chart',
-	         defaultSeriesType: 'line',
-	         marginRight: 130,
-	         marginBottom: 130
-	      },
-	      title: {
-	         text: 'Net Paying',
-	         x: -20 //center
-	      },
-	      subtitle: {
-	         text: 'Gain and Decline',
-	         x: -20
-	      },
-	      xAxis: {
-	         categories: [
-				<%= periods(@data).collect { | k | "'#{k[0]}'"}.join(",") %>
-			] ,
-			labels: {
-			            rotation: -45,
-			            align: 'right',
-			         }
-	      },
-	      yAxis: {
-	         title: {
-	            text: "<%= col_names['row_header1'] %>"
-	         },
-	         plotLines: [{
-	            value: 0,
-	            width: 1,
-	            color: '#808080'
-	         }]
-	      },
-	      tooltip: {
-	         formatter: function() {
-	                   return '<b>'+ this.series.name +'</b><br/>'+
-	               this.x +': '+ this.y;
-	         }
-	      },
-	      legend: {
-	         layout: 'vertical',
-	         align: 'right',
-	         verticalAlign: 'top',
-	         x: -10,
-	         y: 100,
-	         borderWidth: 0
-	      },
-		  series: [
-			<%= pivot(@data).collect { | k, v | "{ name: '#{k}', data: [#{v.collect{ | i | i}.join(',')}] }" }.join(",\n") %>
-		  ]
-	   });
-   
-   
-	};
+	<% if (series_count(@data) <= 40) %>
+	
+		var chart;
+		function setupchart() {
+		   chart = new Highcharts.Chart({
+		      chart: {
+		         renderTo: 'chart',
+		         defaultSeriesType: 'line',
+		         marginRight: 130,
+		         marginBottom: 130,
+				 height: 500
+		      },
+		      title: {
+		         text: 'Net Paying',
+		         x: -20 //center
+		      },
+		      subtitle: {
+		         text: 'Gain and Decline',
+		         x: -20
+		      },
+		      xAxis: {
+		         categories: [
+					<%= periods(@data).collect { | k | "'#{k[0]}'"}.join(",") %>
+				] ,
+				labels: {
+				            rotation: -45,
+				            align: 'right',
+				         }
+		      },
+		      yAxis: {
+		         title: {
+		            text: "<%= col_names['row_header1'] %>"
+		         },
+		         plotLines: [{
+		            value: 0,
+		            width: 1,
+		            color: '#808080'
+		         }]
+		      },
+		      tooltip: {
+		         formatter: function() {
+		                   return '<b>'+ this.series.name +'</b><br/>'+
+		               this.x +': '+ this.y;
+		         }
+		      },
+		      legend: {
+		         layout: 'vertical',
+		         align: 'right',
+		         verticalAlign: 'top',
+		         x: -10,
+		         y: 100,
+		         borderWidth: 0
+		      },
+			  series: [
+				<%= pivot(@data).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i}.join(',')}] }" }.join(",\n") %>
+			  ]
+		   });
+		};
+	<% end %>
 
 	$(function() {
   		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
@@ -319,11 +321,12 @@
 			<% end %>
 		<% end %>
 		
-		<% if (query['interval'] != 'none') %>
-			setupchart();
-		<% else %>
-			<% if (@data.count <= 20) %>
-				$("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#FFFFFF", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
+		<% if (series_count(@data) <= 40) %>
+			<% if (query['interval'] != 'none') %>
+				setupchart();
+			<% else %>
+					$("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#FFFFFF", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
+
 			<% end %>
 		<% end %>
   	});
