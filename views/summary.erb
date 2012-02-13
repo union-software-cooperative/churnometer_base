@@ -89,6 +89,7 @@
  </div>
 </div>
 <section>
+	<a id='hidechart' onclick="$('#chart').toggle();if ($('#hidechart').text()=='Show chart') $('#hidechart').text('Hide chart'); else $('#hidechart').text('Show chart');">Hide chart</a>
 	<div id="chart">
 	<% if query['interval'] != 'none' %>
 		LINE GRAPH GOES HERE

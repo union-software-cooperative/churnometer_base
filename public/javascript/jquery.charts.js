@@ -21,7 +21,7 @@
 			chartbgcolours: ["#336699", "#669933", "#339966"],
 			chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"],
 			chartpadding: 8,
-			chartheight: 300,
+			chartheight: 500,
 			showlabels: true,
 			showgrid: false,
 			gridlines: 8,
@@ -158,12 +158,18 @@
 			var output = "";
 			var colourIndex = 0;
 			var leftShim = 0;
+			var totalValue = (largestValue-smallestValue)
 			var shimAdjustment = RoundToTwoDecimalPlaces(100 / labelArray.length);
 			var widthAdjustment = shimAdjustment - 1;
 			
 			output += "<div style=\"height: " + config.chartheight + "px; position: relative;\">";
 			
 			var runningTotal = 0;
+			
+			alert(smallestValue);
+			alert(largestValue);
+			alert(totalValue);
+			alert(100 - (largestValue/totalValue * 100))
 			
 			for (var i = 0; i < valueArray.length; i++) {
 				
@@ -180,7 +186,7 @@
 				}
 			
 				var percent = RoundToTwoDecimalPlaces((positiveValue / totalValue) * 100);
-				var barHeight = RoundToTwoDecimalPlaces((positiveValue / (largestValue-=smallestValue)) * 100);
+				var barHeight = RoundToTwoDecimalPlaces((positiveValue / totalValue) * 100);
 				
 				var bottomPosition = runningTotal - barHeight; // Negative column
 				if (i == 0 || i == (valueArray.length - 1)) {
@@ -190,12 +196,12 @@
 					bottomPosition = runningTotal;
 				}
 
-				//bottomPosition += 100 - (largestValue/(largestValue-=smallestValue) * 100);
-
+				bottomPosition += (100 - (largestValue/totalValue * 100));
+				
 				// Labels
 				var displayLabel = "";
 				if (config.showlabels) {
-					displayLabel = "<span style=\"display: block; width: 100%; position: absolute; bottom: 0; text-align: center; background-color: " /* + config.chartbgcolours[colourIndex] */ + "#333333" + ";\">" + labelArray[i] + "</span>"
+					displayLabel = "<span style=\"display: block; width: 100%; position: absolute; opacity:0.8; bottom: 0; text-align: center; background-color: " /* + config.chartbgcolours[colourIndex] */ + "#333333" + ";\">" + labelArray[i] + "</span>"
 				}
 				
 				// Column
@@ -261,11 +267,11 @@
 					valueArray[valueArray.length] = valueAmount;
 					totalValue = totalValue + valueAmount;
 					if (totalValue > largestValue) {
-						largestValue = valueAmount;
+						largestValue = totalValue;
 					}
 					// include smallest value in range
 					if (totalValue < smallestValue) {
-						smallestValue = valueAmount;
+						smallestValue = totalValue;
 					}
 				}
 			}
