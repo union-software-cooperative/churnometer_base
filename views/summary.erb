@@ -7,15 +7,15 @@
 	  <input type="hidden" name="column" value="<%= @query['column'] %>">
         
         <ul>
-          <li class="datepicker form span-5 ui-corner-all">
+          <li class="datepicker form span-5">
             <label>Start Date</label>
             <input type="text" name="startDate" value="<%= @query['startDate'] %>">
           </li>
-          <li class="datepicker form span-5  ui-corner-all">
+          <li class="datepicker form span-5">
             <label>End Date</label>
             <input type="text" name="endDate" value="<%= @query['endDate'] %>">
           </li>
-          <li class="group_by form span-5  ui-corner-all">
+          <li class="group_by form span-5">
             <label>Sub-total on</label>
             <select name="group_by">
               <% groups_by_collection.each do |column_name, name| %>
@@ -27,7 +27,7 @@
               <% end %>
             </select>
 		  </li>
-		  <li class="group_by form span-5  ui-corner-all">
+		  <li class="group_by form span-5">
             <label>Running totals on</label>
             <select name="interval">
               <% interval_collection.each do |column_name, name| %>
@@ -58,7 +58,7 @@
 			  <% end %>
 			</table>
 	      </li>
-		  <li class="form span-24 ui-corner-all">
+		  <li class="form span-24">
 		    <input  type="submit" value="Refresh">
 		  </li>
 		</ul>
