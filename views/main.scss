@@ -22,7 +22,7 @@ $line: 18px;
     display:block;
     padding:0.5em;
 	font-size:120%;
-	color:#ffe;
+	color:#ffd;
   }
 
   ul {
@@ -33,11 +33,12 @@ $line: 18px;
     }
   }
 
-  input, select {
+  input[type=text], select {
 	color: #333;
 	padding: 0.5em;
 	border-radius: 5px;
 	-webkit-appearance:none;
+	background:ivory;
   }
 
   td {
@@ -132,7 +133,7 @@ body {
 }
 
 h1 {
-	color: #ffe;
+	color: #ffd;
 }
 
 .ui-widget-header {
@@ -150,6 +151,9 @@ h1 {
 	}
 }
 
+.ui-state-default {
+	background:ivory !important;
+}
 .ui-widget-content a {
 	color: #ffe;
 	
@@ -163,6 +167,7 @@ table a {
 	:hover {
 		color: light-blue !important;
 	}
+	
 }
 
 td.filters{
