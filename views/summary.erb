@@ -70,7 +70,7 @@
 <section id="data">
 	<div id="tabs">
 
-		<% tables = params['column'].empty? ? summary_tables : member_tables %>
+		<% tables = params['column'].to_s == '' ? summary_tables : member_tables %>
 		
 		<ul>
 			<% i = 0 %>
@@ -144,9 +144,9 @@
 				
 				<ul>
 			    	<% if @query['column'].empty? %>
-				      <li><a href="/export_summary?<%= query_string %>" class="button">Export Summary</a></li>
+				      <li class="nav"><a href="/export_summary?<%= query_string %>" class="button">Export Summary</a></li>
 				    <% end %>
-				    <li><a href="/export_member_details?<%= query_string %>" class="button">Export Member Details</a></li>
+				    <li class="nav"><a href="/export_member_details?<%= query_string %>" class="button">Export Member Details</a></li>
 				</ul>
 			  <% if has_data? %>
 			    <% totals = {} %>
@@ -200,7 +200,7 @@
 			          </tr>
 			        <% end %>
 			      </tbody>
-				  <% if params['column'].empty? %>
+				  <% if params['column'].to_s == '' %>
 			      	<tfoot>
 				        <tr>
 				          <% totals.each do |column_name, total| %>

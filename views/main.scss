@@ -141,15 +141,26 @@ h1 {
 	border: #333 !important;
 	background: #707070;
 	color: #ffe;
-	a {
-		color: #ffe;
+	
+	tbody tr:nth-child(odd) td, tbody tr.even td{
+		background: #ffe;
 	}
 }
 
-tbody tr:nth-child(odd) td, tbody tr.even td{
-	background: #ffe;
+.ui-widget-content a {
+	color: #ffe;
+	
+
+	
 }
 
+table a {
+	color: #333 !important ;
+	
+	:hover {
+		color: light-blue !important;
+	}
+}
 
 td.filters{
 	background: transparent !important;
