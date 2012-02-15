@@ -50,22 +50,25 @@ module Churnobyl
     end
 
     def getdimstart(dim)
-       @data = db.ex(dimstart_sql)
+      db.ex(dimstart_sql)
     end
 
-    def drill_down_link(row)
-      uri_join_queries drill_down(row), next_group_by, row_interval(row)
-    end
-    
-    def uri_join_queries(*queries)
-      if params == {}
-        request.url + '?' + queries.join('&')
+    def get_display_text(column, id)
+      t = "error!"
+      
+      if id == "unassigned" 
+        t = "unassigned"
       else
-        request.url + '&' + queries.join('&')
-      end
+        val = db.ex(get_display_text_sql(column,id.sub('!','').sub('-','')))
+        
+        if val.count != 0 
+          t = val[0]['displaytext']
+        end
+      end 
+      
+      t
     end
-    
-    
+
     def can_detail_cell?(column_name, value)
       (
         %w{a1p_real_gain a1p_real_loss a1p_other_gain a1p_other_loss paying_real_gain paying_real_loss paying_other_gain paying_other_loss other_other_gain other_other_loss}.include? column_name
@@ -159,29 +162,40 @@ module Churnobyl
     def col_names 
       hash = {
         'row_header1'     => groups_by_collection[(params['group_by'] || 'branchid')],
-        'a1p_real_gain'   => 'cards in',
-        'a1p_to_other'    => 'never paid',
+        'a1p_real_gain'   => 'total cards in',
+        'a1p_to_other'    => 'never started paying',
         'paying_start_count' => 'paying at start',
         'paying_real_gain'  => 'started paying',
         'paying_real_loss'  => 'stopped paying',
+        'a1p_start_count' => 'a1p at end',
+        'a1p_end_count' => 'a1p at start',
         'paying_real_net'   => 'paying net',
         'paying_end_count'  => 'paying at end',
-        'income_net'            => 'income',
-        'running_paying_net'  => 'running paying net',
+        'posted'            => 'income posted',
+        'unposted'            => 'income corrections',
+        'income_net'            => 'income net',
+        'running_paying_net'  => 'paying net (running total)',
         'paying_other_loss'   => 'paying transfers out',
         'paying_other_gain'   => 'paying transfers in',
-        'a1p_newjoins'        => 'cards in (new)',
-        'a1p_rejoins'         => 'cards in (rejoin)',
+        'a1p_other_gain'     => 'a1p transfers in',
+        'a1p_other_loss'     => 'a1p transfers out',
+        'a1p_newjoin'        => 'cards in (new)',
+        'a1p_rejoin'         => 'cards in (rejoin)',
+        'a1p_to_paying'     => 'a1p started paying',
+        #'a1p_real_loss'     => 'a1p never paid',
         'period_header'       => 'interval',
         'start_date'          => 'start date',
-        'end_date'          => 'end date'
+        'end_date'          => 'end date',
+        'annualisedavgcontribution' => 'estimated annual contribution',
+        'contributors'  => 'unique contributors'
         }
     end
     
     def bold_col?(column_name)
       [
         'paying_real_net',
-        'running_paying_net'
+        'running_paying_net',
+        'a1p_real_gain'
       ].include?(column_name)
     end
     
@@ -202,7 +216,8 @@ module Churnobyl
         'income_net'
       ]
     end
-
+    
+    
     def simple_member
       [
         'row_header',
@@ -214,6 +229,82 @@ module Churnobyl
         'oldcompany',
         'newcompany'
       ]
+    end
+
+   def summary_tables
+      hash = {
+        'Summary' => [
+          'row_header',
+          'row_header1',
+          'period_header',
+          'a1p_real_gain',
+          'a1p_to_other',
+          'paying_start_count',
+          'paying_real_gain',
+          'paying_real_loss',
+          'paying_real_net',
+          'running_paying_net',
+          'paying_end_count',
+          'contributors', 
+          'income_net'
+          ],
+        'Paying' => [
+          'row_header',
+          'row_header1',
+          'period_header',
+          'paying_start_count',
+          'paying_real_gain',
+          'paying_real_loss',
+          'paying_other_gain',
+          'paying_other_loss',
+          'paying_end_count',
+          'paying_net'
+          ] ,
+        'A1p' => [
+          'row_header',
+          'row_header1',
+          'period_header',
+          'a1p_start_count',
+          'a1p_newjoin',
+          'a1p_rejoin',
+          'a1p_real_gain',
+          'a1p_to_other',
+          'a1p_to_paying',
+          'a1p_other_gain',
+          'a1p_other_loss',
+          'a1p_end_count',
+          'a1p_net'
+          ],
+          'Financial' => [
+            'row_header',
+            'row_header1',
+            'period_header',
+            'posted',
+            'unposted',
+            'income_net',
+            'contributors',
+            'annualisedavgcontribution'
+            ]
+      }
+    end
+   
+    def member_tables
+       hash = {
+         'Member Detail' => [
+           'row_header',
+           'row_header1',
+           'row_header2',
+           'member',
+           'oldstatus',
+           'newstatus',
+           'oldcompany',
+           'newcompany'
+           ]
+       }
+     end
+    
+    def merge_cols(row, cols)
+      row.reject{ |k | !cols.include?(k)  }.sort{ |a,b| cols.index(a[0]) <=> cols.index(b[0]) }
     end
     
     def tips
@@ -257,12 +348,6 @@ module Churnobyl
       nt
     end
    
-    def drill_down(row)
-      row_header1_id = row['row_header1_id']
-      row_header1 = row['row_header1']
-      URI.escape "#{Filter}[#{@query['group_by']}]=#{row_header1_id}&#{FilterNames}[#{row_header1_id}]=#{row_header1}"
-    end
-
     def next_group_by
       hash = {
         'branchid'      => 'lead',
@@ -285,19 +370,42 @@ module Churnobyl
       params[FilterNames] || []
     end
     
-    def remove_filter_link(filter_value)
-      f = params[Filter].reject { |field, value| value == filter_value }
-      fn = params[FilterNames].reject { |value, name| value == filter_value }
-      p = params
-      p[Filter] = f
-      p[FilterNames] = fn
-      
-      temp = Addressable::URI.new
-      temp.query_values = p
-      
-      uri = URI.parse(request.url)
-      uri.query = temp.query
-      uri.to_s
+    def drill_down_link(row)
+      uri_join_queries drill_down(row), next_group_by, row_interval(row)
+    end
+    
+    def drill_down(row)
+      row_header1_id = row['row_header1_id']
+      row_header1 = row['row_header1']
+      #URI.escape "#{Filter}[#{@query['group_by']}]=#{row_header1_id}&#{FilterNames}[#{row_header1_id}]=#{row_header1}"
+      URI.escape "#{Filter}[#{@query['group_by']}]=#{row_header1_id}"
+    end
+    
+    def uri_join_queries(*queries)
+      if params == {}
+        request.url + '?' + queries.join('&')
+      else
+        request.url + '&' + queries.join('&')
+      end
+    end
+    
+    # def remove_filter_link(filter_value)
+    #   f = params[Filter].reject { |field, value| value == filter_value }
+    #   fn = params[FilterNames].reject { |value, name| value == filter_value }
+    #   p = params
+    #   p[Filter] = f
+    #   p[FilterNames] = fn
+    #   
+    #   temp = Addressable::URI.new
+    #   temp.query_values = p
+    #   
+    #   uri = URI.parse(request.url)
+    #   uri.query = temp.query
+    #   uri.to_s
+    # end
+    
+    def filter_value(value)
+      value.sub('!','').sub('-','')
     end
     
     def safe_add(a, b)

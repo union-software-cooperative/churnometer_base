@@ -16,11 +16,15 @@ $line: 18px;
   }
 }
 
+
 .form {
   label, input, select {
     display:block;
     padding:0.5em;
+	font-size:120%;
+	color:#ffe;
   }
+
   ul {
     overflow:hidden;
     list-style-type:none;
@@ -28,6 +32,16 @@ $line: 18px;
       height:4*$line;
     }
   }
+
+  input {
+	color:black;
+  }
+
+  td {
+	color:#ffe !important;
+	font-weight: bold !important;
+  }
+
 }
 
 #filter, #data {
@@ -56,6 +70,7 @@ $line: 18px;
     }
     tbody {
     }
+
     tfoot {
       text-align:right;
       font-weight:bold;
@@ -103,4 +118,44 @@ background-color: #8dbdd8;
 	-moz-border-radius-bottomright: 50px 25px;
 	border-bottom-right-radius: 50px 25px;
 	
+}
+
+input.selections {
+	display:inline;
+}
+
+body {
+	background-color: #C60C30;
+}
+
+h1 {
+	color: #ffe;
+}
+
+.ui-widget-header {
+	background:#DFDF00;
+	border:#ffe;
+}
+
+.ui-widget-content {
+	border: #333 !important;
+	background: #707070;
+	color: #ffe;
+	a {
+		color: #ffe;
+	}
+}
+
+tbody tr:nth-child(odd) td, tbody tr.even td{
+	background: #ffe;
+}
+
+
+td.filters{
+	background: transparent !important;
+}
+
+
+tfoot {
+	background: #ffe !important;
 }

@@ -67,6 +67,12 @@ module Churnobyl
       SQL
     end
 
+    def get_display_text_sql(column, id)
+        <<-SQL
+          select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
+        SQL
+    end
+
     def periods(data)
         # data.each do |row|
         #           row.each do |column_name, v|
@@ -114,6 +120,17 @@ module Churnobyl
       t
     end
     
+    def filter_xml_node(k,v)
+      case v[0]
+        when '!' 
+          "<not_#{k}>#{v.sub('!','')}</not_#{k}>" 
+        when '-' 
+          "<ignore_#{k}>#{v.sub('!','')}</ignore_#{k}>" 
+        else 
+          "<#{k}>#{v}</#{k}>"
+        end
+    end
+    
 
     def filter_xml(filters)
       # Example XML
@@ -122,10 +139,10 @@ module Churnobyl
       filters.each do |k, v|
         if v.is_a?(Array)
           v.each do |item|
-            result += "<#{k}>#{item}</#{k}>"
+            result += filter_xml_node(k,item)
           end
         else
-          result += "<#{k}>#{v}</#{k}>"
+          result += filter_xml_node(k,v)
         end
       end
 

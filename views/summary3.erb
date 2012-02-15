@@ -2,20 +2,20 @@
 
   <h1>churnobyl prototype</h1>
   <section id="filter" class="form span-24">
-	<div class="form span-24 last">
+	<div class="span-24 last">
       <form action="/">
 	  <input type="hidden" name="column" value="<%= @query['column'] %>">
         
         <ul>
-          <li class="datepicker form span-5">
+          <li class="datepicker span-5">
             <label>Start Date</label>
             <input type="text" name="startDate" value="<%= @query['startDate'] %>">
           </li>
-          <li class="datepicker form span-5">
+          <li class="datepicker span-5">
             <label>End Date</label>
             <input type="text" name="endDate" value="<%= @query['endDate'] %>">
           </li>
-          <li class="group_by form span-5">
+          <li class="group_by span-5">
             <label>Sub-total on</label>
             <select name="group_by">
               <% groups_by_collection.each do |column_name, name| %>
@@ -27,7 +27,7 @@
               <% end %>
             </select>
 		  </li>
-		  <li class="group_by form span-5">
+		  <li class="group_by span-5">
             <label>Running totals on</label>
             <select name="interval">
               <% interval_collection.each do |column_name, name| %>
@@ -42,13 +42,13 @@
 		 <li >
             <label class="form span-18">Filters</label>
 			
-			<table class="form span-18" >
+			<table class="form span-18">
 			  <% (params[Filter] || []).reject{ |column_name, value | value.empty? }.each do |column_name, value| %>
 					 <tr>
-						<td class="form span-5 filters">
+						<td class="span-5">
 			    			<%=h(groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
 						</td>
-						<td class="filters">
+						<td>
 						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Filter for&nbsp;&nbsp;&nbsp;&nbsp;
 						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Filter out&nbsp;&nbsp;&nbsp;&nbsp;
 						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Ignore Filter&nbsp;&nbsp;&nbsp;&nbsp;
@@ -69,29 +69,125 @@
 
 <section id="data">
 	<div id="tabs">
-
-		<% tables = params['column'].empty? ? summary_tables : member_tables %>
-		
 		<ul>
 			<% i = 0 %>
-			
-			<% if series_count(@data) <= 40 && @query['column'].empty? %>
-				<li><a href="#tabs-<%=i+=1%>">Graph</a></li>
-			<% end %>
 			<% tables.each do | table | %>
 				<li><a href="#tabs-<%=i+=1%>"><%=table[0] %></a></li>
 			<% end %>
 			
+			<li><a href="#tabs-<%=i+=1%>">Graph</a></li>
 			<li><a href="#tabs-<%=i+=1%>">Diagnostics</a></li>
 		</ul>
 	
 		<% i = 0 %>
-
-		<% if series_count(@data) <= 40 && @query['column'].empty? %>
-		
+		<!-- <% tables.each do | table, cols | %> -->
 			<div id="tabs-<%=i+=1%>">
-			
-				<!-- <a id='hidechart' onclick="$('#chart').toggle();if ($('#hidechart').text()=='Show chart') $('#hidechart').text('Hide chart'); else $('#hidechart').text('Show chart');">Hide chart</a> -->
+				
+				<ul>
+			    	<% if @query['column'].empty? %>
+				      <li><a href="/export_summary?<%= query_string %>" class="button">Export Summary</a></li>
+				    <% end %>
+				    <li><a href="/export_member_details?<%= query_string %>" class="button">Export Member Details</a></li>
+				    <li><a id='toggle' onclick="$('.advcol').toggle();if ($('#toggle').text()=='Show more') $('#toggle').text('Show less'); else $('#toggle').text('Show more');">Show more</a></li>
+				</ul>
+			  <% if has_data? %>
+			    <% totals = {} %>
+ 
+			    <table class="tablesorter">
+			      <thead>
+			        <tr>
+			          <% @data[0].each do |column_name, v| %>
+				    	<th <%= show_col?(column_name) ? '' : 'class="advcol"' %> id="<%=column_name %>head">
+							
+							<% if bold_col?(column_name) %> 
+								<strong>
+							<% end %>
+							
+							<%= col_names[column_name] || column_name %>
+							
+							<% if bold_col?(column_name) %> 
+								</strong>
+							<% end %>
+						</th>
+			          <% end %>
+			        </tr>
+			      </thead>
+			      <tbody>
+			        <% @data.each do |row| %>
+			          <tr>
+			            <% row.each do |column_name, v| %>
+					<%
+					  totals[column_name] ||= 0
+					  totals[column_name] = safe_add totals[column_name], v
+					%>
+					<td <%= show_col?(column_name) ? '' : 'class="advcol"' %>>
+						<% if bold_col?(column_name) %> 
+							<strong>
+						<% end %>
+		
+					  		<% if column_name == 'row_header1' %>
+							    <a href="<%= drill_down_link(row) %>"><%= v %></a>
+							  <% elsif can_detail_cell? column_name, v %>
+							    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>
+							  <% elsif can_export_cell? column_name, v %>
+							    <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
+							  <% else %>
+							    <%= v %>
+							<% end %>
+						<% if bold_col?(column_name) %> 
+							<strong>
+						<% end %>
+					</td>
+			            <% end %>
+			          </tr>
+			        <% end %>
+			      </tbody>
+			      <tfoot>
+			        <tr>
+			          <% totals.each do |column_name, total| %>
+			            <td <%= show_col?(column_name) ? '' : 'class="advcol"' %>>
+							<% if bold_col?(column_name) %> 
+								<strong>
+							<% end %>
+		
+				      		<% if !no_total.include?(column_name) %>
+			                	<% if can_export_cell? column_name, total %>
+				                  <a href="<%= export_column(column_name) %>"><%= total %></a>
+				                <% else %>
+				                  <%= total %>
+				                <% end %>
+				            <% end %>
+						<% if bold_col?(column_name) %> 
+							<strong>
+						<% end %>
+				    </td>
+			          <% end %>
+			        </tr>
+			      </tfoot>
+			    </table>
+	
+				<% @data[0].each do | column_name, v | %>
+					<% if (tips[column_name] || "") != "" %>
+						<div id="<%=column_name %>tip" class="tooltip">
+							<%=tips[column_name]%>
+						</div>
+					<% end %>
+				<% end %>
+
+			  <% else %>
+			    <p>No data</p>
+			  <% end %>
+	
+	
+			</div>
+		<!-- <% end %> -->
+		
+		
+		<div id="tabs-<%=i+=1%>">
+			<% if series_count(@data) <= 40 %>
+		
+				<!-- <a id='hidechart' onclick="$('#chart').toggle();if ($('#hidechart').text()=='Show chart') $('#hidechart').text('Hide chart'); else $('#hidechart').text('Show chart');">Hide chart</a>
+								 -->
 					
 					<div id="chart">
 					<% if query['interval'] != 'none' %>
@@ -134,116 +230,15 @@
 							</tbody>
 						</table>
 					<% end %>
-				</div>
-			</div>
-		<% end %>
-		
-		
-		<% tables.each do | table, cols | %>
-			<div id="tabs-<%=i+=1%>">
-				
-				<ul>
-			    	<% if @query['column'].empty? %>
-				      <li><a href="/export_summary?<%= query_string %>" class="button">Export Summary</a></li>
-				    <% end %>
-				    <li><a href="/export_member_details?<%= query_string %>" class="button">Export Member Details</a></li>
-				</ul>
-			  <% if has_data? %>
-			    <% totals = {} %>
- 
-			    <table class="tablesorter">
-			      <thead>
-			        <tr>
-			          <% merge_cols(@data[0], cols).each do |column_name, v| %>
-				    	<th id="<%=column_name %>head">
-							
-							<% if bold_col?(column_name) %> 
-								<strong>
-							<% end %>
-							
-							<%= col_names[column_name] || column_name %>
-							
-							<% if bold_col?(column_name) %> 
-								</strong>
-							<% end %>
-						</th>
-			          <% end %>
-			        </tr>
-			      </thead>
-			      <tbody>
-			        <% @data.each do |row| %>
-			          <tr>
-			            <% merge_cols(row, cols).each do |column_name, v| %>
-							<%
-							  totals[column_name] ||= 0
-							  totals[column_name] = safe_add totals[column_name], v
-							%>
-							<td>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-		
-							  		<% if column_name == 'row_header1' %>
-									    <a href="<%= drill_down_link(row) %>"><%= v %></a>
-									  <% elsif can_detail_cell? column_name, v %>
-									    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>
-									  <% elsif can_export_cell? column_name, v %>
-									    <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
-									  <% else %>
-									    <%= v %>
-									<% end %>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-							</td>
-			            <% end %>
-			          </tr>
-			        <% end %>
-			      </tbody>
-				  <% if params['column'].empty? %>
-			      	<tfoot>
-				        <tr>
-				          <% totals.each do |column_name, total| %>
-				            <td>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-		
-					      		<% if !no_total.include?(column_name) %>
-				                	<% if can_export_cell? column_name, total %>
-					                  <a href="<%= export_column(column_name) %>"><%= total %></a>
-					                <% else %>
-					                  <%= total %>
-					                <% end %>
-					            <% end %>
-							<% if bold_col?(column_name) %> 
-								<strong>
-							<% end %>
-					    </td>
-				          <% end %>
-				        </tr>
-				      </tfoot>
-					<% end %>
-			    </table>
-	
-				<% @data[0].each do | column_name, v | %>
-					<% if (tips[column_name] || "") != "" %>
-						<div id="<%=column_name %>tip" class="tooltip">
-							<%=tips[column_name]%>
-						</div>
-					<% end %>
+				<% else %>
+					Too much data to display graph
 				<% end %>
-
-			  <% else %>
-			    <p>No data</p>
-			  <% end %>
-	
-	
 			</div>
-		<% end %>
-		
+		</div>
+
 		<div id="tabs-<%=i+=1%>">
-			<pre>
+			<h2>SQL sent</h2>
+	    	<pre>
 		      <%= h @sql %>
 		    </pre>
 		</div>
@@ -317,10 +312,7 @@
 	$(function() {
 		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
   		$("table").tablesorter();
-		//$(".advcol").hide();
-		
-		$( "#tabs" ).tabs();
-		
+		$(".advcol").hide();
 		// setup tooltip for a single DIV element
 		<% if @data.count != 0  %>
 			<% @data[0].each do | column_name, v | %>
@@ -345,6 +337,7 @@
 
 			<% end %>
 		<% end %>
-
+		
+		$( "#tabs" ).tabs();
   	});
 </script>
