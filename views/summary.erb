@@ -40,23 +40,27 @@
             </select>
 		  </li>
 		 <li >
-            <label class="form span-18">Filters</label>
-			
-			<table class="form span-18" >
-			  <% (params[Filter] || []).reject{ |column_name, value | value.empty? }.each do |column_name, value| %>
-					 <tr>
-						<td class="form span-5 filters">
-			    			<%=h(groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
-						</td>
-						<td class="filters">
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Filter for&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Filter out&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Ignore Filter&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
-					  	</td>
-					  </tr>
-			  <% end %>
-			</table>
+            <% if filters.count > 0 %>
+				<label class="form span-18">Drilling down into...</label>
+				
+				<table class="form span-18" >
+				  <% filters.each do |column_name, value| %>
+						 <tr>
+							<td class="form span-5 filters">
+				    			<%=h(groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
+							</td>
+							<td class="filters">
+							<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Filter for&nbsp;&nbsp;&nbsp;&nbsp;
+							<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Filter out&nbsp;&nbsp;&nbsp;&nbsp;
+							<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Ignore Filter&nbsp;&nbsp;&nbsp;&nbsp;
+							<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+						  	</td>
+						  </tr>
+				  <% end %>
+				</table>
+			<% else %>
+				<label class="form span-18">Start drilling-down by choosing interesting links from the table data under the tabs below.</label>
+			<% end %>
 	      </li>
 		  <li class="form span-24">
 		    <input  type="submit" value="Refresh">
@@ -75,7 +79,7 @@
 		<ul>
 			<% i = 0 %>
 			
-			<% if series_count(@data) <= 40 && @query['column'].empty? %>
+			<% if waterfall_chart_ok? || line_chart_ok? %>
 				<li><a href="#tabs-<%=i+=1%>">Graph</a></li>
 			<% end %>
 			<% tables.each do | table | %>
@@ -87,14 +91,14 @@
 	
 		<% i = 0 %>
 
-		<% if series_count(@data) <= 40 && @query['column'].empty? %>
+		<% if waterfall_chart_ok? || line_chart_ok? %>
 		
 			<div id="tabs-<%=i+=1%>">
 			
 				<!-- <a id='hidechart' onclick="$('#chart').toggle();if ($('#hidechart').text()=='Show chart') $('#hidechart').text('Hide chart'); else $('#hidechart').text('Show chart');">Hide chart</a> -->
-					
 					<div id="chart">
-					<% if query['interval'] != 'none' %>
+					
+					<% if line_chart_ok? %>
 						LINE GRAPH GOES HERE
 					<% else %>
 					  	<table id="waterfall">
@@ -184,12 +188,14 @@
 								<% end %>
 		
 							  		<% if column_name == 'row_header1' %>
-									    <a href="<%= drill_down_link(row) %>"><%= v %></a>
-									  <% elsif can_detail_cell? column_name, v %>
+									    <a href="<%= drill_down_link_header(row) %>"><%= v %></a>
+									<% elsif column_name == 'period_header' %>
+										<a href="<%= drill_down_link_interval(row) %>"><%= v %></a>
+									<% elsif can_detail_cell? column_name, v %>
 									    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>
-									  <% elsif can_export_cell? column_name, v %>
+									<% elsif can_export_cell? column_name, v %>
 									    <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
-									  <% else %>
+									<% else %>
 									    <%= v %>
 									<% end %>
 								<% if bold_col?(column_name) %> 

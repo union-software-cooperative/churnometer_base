@@ -167,8 +167,8 @@ module Churnobyl
         'paying_start_count' => 'paying at start',
         'paying_real_gain'  => 'started paying',
         'paying_real_loss'  => 'stopped paying',
-        'a1p_start_count' => 'a1p at end',
-        'a1p_end_count' => 'a1p at start',
+        'a1p_start_count' => 'a1p at start',
+        'a1p_end_count' => 'a1p at end',
         'paying_real_net'   => 'paying net',
         'paying_end_count'  => 'paying at end',
         'posted'            => 'income posted',
@@ -297,8 +297,10 @@ module Churnobyl
            'member',
            'oldstatus',
            'newstatus',
+           'currentstatus',
            'oldcompany',
-           'newcompany'
+           'newcompany',
+           'currentcompany'
            ]
        }
      end
@@ -366,12 +368,24 @@ module Churnobyl
       URI.escape "group_by=#{hash[query['group_by']]}"
     end
 
+    def filters
+      (params[Filter] || []).reject{ |column_name, value | value.empty? }
+    end
+
     def filter_names
       params[FilterNames] || []
     end
     
-    def drill_down_link(row)
-      uri_join_queries drill_down(row), next_group_by, row_interval(row)
+    def drill_down_link_header(row)
+      uri_join_queries drill_down(row), next_group_by
+    end
+    
+    def drill_down_link_interval(row)
+      # This one shows all week two without intervals
+      #uri_join_queries row_interval(row), 'interval=none'
+      
+      # This one shows just the values of the row header futher broken down for the period without the running totals
+      uri_join_queries drill_down(row), next_group_by, row_interval(row), 'interval=none'
     end
     
     def drill_down(row)
@@ -415,5 +429,14 @@ module Churnobyl
         a.to_i + b.to_i
       end
     end
+    
+    def line_chart_ok?
+      series_count(@data) <= 30 && @query['column'].empty? && query['interval'] != 'none'
+    end
+  
+    def waterfall_chart_ok?
+      series_count(@data) <= 20 && @query['column'].empty? && query['interval'] == 'none'
+    end
+  
   end
 end

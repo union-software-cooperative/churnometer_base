@@ -19,7 +19,9 @@ module Churnobyl
       
         <<-SQL 
       select * 
-      from churndetailfriendly10('#{query['group_by']}', 
+      from churndetailfriendly20(
+                            'memberfacthelperpaying2',
+                            '#{query['group_by']}', 
                             '#{query['column']}',  
                             '#{query['startDate']}', 
                             '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
