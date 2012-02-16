@@ -313,7 +313,7 @@ module Churnobyl
       {
         'paying_real_net' => "The number of members whose status became 'paying' during the period minus those that lost the 'paying' status", 
         'paying_end_count' => "The number of members with the 'paying' status at the end of the period.  '#{col_names['paying_end_count']}' is equal to '#{col_names['paying_start_count']}' plus '#{col_names['paying_real_gain']}' minus '#{col_names['paying_real_loss']}' plus '#{col_names['paying_other_gain']}' minus '#{col_names['paying_other_loss']}'.",
-        'a1p_real_gain' => "The number of people who became 'awaiting first payment' during the period.  Most of these are new joiners (see '#{col_names['a1p_newjoins']}') but some may have already been members or become 'awaiting first payment' for administrative reasons (see '#{col_names['a1p_rejoins']}') .",
+        'a1p_real_gain' => "The number of people who became 'awaiting first payment' during the period.  Most of these are new joiners (see '#{col_names['a1p_newjoin']}') but some may have already been members or become 'awaiting first payment' for administrative reasons (see '#{col_names['a1p_rejoin']}') .",
         'a1p_to_other' => "The number of 'awaiting first payment' members who were struck off during the period before they paid any dues.",
         'paying_start_count' => "The number of members with the 'paying' status at the beginning of the period.",
         'paying_real_gain' => "The number of members whose status become 'paying' during the period.",
@@ -321,7 +321,19 @@ module Churnobyl
         'income_net' => 'The amount of money posted against members by support staff during the period (without regard to the period the payment was remitted for).',
         'contributors' => 'The number of unique members to have contributed dues during the period.',
         'running_paying_net' => "The running total of '#{col_names['paying_real_net']}'.  Be careful to sort by the row header then '#{col_names['period_header']}' (the default sort) otherwise this column won't make sense.",
-        'period_header' => "The intervals dividing '#{col_names['start_date']}' and '#{col_names['end_date']}' as selected by the user.  Beware that if '#{col_names['start_date']}' or '#{col_names['end_date']}' don't align to standard interval boundaries, the first or last interval will be shorter in duration."
+        'period_header' => "The intervals dividing '#{col_names['start_date']}' and '#{col_names['end_date']}' as selected by the user.  Beware that if '#{col_names['start_date']}' or '#{col_names['end_date']}' don't align to standard interval boundaries, the first or last interval will be shorter in duration.",
+        'paying_other_gain' => "The number of paying members gained without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers. ",
+        'paying_other_loss' => "The number of paying members lost without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers. ",
+        'a1p_start_count' => "The number of members with the 'awaiting first payment' status at the beginning of the period.",
+        'a1p_end_count' => "The number of members with the 'awaiting first payment' status at the end of the period.",
+        'a1p_newjoin' => "The number of members who became 'awaiting first payment' during the period who have never been a member before.",
+        'a1p_rejoin' => "The number of members who became 'awaiting first payment' during the period who have been a member before.",
+        'a1p_to_paying' => "The number of members who stopped being 'awaiting first payment' during the period because they started paying.",
+        'a1p_other_gain' => "The number of 'awaiting first payment' members gained without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers. ",
+        'a1p_other_loss' => "The number of 'awaiting first payment' members lost without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers. ",
+        'posted'  => "The amount of money posted to members during the period, including money reposted because of corrections (see '#{col_names['unposted']}).  NB corrections are applied to the period for which they money belongs in order to ensure historical consistency.",
+        'unposted' => "The amount of money deducted during the period, usually because of undoing a payment.  Be aware that when an undone payment is reposted, the amount will appear in '#{col_names['posted']}'.",
+        'annualisedavgcontribution' => "The total amount of money posted during the period, divided by the number of unique contributors, scaled to make the period equivalent to a year.  NB If, for any reason, money isn't received for a large portion of members for a large portion of the period, this figure will be low.  e.g.  Members were redistributed (think area changes) or reclassified (think industry changes) mid way through the period."
       }
     end
     

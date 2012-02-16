@@ -53,8 +53,10 @@
 						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Filter for&nbsp;&nbsp;&nbsp;&nbsp;
 						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Filter out&nbsp;&nbsp;&nbsp;&nbsp;
 						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Ignore Filter&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
-					  	</td>
+						<input class="selections" type="radio" id="<%="#{Filter}#{column_name}remove" %>" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+					  	
+						</td>
+						
 					  </tr>
 				  <% end %>
 				
@@ -70,6 +72,9 @@
 					  </tr>
 				  <% end %>
 				</table>
+				<label class="form span-18" style="font-size:90%">
+					When removing or ignoring a filter, please carefully consider the 'Sub-total on' setting.  Thousands of rows could be returned if too 'Sub-total on' is too granular.
+				</label>
 			<% else %>
 				<label class="form span-18">Start drilling-down by choosing interesting links from the table data under the tabs below.</label>
 			<% end %>
@@ -171,7 +176,7 @@
 			      <thead>
 			        <tr>
 			          <% merge_cols(@data[0], cols).each do |column_name, v| %>
-				    	<th id="<%=column_name %>head">
+				    	<th id="<%=column_name %>h<%=i%>">
 							
 							<% if bold_col?(column_name) %> 
 								<strong>
@@ -244,14 +249,6 @@
 					<% end %>
 			    </table>
 	
-				<% @data[0].each do | column_name, v | %>
-					<% if (tips[column_name] || "") != "" %>
-						<div id="<%=column_name %>tip" class="tooltip">
-							<%=tips[column_name]%>
-						</div>
-					<% end %>
-				<% end %>
-
 			  <% else %>
 			    <p>No data</p>
 			  <% end %>
@@ -265,7 +262,23 @@
 		      <%= h @sql %>
 		    </pre>
 		</div>
+		
+		<!-- tooltip descriptions -->
+		<% i=1 %> 
+		<% tables.each do | table, cols | %>
+			<% i+=1 %>
+			<% merge_cols(@data[0], cols).each do |column_name, v| %>
+				<% if (tips[column_name] || "") != "" %>
+					<div id="<%=column_name %>tip<%=i %>" class="tooltip">
+						<%=tips[column_name]%>
+					</div>
+				<% end %>
+			<% end %>
+		<% end %>
+		
 	</div>
+	
+	
 </section>
 
 
@@ -334,26 +347,10 @@
 
 	$(function() {
 		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
-  		$("table").tablesorter();
-		//$(".advcol").hide();
+  		
+		$("table").tablesorter();
 		
-		$( "#tabs" ).tabs();
-		
-		// setup tooltip for a single DIV element
-		<% if @data.count != 0  %>
-			<% @data[0].each do | column_name, v | %>
-				<% if (tips[column_name] || "") != "" %>
-		
-					$("#<%=column_name %>head").tooltip({
-						tip: '#<%=column_name %>tip',
-						position: 'top center',
-						offset: [-25, 0],
-						delay: 0
-					});
-				
-				<% end %>
-			<% end %>
-		<% end %>
+		$("#tabs").tabs();
 		
 		<% if (series_count(@data) <= 40) %>
 			<% if (query['interval'] != 'none') %>
@@ -363,6 +360,35 @@
 
 			<% end %>
 		<% end %>
+		
+		
+		// setup tooltip for a single DIV element
+		<% i=1 %> /* skip first tab because it is graphs */ 
+		<% tables.each do | table, cols | %>
+			<% i+=1 %>
+			<% merge_cols(@data[0], cols).each do |column_name, v| %>
+				<% if (tips[column_name] || "") != "" %>
+					$("#<%=column_name %>h<%=i%>").tooltip({
+						tip: '#<%=column_name %>tip<%=i %>',
+						position: 'top center',
+						offset: [-25, 0],
+						delay: 0,
+						relative: true
+					});
+				<% end %>
+			<% end %>
+		<% end %>
 
+				// 
+				// <% filters.each do |column_name, value| %>
+				// 	$("#<%="#{Filter}#{column_name}remove"%>").tooltip({
+				// 		tip: '#removefiltertip',
+				// 		position: 'bottom center',
+				// 		offset: [-25, 0],
+				// 		delay: 0,
+				// 		relative: true
+				// 	});
+				// <% end %>
+				// 	
   	});
 </script>
