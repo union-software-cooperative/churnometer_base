@@ -245,8 +245,8 @@ module Churnobyl
           'paying_real_net',
           'running_paying_net',
           'paying_end_count',
-          'contributors', 
-          'income_net'
+          (leader? ? 'contributors' : ''), 
+          (leader? ? 'income_net' : '')
           ],
         'Paying' => [
           'row_header',
@@ -275,7 +275,10 @@ module Churnobyl
           'a1p_end_count',
           'a1p_net'
           ],
-          'Financial' => [
+        }
+        fhash = {
+          'Financial' => 
+            [
             'row_header',
             'row_header1',
             'period_header',
@@ -286,6 +289,11 @@ module Churnobyl
             'annualisedavgcontribution'
             ]
       }
+      if leader?
+        hash = hash.merge(fhash);
+      end
+      
+      hash
     end
    
     def member_tables
