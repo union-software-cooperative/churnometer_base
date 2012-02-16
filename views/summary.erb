@@ -45,17 +45,29 @@
 				
 				<table class="form span-18" >
 				  <% filters.each do |column_name, value| %>
-						 <tr>
-							<td class="form span-5 filters">
-				    			<%=h(groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
-							</td>
-							<td class="filters">
-							<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Filter for&nbsp;&nbsp;&nbsp;&nbsp;
-							<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Filter out&nbsp;&nbsp;&nbsp;&nbsp;
-							<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Ignore Filter&nbsp;&nbsp;&nbsp;&nbsp;
-							<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
-						  	</td>
-						  </tr>
+					 <tr>
+						<td class="form span-5 filters">
+			    			<%=h(groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
+						</td>
+						<td class="filters">
+						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Filter for&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Filter out&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Ignore Filter&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+					  	</td>
+					  </tr>
+				  <% end %>
+				
+				<% if params['column'].to_s != ''%>
+					 <tr>
+						<td class="form span-5 filters">
+			    			<%=h("Members:  #{col_names[params['column']]}") %>
+						</td>
+						<td class="filters">
+						<input class="selections" type="radio" name="<%="column" %>" value="<%=params['column'] %>" checked>Filter for&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections" type="radio" name="<%="column" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+					  	</td>
+					  </tr>
 				  <% end %>
 				</table>
 			<% else %>
