@@ -153,9 +153,9 @@ module Churnobyl
     
     def interval_collection
       [
-        ["none", "No time interval"],
-        ["week", "Weekly intervals"],
-        ["month", "Monthly intervals"],
+        ["none", "Off"],
+        ["week", "Weekly"],
+        ["month", "Monthly"],
       ]
     end
     
@@ -455,7 +455,7 @@ module Churnobyl
     end
   
     def waterfall_chart_ok?
-      series_count(@data) <= 20 && @query['column'].empty? && query['interval'] == 'none'
+      @data.group_by{ |row| row['row_header1'] }.reject{ |row | row["paying_real_gain"] == 0 && row["paying_real_loss"] == 0}.count <= 30 && @query['column'].empty? && query['interval'] == 'none'
     end
   
   end

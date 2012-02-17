@@ -16,7 +16,7 @@
             <input type="text" name="endDate" value="<%= @query['endDate'] %>">
           </li>
           <li class="group_by form span-5">
-            <label>Sub-total on</label>
+            <label>Group by</label>
             <select name="group_by">
               <% groups_by_collection.each do |column_name, name| %>
                 <% if column_name == @query['group_by'] %>
@@ -28,7 +28,7 @@
             </select>
 		  </li>
 		  <li class="group_by form span-5">
-            <label>Running totals on</label>
+            <label>Running total</label>
             <select name="interval">
               <% interval_collection.each do |column_name, name| %>
                 <% if column_name == @query['interval'] %>
@@ -50,9 +50,9 @@
 			    			<%=h(groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
 						</td>
 						<td class="filters">
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Filter for&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Filter out&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Ignore Filter&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
 						<input class="selections" type="radio" id="<%="#{Filter}#{column_name}remove" %>" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
 					  	
 						</td>
@@ -73,7 +73,7 @@
 				  <% end %>
 				</table>
 				<label class="form span-18" style="font-size:90%">
-					When removing or ignoring a filter, please carefully consider the 'Sub-total on' setting.  Thousands of rows could be returned if 'Sub-total on' is too granular.
+					When removing or ignoring a filter, please carefully consider the 'Group By' setting.  Thousands of rows could be returned if something like 'work site' is set.
 				</label>
 			<% else %>
 				<label class="form span-18">Start drilling-down by choosing interesting links from the table data under the tabs below.</label>
@@ -127,32 +127,28 @@
 								</tr>
 
 							</thead>
-							<tfoot>
-								<tr>
-									<td>End Difference</td>
-									<td><%= paying_end_total(@data) - paying_end_total(@data)%></td>
-								</tr>
-							</tfoot>
 							<tbody>
-								<tr>
-										<td></td>
-										<td>0</td>
-								</tr>
+								<% waterfall_total = 0 %>
 								<% @data.each do |row| %>
 						            <tr>
-										<td><%= "#{row['row_header1']} gain" %></td>
+										<td><a href="<%= drill_down_link_header(row) %>" style="text-decoration:none"><%= "#{row['row_header1']}" %></a> gain</td>
 										<td><%= row['paying_real_gain'] %></td>
 									</tr>
 									<tr>
-										<td><%= "#{row['row_header1']} loss" %></td>
+										<td><a href="<%= drill_down_link_header(row) %>" style="text-decoration:none"><%= "#{row['row_header1']}" %></a> loss</td>
 										<td><%= row['paying_real_loss'] %></td>
 									</tr>
+									<% waterfall_total += (row['paying_real_gain'].to_i + row['paying_real_loss'].to_i)%>
 								<% end %>
 								<tr>
-										<td></td>
-										<td><%= paying_end_total(@data) - paying_end_total(@data)%> </td>
+										<td>Net</td>
+										<td><%= waterfall_total %></td>
+								</tr>
+								<tr>
 								</tr>
 							</tbody>
+
+							
 						</table>
 					<% end %>
 				</div>
@@ -356,7 +352,7 @@
 			<% if (query['interval'] != 'none') %>
 				setupchart();
 			<% else %>
-					$("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#FFFFFF", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
+					$("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#336699", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
 
 			<% end %>
 		<% end %>

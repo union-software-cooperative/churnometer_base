@@ -39,121 +39,8 @@
 			number = number / 100;
 			return number;
 		}
-		
-		function GetHorizontalBarsOutput(groupArray, labelArray, valueArray, totalValue, largestValue, labelTextArray) {
-			var output = "";
-			var colourIndex = 0;
-			
-			output += "<ul>";
-			
-			for (var i = 0; i < valueArray.length; i++) {
-			
-				if (colourIndex >= config.chartbgcolours.length) {
-					colourIndex = 0;
-				}
-			
-				var percent = Math.round((valueArray[i] / totalValue) * 100);
-				var barWidth = Math.round((valueArray[i] / largestValue) * 100);
 				
-				var displayLabel = "";
-				if (config.showlabels) {
-					displayLabel = labelArray[i] + "<br>";
-				}
-				
-				output += "<li>" + displayLabel + "<span class=\"" + config.classmodifier + "bar\" style=\"display: block; width: 0%; background-color: " + config.chartbgcolours[colourIndex] + "; color: " + config.chartfgcolours[colourIndex] + "; padding: " + config.chartpadding + "px 0; text-align: right;\" rel=\"" + barWidth + "\" title=\"" + labelTextArray[i] + " - " + valueArray[i] + " (" + percent + "%)" + "\">" + valueArray[i] + "&nbsp;</span></li>";
-				
-				colourIndex++;
-			}
-			
-			output += "</ul>";
-			
-			return output;
-		}
-		
-		function GetVerticalBarsOutput(groupArray, labelArray, valueArray, totalValue, largestValue, labelTextArray) {
-			var output = "";
-			var colourIndex = 0;
-			var leftShim = 0;
-			var shimAdjustment = RoundToTwoDecimalPlaces((100 + config.chartpadding) / labelArray.length);
-			var widthAdjustment = shimAdjustment - config.chartpadding;
-			
-			var groupName = "";
-			var useGroups = false;
-			if (groupArray.length > 0) {
-				useGroups = true;
-			}
-			
-			output += "<div style=\"height: " + config.chartheight + "px; position: relative;\">";
-			
-			if (config.showgrid) {
-               
-                var gridLineCount = config.gridlines;
-                var gridLineValue = (largestValue / gridLineCount);
-                var gridLineHeight = (gridLineValue / largestValue) * 100;
-                
-                // All grid sections should be same height
-				for (var i = 0; i < gridLineCount; i++) {
-					var alternatingClass = "odd";
-					if (i%2 == 0) {
-						alternatingClass = "even";
-					}
-					output += "<div class=\"" + config.classmodifier + "gridline " + alternatingClass + "\" style=\"height: " + gridLineHeight + "%;\">";
-                    if (config.gridvalues) {
-                        var value = (gridLineCount - i) * gridLineValue;
-                        output += "<span style=\"display: inline-block; width: 3em; position: relative; left: -3em; border-top: 1px solid Gray;\">" + value + "</span>";
-                    }
-                    output += "</div>";
-				}
-			}
-			
-			for (var i = 0; i < valueArray.length; i++) {
-			
-				if (colourIndex >= config.chartbgcolours.length) {
-					colourIndex = 0;
-				}
-			
-				var percent = Math.round((valueArray[i] / totalValue) * 100);
-				// Fix suggested by Jaime Casto
-				if (isNaN(percent)) {
-					percent = 0;
-				}
-				
-				var barHeight = Math.round((valueArray[i] / largestValue) * 100);
 
-				// Group headings
-				if (useGroups) {
-					if (groupArray[i] != groupName) {
-						groupName = groupArray[i];
-						colourIndex = 0;
-						groupWidth = 0;
-						for (var j = i; j < valueArray.length; j++) {
-							if (groupArray[j] == groupName) {
-								groupWidth = groupWidth + (shimAdjustment -0.3);
-							}
-						}
-						output += '<div class="' + config.classmodifier + 'group" style="text-align: center; z-index: 1000; position: absolute; bottom: -1.5em; left: ' + leftShim + '%; display: block; background-color: ' + config.chartbgcolours[colourIndex] + '; color: ' + config.chartfgcolours[colourIndex] + '; width: ' + groupWidth + '%;">' + groupName + '</div>';
-					}
-				}
-				
-				// Labels
-				var displayLabel = "";
-				if (config.showlabels) {
-					displayLabel = "<span style=\"display: block; width: 100%; position: absolute; bottom: 0; text-align: center; background-color: " + config.chartbgcolours[colourIndex] + ";\">" + labelArray[i] + "</span>"
-				}
-				
-				// Column
-				output += "<div class=\"" + config.classmodifier + "bar\" style=\"position: absolute; bottom: 0; left: " + leftShim + "%; display: block; height: 0%; background-color: " + config.chartbgcolours[colourIndex] + "; color: " + config.chartfgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: left;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + " - " + valueArray[i] + " (" + percent + "%)" + "\"><div style=\"text-align:center\">" + valueArray[i] + "</div>" + displayLabel + "</div>"
-
-				leftShim = leftShim + shimAdjustment;
-				
-				colourIndex++;
-			}
-			
-			output += "</div>";
-			
-			return output;
-		}
-		
 		function GetWaterfallOutput(labelArray, valueArray, totalValue, smallestValue, largestValue, labelTextArray) {
 			var output = "";
 			var colourIndex = 0;
@@ -184,23 +71,32 @@
 				var barHeight = RoundToTwoDecimalPlaces((positiveValue / totalValue) * 100);
 				
 				var bottomPosition = runningTotal - barHeight; // Negative column
-				if (i == 0 || i == (valueArray.length - 1)) {
-					bottomPosition = 0; // first or last column
-					colourIndex = 0;
-				} else if (isPositive) {
+				if (isPositive) {
 					bottomPosition = runningTotal;
 				}
+				
+				if (i == (valueArray.length - 1)) {
+					// last column
+					colourIndex = 0;
+					if (isPositive) {
+						bottomPosition = runningTotal - barHeight;
+					}
+					else {
+						bottomPosition = runningTotal;
+					}
+				}  
 
 				bottomPosition += (100 - (largestValue/totalValue * 100));
 				
 				// Labels
 				var displayLabel = "";
 				if (config.showlabels) {
-					displayLabel = "<span style=\"display: block; width: 100%; position: absolute; opacity:0.8; bottom: 0; text-align: center; background-color: " /* + config.chartbgcolours[colourIndex] */ + "#333333" + ";\">" + labelArray[i] + "</span>"
+					displayLabel = "<span style=\"color: ivory; height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i]   + "&nbsp;&nbsp;&nbsp;<strong>" + valueArray[i] +" </strong> </span>"
+					//displayLabel = "<span style=\"display: block; width: 100%; position: absolute; opacity:1; bottom: 0; text-align: center;  background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i] + "</span>"
 				}
 				
 				// Column
-				output += "<div class=\"" + config.classmodifier + "bar\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; background-color: " + config.chartbgcolours[colourIndex] + "; color: " + config.chartfgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + " - " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + valueArray[i] + displayLabel + "</div>"
+				output += "<div class=\"" + config.classmodifier + "bar\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; background-color: " + config.chartbgcolours[colourIndex] + "; color: " + config.chartfgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
 
 				leftShim = leftShim + shimAdjustment;
 				
@@ -257,16 +153,19 @@
 				var valueString = $(values[i]).children("td").eq(config.valuecolumn).text();
 				if (valueString.length > 0) {
 					var valueAmount = parseFloat(valueString, 10);
-					labelArray[labelArray.length] = $(values[i]).children("td").eq(config.labelcolumn).html();
-					labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
-					valueArray[valueArray.length] = valueAmount;
-					totalValue = totalValue + valueAmount;
-					if (totalValue > largestValue) {
-						largestValue = totalValue;
-					}
-					// include smallest value in range
-					if (totalValue < smallestValue) {
-						smallestValue = totalValue;
+					if (valueAmount != 0) {
+						labelArray[labelArray.length] = $(values[i]).children("td").eq(config.labelcolumn).html();
+						labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
+						valueArray[valueArray.length] = valueAmount;
+						totalValue = totalValue + valueAmount;
+						if (totalValue > largestValue) {
+							largestValue = totalValue;
+						}
+						// include smallest value in range
+						if (totalValue < smallestValue) {
+							smallestValue = totalValue;
+						}
+					//alert($(values[i]).children("td").eq(config.labelcolumn).html() + $(values[i]).children("td").eq(config.labelcolumn).text() + valueAmount)
 					}
 				}
 			}
@@ -354,7 +253,7 @@
 				var $Label = $(this).parents("." + config.classmodifier + "container").find("." + config.classmodifier + "label");
 				var $Bar = $(this);
 				$Label.html("<div style=\"width: 70%; margin: 0 auto;\">" + $Bar.attr("title") + "</div>");
-				$Label.find("div").css({ "text-align": "center", color: $Bar.css("background-color"), "background-color": $Bar.css("color") });
+				$Label.find("div").css({ "text-align": "center", "color": "ivory", "background-color": "transparent" });
 				var labelHeight = $Label.find("div").height();
 				$Label.css({ height: labelHeight });
 				return false;
