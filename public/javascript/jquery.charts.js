@@ -79,7 +79,9 @@
 					// last column
 					colourIndex = 0;
 					if (isPositive) {
-						bottomPosition = runningTotal - barHeight;
+						//alert (barHeight);
+						bottomPosition = runningTotal - barHeight -1  ; /* I don't know why I need the -1 */
+						
 					}
 					else {
 						bottomPosition = runningTotal;
