@@ -17,18 +17,41 @@ module Churnobyl
     def member_sql
       xml = filter_xml query[Filter], locks
       
-        <<-SQL 
-      select * 
-      from churndetailfriendly20(
-                            'memberfacthelperpaying2',
-                            '#{query['group_by']}', 
-                            '#{query['column']}',  
-                            '#{query['startDate']}', 
-                            '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
-                            #{leader?.to_s}, 
-                            '#{xml}'
-                            )
+      end_date = (Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")
+      
+      if static_cols.include?(query['column'])
+        if query['column'].include?('start')
+          end_date = (Date.parse(query['startDate'])+1).strftime("%Y-%m-%d")
+        end
+        
+        filter_column = query['column'].sub('_start_count', '').sub('_end_count', '')
+        
+        sql = <<-SQL 
+          select * 
+          from staticdetailfriendly20(
+                                'memberfacthelperpaying2',
+                                '#{query['group_by']}', 
+                                '#{filter_column}',  
+                                '#{end_date}',
+                                '#{xml}'
+                              )
+          SQL
+      else
+        sql = <<-SQL 
+          select * 
+          from churndetailfriendly20(
+                                'memberfacthelperpaying2',
+                                '#{query['group_by']}', 
+                                '#{query['column']}',  
+                                '#{query['startDate']}', 
+                                '#{end_date}',
+                                #{leader?.to_s}, 
+                                '#{xml}'
+                                )
         SQL
+      end
+      
+      sql
     end
 
     def summary_sql  

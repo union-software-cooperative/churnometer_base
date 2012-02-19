@@ -88,6 +88,14 @@ module Churnobyl
         paying_real_net
         other_gain
         other_loss
+        a1p_end_count
+        a1p_start_count
+        paying_end_count
+        paying_start_count
+        contributors
+        income_net
+        posted
+        unposted
         }
     end
 
@@ -214,6 +222,15 @@ module Churnobyl
         }
     end
     
+    def static_cols
+      [
+        'a1p_end_count',
+        'a1p_start_count',
+        'paying_end_count',
+        'paying_start_count'
+      ]
+    end
+    
     def bold_col?(column_name)
       [
         'paying_real_net',
@@ -293,6 +310,7 @@ module Churnobyl
            'row_header',
            'row_header1',
            'row_header2',
+           'changedate',
            'member',
            'oldstatus',
            'newstatus',
@@ -305,6 +323,7 @@ module Churnobyl
             'row_header',
             'row_header1',
             'row_header2',
+            'changedate',
             'member',
             'oldorg',
             'neworg',
@@ -314,6 +333,23 @@ module Churnobyl
             'currentlead'
             ]
        }
+       
+       fhash = {
+         'Financial' => 
+           [
+           'row_header',
+           'row_header1',
+           'row_header2',
+           'member',
+           'posted',
+           'unposted'
+           ]
+         }
+         if leader?
+           hash = hash.merge(fhash);
+         end
+     
+         hash
      end
     
     def merge_cols(row, cols)
