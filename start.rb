@@ -60,10 +60,14 @@ get '/' do
 end
 
 get '/export_summary' do
+  fix_date_params
+  
   data_to_excel db.ex(summary_sql)
 end
 
 get '/export_member_details' do
+  fix_date_params
+  
   data_to_excel db.ex(member_sql)
 end
 
@@ -80,15 +84,31 @@ def data_to_excel(data)
   sheet = book.create_worksheet
   
   if has_data?
+    
+    #Get column list
+    if params['table'].nil?
+      cols = @data[0]
+    elsif summary_tables.include?(params['table'])
+        cols = summary_tables[params['table']]
+    else
+      cols = ['memberid'] | member_tables[params['table']]  
+    end
+    
     # Add header
-    @data[0].each_with_index do |hash, x|
-      sheet[0, x] = hash.first
+    merge_cols(@data[0], cols).each_with_index do |hash, x|
+      sheet[0, x] = col_names[hash.first] || hash.first
     end
   
     # Add data
     @data.each_with_index do |row, y|
-      row.each_with_index do |hash, x|
-        sheet[y + 1, x] = hash.last
+      merge_cols(row, cols).each_with_index do |hash,x|
+        
+        if filter_columns.include?(hash.first) 
+          sheet[y + 1, x] = hash.last.to_i
+        else
+            sheet[y + 1, x] = hash.last
+        end  
+      
       end
     end
   end

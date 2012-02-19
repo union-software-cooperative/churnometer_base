@@ -9,13 +9,13 @@ module Churnobyl
         'interval' => 'none',
         Filter => {
           'status' => [1, 14]      
-        }
+        },
       }.rmerge(params)
     
     end
 
     def member_sql
-      xml = filter_xml query[Filter]
+      xml = filter_xml query[Filter], locks
       
         <<-SQL 
       select * 
@@ -32,7 +32,7 @@ module Churnobyl
     end
 
     def summary_sql  
-      xml = filter_xml query[Filter]
+      xml = filter_xml query[Filter], locks
 
       if query['interval'] == 'none'
         <<-SQL
@@ -134,7 +134,7 @@ module Churnobyl
     end
     
 
-    def filter_xml(filters)
+    def filter_xml(filters, locks)
       # Example XML
       # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>
       result = "<search>"
@@ -148,6 +148,12 @@ module Churnobyl
         end
       end
 
+      locks.each do | k, csv|
+        csv.split(',').each do | item |
+          result += filter_xml_node(k,item)
+        end
+      end
+      
       result += "</search>"
       result
     end

@@ -68,16 +68,38 @@ module Churnobyl
       
       t
     end
+    
+    def filter_columns 
+      %w{
+        a1p_real_gain 
+        a1p_real_loss 
+        a1p_other_gain 
+        a1p_other_loss 
+        paying_real_gain 
+        paying_real_loss 
+        paying_other_gain 
+        paying_other_loss 
+        other_other_gain 
+        other_other_loss
+        a1p_newjoin
+        a1p_rejoin
+        a1p_to_other
+        a1p_to_paying
+        paying_real_net
+        other_gain
+        other_loss
+        }
+    end
 
     def can_detail_cell?(column_name, value)
       (
-        %w{a1p_real_gain a1p_real_loss a1p_other_gain a1p_other_loss paying_real_gain paying_real_loss paying_other_gain paying_other_loss other_other_gain other_other_loss}.include? column_name
-      ) && (value.to_i != 0 && value.to_i.abs < 100)
+        filter_columns.include? column_name
+      ) && (value.to_i != 0 && value.to_i.abs < 500)
     end
 
     def can_export_cell?(column_name, value)
       (
-        %w{a1p_real_gain a1p_real_loss a1p_other_gain a1p_other_loss paying_real_gain paying_real_loss paying_other_gain paying_other_loss other_other_gain other_other_loss}.include? column_name
+        filter_columns.include? column_name
       ) && (value.to_i != 0)
     end
     
@@ -92,7 +114,7 @@ module Churnobyl
     def export_column(column_name)
       column_filter = "column=#{column_name}"
       
-      "/export_member_details?#{query_string}&#{column_filter}"
+      "/export_member_details?#{query_string}&#{column_filter}&table=#{member_tables.first.first}"
     end
     
     def detail_column(column_name)
@@ -137,8 +159,8 @@ module Churnobyl
     def groups_by_collection
       {
         "branchid"      => "Branch",
-        "lead"          => "Lead Organizer",
-        "org"           => "Organizer",
+        "lead"          => "Lead Organiser",
+        "org"           => "Organiser",
         "areaid"        => "Area",
         "companyid"     => "Work Site",
         "industryid"    => "Industry",
@@ -161,7 +183,8 @@ module Churnobyl
     
     def col_names 
       hash = {
-        'row_header1'     => groups_by_collection[(params['group_by'] || 'branchid')],
+        'row_header1'     => groups_by_collection[(params['group_by'] || 'branchid')].downcase,
+        'row_header'     => groups_by_collection[(params['group_by'] || 'branchid')].downcase,
         'a1p_real_gain'   => 'total cards in',
         'a1p_to_other'    => 'never started paying',
         'paying_start_count' => 'paying at start',
@@ -197,38 +220,6 @@ module Churnobyl
         'running_paying_net',
         'a1p_real_gain'
       ].include?(column_name)
-    end
-    
-    def simple_summary
-      [
-        'row_header',
-        'row_header1',
-        'period_header',
-        'running_paying_net',
-        'a1p_real_gain',
-        'a1p_to_other',
-        'paying_start_count',
-        'paying_real_gain',
-        'paying_real_loss',
-        'paying_real_net',
-        'paying_end_count',
-        'contributors', 
-        'income_net'
-      ]
-    end
-    
-    
-    def simple_member
-      [
-        'row_header',
-        'row_header1',
-        'row_header2',
-        'member',
-        'oldstatus',
-        'newstatus',
-        'oldcompany',
-        'newcompany'
-      ]
     end
 
    def summary_tables
@@ -298,7 +289,7 @@ module Churnobyl
    
     def member_tables
        hash = {
-         'Member Detail' => [
+         'Member Summary' => [
            'row_header',
            'row_header1',
            'row_header2',
@@ -309,7 +300,19 @@ module Churnobyl
            'oldcompany',
            'newcompany',
            'currentcompany'
-           ]
+           ], 
+         'Organiser' => [
+            'row_header',
+            'row_header1',
+            'row_header2',
+            'member',
+            'oldorg',
+            'neworg',
+            'currentorg',
+            'oldlead',
+            'newlead',
+            'currentlead'
+            ]
        }
      end
     
@@ -363,7 +366,9 @@ module Churnobyl
         nt += [
           'paying_start_count',
           'paying_end_count',
-          'period_header'
+          'period_header',
+          'a1p_start_count',
+          'a1p_end_count'
         ]
       end
       
@@ -394,6 +399,10 @@ module Churnobyl
 
     def filter_names
       params[FilterNames] || []
+    end
+    
+    def locks
+      (params['lock'] || []).reject{ |column_name, value | value.empty? }
     end
     
     def drill_down_link_header(row)
@@ -458,5 +467,8 @@ module Churnobyl
       @query['column'].empty? && query['interval'] == 'none' && @data.group_by{ |row| row['row_header1'] }.reject{ |row | row["paying_real_gain"] == 0 && row["paying_real_loss"] == 0}.count <= 30
     end
   
+    def row_header_id_list
+      @data.group_by{ |row| row['row_header1_id'] }.collect{ | rh | rh[0] }.join(",")
+    end
   end
 end
