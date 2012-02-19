@@ -91,15 +91,35 @@ module Churnobyl
         periods(data).each do | period |
           intersection = row[1].find { | r | r['period_header'] == period[0] }
           if intersection.nil? 
-            series[row[0]] << 'null'
+            series[row[0]] << "{ y: null }"
           else
-            series[row[0]] << intersection['running_paying_net'] 
+            series[row[0]] << "{ y: #{intersection['running_paying_net'] }, id:'&intervalStart=#{intersection['period_start']}&intervalEnd=#{intersection['period_end']}&interval=none&f[#{(query['group_by'] || 'branchid')}]=#{intersection['row_header1_id']}&#{next_group_by}' }"
           end
         end
       end
     
       series
     end
+    
+    # def pivot(data)
+    #   series = Hash.new
+    #   
+    #   rows = data.group_by{ |row| row['row_header1'] }
+    #   rows.each do | row |
+    #     series[row[0]] = Array.new
+    #     periods(data).each do | period |
+    #       intersection = row[1].find { | r | r['period_header'] == period[0] }
+    #       if intersection.nil? 
+    #         series[row[0]] << 'null'
+    #       else
+    #         series[row[0]] << intersection['running_paying_net'] 
+    #       end
+    #     end
+    #   end
+    # 
+    #   series
+    # end
+    # 
     
     def series_count(data)
       rows = data.group_by{ |row| row['row_header1'] }.count

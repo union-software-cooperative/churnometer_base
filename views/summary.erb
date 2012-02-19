@@ -87,7 +87,7 @@
 					When removing or ignoring a filter, please carefully consider the 'Group By' setting.  Thousands of rows could be returned if something like 'work site' is set.
 				</label>
 			<% else %>
-				<label class="form span-18">Start drilling-down by choosing interesting links from the table data under the tabs below.</label>
+				<label class="form span-18">Start exploring by clicking interesting links in the charts and tables below.</label>
 			<% end %>
 	      </li>
 	
@@ -174,9 +174,9 @@
 			<% if has_data? %>
 				<ul>
 			    	<% if @query['column'].empty? %>
-				    	<li class="nav"><a href="/export_summary?<%= query_string + "&table=" + table %>" class="button">Export Summary</a></li>
+				    	<li class="nav"><a href="/export_summary?<%= (query_string || '') + "&table=" + table %>" class="button">Export Summary</a></li>
 				    <% else %>
-				    	<li class="nav"><a href="/export_member_details?<%= query_string + "&table=" + table %>" class="button">Export Member Details</a></li>
+				    	<li class="nav"><a href="/export_member_details?<%= (query_string || '') + "&table=" + table %>" class="button">Export Member Details</a></li>
 					<% end %>
 				</ul>
 			    <% totals = {} %>
@@ -299,7 +299,7 @@
 
 
 <script>
-	<% if (series_count(@data) <= 40) %>
+	<% if (line_chart_ok?) %>
 	
 		var chart;
 		function setupchart() {
@@ -339,31 +339,30 @@
 		         }]
 		      },
 		
-		// plotOptions: {
-		// 		         series: {
-		// 		            cursor: 'pointer',
-		// 		            point: {
-		// 		               events: {
-		// 		                  click: function() {
-		// 		                     hs.htmlExpand(null, {
-		// 		                        pageOrigin: {
-		// 		                           x: this.pageX, 
-		// 		                           y: this.pageY
-		// 		                        },
-		// 		                        headingText: this.series.name,
-		// 		                        maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+ 
-		// 		                           this.y +' visits',
-		// 		                        width: 200
-		// 		                     });
-		// 		                  }
-		// 		               }
-		// 		            },
-		// 		            marker: {
-		// 		               lineWidth: 1
-		// 		            }
-		// 		         }},
-			
-			
+			plotOptions: {
+												         series: {
+												            cursor: 'pointer',
+												            point: {
+												               events: {
+												                  click: function() {
+																  	
+																	window.location = "<%=request.url %>" + this.id;
+												                     // chart.htmlExpand(null, {
+												                     // 												                        pageOrigin: {
+												                     // 												                           x: this.pageX, 
+												                     // 												                           y: this.pageY
+												                     // 												                        },
+												                     // 												                        headingText: this.series.name,
+												                     // 												                        maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+ 
+												                     // 												                           this.y +' visits',
+												                     // 												                        width: 200
+												                     // 												                     });
+												                  }
+												               }
+												            }
+												         }},
+									
+									
 			
 		      tooltip: {
 		         formatter: function() {
@@ -380,8 +379,9 @@
 		         borderWidth: 0
 		      },
 			  series: [
-				<%= pivot(@data).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i}.join(',')}] }" }.join(",\n") %>
-			  ]
+				<%= pivot(@data).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") %>
+			
+				]
 		   });
 		};
 	<% end %>
