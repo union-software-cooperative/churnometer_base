@@ -181,7 +181,7 @@
 				</ul>
 			    <% totals = {} %>
  
-			    <table class="tablesorter">
+			    <table class="tablesorter" id='table<%=table %>'>
 			      <thead>
 			        <tr>
 			          <% merge_cols(@data[0], cols).each do |column_name, v| %>
@@ -393,6 +393,15 @@
 		
 		$("#tabs").tabs();
 		
+		$('#tabs').bind('tabsshow', function(event, ui) {
+			$('.floatHeader').hide(); // necessary otherwise a retarded floating table header appears until you scroll
+		});
+		
+		<% tables.each do | table, cols | %>
+			$('#table<%=table %>').floatHeader( { recalculate:true, fadeIn:0 }); // recalculate is needed to work with tabs
+		<% end %>
+		
+		
 		<% if (series_count(@data) <= 40) %>
 			<% if (query['interval'] != 'none') %>
 				setupchart();
@@ -431,5 +440,10 @@
 				// 	});
 				// <% end %>
 				// 	
+				
+		
   	});
+
+
+
 </script>
