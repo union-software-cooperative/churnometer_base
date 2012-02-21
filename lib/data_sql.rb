@@ -279,7 +279,15 @@ module Churnobyl
     
       start_count = paying_start_total(data)
       
-      start_date == end_date || start_count == 0 ? 0 : Float((((Float(paying_end_total(data)) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
+      started = 0
+      data.each { | row | started += row['paying_real_gain'].to_i }
+      
+      stopped = 0
+      data.each { | row | stopped += row['paying_real_loss'].to_i }
+      
+      end_count = start_count + stopped + started
+      
+      start_date == end_date || start_count == 0 ? 0 : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
     end
     
   end
