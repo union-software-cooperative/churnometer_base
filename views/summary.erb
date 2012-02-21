@@ -51,9 +51,9 @@
 						</td>
 						<td class="filters">
 						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" id="<%="#{Filter}#{column_name}remove" %>" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections invert_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections disable_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections remove_filter" type="radio" id="<%="#{Filter}#{column_name}remove" %>" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
 					  	
 						</td>
 						
@@ -78,14 +78,11 @@
 					</td>
 					<td class="filters">
 						<input class="selections" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="" checked>Off&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="<%=row_header_id_list %>">On&nbsp;&nbsp;&nbsp;&nbsp;
+						<input class="selections constrain_filter" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="<%=row_header_id_list %>">On&nbsp;&nbsp;&nbsp;&nbsp;
 					</td>
 					</tr>
 				</table>
 				
-				<label class="form span-18" style="font-size:90%">
-					When removing or ignoring a filter, please carefully consider the 'Group By' setting.  Thousands of rows could be returned if something like 'work site' is set.
-				</label>
 			<% else %>
 				<label class="form span-18">Start exploring by clicking interesting links in the charts and tables below.</label>
 			<% end %>
@@ -95,13 +92,25 @@
 		    <input  type="submit" value="Refresh">
 		  </li>
 		</ul>
+		<div id="removefiltertip" class="tooltip">
+			When removed, this filter will be ignored by the system and removed from the screen.  When removing or disabling a filter, please carefully consider the 'Group By' setting.  If 'Work Site' is set thousands of rows could be returned and your browser could hang.
+		</div>
+		<div id="disablefiltertip" class="tooltip">
+			When disabled, this filter will be ignored by the system but kept visible so it can be easily re-enabled.  When removing or disabling a filter, please carefully consider the 'Group By' setting.  If 'Work Site' is set thousands of rows could be returned and your browser could hang.
+		</div>
+		<div id="invertfiltertip" class="tooltip">
+			Returns everything but this item, by excluding any data that matches this item.  Most useful when used with 'Constrain search...'.
+		</div>
+		<div id="constrainfiltertip" class="tooltip">
+			Limits the results of the next search to those listed below.  Useful when disabling, removing or inverting a filter without changing the set of rows reported.  e.g.  you might want to see all churn for an organiser's sites without being limited to just the period the organiser was assigned to those sites.
+		</div>
 		</form>
     </div>
 </section>
 </div>
 
 <section id="data">
-	<h3>
+	<div id="card_target">
 		<% if leader? %>
 			<!-- <ul>
 							<li> -->
@@ -115,7 +124,14 @@
 				<!-- </li>
 							</ul> -->
 		<% end %>
-	</h4>
+	</div>
+	<div id="card_target_tip" class="tooltip">
+		The formular to hold our ground is calculated as 
+			'<%= col_names['paying_real_loss'] %>' 
+			+ '<%= col_names['a1p_to_other'] %>'
+			- the people who resume paying without giving us a card ( i.e. '<%= col_names['paying_real_gain'] %>' - '<%= col_names['a1p_to_paying'] %>'  ) 
+			averaged over just the period of time selected.
+	</div>
 	<div id="tabs">
 
 		<% tables = params['column'].to_s == '' ? summary_tables : member_tables %>
@@ -443,7 +459,7 @@
 				<% if (tips[column_name] || "") != "" %>
 					$("#<%=column_name %>h<%=i%>").tooltip({
 						tip: '#<%=column_name %>tip<%=i %>',
-						position: 'top center',
+						position: 'center right',
 						offset: [-25, 0],
 						delay: 0,
 						relative: true
@@ -451,20 +467,45 @@
 				<% end %>
 			<% end %>
 		<% end %>
-
-				// 
-				// <% filters.each do |column_name, value| %>
-				// 	$("#<%="#{Filter}#{column_name}remove"%>").tooltip({
-				// 		tip: '#removefiltertip',
-				// 		position: 'bottom center',
-				// 		offset: [-25, 0],
-				// 		delay: 0,
-				// 		relative: true
-				// 	});
-				// <% end %>
-				// 	
-				
 		
+		$("#card_target").tooltip({
+			tip: '#card_target_tip',
+			position: 'top center',
+			delay: 0,
+			relative: false
+		});
+		
+		$(".remove_filter").tooltip({
+			tip: '#removefiltertip',
+			position: 'center right',
+			offset: [25, 50],
+			delay: 0,
+			relative: true
+		});
+		
+		$(".disable_filter").tooltip({
+			tip: '#disablefiltertip',
+			position: 'center right',
+			offset: [25, 50],
+			delay: 0,
+			relative: true
+		});
+		
+		$(".invert_filter").tooltip({
+			tip: '#invertfiltertip',
+			position: 'center right',
+			offset: [25, 50],
+			delay: 0,
+			relative: true
+		});
+			
+		$(".constrain_filter").tooltip({
+			tip: '#constrainfiltertip',
+			position: 'center right',
+			offset: [0, 50],
+			delay: 0,
+			relative: true
+		});
   	});
 
 
