@@ -111,7 +111,7 @@
 
 <section id="data">
 	<div id="card_target">
-		<% if leader? %>
+		<% if leader? && params['column'].to_s == '' %>
 			<!-- <ul>
 							<li> -->
 					<%="#{get_cards_in(@data)} cards were brought in per week. " %>
