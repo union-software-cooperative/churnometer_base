@@ -221,7 +221,7 @@ module Churnobyl
       
       cards_per_week = 0.0
       if start_date != end_date  
-        cards_per_week = Float(((stopped - resume + failed) / (end_date - start_date) * 7 )).round(1)
+        cards_per_week = Float((Float(stopped - resume + failed) / Float(end_date - start_date) * 7 )).round(1)
       end
       
       cards_per_week
@@ -250,7 +250,7 @@ module Churnobyl
       if start_date != end_date  
         growth = Float(paying_start_total(data)) * 0.1 / 365 * Float(end_date - start_date) # very crude growth calculation - should use CAGR
         
-        cards_per_week = Float(((stopped - resume + failed + growth) / (end_date - start_date) * 7 )).round(1) 
+        cards_per_week = Float((Float(stopped - resume + failed + growth) / Float(end_date - start_date) * 7 )).round(1) 
       end
       
       cards_per_week
@@ -267,10 +267,19 @@ module Churnobyl
       
       cards_per_week = 0.0
       if start_date != end_date  
-        cards_per_week = Float(((cards) / (end_date - start_date) * 7 )).round(1)
+        cards_per_week = Float(((cards) / Float(end_date - start_date) * 7 )).round(1)
       end
       
       cards_per_week
+    end
+    
+    def growth(data) 
+      start_date = Date.parse(@query['startDate'])
+      end_date = Date.parse(@query['endDate'])
+    
+      start_count = paying_start_total(data)
+      
+      start_date == end_date || start_count == 0 ? 0 : Float((((Float(paying_end_total(data)) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
     end
     
   end

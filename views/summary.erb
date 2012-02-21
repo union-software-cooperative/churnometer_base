@@ -113,7 +113,10 @@
 	<div id="card_target">
 		<% if leader? && params['column'].to_s == '' %>
 			<!-- <ul>
-							<li> -->
+				<li> -->
+					<%= "We grew by #{growth(@data)}% p.a." %><br/>
+				<!-- </li>
+				<li> -->
 					<%="#{get_cards_in(@data)} cards were brought in per week. " %>
 				<!-- </li>
 								<li>  -->
@@ -122,11 +125,11 @@
 								<li> -->
 					<%= "And #{get_cards_in_growth_target(@data)} would have grown us 10%." %>
 				<!-- </li>
-							</ul> -->
+			</ul> -->
 		<% end %>
 	</div>
 	<div id="card_target_tip" class="tooltip">
-		The formular to hold our ground is calculated as 
+		The formula to hold our ground is calculated as 
 			'<%= col_names['paying_real_loss'] %>' 
 			+ '<%= col_names['a1p_to_other'] %>'
 			- the people who resume paying without giving us a card ( i.e. '<%= col_names['paying_real_gain'] %>' - '<%= col_names['a1p_to_paying'] %>'  ) 
