@@ -155,17 +155,21 @@
 				var valueString = $(values[i]).children("td").eq(config.valuecolumn).text();
 				if (valueString.length > 0) {
 					var valueAmount = parseFloat(valueString, 10);
-					if (valueAmount != 0) {
+					
+					if (valueAmount != 0 || i == (values.length - 2) /* include net, even if 0 */ ) {
+						
 						labelArray[labelArray.length] = $(values[i]).children("td").eq(config.labelcolumn).html();
 						labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
 						valueArray[valueArray.length] = valueAmount;
 						totalValue = totalValue + valueAmount;
-						if (totalValue > largestValue) {
-							largestValue = totalValue;
-						}
-						// include smallest value in range
-						if (totalValue < smallestValue) {
-							smallestValue = totalValue;
+						if (i != (values.length - 2)) { // don't include net in running totals
+							if (totalValue > largestValue) {
+								largestValue = totalValue;
+							}
+							// include smallest value in range
+							if (totalValue < smallestValue) {
+								smallestValue = totalValue;
+							}
 						}
 					//alert($(values[i]).children("td").eq(config.labelcolumn).html() + $(values[i]).children("td").eq(config.labelcolumn).text() + valueAmount)
 					}

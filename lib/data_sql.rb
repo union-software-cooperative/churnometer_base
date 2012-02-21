@@ -149,7 +149,7 @@ module Churnobyl
     end
 
     def paying_start_total(data)
-      # can't figure out enumerable way to sume this
+      # can't figure out enumerable way to sum this
       t=0
       data.each do | row |
         t += row['paying_start_count'].to_i
@@ -199,6 +199,78 @@ module Churnobyl
       
       result += "</search>"
       result
+    end
+    
+    def get_cards_in_target(data)
+      
+      # the number of people who stopped paying
+      stopped = 0
+      data.each { | row | stopped -= row['paying_real_loss'].to_i }
+      
+      # count the people who start paying without giving us a card
+      # we calculate this by subtracting the people who become paying from a1p (a1p_to_paying which is negative) from the paying gain
+      resume = 0 
+      data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
+      
+      # count the joiners who fail to convert to paying
+      failed = 0 
+      data.each { | row | failed -= row['a1p_to_other'].to_i }
+      
+      start_date = Date.parse(params['startDate'])
+      end_date = Date.parse(params['endDate'])
+      
+      cards_per_week = 0.0
+      if start_date != end_date  
+        cards_per_week = Float(((stopped - resume + failed) / (end_date - start_date) * 7 )).round(1)
+      end
+      
+      cards_per_week
+    end
+    
+    def get_cards_in_growth_target(data)
+      
+      # the number of people who stopped paying
+      stopped = 0
+      data.each { | row | stopped -= row['paying_real_loss'].to_i }
+      
+      # count the people who start paying without giving us a card
+      # we calculate this by subtracting the people who become paying from a1p (a1p_to_paying which is negative) from the paying gain
+      resume = 0 
+      data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
+      
+      # count the joiners who fail to convert to paying
+      failed = 0 
+      data.each { | row | failed -= row['a1p_to_other'].to_i }
+      
+      start_date = Date.parse(params['startDate'])
+      end_date = Date.parse(params['endDate'])
+      
+      
+      cards_per_week = 0.0
+      if start_date != end_date  
+        growth = Float(paying_start_total(data) * 0.1 / (end_date - start_date) * 365 / 52 ) # very crude growth calculation - should use CAGR
+        
+        cards_per_week = Float(((stopped - resume + failed + growth) / (end_date - start_date) * 7 )).round(1) 
+      end
+      
+      cards_per_week
+    end
+    
+    def get_cards_in(data)
+      
+      # the number of people who stopped paying
+      cards = 0
+      data.each { | row | cards += row['a1p_real_gain'].to_i }
+      
+      start_date = Date.parse(params['startDate'])
+      end_date = Date.parse(params['endDate'])
+      
+      cards_per_week = 0.0
+      if start_date != end_date  
+        cards_per_week = Float(((cards) / (end_date - start_date) * 7 )).round(1)
+      end
+      
+      cards_per_week
     end
     
   end

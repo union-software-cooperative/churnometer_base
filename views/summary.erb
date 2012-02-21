@@ -101,6 +101,21 @@
 </div>
 
 <section id="data">
+	<h3>
+		<% if leader? %>
+			<!-- <ul>
+							<li> -->
+					<%="#{get_cards_in(@data)} cards were brought in per week. " %>
+				<!-- </li>
+								<li>  -->
+					<%="Approximately #{get_cards_in_target(@data)} would have to held our ground. " %>
+				<!-- </li>
+								<li> -->
+					<%= "And #{get_cards_in_growth_target(@data)} would have grown us 10%." %>
+				<!-- </li>
+							</ul> -->
+		<% end %>
+	</h4>
 	<div id="tabs">
 
 		<% tables = params['column'].to_s == '' ? summary_tables : member_tables %>
@@ -278,7 +293,11 @@
 		</div>
 		
 		<!-- tooltip descriptions -->
-		<% i=1 %> 
+		<% i=0 %> 
+		<% if waterfall_chart_ok? || line_chart_ok? %>
+			<% i+=1 %>
+		<% end %> 
+		
 		<% tables.each do | table, cols | %>
 			<% i+=1 %>
 			<% merge_cols(@data[0], cols).each do |column_name, v| %>
@@ -398,7 +417,7 @@
 		});
 		
 		<% tables.each do | table, cols | %>
-			$('#table<%=table %>').floatHeader( { recalculate:true, fadeIn:0 }); // recalculate is needed to work with tabs
+			$('#table<%=table %>').floatHeader( { recalculate: true, fadeIn:0 }); // recalculate is needed to work with tabs but causes high cpu
 		<% end %>
 		
 		
@@ -413,7 +432,11 @@
 		
 		
 		// setup tooltip for a single DIV element
-		<% i=1 %> /* skip first tab because it is graphs */ 
+		<% i=0 %> 
+		<% if waterfall_chart_ok? || line_chart_ok? %>
+			<% i+=1 %>
+		<% end %> /* skip first tab because it is graphs */ 
+		
 		<% tables.each do | table, cols | %>
 			<% i+=1 %>
 			<% merge_cols(@data[0], cols).each do |column_name, v| %>
