@@ -151,16 +151,16 @@ module Churnobyl
     def paying_start_total(data)
       # can't figure out enumerable way to sum this
       t=0
-      data.each do | row |
-        t += row['paying_start_count'].to_i
+      data.group_by{ |row| row['row_header1'] }.each do | row, v |
+        t += v[0]['paying_start_count'].to_i
       end
       t
     end
 
     def paying_end_total(data)
       t=0
-      data.each do | row |
-        t += row['paying_end_count'].to_i
+      data.group_by{ |row| row['row_header1'] }.each do | row, v |
+        t += v[0]['paying_end_count'].to_i
       end
       t
     end
