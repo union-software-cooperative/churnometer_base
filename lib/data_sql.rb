@@ -216,8 +216,8 @@ module Churnobyl
       failed = 0 
       data.each { | row | failed -= row['a1p_to_other'].to_i }
       
-      start_date = Date.parse(params['startDate'])
-      end_date = Date.parse(params['endDate'])
+      start_date = Date.parse(@query['startDate'])
+      end_date = Date.parse(@query['endDate'])
       
       cards_per_week = 0.0
       if start_date != end_date  
@@ -242,13 +242,13 @@ module Churnobyl
       failed = 0 
       data.each { | row | failed -= row['a1p_to_other'].to_i }
       
-      start_date = Date.parse(params['startDate'])
-      end_date = Date.parse(params['endDate'])
+      start_date = Date.parse(@query['startDate'])
+      end_date = Date.parse(@query['endDate'])
       
       
       cards_per_week = 0.0
       if start_date != end_date  
-        growth = Float(paying_start_total(data) * 0.1 / (end_date - start_date) * 365 / 52 ) # very crude growth calculation - should use CAGR
+        growth = Float(paying_start_total(data)) * 0.1 / 365 * Float(end_date - start_date) # very crude growth calculation - should use CAGR
         
         cards_per_week = Float(((stopped - resume + failed + growth) / (end_date - start_date) * 7 )).round(1) 
       end
@@ -262,8 +262,8 @@ module Churnobyl
       cards = 0
       data.each { | row | cards += row['a1p_real_gain'].to_i }
       
-      start_date = Date.parse(params['startDate'])
-      end_date = Date.parse(params['endDate'])
+      start_date = Date.parse(@query['startDate'])
+      end_date = Date.parse(@query['endDate'])
       
       cards_per_week = 0.0
       if start_date != end_date  
