@@ -160,7 +160,15 @@ module Churnobyl
     def paying_end_total(data)
       t=0
       data.group_by{ |row| row['row_header1'] }.each do | row, v |
-        t += v[0]['paying_end_count'].to_i
+        t += v[0] ['paying_end_count'].to_i
+      end
+      t
+    end
+    
+    def paying_transfers_total(data)
+      t=0
+      data.group_by{ |row| row['row_header1'] }.each do | row, v |
+        t += v[0] ['paying_other_gain'].to_i + v[0] ['paying_other_loss'].to_i
       end
       t
     end
@@ -227,6 +235,8 @@ module Churnobyl
       cards_per_week
     end
     
+    
+    
     def get_cards_in_growth_target(data)
       
       # the number of people who stopped paying
@@ -238,18 +248,41 @@ module Churnobyl
       resume = 0 
       data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
       
+      # count of a1p people who start paying
+      conversions = 0
+      data.each { | row | conversions -= row['a1p_to_paying'].to_i }
+      
       # count the joiners who fail to convert to paying
       failed = 0 
       data.each { | row | failed -= row['a1p_to_other'].to_i }
       
+      # count the joiners who fail to convert to paying
+      cards = 0 
+      data.each { | row | cards += row['a1p_real_gain'].to_i }
+      
       start_date = Date.parse(@query['startDate'])
       end_date = Date.parse(@query['endDate'])
       
-      
       cards_per_week = 0.0
       if start_date != end_date  
-        growth = Float(paying_start_total(data)) * 0.1 / 365 * Float(end_date - start_date) # very crude growth calculation - should use CAGR
+        growth = Float((paying_start_total(data) + paying_transfers_total(data))) * 0.1 / 365 * Float(end_date - start_date) # very crude growth calculation - But I don't think CAGR makes sense, the formula would be # growth = (((10% + 1) ^ (duration/365) * start) - start) 
+         
+        # METHOD 1.  for every sign up, we only convert some to paying
+        # growth = conversions == 0 || cards == 0 ? growth : growth * (cards/conversions) # if we got no conversions or cards, then don't worry about the ratio and just go for cards in - bad bad bad.
         
+        # METHOD 2. For every card we get in, there is some that never start paying 10 vs 2.  If we get 20 we'd expect 4 to not start paying.
+        # To get the 4 we multiple growth target number failed/cards * target + target 
+        # growth += (cards == 0 ? 0 : failed/cards * growth)  
+        
+        # METHOD 3.  Maybe I'm counting the conversion ratio twice in Method 1 and 2.  
+        # The conversion ratio may be already included in the cards we need to hold our ground
+        # See + failed in equation below, so I should leave the raw growth figure alone
+        # Method 1 and 2 also leave the equation vulnerable to crazy volatility
+         
+        # to hold our ground we need to recruit the same number as those that stopped, 
+        # less those that historically resume paying on their own (these are freebies)
+        # plus those that new cards that failed to start paying
+        # plus a certain amount to acheive some growth figure.  The growth figure should reflect
         cards_per_week = Float((Float(stopped - resume + failed + growth) / Float(end_date - start_date) * 7 )).round(1) 
       end
       
@@ -287,7 +320,7 @@ module Churnobyl
       
       end_count = start_count + stopped + started
       
-      start_date == end_date || start_count == 0 ? 0 : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
+      start_date == end_date || start_count == 0 ? Float(1/0.0) : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
     end
     
   end
