@@ -2,6 +2,7 @@ require 'rubygems'
 require 'bundler/setup'
 
 require './lib/ruby_changes'
+require './lib/constants'
 require './lib/helpers'
 require './lib/db'
 require './lib/data_sql'
@@ -18,11 +19,6 @@ require 'money'
 require "addressable/uri"
 
 require 'ir_b'
-
-
-# Short names to help shorten URL
-Filter = "f"
-FilterNames = "fn"
 
 include Churnobyl::DataSql
 include Churnobyl::Authorization
