@@ -1,7 +1,16 @@
 require File.expand_path('../../spec_helper.rb', __FILE__)
 
 describe Churnobyl::DataSql do
-  let(:datasql) { Churnobyl::DataSql.new }
+  let(:datasql) do
+    class Dummy
+      include Churnobyl::DataSql
+      
+      def params
+        {}
+      end
+    end
+    Dummy.new 
+  end
   
   describe 'query' do
     it "has sensible default" do
