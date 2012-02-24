@@ -1,5 +1,4 @@
 require File.expand_path('../../spec_helper.rb', __FILE__)
-require File.expand_path('../../../lib/ruby_changes.rb', __FILE__)
 
 describe "Ruby changes" do
 
