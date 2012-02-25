@@ -105,5 +105,26 @@ describe "Tables" do
       page.should have_content "81.20"
     end
     
+    click_link "Paying" 
+    within 'table#tablePaying tbody tr:nth-child(1)' do
+      page.should have_content "Belinda Jacobi"
+      page.should have_content "10107"
+      page.should have_content "178"
+      page.should have_content "-187"
+      page.should have_content "4"
+      page.should have_content "-140"
+      page.should have_content "9962"
+    end
+    within 'table#tablePaying tbody tr:nth-child(2)' do
+      page.should have_content "Chris Kalomiris"
+      page.should have_content "3"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "3"
+    end
+    
+    
   end
 end
