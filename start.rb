@@ -33,7 +33,6 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/get_data' do
-    @query = query
     @data = db.ex params[:sql]
     erb :summary
   end
@@ -48,8 +47,7 @@ class Churnobyl < Sinatra::Base
   
     fix_date_params
    
-    @query = query
-    @sql = @query['column'].empty? ? summary_sql : member_sql
+    @sql = query['column'].empty? ? summary_sql : member_sql
   
     @data = db.ex @sql
   
