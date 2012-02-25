@@ -455,8 +455,7 @@ module Helpers
   def drill_down(row)
     row_header1_id = row['row_header1_id']
     row_header1 = row['row_header1']
-    #URI.escape "#{Filter}[#{@query['group_by']}]=#{row_header1_id}&#{FilterNames}[#{row_header1_id}]=#{row_header1}"
-    URI.escape "#{Filter}[#{@query['group_by']}]=#{row_header1_id}"
+    URI.escape "#{Filter}[#{query['group_by']}]=#{row_header1_id}"
   end
   
   def uri_join_queries(*queries)
@@ -480,11 +479,11 @@ module Helpers
   end
   
   def line_chart_ok?
-    series_count(@data) <= 30 && @query['column'].empty? && query['interval'] != 'none'
+    series_count(@data) <= 30 && query['column'].empty? && query['interval'] != 'none'
   end
 
   def waterfall_chart_ok?
-    @query['column'].empty? && query['interval'] == 'none' && @data.group_by{ |row| row['row_header1'] }.reject{ |row | row["paying_real_gain"] == 0 && row["paying_real_loss"] == 0}.count <= 30
+    query['column'].empty? && query['interval'] == 'none' && @data.group_by{ |row| row['row_header1'] }.reject{ |row | row["paying_real_gain"] == 0 && row["paying_real_loss"] == 0}.count <= 30
   end
 
   def row_header_id_list
