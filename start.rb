@@ -122,16 +122,6 @@ class Churnobyl < Sinatra::Base
     DataSqlProxy.new params
   end
 
-  class DataSqlProxy
-    include DataSql
-
-    attr_reader :params
-
-    def initialize(params)
-      @params = params
-    end
-  end
-
   
   run! if app_file == $0
 end
