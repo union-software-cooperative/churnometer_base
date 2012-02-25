@@ -1,14 +1,14 @@
 require File.expand_path('../../spec_helper.rb', __FILE__)
 
-describe DataSqlProxy do
+describe DataSql do
   let(:datasql) do
-    class DataSqlProxy
+    class DataSql
       def initialize
         @params = {}
       end
       
     end
-    DataSqlProxy.new 
+    DataSql.new 
   end
   
   describe 'query' do

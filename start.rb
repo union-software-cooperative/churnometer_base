@@ -118,7 +118,7 @@ class Churnobyl < Sinatra::Base
   end
   
   def data_sql
-    @data_sql ||= DataSqlProxy.new params
+    @data_sql ||= DataSql.new params
   end
 
   

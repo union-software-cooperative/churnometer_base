@@ -1,4 +1,4 @@
-class DataSqlProxy
+class DataSql
   attr_reader :params
 
   def initialize(params)
