@@ -12,7 +12,7 @@ module DataSql
     }.rmerge(params)
   end
 
-  def summary_sql  
+  def summary_sql(leader)
     xml = filter_xml query[Filter], locks
 
     if query['interval'] == 'none'
@@ -24,7 +24,7 @@ module DataSql
                             '',
                             '#{query['startDate']}', 
                             '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
-                            #{leader?.to_s}, 
+                            #{leader.to_s}, 
                             '#{xml}'
                             )
       SQL
@@ -37,7 +37,7 @@ module DataSql
                             '#{query['interval']}', 
                             '#{query['startDate']}', 
                             '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
-                            #{leader?.to_s}, 
+                            #{leader.to_s}, 
                             '#{xml}'
                             )
       SQL
