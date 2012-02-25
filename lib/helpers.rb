@@ -140,29 +140,13 @@ module Helpers
   def row_interval(row)
     row_interval = ""
 
-    if query["interval"] != "none" 
+    if data_sql.query["interval"] != "none" 
       row_interval = "&intervalStart=#{row['period_start']}&intervalEnd=#{row['period_end']}"
     end
 
     row_interval
   end
-   
-  # def groups_by_collection
-  #       [
-  #         ["branchid", "Branch"],
-  #         ["lead", "Lead Organizer"],
-  #         ["org", "Organizer"],
-  #         ["areaid", "Area"],
-  #         ["companyid", "Work Site"],
-  #         ["industryid", "Industry"],
-  #         ["del", "Delegate Training"],
-  #         ["hsr", "HSR Training"],
-  #         ["nuwelectorate", "Electorate"],
-  #         ["state", "State"],
-  #         ["feegroupid", "Fee Group"]
-  #       ]
-  #     end
-  
+     
   def groups_by_collection
     {
       "branchid"      => "Branch",
