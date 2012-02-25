@@ -439,11 +439,7 @@ module Helpers
   def filter_names
     params[FilterNames] || []
   end
-  
-  def locks
-    (params['lock'] || []).reject{ |column_name, value | value.empty? }
-  end
-  
+    
   def drill_down_link_header(row)
     uri_join_queries drill_down(row), next_group_by
   end

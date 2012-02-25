@@ -301,4 +301,12 @@ module DataSql
     start_date == end_date || start_count == 0 ? Float(1/0.0) : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
   end
   
+  ##########################
+  # Make these private
+  
+  def locks
+    (params['lock'] || []).reject{ |column_name, value | value.empty? }
+  end
+  
+  
 end
