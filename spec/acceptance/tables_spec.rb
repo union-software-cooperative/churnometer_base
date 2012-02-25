@@ -22,7 +22,12 @@ describe "Tables" do
     visit "/"
     
     page.should have_content("prototype")
+    
     check_home_summary
+
+    click_button "Refresh"
+    check_home_summary
+
     drill_down_into_branch
     drill_down_into_lead_organiser
     drill_down_into_organiser
