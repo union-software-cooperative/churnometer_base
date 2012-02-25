@@ -1,91 +1,4 @@
-module DataSql
-  def query
-    {
-      'group_by' => 'branchid',
-      'startDate' => '2011-8-14',
-      'endDate' => Time.now.strftime("%Y-%m-%d"),
-      'column' => '',
-      'interval' => 'none',
-      Filter => {
-        'status' => [1, 14]
-      }
-    }.rmerge(params)
-  end
-      
-  def paying_start_total(data)
-    # can't figure out enumerable way to sum this
-    t=0
-    data.group_by{ |row| row['row_header1'] }.each do | row, v |
-      t += v[0]['paying_start_count'].to_i
-    end
-    t
-  end
-
-  def paying_end_total(data)
-    t=0
-    data.group_by{ |row| row['row_header1'] }.each do | row, v |
-      t += v[0] ['paying_end_count'].to_i
-    end
-    t
-  end
-  
-  def paying_transfers_total(data)
-    t=0
-    data.group_by{ |row| row['row_header1'] }.each do | row, v |
-      t += v[0] ['paying_other_gain'].to_i + v[0] ['paying_other_loss'].to_i
-    end
-    t
-  end
-  
-  def filter_xml_node(k,v)
-    case v[0]
-      when '!' 
-        "<not_#{k}>#{v.sub('!','')}</not_#{k}>" 
-      when '-' 
-        "<ignore_#{k}>#{v.sub('!','')}</ignore_#{k}>" 
-      else 
-        "<#{k}>#{v}</#{k}>"
-      end
-  end
-  
-
-  def filter_xml(filters, locks)
-    # Example XML
-    # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>
-    result = "<search>"
-    filters.each do |k, v|
-      if v.is_a?(Array)
-        v.each do |item|
-          result += filter_xml_node(k,item)
-        end
-      else
-        result += filter_xml_node(k,v)
-      end
-    end
-
-    locks.each do | k, csv|
-      csv.split(',').each do | item |
-        result += filter_xml_node(k,item)
-      end
-    end
-    
-    result += "</search>"
-    result
-  end
-          
-  ##########################
-  # Make these private
-  
-  def locks
-    (params['lock'] || []).reject{ |column_name, value | value.empty? }
-  end
-  
-  
-end
-
 class DataSqlProxy
-  include DataSql
-
   attr_reader :params
 
   def initialize(params)
@@ -314,6 +227,87 @@ class DataSqlProxy
     end
   
     series
+  end
+  
+  def query
+    {
+      'group_by' => 'branchid',
+      'startDate' => '2011-8-14',
+      'endDate' => Time.now.strftime("%Y-%m-%d"),
+      'column' => '',
+      'interval' => 'none',
+      Filter => {
+        'status' => [1, 14]
+      }
+    }.rmerge(params)
+  end
+      
+  def paying_start_total(data)
+    # can't figure out enumerable way to sum this
+    t=0
+    data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += v[0]['paying_start_count'].to_i
+    end
+    t
+  end
+
+  def paying_end_total(data)
+    t=0
+    data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += v[0] ['paying_end_count'].to_i
+    end
+    t
+  end
+  
+  def paying_transfers_total(data)
+    t=0
+    data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += v[0] ['paying_other_gain'].to_i + v[0] ['paying_other_loss'].to_i
+    end
+    t
+  end
+  
+  def filter_xml_node(k,v)
+    case v[0]
+      when '!' 
+        "<not_#{k}>#{v.sub('!','')}</not_#{k}>" 
+      when '-' 
+        "<ignore_#{k}>#{v.sub('!','')}</ignore_#{k}>" 
+      else 
+        "<#{k}>#{v}</#{k}>"
+      end
+  end
+  
+
+  def filter_xml(filters, locks)
+    # Example XML
+    # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>
+    result = "<search>"
+    filters.each do |k, v|
+      if v.is_a?(Array)
+        v.each do |item|
+          result += filter_xml_node(k,item)
+        end
+      else
+        result += filter_xml_node(k,v)
+      end
+    end
+
+    locks.each do | k, csv|
+      csv.split(',').each do | item |
+        result += filter_xml_node(k,item)
+      end
+    end
+    
+    result += "</search>"
+    result
+  end
+          
+  ##########################
+  # Make these private
+  
+  def locks
+    (params['lock'] || []).reject{ |column_name, value | value.empty? }
   end
   
 end

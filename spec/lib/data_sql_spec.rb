@@ -1,6 +1,6 @@
 require File.expand_path('../../spec_helper.rb', __FILE__)
 
-describe DataSql do
+describe DataSqlProxy do
   let(:datasql) do
     class DataSqlProxy
       include Helpers

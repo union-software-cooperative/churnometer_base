@@ -13,10 +13,16 @@ end
 class DataSqlProxy
   # Override DataSql dates
   def query
-    super.rmerge({
+    {
+      'group_by' => 'branchid',
       'startDate' => '2012-01-01',
       'endDate'   => '2012-02-08',
-    })
+      'column' => '',
+      'interval' => 'none',
+      Filter => {
+        'status' => [1, 14]
+      }
+    }.rmerge(params)
   end
 end
 
