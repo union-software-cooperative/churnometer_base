@@ -176,33 +176,7 @@ module DataSql
     result += "</search>"
     result
   end
-  
-  def get_cards_in_target(data)
-    
-    # the number of people who stopped paying
-    stopped = 0
-    data.each { | row | stopped -= row['paying_real_loss'].to_i }
-    
-    # count the people who start paying without giving us a card
-    # we calculate this by subtracting the people who become paying from a1p (a1p_to_paying which is negative) from the paying gain
-    resume = 0 
-    data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
-    
-    # count the joiners who fail to convert to paying
-    failed = 0 
-    data.each { | row | failed -= row['a1p_to_other'].to_i }
-    
-    start_date = Date.parse(query['startDate'])
-    end_date = Date.parse(query['endDate'])
-    
-    cards_per_week = 0.0
-    if start_date != end_date  
-      cards_per_week = Float((Float(stopped - resume + failed) / Float(end_date - start_date) * 7 )).round(1)
-    end
-    
-    cards_per_week
-  end
-        
+          
   ##########################
   # Make these private
   
@@ -296,6 +270,32 @@ class DataSqlProxy
       # plus those that new cards that failed to start paying
       # plus a certain amount to acheive some growth figure.  The growth figure should reflect
       cards_per_week = Float((Float(stopped - resume + failed + growth) / Float(end_date - start_date) * 7 )).round(1) 
+    end
+    
+    cards_per_week
+  end
+
+  def get_cards_in_target(data)
+    
+    # the number of people who stopped paying
+    stopped = 0
+    data.each { | row | stopped -= row['paying_real_loss'].to_i }
+    
+    # count the people who start paying without giving us a card
+    # we calculate this by subtracting the people who become paying from a1p (a1p_to_paying which is negative) from the paying gain
+    resume = 0 
+    data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
+    
+    # count the joiners who fail to convert to paying
+    failed = 0 
+    data.each { | row | failed -= row['a1p_to_other'].to_i }
+    
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
+    
+    cards_per_week = 0.0
+    if start_date != end_date  
+      cards_per_week = Float((Float(stopped - resume + failed) / Float(end_date - start_date) * 7 )).round(1)
     end
     
     cards_per_week

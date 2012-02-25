@@ -114,7 +114,7 @@
 		<% if leader? && params['column'].to_s == '' %>
 			<%= "We grew by #{data_sql.growth(@data)}% p.a." %><br/>
 			<%="#{data_sql.get_cards_in(@data)} cards brought in per week. " %>
-			<%= "#{get_cards_in_target(@data)} needed to hold our ground. " %>
+			<%= "#{data_sql.get_cards_in_target(@data)} needed to hold our ground. " %>
 			<%= " #{data_sql.get_cards_in_growth_target(@data)} needed to grow 10%." %>
 		<% end %>
 	</div>
