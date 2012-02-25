@@ -8,10 +8,9 @@ module Churnobyl
         'column' => '',
         'interval' => 'none',
         Filter => {
-          'status' => [1, 14]      
-        },
+          'status' => [1, 14]
+        }
       }.rmerge(params)
-    
     end
 
     def member_sql
