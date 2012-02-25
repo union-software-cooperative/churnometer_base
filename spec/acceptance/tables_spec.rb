@@ -10,16 +10,10 @@ class Churnobyl
 
   # Override DataSql dates
   def query
-    {
-      'group_by' => 'branchid',
+    super.rmerge({
       'startDate' => '2012-01-01',
       'endDate'   => '2012-02-08',
-      'column' => '',
-      'interval' => 'none',
-      Filter => {
-        'status' => [1, 14]
-      }
-    }.rmerge(params)
+    })
   end
 end
 
