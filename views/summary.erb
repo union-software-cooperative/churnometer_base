@@ -4,22 +4,22 @@
   <section id="filter" class="form span-24">
 	<div class="form span-24 last">
       <form action="/">
-	  <input type="hidden" name="column" value="<%= @query['column'] %>">
+	  <input type="hidden" name="column" value="<%= query['column'] %>">
         
         <ul>
           <li class="datepicker form span-5">
             <label>Start Date</label>
-            <input type="text" name="startDate" value="<%= @query['startDate'] %>">
+            <input type="text" name="startDate" value="<%= query['startDate'] %>">
           </li>
           <li class="datepicker form span-5">
             <label>End Date</label>
-            <input type="text" name="endDate" value="<%= @query['endDate'] %>">
+            <input type="text" name="endDate" value="<%= query['endDate'] %>">
           </li>
           <li class="group_by form span-5">
             <label>Group by</label>
             <select name="group_by">
               <% groups_by_collection.each do |column_name, name| %>
-                <% if column_name == @query['group_by'] %>
+                <% if column_name == query['group_by'] %>
                   <option value="<%= column_name %>" selected="selected"><%= name %></option>
                 <% else %> 
                   <option value="<%= column_name %>"><%= name %></option>
@@ -31,7 +31,7 @@
             <label>Running total</label>
             <select name="interval">
               <% interval_collection.each do |column_name, name| %>
-                <% if column_name == @query['interval'] %>
+                <% if column_name == query['interval'] %>
                   <option value="<%= column_name %>" selected="selected"><%= name %></option>
                 <% else %>
                   <option value="<%= column_name %>"><%= name %></option>
@@ -204,7 +204,7 @@
 				
 			<% if has_data? %>
 				<ul>
-			    	<% if @query['column'].empty? %>
+			    	<% if query['column'].empty? %>
 				    	<li class="nav"><a href="/export_summary?<%= (query_string || '') + "&table=" + table %>" class="button">Export Summary</a></li>
 				    <% else %>
 				    	<li class="nav"><a href="/export_member_details?<%= (query_string || '') + "&table=" + table %>" class="button">Export Member Details</a></li>
