@@ -385,7 +385,7 @@ module Helpers
       'running_paying_net'
     ]
     
-    if query['interval'] != 'none'
+    if data_sql.query['interval'] != 'none'
       nt += [
         'paying_start_count',
         'paying_end_count',
@@ -413,7 +413,7 @@ module Helpers
       'companyid'     => 'companyid'
     }
 
-    URI.escape "group_by=#{hash[query['group_by']]}"
+    URI.escape "group_by=#{hash[data_sql.query['group_by']]}"
   end
 
   def filters
@@ -439,7 +439,7 @@ module Helpers
   def drill_down(row)
     row_header1_id = row['row_header1_id']
     row_header1 = row['row_header1']
-    URI.escape "#{Filter}[#{query['group_by']}]=#{row_header1_id}"
+    URI.escape "#{Filter}[#{data_sql.query['group_by']}]=#{row_header1_id}"
   end
   
   def uri_join_queries(*queries)
