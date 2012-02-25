@@ -171,5 +171,57 @@ describe "Tables" do
       page.should have_content "608"
     end
     
+    click_link "Gayle Burmeister" 
+    within '#filters' do
+      page.should have_content "Branch: Victorian Branch"
+      page.should have_content "Lead Organiser: Belinda Jacobi"
+      page.should have_content "Organiser: Gayle Burmeister"
+    end
+    click_link "Summary"
+    within 'table#tableSummary tbody tr:nth-child(1)' do
+      page.should have_content "3D Geoshapes Australia Pty Ltd"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "1"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "1"
+      page.should have_content "1"
+      page.should have_content "40.60"
+    end
+    within 'table#tableSummary tbody tr:nth-child(15)' do
+      page.should have_content "Charles Parsons (Vic) P/L"
+      page.should have_content "7"
+      page.should have_content "0"
+      page.should have_content "2"
+      page.should have_content "4"
+      page.should have_content "0"
+      page.should have_content "4"
+      page.should have_content "0"
+      page.should have_content "6"
+      page.should have_content "196.23"
+    end
+    
+    click_link "Paying" 
+    within 'table#tablePaying tbody tr:nth-child(1)' do
+      page.should have_content "3D Geoshapes Australia Pty Ltd"
+      page.should have_content "1"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "1"
+    end
+    within 'table#tablePaying tbody tr:nth-child(15)' do
+      page.should have_content "Charles Parsons (Vic) P/L"
+      page.should have_content "2"
+      page.should have_content "4"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "-6"
+      page.should have_content "0"
+    end
+    
   end
 end
