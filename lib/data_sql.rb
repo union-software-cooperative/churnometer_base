@@ -12,38 +12,6 @@ module DataSql
     }.rmerge(params)
   end
 
-  def summary_sql(leader)
-    xml = filter_xml query[Filter], locks
-
-    if query['interval'] == 'none'
-      <<-SQL
-      select * 
-      from churnsummarydyn19(
-                            'memberfacthelperpaying2',
-                            '#{query['group_by']}', 
-                            '',
-                            '#{query['startDate']}', 
-                            '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
-                            #{leader.to_s}, 
-                            '#{xml}'
-                            )
-      SQL
-    else
-      <<-SQL
-      select * 
-      from churnrunningdyn19(
-                            'memberfacthelperpaying2',
-                            '#{query['group_by']}', 
-                            '#{query['interval']}', 
-                            '#{query['startDate']}', 
-                            '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
-                            #{leader.to_s}, 
-                            '#{xml}'
-                            )
-      SQL
-    end
-  end
-
   def get_display_text_sql(column, id)
       <<-SQL
         select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
@@ -154,6 +122,38 @@ class DataSqlProxy
 
   def initialize(params)
     @params = params
+  end
+  
+  def summary_sql(leader)
+    xml = filter_xml query[Filter], locks
+
+    if query['interval'] == 'none'
+      <<-SQL
+      select * 
+      from churnsummarydyn19(
+                            'memberfacthelperpaying2',
+                            '#{query['group_by']}', 
+                            '',
+                            '#{query['startDate']}', 
+                            '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
+                            #{leader.to_s}, 
+                            '#{xml}'
+                            )
+      SQL
+    else
+      <<-SQL
+      select * 
+      from churnrunningdyn19(
+                            'memberfacthelperpaying2',
+                            '#{query['group_by']}', 
+                            '#{query['interval']}', 
+                            '#{query['startDate']}', 
+                            '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
+                            #{leader.to_s}, 
+                            '#{xml}'
+                            )
+      SQL
+    end
   end
   
   def member_sql

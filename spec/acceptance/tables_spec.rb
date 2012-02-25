@@ -5,9 +5,12 @@ class Churnobyl
   def leader?
     true
   end
+  
   def protected!
   end
+end
 
+class DataSqlProxy
   # Override DataSql dates
   def query
     super.rmerge({
