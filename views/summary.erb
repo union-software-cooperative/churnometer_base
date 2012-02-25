@@ -346,7 +346,7 @@
 		      },
 		      xAxis: {
 		         categories: [
-					<%= periods(@data).collect { | k | "'#{k[0]}'"}.join(",") %>
+					<%= data_sql.periods(@data).collect { | k | "'#{k[0]}'"}.join(",") %>
 				] ,
 				labels: {
 				            rotation: -45,
@@ -404,7 +404,7 @@
 		         borderWidth: 0
 		      },
 			  series: [
-				<%= pivot(@data).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") %>
+				<%= data_sql.pivot(@data).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") %>
 			
 				]
 		   });

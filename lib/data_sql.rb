@@ -11,32 +11,6 @@ module DataSql
       }
     }.rmerge(params)
   end
-
-  def periods(data)
-      # data.each do |row|
-      #           row.each do |column_name, v|
-      #             if column_name == 'period_header'
-      data.group_by{ |row| row['period_header'] }.sort{|a,b| a[0] <=> b[0] }
-  end
-  
-  def pivot(data)
-    series = Hash.new
-    
-    rows = data.group_by{ |row| row['row_header1'] }
-    rows.each do | row |
-      series[row[0]] = Array.new
-      periods(data).each do | period |
-        intersection = row[1].find { | r | r['period_header'] == period[0] }
-        if intersection.nil? 
-          series[row[0]] << "{ y: null }"
-        else
-          series[row[0]] << "{ y: #{intersection['running_paying_net'] }, id:'&intervalStart=#{intersection['period_start']}&intervalEnd=#{intersection['period_end']}&interval=none&f[#{(query['group_by'] || 'branchid')}]=#{intersection['row_header1_id']}&#{next_group_by}' }"
-        end
-      end
-    end
-  
-    series
-  end
       
   def paying_start_total(data)
     # can't figure out enumerable way to sum this
@@ -317,6 +291,29 @@ class DataSqlProxy
     <<-SQL
       select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
     SQL
+  end
+  
+  def periods(data)
+    data.group_by{ |row| row['period_header'] }.sort{|a,b| a[0] <=> b[0] }
+  end
+  
+  def pivot(data)
+    series = Hash.new
+    
+    rows = data.group_by{ |row| row['row_header1'] }
+    rows.each do | row |
+      series[row[0]] = Array.new
+      periods(data).each do | period |
+        intersection = row[1].find { | r | r['period_header'] == period[0] }
+        if intersection.nil? 
+          series[row[0]] << "{ y: null }"
+        else
+          series[row[0]] << "{ y: #{intersection['running_paying_net'] }, id:'&intervalStart=#{intersection['period_start']}&intervalEnd=#{intersection['period_end']}&interval=none&f[#{(query['group_by'] || 'branchid')}]=#{intersection['row_header1_id']}&#{next_group_by}' }"
+        end
+      end
+    end
+  
+    series
   end
   
 end
