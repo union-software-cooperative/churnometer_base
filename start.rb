@@ -47,7 +47,7 @@ class Churnobyl < Sinatra::Base
   
     fix_date_params
    
-    @sql = query['column'].empty? ? summary_sql : member_sql
+    @sql = data_sql.query['column'].empty? ? summary_sql : member_sql
   
     @data = db.ex @sql
   
@@ -114,12 +114,25 @@ class Churnobyl < Sinatra::Base
     send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
 
-
   def db
     @db ||= Db.new
   end
   
+  def data_sql
+    DataSqlProxy.new params
+  end
+  
   run! if app_file == $0
+end
+
+class DataSqlProxy
+  include DataSql
+  
+  attr_reader :params
+  
+  def initialize(params)
+    @params = params
+  end
 end
 
 
