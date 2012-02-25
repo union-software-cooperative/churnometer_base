@@ -53,5 +53,25 @@ describe "Tables" do
       page.should have_content "2283"
       page.should have_content "94786.71"
     end
+    
+    click_link "Paying" 
+    within 'table#tablePaying tbody tr:nth-child(1)' do
+      page.should have_content "General Branch"
+      page.should have_content "10075"
+      page.should have_content "189"
+      page.should have_content "-252"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "10012"
+    end
+    within 'table#tablePaying tbody tr:nth-child(2)' do
+      page.should have_content "Victorian Branch"
+      page.should have_content "22216"
+      page.should have_content "59"
+      page.should have_content "-68"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "22207"
+    end
   end
 end
