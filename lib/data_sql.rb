@@ -124,7 +124,7 @@ class DataSqlProxy
     end
   end
   
-  def member_sql
+  def member_sql(leader)
     xml = filter_xml query[Filter], locks
     
     end_date = (Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")
@@ -155,7 +155,7 @@ class DataSqlProxy
                               '#{query['column']}',  
                               '#{query['startDate']}', 
                               '#{end_date}',
-                              #{leader?.to_s}, 
+                              #{leader.to_s}, 
                               '#{xml}'
                               )
       SQL
