@@ -204,16 +204,7 @@ module Helpers
       'contributors'  => 'unique contributors'
       }
   end
-  
-  def static_cols
-    [
-      'a1p_end_count',
-      'a1p_start_count',
-      'paying_end_count',
-      'paying_start_count'
-    ]
-  end
-  
+    
   def bold_col?(column_name)
     [
       'paying_real_net',
