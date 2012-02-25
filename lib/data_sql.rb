@@ -256,24 +256,7 @@ module DataSql
     
     cards_per_week
   end
-  
-  def get_cards_in(data)
-    
-    # the number of people who stopped paying
-    cards = 0
-    data.each { | row | cards += row['a1p_real_gain'].to_i }
-    
-    start_date = Date.parse(query['startDate'])
-    end_date = Date.parse(query['endDate'])
-    
-    cards_per_week = 0.0
-    if start_date != end_date  
-      cards_per_week = Float(((cards) / Float(end_date - start_date) * 7 )).round(1)
-    end
-    
-    cards_per_week
-  end
-    
+      
   ##########################
   # Make these private
   
@@ -318,6 +301,23 @@ class DataSqlProxy
 
   def series_count(data)
     rows = data.group_by{ |row| row['row_header1'] }.count
+  end
+
+  def get_cards_in(data)
+    
+    # the number of people who stopped paying
+    cards = 0
+    data.each { | row | cards += row['a1p_real_gain'].to_i }
+    
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
+    
+    cards_per_week = 0.0
+    if start_date != end_date  
+      cards_per_week = Float(((cards) / Float(end_date - start_date) * 7 )).round(1)
+    end
+    
+    cards_per_week
   end
   
 end
