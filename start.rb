@@ -21,7 +21,6 @@ require "addressable/uri"
 require 'ir_b'
 
 class Churnobyl < Sinatra::Base
-  include DataSql
   include Authorization
 
   before do
