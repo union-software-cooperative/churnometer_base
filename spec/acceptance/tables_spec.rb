@@ -75,8 +75,8 @@ describe "Tables" do
     end
     
     click_link "Victorian Branch"
-    within '.filters' do
-      page.should have_content "Victorian Branch"
+    within '#filters' do
+      page.should have_content "Branch: Victorian Branch"
     end
     
     click_link "Summary"
@@ -125,6 +125,57 @@ describe "Tables" do
       page.should have_content "3"
     end
     
+    click_link "Belinda Jacobi"
+    within '#filters' do
+      page.should have_content "Branch: Victorian Branch"
+      page.should have_content "Lead Organiser: Belinda Jacobi"
+    end
+    
+    click_link "Summary"
+    within 'table#tableSummary tbody tr:nth-child(1)' do
+      page.should have_content "Adam Auld"
+      page.should have_content "15"
+      page.should have_content "-1"
+      page.should have_content "1505"
+      page.should have_content "20"
+      page.should have_content "-27"
+      page.should have_content "-7"
+      page.should have_content "1498"
+      page.should have_content "1171"
+      page.should have_content "57203.55"      
+    end
+    within 'table#tableSummary tbody tr:nth-child(2)' do
+      page.should have_content "Belinda Jacobi"
+      page.should have_content "8"
+      page.should have_content "-3"
+      page.should have_content "1166"
+      page.should have_content "78"
+      page.should have_content "-27"
+      page.should have_content "51"
+      page.should have_content "1215"
+      page.should have_content "1062"
+      page.should have_content "54700.28"
+    end
+    
+    click_link "Paying" 
+    within 'table#tablePaying tbody tr:nth-child(1)' do
+      page.should have_content "Adam Auld"
+      page.should have_content "1505"
+      page.should have_content "20"
+      page.should have_content "-27"
+      page.should have_content "0"
+      page.should have_content "0"
+      page.should have_content "1498"
+    end
+    within 'table#tablePaying tbody tr:nth-child(6)' do
+      page.should have_content "Gayle Burmeister"
+      page.should have_content "613"
+      page.should have_content "13"
+      page.should have_content "-15"
+      page.should have_content "4"
+      page.should have_content "-7"
+      page.should have_content "608"
+    end
     
   end
 end
