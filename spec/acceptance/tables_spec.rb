@@ -89,48 +89,18 @@ describe "Tables" do
     end
     click_link "Summary"
     within 'table#tableSummary tbody tr:nth-child(1)' do
-      page.should have_content "3D Geoshapes Australia Pty Ltd"
-      page.should have_content "0"
-      page.should have_content "0"
-      page.should have_content "1"
-      page.should have_content "0"
-      page.should have_content "0"
-      page.should have_content "0"
-      page.should have_content "1"
-      page.should have_content "1"
-      page.should have_content "40.60"
+      row_has "3D Geoshapes Australia Pty Ltd", %w{0 0 1 0 0 0 1 1 40.60}
     end
     within 'table#tableSummary tbody tr:nth-child(15)' do
-      page.should have_content "Charles Parsons (Vic) P/L"
-      page.should have_content "7"
-      page.should have_content "0"
-      page.should have_content "2"
-      page.should have_content "4"
-      page.should have_content "0"
-      page.should have_content "4"
-      page.should have_content "0"
-      page.should have_content "6"
-      page.should have_content "196.23"
+      row_has "Charles Parsons (Vic) P/L", %w{7 0 2 4 0 4 0 6 196.23}
     end
     
     click_link "Paying" 
     within 'table#tablePaying tbody tr:nth-child(1)' do
-      page.should have_content "3D Geoshapes Australia Pty Ltd"
-      page.should have_content "1"
-      page.should have_content "0"
-      page.should have_content "0"
-      page.should have_content "0"
-      page.should have_content "0"
-      page.should have_content "1"
+      row_has "3D Geoshapes Australia Pty Ltd", %w{1 0 0 0 0 1}
     end
     within 'table#tablePaying tbody tr:nth-child(15)' do
-      page.should have_content "Charles Parsons (Vic) P/L"
-      page.should have_content "2"
-      page.should have_content "4"
-      page.should have_content "0"
-      page.should have_content "0"
-      page.should have_content "-6"
-      page.should have_content "0"
+      row_has "Charles Parsons (Vic) P/L", %w{2 4 0 0 -6 0}
     end
     
   end
