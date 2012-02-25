@@ -238,6 +238,10 @@ module Churnobyl
         'a1p_real_gain'
       ].include?(column_name)
     end
+    
+    def tables
+      params['column'].to_s == '' ? summary_tables : member_tables
+    end
 
    def summary_tables
       hash = {
