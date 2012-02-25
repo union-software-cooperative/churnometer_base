@@ -463,11 +463,11 @@ module Helpers
   end
   
   def line_chart_ok?
-    series_count(@data) <= 30 && query['column'].empty? && query['interval'] != 'none'
+    series_count(@data) <= 30 && data_sql.query['column'].empty? && data_sql.query['interval'] != 'none'
   end
 
   def waterfall_chart_ok?
-    query['column'].empty? && query['interval'] == 'none' && @data.group_by{ |row| row['row_header1'] }.reject{ |row | row["paying_real_gain"] == 0 && row["paying_real_loss"] == 0}.count <= 30
+    data_sql.query['column'].empty? && data_sql.query['interval'] == 'none' && @data.group_by{ |row| row['row_header1'] }.reject{ |row | row["paying_real_gain"] == 0 && row["paying_real_loss"] == 0}.count <= 30
   end
 
   def row_header_id_list
