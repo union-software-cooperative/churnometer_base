@@ -1,5 +1,16 @@
 require File.expand_path(File.dirname(__FILE__) + "/acceptance_helper")
 
+
+class DataSqlOverride < DataSql
+  # Override DataSql dates
+  def query
+    super.rmerge({
+      'startDate' => '2012-01-01',
+      'endDate'   => '2012-02-08',
+    }).rmerge(params)
+  end
+end
+
 class Churnobyl
   # Override authentication includes
   def leader?
@@ -8,23 +19,13 @@ class Churnobyl
   
   def protected!
   end
-end
-
-class DataSqlProxy
-  # Override DataSql dates
-  def query
-    {
-      'group_by' => 'branchid',
-      'startDate' => '2012-01-01',
-      'endDate'   => '2012-02-08',
-      'column' => '',
-      'interval' => 'none',
-      Filter => {
-        'status' => [1, 14]
-      }
-    }.rmerge(params)
+  
+  # Override data_sql object's class
+  def data_sql
+    @data_sql ||= DataSqlOverride.new params
   end
 end
+
 
 describe "Tables" do
   it "Has the expected data" do
