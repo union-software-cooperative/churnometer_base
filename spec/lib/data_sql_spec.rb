@@ -1,10 +1,10 @@
 require File.expand_path('../../spec_helper.rb', __FILE__)
 
-describe Churnobyl::DataSql do
+describe DataSql do
   let(:datasql) do
     class Dummy
-      include Churnobyl::DataSql
-      include Churnobyl::Helpers
+      include DataSql
+      include Helpers
 
       def initialize
         self.params = {}
