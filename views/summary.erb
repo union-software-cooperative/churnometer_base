@@ -437,7 +437,7 @@
 		<% end %>
 		
 		
-		<% if (series_count(@data) <= 40) %>
+		<% if (data_sql.series_count(@data) <= 40) %>
 			<% if (data_sql.query['interval'] != 'none') %>
 				setupchart();
 			<% else %>

@@ -116,10 +116,6 @@ module DataSql
     series
   end
       
-  def series_count(data)
-    rows = data.group_by{ |row| row['row_header1'] }.count
-  end
-
   def paying_start_total(data)
     # can't figure out enumerable way to sum this
     t=0
@@ -318,6 +314,10 @@ class DataSqlProxy
     end_count = start_count + stopped + started
     
     start_date == end_date || start_count == 0 ? Float(1/0.0) : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
+  end
+
+  def series_count(data)
+    rows = data.group_by{ |row| row['row_header1'] }.count
   end
   
 end

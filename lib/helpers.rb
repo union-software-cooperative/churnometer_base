@@ -463,7 +463,7 @@ module Helpers
   end
   
   def line_chart_ok?
-    series_count(@data) <= 30 && data_sql.query['column'].empty? && data_sql.query['interval'] != 'none'
+    data_sql.series_count(@data) <= 30 && data_sql.query['column'].empty? && data_sql.query['interval'] != 'none'
   end
 
   def waterfall_chart_ok?
