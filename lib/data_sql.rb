@@ -202,8 +202,8 @@ module DataSql
     failed = 0 
     data.each { | row | failed -= row['a1p_to_other'].to_i }
     
-    start_date = Date.parse(@query['startDate'])
-    end_date = Date.parse(@query['endDate'])
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
     
     cards_per_week = 0.0
     if start_date != end_date  
@@ -238,8 +238,8 @@ module DataSql
     cards = 0 
     data.each { | row | cards += row['a1p_real_gain'].to_i }
     
-    start_date = Date.parse(@query['startDate'])
-    end_date = Date.parse(@query['endDate'])
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
     
     cards_per_week = 0.0
     if start_date != end_date  
@@ -273,8 +273,8 @@ module DataSql
     cards = 0
     data.each { | row | cards += row['a1p_real_gain'].to_i }
     
-    start_date = Date.parse(@query['startDate'])
-    end_date = Date.parse(@query['endDate'])
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
     
     cards_per_week = 0.0
     if start_date != end_date  
@@ -285,8 +285,8 @@ module DataSql
   end
   
   def growth(data) 
-    start_date = Date.parse(@query['startDate'])
-    end_date = Date.parse(@query['endDate'])
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
   
     start_count = paying_start_total(data)
     
