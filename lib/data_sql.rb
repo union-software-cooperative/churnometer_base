@@ -84,12 +84,6 @@ module DataSql
     end
   end
 
-  def getdimstart_sql
-    <<-SQL
-      select getdimstart('#{(query['group_by'] || 'branchid')}')
-    SQL
-  end
-
   def get_display_text_sql(column, id)
       <<-SQL
         select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
@@ -319,4 +313,11 @@ class DataSqlProxy
   def initialize(params)
     @params = params
   end
+  
+  def getdimstart_sql
+    <<-SQL
+      select getdimstart('#{(query['group_by'] || 'branchid')}')
+    SQL
+  end
+  
 end
