@@ -112,20 +112,10 @@
 <section id="data">
 	<div id="card_target">
 		<% if leader? && params['column'].to_s == '' %>
-			<!-- <ul>
-				<li> -->
-					<%= "We grew by #{data_sql.growth(@data)}% p.a." %><br/>
-				<!-- </li>
-				<li> -->
-					<%="#{data_sql.get_cards_in(@data)} cards brought in per week. " %>
-				<!-- </li>
-								<li>  -->
-					<%= "#{get_cards_in_target(@data)} needed to hold our ground. " %>
-				<!-- </li>
-								<li> -->
-					<%= " #{data_sql.get_cards_in_growth_target(@data)} needed to grow 10%." %>
-				<!-- </li>
-			</ul> -->
+			<%= "We grew by #{data_sql.growth(@data)}% p.a." %><br/>
+			<%="#{data_sql.get_cards_in(@data)} cards brought in per week. " %>
+			<%= "#{get_cards_in_target(@data)} needed to hold our ground. " %>
+			<%= " #{data_sql.get_cards_in_growth_target(@data)} needed to grow 10%." %>
 		<% end %>
 	</div>
 	<div id="card_target_tip" class="tooltip">
