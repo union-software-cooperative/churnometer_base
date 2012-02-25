@@ -202,9 +202,53 @@ module DataSql
     
     cards_per_week
   end
+        
+  ##########################
+  # Make these private
+  
+  def locks
+    (params['lock'] || []).reject{ |column_name, value | value.empty? }
+  end
   
   
+end
+
+class DataSqlProxy
+  include DataSql
+
+  attr_reader :params
+
+  def initialize(params)
+    @params = params
+  end
   
+  def getdimstart_sql
+    <<-SQL
+      select getdimstart('#{(query['group_by'] || 'branchid')}')
+    SQL
+  end
+
+  def growth(data) 
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
+  
+    start_count = paying_start_total(data)
+    
+    started = 0
+    data.each { | row | started += row['paying_real_gain'].to_i }
+    
+    stopped = 0
+    data.each { | row | stopped += row['paying_real_loss'].to_i }
+    
+    end_count = start_count + stopped + started
+    
+    start_date == end_date || start_count == 0 ? Float(1/0.0) : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
+  end
+
+  def series_count(data)
+    rows = data.group_by{ |row| row['row_header1'] }.count
+  end
+
   def get_cards_in_growth_target(data)
     
     # the number of people who stopped paying
@@ -255,52 +299,6 @@ module DataSql
     end
     
     cards_per_week
-  end
-      
-  ##########################
-  # Make these private
-  
-  def locks
-    (params['lock'] || []).reject{ |column_name, value | value.empty? }
-  end
-  
-  
-end
-
-class DataSqlProxy
-  include DataSql
-
-  attr_reader :params
-
-  def initialize(params)
-    @params = params
-  end
-  
-  def getdimstart_sql
-    <<-SQL
-      select getdimstart('#{(query['group_by'] || 'branchid')}')
-    SQL
-  end
-
-  def growth(data) 
-    start_date = Date.parse(query['startDate'])
-    end_date = Date.parse(query['endDate'])
-  
-    start_count = paying_start_total(data)
-    
-    started = 0
-    data.each { | row | started += row['paying_real_gain'].to_i }
-    
-    stopped = 0
-    data.each { | row | stopped += row['paying_real_loss'].to_i }
-    
-    end_count = start_count + stopped + started
-    
-    start_date == end_date || start_count == 0 ? Float(1/0.0) : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
-  end
-
-  def series_count(data)
-    rows = data.group_by{ |row| row['row_header1'] }.count
   end
 
   def get_cards_in(data)
