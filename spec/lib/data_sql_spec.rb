@@ -2,21 +2,19 @@ require File.expand_path('../../spec_helper.rb', __FILE__)
 
 describe DataSql do
   let(:datasql) do
-    class Dummy
-      include DataSql
+    class DataSqlProxy
       include Helpers
 
       def initialize
-        self.params = {}
+        @params = {}
       end
       
       def leader?
         true
       end
 
-      attr_accessor :params
     end
-    Dummy.new 
+    DataSqlProxy.new 
   end
   
   describe 'query' do
