@@ -58,7 +58,7 @@ module Helpers
     if id == "unassigned" 
       t = "unassigned"
     else
-      val = db.ex(get_display_text_sql(column,id.sub('!','').sub('-','')))
+      val = db.ex(data_sql.get_display_text_sql(column,id.sub('!','').sub('-','')))
       
       if val.count != 0 
         t = val[0]['displaytext']

@@ -12,12 +12,6 @@ module DataSql
     }.rmerge(params)
   end
 
-  def get_display_text_sql(column, id)
-      <<-SQL
-        select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
-      SQL
-  end
-
   def periods(data)
       # data.each do |row|
       #           row.each do |column_name, v|
@@ -317,6 +311,12 @@ class DataSqlProxy
     end
     
     cards_per_week
+  end
+  
+  def get_display_text_sql(column, id)
+    <<-SQL
+      select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
+    SQL
   end
   
 end
