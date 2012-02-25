@@ -22,6 +22,13 @@ describe "Tables" do
     visit "/"
     
     page.should have_content("prototype")
+    check_home_summary
+    drill_down_into_branch
+    drill_down_into_lead_organiser
+    drill_down_into_organiser
+  end
+  
+  def check_home_summary 
     click_link "Summary"
     within 'table#tableSummary tbody tr:nth-child(1)' do
       row_has "General Branch", %w{230 23 10147 302 -437 -135 10012 9093 631362.47}
@@ -37,7 +44,9 @@ describe "Tables" do
     within 'table#tablePaying tbody tr:nth-child(3)' do
       row_has "Victorian Branch", %w{22259 361 -413 0 0 22207}
     end
-    
+  end
+  
+  def drill_down_into_branch
     click_link "Victorian Branch"
     within '#filters' do
       page.should have_content "Branch: Victorian Branch"
@@ -58,7 +67,9 @@ describe "Tables" do
     within 'table#tablePaying tbody tr:nth-child(2)' do
       row_has "Chris Kalomiris", %w{3 0 0 0 0 3}
     end
-    
+  end
+  
+  def drill_down_into_lead_organiser
     click_link "Belinda Jacobi"
     within '#filters' do
       page.should have_content "Branch: Victorian Branch"
@@ -80,7 +91,9 @@ describe "Tables" do
     within 'table#tablePaying tbody tr:nth-child(6)' do
       row_has "Gayle Burmeister", %w{613 13 -15 4 -7 608}
     end
-    
+  end
+  
+  def drill_down_into_organiser
     click_link "Gayle Burmeister" 
     within '#filters' do
       page.should have_content "Branch: Victorian Branch"
@@ -102,7 +115,6 @@ describe "Tables" do
     within 'table#tablePaying tbody tr:nth-child(15)' do
       row_has "Charles Parsons (Vic) P/L", %w{2 4 0 0 -6 0}
     end
-    
   end
   
   def row_has(*items)
