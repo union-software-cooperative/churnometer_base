@@ -4,10 +4,12 @@ describe Churnobyl::DataSql do
   let(:datasql) do
     class Dummy
       include Churnobyl::DataSql
-      
-      def params
-        {}
+
+      def initialize
+        self.params = {}
       end
+
+      attr_accessor :params
     end
     Dummy.new 
   end
