@@ -1,8 +1,9 @@
 <div id="error-page"  class="container">
-  <div class="prepend-4 span-16 append-4 last">
+  <div class="prepend-2 span-20 append-2 last">
     <h1>There was an error</h1>
     <section class="errors">
-      <p><%= @error.message %></p>
+      <label>Error</label>
+      <p class="error"><%= @error.message %></p>
 
       <label>URL</label>
       <p class="info">
@@ -12,6 +13,16 @@
       <label>Params</label>
       <p class="info">
         <%= params.inspect %>
+      </p>
+
+      <label>SQL</label>
+      <p class="info">
+        <%= @sql %>
+      </p>
+
+      <label>Stacktrace</label>
+      <p class="info">
+        <%= @error.backtrace.join("<br />") %>
       </p>
     </section>
   </div>
