@@ -28,7 +28,7 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/dev' do
-    erb :index  
+    erb :dev  
   end
 
   get '/get_data' do
