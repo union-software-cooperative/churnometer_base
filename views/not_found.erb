@@ -1,0 +1,16 @@
+<div id="error-page"  class="container">
+  <div class="prepend-2 span-20 append-2 last">
+    <h1>Route does not exist</h1>
+    <section class="errors">
+      <label>URL</label>
+      <p class="info">
+        <%= request.url %>
+      </p>
+
+      <label>Params</label>
+      <p class="info">
+        <%= params.inspect %>
+      </p>
+    </section>
+  </div>
+</div>

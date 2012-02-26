@@ -30,6 +30,10 @@ class Churnobyl < Sinatra::Base
   set :raise_errors, false
   set :show_exceptions, false
   
+  not_found do
+    erb :not_found
+  end
+  
   error do
     @error = env['sinatra.error']
     erb :error
