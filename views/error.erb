@@ -1,0 +1,18 @@
+<div id="error-page"  class="container">
+  <div class="prepend-4 span-16 append-4 last">
+    <h1>There was an error</h1>
+    <section class="errors">
+      <p><%= @error.message %></p>
+
+      <label>URL</label>
+      <p class="info">
+        <%= request.url %>
+      </p>
+
+      <label>Params</label>
+      <p class="info">
+        <%= params.inspect %>
+      </p>
+    </section>
+  </div>
+</div>

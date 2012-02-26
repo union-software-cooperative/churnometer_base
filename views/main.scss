@@ -185,3 +185,11 @@ tfoot {
 	font-weight: strong;
 	font-size:140%;
 }
+
+#error-page {
+  .errors {
+    margin-top: 18px;
+    background-color: #fff;
+    padding: 10px 20px;
+  }
+}

@@ -27,6 +27,14 @@ class Churnobyl < Sinatra::Base
     #cache_control :public, :must_revalidate, :max_age => 60
   end
 
+  set :raise_errors, false
+  set :show_exceptions, false
+  
+  error do
+    @error = env['sinatra.error']
+    erb :error
+  end
+
   get '/dev' do
     erb :dev  
   end
