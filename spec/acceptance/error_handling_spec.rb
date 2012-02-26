@@ -19,13 +19,15 @@ describe "Not found" do
 end
 
 describe "Internal error" do
+  # This spec leaves an ugly stacktrace behind.  Not sure how to silence it for this
+  # spec
   it "shows stack trace" do
     visit "/?startDate=20-01-01"
-    
+  
     page.should have_content "date/time field value out of range"
     page.should have_content "/?startDate=20-01-01"
     page.should have_content '{"startDate"=>"20-01-01", "splat"=>[], "captures"=>[#]}'
     page.should have_content "select * from churnsummarydyn19( 'memberfacthelperpaying2', 'branchid', '', '20-01-01', '2012-02-27', true, '114' )"
-    page.select have_content "/churnobyl/lib/db.rb"
+    page.should have_content "/churnobyl/lib/db.rb"
   end
 end
