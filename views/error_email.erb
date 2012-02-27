@@ -1,0 +1,19 @@
+There was an error
+
+== Error
+<%= @error.message %>
+
+
+== URL
+<%= request.url %>
+
+
+== Params
+<%= params.inspect %>
+
+
+== SQL
+<%= @sql %>
+
+== Stacktrace
+<%= @error.backtrace.join("\n") %>
