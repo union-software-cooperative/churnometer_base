@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 
+require './lib/config'
 require './lib/ruby_changes'
 require './lib/constants'
 require './lib/helpers'
@@ -39,8 +40,8 @@ class Churnobyl < Sinatra::Base
     @error = env['sinatra.error']
     
     Pony.mail({
-      :to   => "somone@example.com",
-      :from => "noreply@example.com",
+      :to   => Config[:email_to],
+      :from => Config[:email_from],
       :subject => "[Error] #{@error.message}",
       :body => erb(:error_email, layout: false)
     })
