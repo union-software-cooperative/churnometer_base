@@ -17,6 +17,7 @@ require 'uri'
 require 'spreadsheet'
 require 'money'
 require "addressable/uri"
+require 'pony'
 
 require 'ir_b'
 
@@ -36,6 +37,14 @@ class Churnobyl < Sinatra::Base
   
   error do
     @error = env['sinatra.error']
+    
+    Pony.mail({
+      :to   => "somone@example.com",
+      :from => "noreply@example.com",
+      :subject => "[Error] #{@error.message}",
+      :body => erb(:error_email, layout: false)
+    })
+    
     erb :error
   end
 
@@ -132,7 +141,6 @@ class Churnobyl < Sinatra::Base
   def data_sql
     @data_sql ||= DataSql.new params
   end
-
   
   run! if app_file == $0
 end
