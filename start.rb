@@ -1,14 +1,6 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require './lib/config'
-require './lib/ruby_changes'
-require './lib/constants'
-require './lib/helpers'
-require './lib/db'
-require './lib/data_sql'
-require './lib/authorization'
-
 require 'sinatra/base'
 
 require 'pg'
@@ -21,6 +13,9 @@ require "addressable/uri"
 require 'pony'
 
 require 'ir_b'
+
+Config = YAML.load(File.read("./config/config.yaml"))
+Dir["./lib/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
   include Authorization
@@ -40,8 +35,8 @@ class Churnobyl < Sinatra::Base
     @error = env['sinatra.error']
     
     Pony.mail({
-      :to   => Config[:email_to],
-      :from => Config[:email_from],
+      :to   => Config['email_errors']['to'],
+      :from => Config['email_errors']['from'],
       :subject => "[Error] #{@error.message}",
       :body => erb(:error_email, layout: false)
     })
