@@ -37,7 +37,9 @@
 		<% i = 0 %>
 
     <% if waterfall_chart_ok? || line_chart_ok? %>
-      <%= erb :'summary/graph', :locals => {:i => i} %>
+      <div id="tabs-graph">
+        <%= erb :'summary/graph', :locals => {:i => i} %>
+      </div>
     <% end %>
 		
 		
