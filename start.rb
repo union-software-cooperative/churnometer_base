@@ -31,14 +31,13 @@ class Churnobyl < Sinatra::Base
     fix_date_params
    
     @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql
-    @data = db.ex @sql
-  
+    @data = DataPresenter.new db.ex(@sql)  
     erb :summary
   end
 
   get '/get_data' do
     @sql = params[:sql]
-    @data = db.ex @sql
+    @data = DataPresenter.new db.ex(@sql)
     erb :summary
   end
 
