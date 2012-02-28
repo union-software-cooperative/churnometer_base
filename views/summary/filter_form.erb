@@ -70,7 +70,7 @@
 			
     			<tr>
     				<td class="form span-5 filters">
-    					Constrain search to this <%= Mappings.groups_by_collection[params['group_by']].downcase %> list
+    					Constrain search to this <%= Mappings.groups_by_collection[params['group_by'] || 'branchid'].downcase %> list
     				</td>
     				<td class="filters">
     					<input class="selections" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="" checked>Off&nbsp;&nbsp;&nbsp;&nbsp;

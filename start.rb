@@ -30,7 +30,7 @@ class Churnobyl < Sinatra::Base
   
     fix_date_params
    
-    @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql
+    @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql(leader?)
     @data = DataPresenter.new db.ex(@sql)  
     erb :summary
   end
@@ -58,7 +58,7 @@ class Churnobyl < Sinatra::Base
   get '/export_member_details' do
     fix_date_params
   
-    data_to_excel db.ex(data_sql.member_sql)
+    data_to_excel db.ex(data_sql.member_sql(leader?))
   end
 
   helpers do

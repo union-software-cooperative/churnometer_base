@@ -57,6 +57,18 @@ describe "Tables" do
     page.should have_no_content "Error"
   end
   
+  it "Can drill down into a member" do
+    visit "/"
+    click_link "Summary"
+
+    within 'table#tableSummary tbody tr:nth-child(1)' do
+      click_link "230"
+    end
+    
+    page.should have_content "prototype"
+    page.should have_no_content "Error"
+  end
+  
   def check_home_summary 
     click_link "Summary"
     within 'table#tableSummary tbody tr:nth-child(1)' do
