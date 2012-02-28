@@ -1,112 +1,6 @@
 <div class="container">
-
   <h1>churnobyl prototype</h1>
-  <section id="filter" class="form span-24">
-	<div class="form span-24 last">
-      <form action="/">
-	  <input type="hidden" name="column" value="<%= data_sql.query['column'] %>">
-        
-        <ul>
-          <li class="datepicker form span-5">
-            <label>Start Date</label>
-            <input type="text" name="startDate" value="<%= data_sql.query['startDate'] %>">
-          </li>
-          <li class="datepicker form span-5">
-            <label>End Date</label>
-            <input type="text" name="endDate" value="<%= data_sql.query['endDate'] %>">
-          </li>
-          <li class="group_by form span-5">
-            <label>Group by</label>
-            <select name="group_by">
-              <% groups_by_collection.each do |column_name, name| %>
-                <% if column_name == data_sql.query['group_by'] %>
-                  <option value="<%= column_name %>" selected="selected"><%= name %></option>
-                <% else %> 
-                  <option value="<%= column_name %>"><%= name %></option>
-                <% end %>
-              <% end %>
-            </select>
-		  </li>
-		  <li class="group_by form span-5">
-            <label>Running total</label>
-            <select name="interval">
-              <% interval_collection.each do |column_name, name| %>
-                <% if column_name == data_sql.query['interval'] %>
-                  <option value="<%= column_name %>" selected="selected"><%= name %></option>
-                <% else %>
-                  <option value="<%= column_name %>"><%= name %></option>
-                <% end %>
-              <% end %>
-            </select>
-		  </li>
-		 <li >
-            <% if filters.count > 0 %>
-				<label class="form span-18">Drilling down into...</label>
-				
-				<table id="filters" class="form span-18" >
-				  <% filters.each do |column_name, value| %>
-					 <tr>
-						<td class="form span-5 filters">
-			    			<%=h(groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
-						</td>
-						<td class="filters">
-						<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections invert_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections disable_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections remove_filter" type="radio" id="<%="#{Filter}#{column_name}remove" %>" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
-					  	
-						</td>
-						
-					  </tr>
-				  <% end %>
-				
-				<% if params['column'].to_s != ''%>
-					 <tr>
-						<td class="form span-5 filters">
-			    			<%=h("Members:  #{col_names[params['column']]}") %>
-						</td>
-						<td class="filters">
-						<input class="selections" type="radio" name="<%="column" %>" value="<%=params['column'] %>" checked>Filter for&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections" type="radio" name="<%="column" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
-					  	</td>
-					  </tr>
-				  <% end %>
-				
-				<tr>
-					<td class="form span-5 filters">
-						Constrain search to this <%= groups_by_collection[params['group_by']].downcase %> list
-					</td>
-					<td class="filters">
-						<input class="selections" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="" checked>Off&nbsp;&nbsp;&nbsp;&nbsp;
-						<input class="selections constrain_filter" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="<%=row_header_id_list %>">On&nbsp;&nbsp;&nbsp;&nbsp;
-					</td>
-					</tr>
-				</table>
-				
-			<% else %>
-				<label class="form span-18">Start exploring by clicking interesting links in the charts and tables below.</label>
-			<% end %>
-	      </li>
-	
-		  <li class="form span-24">
-		    <input  type="submit" value="Refresh">
-		  </li>
-		</ul>
-		<div id="removefiltertip" class="tooltip">
-			When removed, this filter will be ignored by the system and removed from the screen.  When removing or disabling a filter, please carefully consider the 'Group By' setting.  If 'Work Site' is set thousands of rows could be returned and your browser could hang.
-		</div>
-		<div id="disablefiltertip" class="tooltip">
-			When disabled, this filter will be ignored by the system but kept visible so it can be easily re-enabled.  When removing or disabling a filter, please carefully consider the 'Group By' setting.  If 'Work Site' is set thousands of rows could be returned and your browser could hang.
-		</div>
-		<div id="invertfiltertip" class="tooltip">
-			Returns everything but this item, by excluding any data that matches this item.  Most useful when used with 'Constrain search...'.
-		</div>
-		<div id="constrainfiltertip" class="tooltip">
-			Limits the results of the next search to those listed below.  Useful when disabling, removing or inverting a filter without changing the set of rows reported.  e.g.  you might want to see all churn for an organiser's sites without being limited to just the period the organiser was assigned to those sites.
-		</div>
-		</form>
-    </div>
-</section>
+  <%= erb :'summary/filter_form' %>
 </div>
 
 <section id="data">
@@ -131,7 +25,7 @@
 			<% i = 0 %>
 			
 			<% if waterfall_chart_ok? || line_chart_ok? %>
-				<li><a href="#tabs-<%=i+=1%>">Graph</a></li>
+				<li><a href="#tabs-graph">Graph</a></li>
 			<% end %>
 			<% tables.each do | table | %>
 				<li><a href="#tabs-<%=i+=1%>"><%=table[0] %></a></li>
@@ -142,160 +36,28 @@
 	
 		<% i = 0 %>
 
-		<% if waterfall_chart_ok? || line_chart_ok? %>
-		
-			<div id="tabs-<%=i+=1%>">
-			
-					<div id="chart">
-					
-					<% if line_chart_ok? %>
-						LINE GRAPH GOES HERE
-					<% else %>
-					  	<table id="waterfall">
-							<caption>Paying gain vs loss</caption>
-							<thead>
-								<tr>
-									<th>Item</th>
-									<th>Change</th>
-								</tr>
-
-							</thead>
-							<tbody>
-								<% waterfall_total = 0 %>
-								<% @data.each do |row| %>
-						            <tr>
-										<td><a href="<%= drill_down_link_header(row) %>" style="text-decoration:none"><%= "#{row['row_header1']}" %></a> gain</td>
-										<td><%= row['paying_real_gain'] %></td>
-									</tr>
-									<tr>
-										<td><a href="<%= drill_down_link_header(row) %>" style="text-decoration:none"><%= "#{row['row_header1']}" %></a> loss</td>
-										<td><%= row['paying_real_loss'] %></td>
-									</tr>
-									<% waterfall_total += (row['paying_real_gain'].to_i + row['paying_real_loss'].to_i)%>
-								<% end %>
-								<tr>
-										<td>Net</td>
-										<td><%= waterfall_total %></td>
-								</tr>
-								<tr>
-								</tr>
-							</tbody>
-
-							
-						</table>
-					<% end %>
-				</div>
-			</div>
-		<% end %>
+    <% if waterfall_chart_ok? || line_chart_ok? %>
+      <div id="tabs-graph">
+        <%= erb :'summary/graph', :locals => {:i => i} %>
+      </div>
+    <% end %>
 		
 		
 		<% tables.each do | table, cols | %>
 			<div id="tabs-<%=i+=1%>">
-				
-			<% if has_data? %>
-				<ul>
-			    	<% if data_sql.query['column'].empty? %>
-				    	<li class="nav"><a href="/export_summary?<%= (query_string || '') + "&table=" + table %>" class="button">Export Summary</a></li>
-				    <% else %>
-				    	<li class="nav"><a href="/export_member_details?<%= (query_string || '') + "&table=" + table %>" class="button">Export Member Details</a></li>
-					<% end %>
-				</ul>
-			    <% totals = {} %>
- 
-			    <table class="tablesorter" id='table<%=table %>'>
-			      <thead>
-			        <tr>
-			          <% merge_cols(@data[0], cols).each do |column_name, v| %>
-				    	<th id="<%=column_name %>h<%=i%>">
-							
-							<% if bold_col?(column_name) %> 
-								<strong>
-							<% end %>
-							
-							<%= col_names[column_name] || column_name %>
-							
-							<% if bold_col?(column_name) %> 
-								</strong>
-							<% end %>
-						</th>
-			          <% end %>
-			        </tr>
-			      </thead>
-			      <tbody>
-			        <% @data.each do |row| %>
-			          <tr>
-			            <% merge_cols(row, cols).each do |column_name, v| %>
-							<%
-							  totals[column_name] ||= 0
-							  totals[column_name] = safe_add totals[column_name], v
-							%>
-							<td>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-		
-							  		<% if column_name == 'row_header1' %>
-									    <a href="<%= drill_down_link_header(row) %>"><%= v %></a>
-									<% elsif column_name == 'period_header' %>
-										<a href="<%= drill_down_link_interval(row) %>"><%= v %></a>
-									<% elsif can_detail_cell? column_name, v %>
-									    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>
-									<% elsif can_export_cell? column_name, v %>
-									    <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
-									<% else %>
-									    <%= v %>
-									<% end %>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-							</td>
-			            <% end %>
-			          </tr>
-			        <% end %>
-			      </tbody>
-				  <% if params['column'].to_s == '' %>
-			      	<tfoot>
-				        <tr>
-				          <% totals.each do |column_name, total| %>
-				            <td>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-		
-					      		<% if !no_total.include?(column_name) %>
-				                	<% if can_export_cell? column_name, total %>
-					                  <a href="<%= export_column(column_name) %>"><%= total %></a>
-					                <% else %>
-					                  <%= total %>
-					                <% end %>
-					            <% end %>
-							<% if bold_col?(column_name) %> 
-								<strong>
-							<% end %>
-					    </td>
-				          <% end %>
-				        </tr>
-				      </tfoot>
-					<% end %>
-			    </table>
-	
-			  <% else %>
-			    <p>No data</p>
-			  <% end %>
-	
-	
+	      <%= erb :'summary/table', :locals => {:table => table, :cols => cols, :i => i} %>
 			</div>
 		<% end %>
 		
 		<div id="tabs-<%=i+=1%>">
 			<ul>
-		    	<li class="nav"><a href="/export_summary?<%= query_string %>" class="button">Export All Summary Data</a></li>
-		    	<li class="nav"><a href="/export_member_details?<%= query_string %>" class="button">Export All Member Details</a></li>
+	    	<li class="nav"><a href="/export_summary?<%= query_string %>" class="button">Export All Summary Data</a></li>
+	    	<li class="nav"><a href="/export_member_details?<%= query_string %>" class="button">Export All Member Details</a></li>
 			</ul>
 			
 			<pre>
-		      <%= h @sql %>
-		    </pre>
+	      <%= h @sql %>
+	    </pre>
 		</div>
 		
 		<!-- tooltip descriptions -->
@@ -404,7 +166,7 @@
 		         borderWidth: 0
 		      },
 			  series: [
-				<%= data_sql.pivot(@data).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") %>
+				<%= data_sql.pivot(@data, next_group_by).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") %>
 			
 				]
 		   });

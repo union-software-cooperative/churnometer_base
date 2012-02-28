@@ -1,55 +1,6 @@
 module Helpers
-  def has_data?
-    @data && @data.count > 0
-  end
-  
   def query_string
     URI.parse(request.url).query
-  end
-
-  def fix_date_params
-    # override date filters with interval filters
-    if !params['intervalStart'].nil?
-      params['startDate'] = params['intervalStart'] 
-    end
-    
-    if !params['intervalEnd'].nil? 
-      params['endDate'] = params['intervalEnd']
-    end
-    
-    # make sure startDate isn't before data began
-    if !params['startDate'].nil?
-      @start = Date.parse((db.ex data_sql.getdimstart_sql)[0]['getdimstart'])+1
-      if @start > Date.parse(params['startDate'])
-        @warning = 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')' 
-        params['startDate'] = @start.to_s
-      end
-    end
-
-    # make sure endDate is in the future
-    if !params['endDate'].nil?
-      @end = Date.parse(params['endDate'])
-      if DateTime.now < @end
-        @end = Time.now
-      end
-      params['endDate'] = @end.strftime("%Y-%m-%d")
-    end
-  end
-
-  def show_col?(column_name)
-    result=true
-    if params['adv'] == '1'
-      result=true
-    elsif params['column'].to_s == ''
-      result=simple_summary.include?(column_name)
-    else
-      result=simple_member.include?(column_name)
-    end
-    result
-  end
-
-  def getdimstart(dim)
-    db.ex(dimstart_sql)
   end
 
   def get_display_text(column, id)
@@ -146,36 +97,11 @@ module Helpers
 
     row_interval
   end
-     
-  def groups_by_collection
-    {
-      "branchid"      => "Branch",
-      "lead"          => "Lead Organiser",
-      "org"           => "Organiser",
-      "areaid"        => "Area",
-      "companyid"     => "Work Site",
-      "industryid"    => "Industry",
-      "del"           => "Delegate Training",
-      "hsr"           => "HSR Training",
-      "nuwelectorate" => "Electorate",
-      "state"         => "State",
-      "feegroupid"    => "Fee Group"
-    }
-  end
-  
-  
-  def interval_collection
-    [
-      ["none", "Off"],
-      ["week", "Weekly"],
-      ["month", "Monthly"],
-    ]
-  end
-  
+       
   def col_names 
     hash = {
-      'row_header1'     => groups_by_collection[(params['group_by'] || 'branchid')].downcase,
-      'row_header'     => groups_by_collection[(params['group_by'] || 'branchid')].downcase,
+      'row_header1'     => Mappings.groups_by_collection[(params['group_by'] || 'branchid')].downcase,
+      'row_header'     => Mappings.groups_by_collection[(params['group_by'] || 'branchid')].downcase,
       'a1p_real_gain'   => 'total cards in',
       'a1p_to_other'    => 'never started paying',
       'paying_start_count' => 'paying at start',
@@ -396,11 +322,11 @@ module Helpers
       'org'           => 'companyid',
       'state'         => 'areaid',
       'area'          => 'companyid',
-      'feegroupid'      => 'companyid',
+      'feegroupid'    => 'companyid',
       'nuwelectorate' => 'org',
       'del'           => 'companyid',
       'hsr'           => 'companyid',
-      'industryid'	=> 'companyid',
+      'industryid'	  => 'companyid',
       'companyid'     => 'companyid'
     }
 

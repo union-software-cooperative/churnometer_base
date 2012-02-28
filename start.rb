@@ -19,6 +19,7 @@ Dir["./lib/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
   include Authorization
+  include Support
 
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
@@ -30,15 +31,14 @@ class Churnobyl < Sinatra::Base
   
     fix_date_params
    
-    @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql
-    @data = db.ex @sql
-  
+    @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql(leader?)
+    @data = DataPresenter.new db.ex(@sql)  
     erb :summary
   end
 
   get '/get_data' do
     @sql = params[:sql]
-    @data = db.ex @sql
+    @data = DataPresenter.new db.ex(@sql)
     erb :summary
   end
 
@@ -59,7 +59,7 @@ class Churnobyl < Sinatra::Base
   get '/export_member_details' do
     fix_date_params
   
-    data_to_excel db.ex(data_sql.member_sql)
+    data_to_excel db.ex(data_sql.member_sql(leader?))
   end
 
   helpers do
@@ -67,47 +67,6 @@ class Churnobyl < Sinatra::Base
     alias_method :h, :escape_html
   
     include Helpers
-  end
-
-  def data_to_excel(data)
-    @data = data
-    book = Spreadsheet::Excel::Workbook.new
-    sheet = book.create_worksheet
-  
-    if has_data?
-    
-      #Get column list
-      if params['table'].nil?
-        cols = @data[0]
-      elsif summary_tables.include?(params['table'])
-          cols = summary_tables[params['table']]
-      else
-        cols = ['memberid'] | member_tables[params['table']]  
-      end
-    
-      # Add header
-      merge_cols(@data[0], cols).each_with_index do |hash, x|
-        sheet[0, x] = col_names[hash.first] || hash.first
-      end
-  
-      # Add data
-      @data.each_with_index do |row, y|
-        merge_cols(row, cols).each_with_index do |hash,x|
-        
-          if filter_columns.include?(hash.first) 
-            sheet[y + 1, x] = hash.last.to_i
-          else
-              sheet[y + 1, x] = hash.last
-          end  
-      
-        end
-      end
-    end
-  
-    path = "tmp/data.xls"
-    book.write path
-  
-    send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
 
   def db

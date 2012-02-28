@@ -4,7 +4,7 @@ class Sinatra::Base
   set :show_exceptions, false
 
   not_found do
-    erb :not_found
+    erb :'errors/not_found'
   end
   
   error do
@@ -14,9 +14,9 @@ class Sinatra::Base
       :to   => Config['email_errors']['to'],
       :from => Config['email_errors']['from'],
       :subject => "[Error] #{@error.message}",
-      :body => erb(:error_email, layout: false)
+      :body => erb(:'errors/error_email', layout: false)
     })
     
-    erb :error
+    erb :'errors/error'
   end
 end
