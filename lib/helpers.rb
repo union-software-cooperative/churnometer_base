@@ -3,10 +3,6 @@ module Helpers
     URI.parse(request.url).query
   end
 
-  def getdimstart(dim)
-    db.ex(dimstart_sql)
-  end
-
   def get_display_text(column, id)
     t = "error!"
     
