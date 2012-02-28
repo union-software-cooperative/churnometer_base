@@ -26,7 +26,7 @@
 			<% i = 0 %>
 			
 			<% if waterfall_chart_ok? || line_chart_ok? %>
-				<li><a href="#tabs-<%=i+=1%>">Graph</a></li>
+				<li><a href="#tabs-graph">Graph</a></li>
 			<% end %>
 			<% tables.each do | table | %>
 				<li><a href="#tabs-<%=i+=1%>"><%=table[0] %></a></li>
@@ -37,7 +37,9 @@
 	
 		<% i = 0 %>
 
-    <%= erb :'summary/graph', :locals => {:i => i} %>
+    <% if waterfall_chart_ok? || line_chart_ok? %>
+      <%= erb :'summary/graph', :locals => {:i => i} %>
+    <% end %>
 		
 		
 		<% tables.each do | table, cols | %>
