@@ -1,11 +1,11 @@
 class Db
   def initialize
     @conn = PGconn.open(
-      :host => "122.248.235.218",
-      :port => "5432",
-      :dbname => "churnobyl",
-      :user => "churnuser",
-      :password => "fcchurnpass"
+      :host =>      Config['database']['host'],
+      :port =>      Config['database']['port'],
+      :dbname =>    Config['database']['dbname'],
+      :user =>      Config['database']['user'],
+      :password =>  Config['database']['password']
     )
   end
   

@@ -1,14 +1,6 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require './lib/config'
-require './lib/ruby_changes'
-require './lib/constants'
-require './lib/helpers'
-require './lib/db'
-require './lib/data_sql'
-require './lib/authorization'
-
 require 'sinatra/base'
 
 require 'pg'
@@ -22,44 +14,14 @@ require 'pony'
 
 require 'ir_b'
 
+Config = YAML.load(File.read("./config/config.yaml"))
+Dir["./lib/*.rb"].each { |f| require f }
+
 class Churnobyl < Sinatra::Base
   include Authorization
 
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
-  end
-
-  set :raise_errors, false
-  set :show_exceptions, false
-  
-  not_found do
-    erb :not_found
-  end
-  
-  error do
-    @error = env['sinatra.error']
-    
-    Pony.mail({
-      :to   => Config[:email_to],
-      :from => Config[:email_from],
-      :subject => "[Error] #{@error.message}",
-      :body => erb(:error_email, layout: false)
-    })
-    
-    erb :error
-  end
-
-  get '/dev' do
-    erb :dev  
-  end
-
-  get '/get_data' do
-    @data = db.ex params[:sql]
-    erb :summary
-  end
-
-  get '/scss/:name.css' do |name|
-    scss name.to_sym, :style => :expanded
   end
 
   get '/' do
@@ -69,10 +31,23 @@ class Churnobyl < Sinatra::Base
     fix_date_params
    
     @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql
-  
     @data = db.ex @sql
   
     erb :summary
+  end
+
+  get '/get_data' do
+    @sql = params[:sql]
+    @data = db.ex @sql
+    erb :summary
+  end
+
+  get '/dev' do
+    erb :dev  
+  end
+
+  get '/scss/:name.css' do |name|
+    scss name.to_sym, :style => :expanded
   end
 
   get '/export_summary' do
