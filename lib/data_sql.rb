@@ -241,7 +241,9 @@ class DataSql
       }
     }.rmerge(params)
   end
-      
+            
+  private
+
   def paying_start_total(data)
     # can't figure out enumerable way to sum this
     t=0
@@ -251,14 +253,6 @@ class DataSql
     t
   end
 
-  def paying_end_total(data)
-    t=0
-    data.group_by{ |row| row['row_header1'] }.each do | row, v |
-      t += v[0] ['paying_end_count'].to_i
-    end
-    t
-  end
-  
   def paying_transfers_total(data)
     t=0
     data.group_by{ |row| row['row_header1'] }.each do | row, v |
@@ -266,18 +260,6 @@ class DataSql
     end
     t
   end
-  
-  def filter_xml_node(k,v)
-    case v[0]
-      when '!' 
-        "<not_#{k}>#{v.sub('!','')}</not_#{k}>" 
-      when '-' 
-        "<ignore_#{k}>#{v.sub('!','')}</ignore_#{k}>" 
-      else 
-        "<#{k}>#{v}</#{k}>"
-      end
-  end
-  
 
   def filter_xml(filters, locks)
     # Example XML
@@ -302,9 +284,18 @@ class DataSql
     result += "</search>"
     result
   end
-          
-  private
   
+  def filter_xml_node(k,v)
+    case v[0]
+      when '!' 
+        "<not_#{k}>#{v.sub('!','')}</not_#{k}>" 
+      when '-' 
+        "<ignore_#{k}>#{v.sub('!','')}</ignore_#{k}>" 
+      else 
+        "<#{k}>#{v}</#{k}>"
+      end
+  end
+            
   def locks
     (params['lock'] || []).reject{ |column_name, value | value.empty? }
   end
