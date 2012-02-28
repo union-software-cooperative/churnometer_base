@@ -26,7 +26,7 @@
     	  <li class="group_by form span-5">
               <label for="input-internal-select">Running total</label>
               <select id="input-internal-select" name="interval">
-                <% interval_collection.each do |column_name, name| %>
+                <% @data.interval_selections.each do |column_name, name| %>
                   <% if column_name == data_sql.query['interval'] %>
                     <option value="<%= column_name %>" selected="selected"><%= name %></option>
                   <% else %>

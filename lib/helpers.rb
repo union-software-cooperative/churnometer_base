@@ -160,14 +160,6 @@ module Helpers
   end
   
   
-  def interval_collection
-    [
-      ["none", "Off"],
-      ["week", "Weekly"],
-      ["month", "Monthly"],
-    ]
-  end
-  
   def col_names 
     hash = {
       'row_header1'     => groups_by_collection[(params['group_by'] || 'branchid')].downcase,

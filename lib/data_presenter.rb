@@ -12,7 +12,14 @@ class DataPresenter
   def has_data?
     data && data.count > 0
   end
-
+  
+  def interval_selections
+    [
+      ["none", "Off"],
+      ["week", "Weekly"],
+      ["month", "Monthly"],
+    ]
+  end
   
   # Wrappers
   
