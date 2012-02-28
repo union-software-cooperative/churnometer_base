@@ -24,39 +24,6 @@ class Churnobyl < Sinatra::Base
     #cache_control :public, :must_revalidate, :max_age => 60
   end
 
-  set :raise_errors, false
-  set :show_exceptions, false
-  
-  not_found do
-    erb :not_found
-  end
-  
-  error do
-    @error = env['sinatra.error']
-    
-    Pony.mail({
-      :to   => Config['email_errors']['to'],
-      :from => Config['email_errors']['from'],
-      :subject => "[Error] #{@error.message}",
-      :body => erb(:error_email, layout: false)
-    })
-    
-    erb :error
-  end
-
-  get '/dev' do
-    erb :dev  
-  end
-
-  get '/get_data' do
-    @data = db.ex params[:sql]
-    erb :summary
-  end
-
-  get '/scss/:name.css' do |name|
-    scss name.to_sym, :style => :expanded
-  end
-
   get '/' do
     cache_control :public, :max_age => 43200
     protected!
@@ -64,10 +31,23 @@ class Churnobyl < Sinatra::Base
     fix_date_params
    
     @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql
-  
     @data = db.ex @sql
   
     erb :summary
+  end
+
+  get '/get_data' do
+    @sql = params[:sql]
+    @data = db.ex @sql
+    erb :summary
+  end
+
+  get '/dev' do
+    erb :dev  
+  end
+
+  get '/scss/:name.css' do |name|
+    scss name.to_sym, :style => :expanded
   end
 
   get '/export_summary' do
