@@ -1,5 +1,4 @@
 <div class="container">
-
   <h1>churnobyl prototype</h1>
   <%= erb :'summary/filter_form' %>
 </div>
@@ -44,99 +43,7 @@
 		
 		<% tables.each do | table, cols | %>
 			<div id="tabs-<%=i+=1%>">
-				
-			<% if @data.has_data? %>
-				<ul>
-			    	<% if data_sql.query['column'].empty? %>
-				    	<li class="nav"><a href="/export_summary?<%= (query_string || '') + "&table=" + table %>" class="button">Export Summary</a></li>
-				    <% else %>
-				    	<li class="nav"><a href="/export_member_details?<%= (query_string || '') + "&table=" + table %>" class="button">Export Member Details</a></li>
-					<% end %>
-				</ul>
-			    <% totals = {} %>
- 
-			    <table class="tablesorter" id='table<%=table %>'>
-			      <thead>
-			        <tr>
-			          <% merge_cols(@data[0], cols).each do |column_name, v| %>
-				    	<th id="<%=column_name %>h<%=i%>">
-							
-							<% if bold_col?(column_name) %> 
-								<strong>
-							<% end %>
-							
-							<%= col_names[column_name] || column_name %>
-							
-							<% if bold_col?(column_name) %> 
-								</strong>
-							<% end %>
-						</th>
-			          <% end %>
-			        </tr>
-			      </thead>
-			      <tbody>
-			        <% @data.each do |row| %>
-			          <tr>
-			            <% merge_cols(row, cols).each do |column_name, v| %>
-							<%
-							  totals[column_name] ||= 0
-							  totals[column_name] = safe_add totals[column_name], v
-							%>
-							<td>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-		
-							  		<% if column_name == 'row_header1' %>
-									    <a href="<%= drill_down_link_header(row) %>"><%= v %></a>
-									<% elsif column_name == 'period_header' %>
-										<a href="<%= drill_down_link_interval(row) %>"><%= v %></a>
-									<% elsif can_detail_cell? column_name, v %>
-									    <a href="<%= detail_cell(row, column_name) %>"><%= v %></a>
-									<% elsif can_export_cell? column_name, v %>
-									    <a href="<%= export_cell(row, column_name) %>"><%= v %></a>
-									<% else %>
-									    <%= v %>
-									<% end %>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-							</td>
-			            <% end %>
-			          </tr>
-			        <% end %>
-			      </tbody>
-				  <% if params['column'].to_s == '' %>
-			      	<tfoot>
-				        <tr>
-				          <% totals.each do |column_name, total| %>
-				            <td>
-								<% if bold_col?(column_name) %> 
-									<strong>
-								<% end %>
-		
-					      		<% if !no_total.include?(column_name) %>
-				                	<% if can_export_cell? column_name, total %>
-					                  <a href="<%= export_column(column_name) %>"><%= total %></a>
-					                <% else %>
-					                  <%= total %>
-					                <% end %>
-					            <% end %>
-							<% if bold_col?(column_name) %> 
-								<strong>
-							<% end %>
-					    </td>
-				          <% end %>
-				        </tr>
-				      </tfoot>
-					<% end %>
-			    </table>
-	
-			  <% else %>
-			    <p>No data</p>
-			  <% end %>
-	
-	
+	      <%= erb :'summary/table', :locals => {:table => table, :cols => cols, :i => i} %>
 			</div>
 		<% end %>
 		
