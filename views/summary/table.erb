@@ -12,18 +12,17 @@
     <thead>
       <tr>
         <% merge_cols(@data[0], cols).each do |column_name, v| %>
-    	<th id="<%=column_name %>h<%=i%>">
+        	<th id="<%=column_name %>h<%=i%>">
+      			<% if bold_col?(column_name) %> 
+      				<strong>
+      			<% end %>
 			
-			<% if bold_col?(column_name) %> 
-				<strong>
-			<% end %>
+      			<%= col_names[column_name] || column_name %>
 			
-			<%= col_names[column_name] || column_name %>
-			
-			<% if bold_col?(column_name) %> 
-				</strong>
-			<% end %>
-		</th>
+      			<% if bold_col?(column_name) %> 
+      				</strong>
+      			<% end %>
+    		  </th>
         <% end %>
       </tr>
     </thead>
