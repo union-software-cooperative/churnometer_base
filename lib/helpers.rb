@@ -3,47 +3,6 @@ module Helpers
     URI.parse(request.url).query
   end
 
-  def fix_date_params
-    # override date filters with interval filters
-    if !params['intervalStart'].nil?
-      params['startDate'] = params['intervalStart'] 
-    end
-    
-    if !params['intervalEnd'].nil? 
-      params['endDate'] = params['intervalEnd']
-    end
-    
-    # make sure startDate isn't before data began
-    if !params['startDate'].nil?
-      @start = Date.parse((db.ex data_sql.getdimstart_sql)[0]['getdimstart'])+1
-      if @start > Date.parse(params['startDate'])
-        @warning = 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')' 
-        params['startDate'] = @start.to_s
-      end
-    end
-
-    # make sure endDate is in the future
-    if !params['endDate'].nil?
-      @end = Date.parse(params['endDate'])
-      if DateTime.now < @end
-        @end = Time.now
-      end
-      params['endDate'] = @end.strftime("%Y-%m-%d")
-    end
-  end
-
-  def show_col?(column_name)
-    result=true
-    if params['adv'] == '1'
-      result=true
-    elsif params['column'].to_s == ''
-      result=simple_summary.include?(column_name)
-    else
-      result=simple_member.include?(column_name)
-    end
-    result
-  end
-
   def getdimstart(dim)
     db.ex(dimstart_sql)
   end
