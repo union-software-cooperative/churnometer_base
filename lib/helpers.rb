@@ -142,28 +142,11 @@ module Helpers
 
     row_interval
   end
-     
-  def groups_by_collection
-    {
-      "branchid"      => "Branch",
-      "lead"          => "Lead Organiser",
-      "org"           => "Organiser",
-      "areaid"        => "Area",
-      "companyid"     => "Work Site",
-      "industryid"    => "Industry",
-      "del"           => "Delegate Training",
-      "hsr"           => "HSR Training",
-      "nuwelectorate" => "Electorate",
-      "state"         => "State",
-      "feegroupid"    => "Fee Group"
-    }
-  end
-  
-  
+       
   def col_names 
     hash = {
-      'row_header1'     => groups_by_collection[(params['group_by'] || 'branchid')].downcase,
-      'row_header'     => groups_by_collection[(params['group_by'] || 'branchid')].downcase,
+      'row_header1'     => Mappings.groups_by_collection[(params['group_by'] || 'branchid')].downcase,
+      'row_header'     => Mappings.groups_by_collection[(params['group_by'] || 'branchid')].downcase,
       'a1p_real_gain'   => 'total cards in',
       'a1p_to_other'    => 'never started paying',
       'paying_start_count' => 'paying at start',

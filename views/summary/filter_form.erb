@@ -14,7 +14,7 @@
         <li class="group_by form span-5">
           <label>Group by</label>
           <select name="group_by">
-            <% groups_by_collection.each do |column_name, name| %>
+            <% Mappings.groups_by_collection.each do |column_name, name| %>
               <% if column_name == data_sql.query['group_by'] %>
                 <option value="<%= column_name %>" selected="selected"><%= name %></option>
               <% else %> 
@@ -43,7 +43,7 @@
     			  <% filters.each do |column_name, value| %>
     				 <tr>
     					<td class="form span-5 filters">
-    		    			<%=h(groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
+    		    			<%=h(Mappings.groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
     					</td>
     					<td class="filters">
     					<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
@@ -70,7 +70,7 @@
 			
     			<tr>
     				<td class="form span-5 filters">
-    					Constrain search to this <%= groups_by_collection[params['group_by']].downcase %> list
+    					Constrain search to this <%= Mappings.groups_by_collection[params['group_by']].downcase %> list
     				</td>
     				<td class="filters">
     					<input class="selections" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="" checked>Off&nbsp;&nbsp;&nbsp;&nbsp;
