@@ -14,8 +14,8 @@
 			<tbody>
 				<% waterfall_total = 0 %>
 				<% @data.each do |row| %>
-		            <tr>
-						<td><a href="<%= drill_down_link_header(row) %>" style="text-decoration:none"><%= "#{row['row_header1']}" %></a> gain</td>
+          <tr>
+  					<td><a href="<%= drill_down_link_header(row) %>" style="text-decoration:none"><%= "#{row['row_header1']}" %></a> gain</td>
 						<td><%= row['paying_real_gain'] %></td>
 					</tr>
 					<tr>
@@ -23,16 +23,14 @@
 						<td><%= row['paying_real_loss'] %></td>
 					</tr>
 					<% waterfall_total += (row['paying_real_gain'].to_i + row['paying_real_loss'].to_i)%>
-				<% end %>
+        <% end %>
 				<tr>
-						<td>Net</td>
-						<td><%= waterfall_total %></td>
-				</tr>
-				<tr>
-				</tr>
-			</tbody>
-
-			
+					<td>Net</td>
+					<td><%= waterfall_total %></td>
+			  </tr>
+			  <tr>
+			  </tr>
+			</tbody>			
 		</table>
 	<% end %>
 </div>

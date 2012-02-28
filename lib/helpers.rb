@@ -392,11 +392,11 @@ module Helpers
       'org'           => 'companyid',
       'state'         => 'areaid',
       'area'          => 'companyid',
-      'feegroupid'      => 'companyid',
+      'feegroupid'    => 'companyid',
       'nuwelectorate' => 'org',
       'del'           => 'companyid',
       'hsr'           => 'companyid',
-      'industryid'	=> 'companyid',
+      'industryid'	  => 'companyid',
       'companyid'     => 'companyid'
     }
 
