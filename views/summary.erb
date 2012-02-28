@@ -166,7 +166,7 @@
 		         borderWidth: 0
 		      },
 			  series: [
-				<%= data_sql.pivot(@data).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") %>
+				<%= data_sql.pivot(@data, next_group_by).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") %>
 			
 				]
 		   });

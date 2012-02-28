@@ -210,7 +210,7 @@ class DataSql
     data.group_by{ |row| row['period_header'] }.sort{|a,b| a[0] <=> b[0] }
   end
   
-  def pivot(data)
+  def pivot(data, next_group_by)
     series = Hash.new
     
     rows = data.group_by{ |row| row['row_header1'] }
