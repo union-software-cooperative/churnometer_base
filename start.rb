@@ -69,11 +69,11 @@ class Churnobyl < Sinatra::Base
   end
 
   def data_to_excel(data)
-    @data = data
+    @data = DataPresenter.new data
     book = Spreadsheet::Excel::Workbook.new
     sheet = book.create_worksheet
   
-    if has_data?
+    if @data.has_data?
     
       #Get column list
       if params['table'].nil?

@@ -1,8 +1,4 @@
 module Helpers
-  def has_data?
-    @data && @data.count > 0
-  end
-  
   def query_string
     URI.parse(request.url).query
   end

@@ -45,7 +45,7 @@
 		<% tables.each do | table, cols | %>
 			<div id="tabs-<%=i+=1%>">
 				
-			<% if has_data? %>
+			<% if @data.has_data? %>
 				<ul>
 			    	<% if data_sql.query['column'].empty? %>
 				    	<li class="nav"><a href="/export_summary?<%= (query_string || '') + "&table=" + table %>" class="button">Export Summary</a></li>
