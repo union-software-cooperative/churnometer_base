@@ -17,6 +17,7 @@ require 'ir_b'
 Config = YAML.load(File.read("./config/config.yaml"))
 Dir["./lib/*.rb"].each { |f| require f }
 
+# test comment
 class Churnobyl < Sinatra::Base
   include Authorization
   include Support
