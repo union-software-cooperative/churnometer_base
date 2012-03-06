@@ -43,8 +43,11 @@ class DataSql
     end_date = (Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")
     
     if static_cols.include?(query['column'])
+
       if query['column'].include?('start')
-        end_date = (Date.parse(query['startDate'])+1).strftime("%Y-%m-%d")
+        sample_date = query['startDate']
+      else
+        sample_date = end_date
       end
       
       filter_column = query['column'].sub('_start_count', '').sub('_end_count', '')
@@ -55,7 +58,7 @@ class DataSql
                               'memberfacthelperpaying2',
                               '#{query['group_by']}', 
                               '#{filter_column}',  
-                              '#{end_date}',
+                              '#{sample_date}',
                               '#{xml}'
                             )
         SQL

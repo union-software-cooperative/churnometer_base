@@ -56,27 +56,27 @@
     				  </tr>
     			  <% end %>
 			
-    			<% if params['column'].to_s != ''%>
-    				 <tr>
-    					<td class="form span-5 filters">
-    		    			<%=h("Members:  #{col_names[params['column']]}") %>
-    					</td>
-    					<td class="filters">
-    					<input class="selections" type="radio" name="<%="column" %>" value="<%=params['column'] %>" checked>Filter for&nbsp;&nbsp;&nbsp;&nbsp;
-    					<input class="selections" type="radio" name="<%="column" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
-    				  	</td>
-    				  </tr>
-    			  <% end %>
-			
-    			<tr>
-    				<td class="form span-5 filters">
-    					Constrain search to this <%= Mappings.groups_by_collection[params['group_by'] || 'branchid'].downcase %> list
-    				</td>
-    				<td class="filters">
-    					<input class="selections" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="" checked>Off&nbsp;&nbsp;&nbsp;&nbsp;
-    					<input class="selections constrain_filter" type="radio" name="<%="lock[#{params['group_by']}]" %>" value="<%=row_header_id_list %>">On&nbsp;&nbsp;&nbsp;&nbsp;
-    				</td>
-    				</tr>
+    			<% if data_sql.query['column'].to_s != ''%>
+                    <tr>
+                        <td class="form span-5 filters">
+                            <%=h("Members:  #{col_names[data_sql.query['column']]}") %>
+                        </td>
+                        <td class="filters">
+                            <input class="selections" type="radio" name="<%="column" %>" value="<%=data_sql.query['column'] %>" checked>Filter for&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input class="selections" type="radio" name="<%="column" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+                        </td>
+                    </tr>
+                <% else %>
+    			    <tr>
+                        <td class="form span-5 filters">
+                            Constrain search to this <%= Mappings.groups_by_collection[data_sql.query['group_by'] || 'branchid'].downcase %> list
+                        </td>
+                        <td class="filters">
+                            <input class="selections" type="radio" name="<%="lock[#{data_sql.query['group_by']}]" %>" value="" checked>Off&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input class="selections constrain_filter" type="radio" name="<%="lock[#{data_sql.query['group_by']}]" %>" value="<%=row_header_id_list %>">On&nbsp;&nbsp;&nbsp;&nbsp;
+                        </td>
+                    </tr>
+                  <% end %>
     			</table>
 			
     		<% else %>

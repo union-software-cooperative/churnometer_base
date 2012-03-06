@@ -384,7 +384,8 @@ module Helpers
   end
 
   def waterfall_chart_ok?
-    data_sql.query['column'].empty? && data_sql.query['interval'] == 'none' && @data.group_by{ |row| row['row_header1'] }.reject{ |row | row["paying_real_gain"] == 0 && row["paying_real_loss"] == 0}.count <= 30
+    cnt =  @data.reject{ |row | row["paying_real_gain"] == '0' && row["paying_real_loss"] == '0' }.count
+    data_sql.query['column'].empty? && data_sql.query['interval'] == 'none' && cnt > 0  && cnt <= 30
   end
 
   def row_header_id_list
