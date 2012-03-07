@@ -1,11 +1,17 @@
 <% if @data.has_data? %>
-	<ul>
-    	<% if data_sql.query['column'].empty? %>
-	    	<li class="nav screen_only"><a href="/export_summary?<%= (query_string || '') + "&table=" + table %>" class="button">Export Summary</a></li>
-	    <% else %>
-	    	<li class="nav screen_only"><a href="/export_member_details?<%= (query_string || '') + "&table=" + table %>" class="button">Export Member Details</a></li>
-		<% end %>
-	</ul>
+    <a class="printer screen_only" href="javascript:print_tab('graph');"><img src="images/printer32.png" alt="print tab"/></a>
+    <% if data_sql.query['column'].empty? %>
+        <a class="download screen_only" href="/export_summary?<%= (query_string || '') + "&table=" + table %>" ><img src="images/download32.png" alt="export to excel"/></a>
+    <% else %>
+        <a class="download screen_only" href="/export_member_details?<%= (query_string || '') + "&table=" + table %>"><img src="images/download32.png" alt="export to excel"/></a></li>
+    <% end %>
+    <!--<ul>-->
+    	<!--<% if data_sql.query['column'].empty? %>-->
+	    	<!--<li class="nav screen_only"><a href="/export_summary?<%= (query_string || '') + "&table=" + table %>" class="button">Export Summary</a></li>-->
+	    <!--<% else %>-->
+	    	<!--<li class="nav screen_only"><a href="/export_member_details?<%= (query_string || '') + "&table=" + table %>" class="button">Export Member Details</a></li>-->
+		<!--<% end %>-->
+	<!--</ul>-->
   <% totals = {} %>
   <h2 class="print_only"><%=table %></h2>
   <table class="tablesorter" id='table<%=table %>'>
@@ -63,19 +69,19 @@
         <tr>
           <% totals.each do |column_name, total| %>
             <td>
-				      <% if bold_col?(column_name) %> 
-  					    <strong>
-  				    <% end %>
-  	      		<% if !no_total.include?(column_name) %>
+              <% if bold_col?(column_name) %>
+                <strong>
+              <% end %>
+  	      	  <% if !no_total.include?(column_name) %>
               	<% if can_export_cell? column_name, total %>
                   <a href="<%= export_column(column_name) %>"><%= total %></a>
                 <% else %>
                   <%= total %>
                 <% end %>
-	            <% end %>
-        			<% if bold_col?(column_name) %> 
-        				<strong>
-        			<% end %>
+	          <% end %>
+            <% if bold_col?(column_name) %>
+                <strong>
+            <% end %>
   	        </td>
           <% end %>
         </tr>

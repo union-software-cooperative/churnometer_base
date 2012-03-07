@@ -272,3 +272,14 @@ hr.space {background:#fff;color:#fff;visibility:hidden;}
     border-width:0px !important;
     border:transparent;
 }
+
+.printer {
+    display:inline;
+    float: right;
+}
+
+.download {
+    display:inline;
+    float: right;
+    padding-right: 1em;
+}

@@ -37,19 +37,21 @@
 		<% i = 0 %>
 
     <% if waterfall_chart_ok? || line_chart_ok? %>
-      <div id="tabs-graph">
+      <div id="tabs-graph" class="tab">
+        <a class="printer screen_only" href="javascript:print_tab(<%=i %>);"><img src="images/printer32.png" /></a>
         <%= erb :'summary/graph', :locals => {:i => i} %>
       </div>
     <% end %>
 		
 		
 		<% tables.each do | table, cols | %>
-			<div id="tabs-<%=i+=1%>">
-	      <%= erb :'summary/table', :locals => {:table => table, :cols => cols, :i => i} %>
+			<div id="tabs-<%=i+=1%>" class="tab">
+              <%= erb :'summary/table', :locals => {:table => table, :cols => cols, :i => i} %>
 			</div>
 		<% end %>
 		
-		<div id="tabs-<%=i+=1%>">
+		<div id="tabs-<%=i+=1%>" class="tab">
+          <a class="printer screen_only" href="javascript:print_tab(<%=i %>);"><img src="images/printer32.png" /></a>
           <h2 class="print_only">Diagnostics</h2>
           <h3 class="screen_only">Data</h3>
           <ul>
@@ -176,6 +178,14 @@
 		   });
 		};
 	<% end %>
+
+    function print_tab(index)
+    {
+        $(".ui-tabs-hide").css("display", "none !important");
+        window.print();
+        $(".ui-tabs-hide").css("display", "");
+
+    }
 
 	$(function() {
 		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
