@@ -15,8 +15,9 @@
 			direction: "horizontal",
 			labelcolumn: 0,
 			valuecolumn: 1,
-			groupcolumn: -1,
-			duration: 2000,
+			linkcolumn: 2,
+            groupcolumn: -1,
+            duration: 2000,
 			showoriginal: false,
 			chartbgcolours: ["#336699", "#669933", "#339966"],
 			chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"],
@@ -41,7 +42,7 @@
 		}
 				
 
-		function GetWaterfallOutput(labelArray, valueArray, totalValue, smallestValue, largestValue, labelTextArray) {
+		function GetWaterfallOutput(labelArray, valueArray, linkArray, totalValue, smallestValue, largestValue, labelTextArray) {
 			var output = "";
 			var colourIndex = 0;
 			var leftShim = 0;
@@ -93,12 +94,14 @@
 				// Labels
 				var displayLabel = "";
 				if (config.showlabels) {
-					displayLabel = "<span style=\"color: ivory; height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i]   + "&nbsp;&nbsp;&nbsp;<strong>" + valueArray[i] +" </strong> </span>"
+					displayLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i]   + "&nbsp;&nbsp;&nbsp;<strong>" + valueArray[i] +" </strong> </span>"
 					//displayLabel = "<span style=\"display: block; width: 100%; position: absolute; opacity:1; bottom: 0; text-align: center;  background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i] + "</span>"
 				}
 				
 				// Column
-				output += "<div class=\"" + config.classmodifier + "bar\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; background-color: " + config.chartbgcolours[colourIndex] + "; color: " + config.chartfgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
+                output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
+				output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; color: " + config.chartfgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
+                output += "</a>"
 
 				leftShim = leftShim + shimAdjustment;
 				
@@ -140,7 +143,8 @@
 			var labelArray = new Array();
 			var labelTextArray = new Array();
 			var valueArray = new Array();
-			var groupArray = new Array();
+            var linkArray = new Array();
+            var groupArray = new Array();
 			
 			var totalValue = 0;
 			var largestValue = 0;
@@ -161,7 +165,8 @@
 						labelArray[labelArray.length] = $(values[i]).children("td").eq(config.labelcolumn).html();
 						labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
 						valueArray[valueArray.length] = valueAmount;
-						totalValue = totalValue + valueAmount;
+                        linkArray[linkArray.length] = $(values[i]).children("td").eq(config.linkcolumn).text();
+                        totalValue = totalValue + valueAmount;
 						if (i != (values.length - 2)) { // don't include net in running totals
 							if (totalValue > largestValue) {
 								largestValue = totalValue;
@@ -213,7 +218,7 @@
 
 						case 'vertical':
 							// Waterfall chart
-							output += GetWaterfallOutput(labelArray, valueArray, totalValue, smallestValue, largestValue, labelTextArray);
+							output += GetWaterfallOutput(labelArray, valueArray, linkArray, totalValue, smallestValue, largestValue, labelTextArray);
 							break;
 					}
 					break;

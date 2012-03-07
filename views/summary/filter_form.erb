@@ -37,20 +37,21 @@
     	  </li>
     	 <li >
               <% if filters.count > 0 %>
-    			<label class="form span-18">Drilling down into...</label>
+    			<label class="form span-18 screen_only">Drilling down into...</label>
 			
     			<table id="filters" class="form span-18" >
     			  <% filters.each do |column_name, value| %>
-    				 <tr>
-    					<td class="form span-5 filters">
+    				 <tr class="<%=value[0] == '-' ? 'screen_only': '' %>">
+    					<td class="form span-5 filters ">
     		    			<%=h(Mappings.groups_by_collection[column_name] +": " + get_display_text(column_name, value)) %>
     					</td>
     					<td class="filters">
     					<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=filter_value(value) %>" <%=value[0] == '!' || value[0] == '-' ? '' : 'checked' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
     					<input class="selections invert_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{filter_value(value)}" %>" <%=value[0] == '!' ? 'checked': '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
-    					<input class="selections disable_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
-    					<input class="selections remove_filter" type="radio" id="<%="#{Filter}#{column_name}remove" %>" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
-				  	
+    					<span class="screen_only">
+                           <input class="selections disable_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{filter_value(value)}" %>" <%=value[0] == '-' ? 'checked': '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
+    					   <input class="selections remove_filter" type="radio" id="<%="#{Filter}#{column_name}remove" %>" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+				  	    </span>
     					</td>
 					
     				  </tr>
@@ -67,7 +68,7 @@
                         </td>
                     </tr>
                 <% else %>
-    			    <tr>
+    			    <tr class="screen_only">
                         <td class="form span-5 filters">
                             Constrain search to this <%= Mappings.groups_by_collection[data_sql.query['group_by'] || 'branchid'].downcase %> list
                         </td>
@@ -80,14 +81,14 @@
     			</table>
 			
     		<% else %>
-    			<label class="form span-18">Start exploring by clicking interesting links in the charts and tables below.</label>
+    			<label class="form span-18  screen_only">Start exploring by clicking interesting links in the charts and tables below.</label>
     		<% end %>
           </li>
 
-    	  <li class="form span-24">
-    	    <input  type="submit" value="Refresh">
-    	  </li>
-	    </ul>
+    	  <div class="screen_only span-24" >
+            <input  type="submit" value="Refresh">
+          </div>
+    	</ul>
   		<div id="removefiltertip" class="tooltip">
   			When removed, this filter will be ignored by the system and removed from the screen.  When removing or disabling a filter, please carefully consider the 'Group By' setting.  If 'Work Site' is set thousands of rows could be returned and your browser could hang.
   		</div>

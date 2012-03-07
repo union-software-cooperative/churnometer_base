@@ -264,3 +264,11 @@ hr.space {background:#fff;color:#fff;visibility:hidden;}
 .clearfix, .container {display:block;}
 .clear {clear:both;}
 
+.print_only {
+    display:none !important;
+}
+
+.chartsbar {
+    border-width:0px !important;
+    border:transparent;
+}
