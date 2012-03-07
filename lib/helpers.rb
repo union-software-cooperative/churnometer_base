@@ -321,7 +321,7 @@ module Helpers
       'lead'          => 'org',
       'org'           => 'companyid',
       'state'         => 'areaid',
-      'area'          => 'companyid',
+      'areaid'          => 'companyid',
       'feegroupid'    => 'companyid',
       'nuwelectorate' => 'org',
       'del'           => 'companyid',
