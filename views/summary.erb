@@ -38,7 +38,7 @@
 
     <% if waterfall_chart_ok? || line_chart_ok? %>
       <div id="tabs-graph" class="tab">
-        <a class="printer screen_only" href="javascript:print_tab(<%=i %>);"><img src="images/printer32.png" /></a>
+        <a class="printer screen_only" href="javascript:print_tab(<%=i %>);"><img src="images/printer32.png" title="print graph" alt="print graph"/></a>
         <%= erb :'summary/graph', :locals => {:i => i} %>
       </div>
     <% end %>
@@ -51,7 +51,7 @@
 		<% end %>
 		
 		<div id="tabs-<%=i+=1%>" class="tab">
-          <a class="printer screen_only" href="javascript:print_tab(<%=i %>);"><img src="images/printer32.png" /></a>
+          <a class="printer screen_only" href="javascript:print_tab(<%=i %>);"><img src="images/printer32.png" title="print diagnostics" alt="print diagnostics"/></a>
           <h2 class="print_only">Diagnostics</h2>
           <h3 class="screen_only">Data</h3>
           <ul>

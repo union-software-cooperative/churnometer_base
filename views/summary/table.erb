@@ -1,9 +1,9 @@
 <% if @data.has_data? %>
-    <a class="printer screen_only" href="javascript:print_tab('graph');"><img src="images/printer32.png" alt="print tab"/></a>
+    <a class="printer screen_only" href="javascript:print_tab('graph');"><img src="images/printer32.png" title="print <%=table.downcase %> table" alt="print <%=table.downcase %> table"/></a>
     <% if data_sql.query['column'].empty? %>
-        <a class="download screen_only" href="/export_summary?<%= (query_string || '') + "&table=" + table %>" ><img src="images/download32.png" alt="export to excel"/></a>
+        <a class="download screen_only" href="/export_summary?<%= (query_string || '') + "&table=" + table %>" ><img src="images/download32.png" title="export <%=table.downcase %> table to excel" alt="export <%=table.downcase %> table to excel"/></a>
     <% else %>
-        <a class="download screen_only" href="/export_member_details?<%= (query_string || '') + "&table=" + table %>"><img src="images/download32.png" alt="export to excel"/></a></li>
+        <a class="download screen_only" href="/export_member_details?<%= (query_string || '') + "&table=" + table %>"><img src="images/download32.png" title="export <%=table.downcase %> table to excel" alt="export <%=table.downcase %> table to excel"/></a></li>
     <% end %>
     <!--<ul>-->
     	<!--<% if data_sql.query['column'].empty? %>-->
