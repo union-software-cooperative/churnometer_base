@@ -188,17 +188,12 @@
 			$('#table<%=table %>').floatHeader( { recalculate: true, fadeIn:0 }); // recalculate is needed to work with tabs but causes high cpu
 		<% end %>
 		
-		
-		<% if (data_sql.series_count(@data) <= 40) %>
-			<% if (data_sql.query['interval'] != 'none') %>
-				setupchart();
-			<% else %>
-					$("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#336699", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
-
-			<% end %>
+		<% if (line_chart_ok?) %>
+            setupchart();
+        <% elsif waterfall_chart_ok? %>
+		    $("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#336699", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
 		<% end %>
-		
-		
+
 		// setup tooltip for a single DIV element
 		<% i=0 %> 
 		<% if waterfall_chart_ok? || line_chart_ok? %>
