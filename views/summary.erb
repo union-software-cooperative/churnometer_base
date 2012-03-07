@@ -38,7 +38,7 @@
 
     <% if waterfall_chart_ok? || line_chart_ok? %>
       <div id="tabs-graph" class="tab">
-        <a class="printer screen_only" href="javascript:print_tab(<%=i %>);"><img src="images/printer32.png" title="print graph" alt="print graph"/></a>
+        <a class="printer screen_only" href="javascript:print_tab('graph');"><img src="images/printer32.png" title="print graph" alt="print graph"/></a>
         <%= erb :'summary/graph', :locals => {:i => i} %>
       </div>
     <% end %>
@@ -50,7 +50,7 @@
 			</div>
 		<% end %>
 		
-		<div id="tabs-<%=i+=1%>" class="tab screen_only">
+		<div id="tabs-<%=i+=1%>" class="screen_only tab">
           <a class="printer screen_only" href="javascript:print_diagnostics(<%=i %>);"><img src="images/printer32.png" title="print diagnostics" alt="print diagnostics"/></a>
           <h2 class="print_only">Diagnostics</h2>
           <h3 class="screen_only">Data</h3>
@@ -186,21 +186,21 @@
 
     function print_tab(index)
     {
-        $(".ui-tabs-hide").css("display", "none !important");
+        // remove ui-tabs-hide because it has displays:block for print media - so file-print show all tabs
+        $(".ui-tabs-hide").addClass("ui-tabs-hide-print");
+        $(".ui-tabs-hide").removeClass("ui-tabs-hide");
         window.print();
-        $(".ui-tabs-hide").css("display", "");
-
+        $(".ui-tabs-hide-print").addClass("ui-tabs-hide");
+        $(".ui-tabs-hide-print").removeClass("ui-tabs-hide-print");
     }
 
     function print_diagnostics(index)
     {
-        $("#tabs-" + index.toString()).removeClass("screen_only")
-        $(".ui-tabs-hide").css("display", "none !important");
-        window.print();
-        $("#tabs-" + index.tostring()).addClass("screen_only")
-        $(".ui-tabs-hide").css("display", "");
-
+        $("#tabs-" + index.toString()).removeClass("screen_only") ;
+        print_tab(index);
+        $("#tabs-" + index.toString()).addClass("screen_only") ;
     }
+
 	$(function() {
 		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
   		

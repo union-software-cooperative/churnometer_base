@@ -277,8 +277,12 @@ a:link, a:visited {
 
 .ui-tabs-nav { display: none; }
 .ui-tabs .ui-tabs-hide {
-    display: block !important;
+    display: block;
     padding: 0 !important;
+}
+
+.ui-tabs-hide-print  {
+    display:none !important;
 }
 
 #tabs-graph {
