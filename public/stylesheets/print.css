@@ -368,10 +368,14 @@ h1, h2, h3, h4 {
 
 .chartstitle {
     color:black !important;
+    font-family:"Helvetica Neue", Arial, Helvetica, sans-serif !important;
+    font-size:100.01%;
 }
 
 .chartslink {
     color:black !important;
+    font-family:"Helvetica Neue", Arial, Helvetica, sans-serif !important;
+    font-size:100.01%;
 }
 
 pre {
@@ -395,3 +399,4 @@ pre {
 .form input[type="text"], .form select {
     font-size: 8pt;
 }
+
