@@ -367,11 +367,11 @@ h1, h2, h3, h4 {
 }
 
 .chartstitle {
-    color:black;
+    color:black !important;
 }
 
 .chartslink {
-    color:black;
+    color:black !important;
 }
 
 pre {
@@ -391,3 +391,7 @@ pre {
 
 }
 
+
+.form input[type="text"], .form select {
+    font-size: 8pt;
+}

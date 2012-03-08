@@ -100,7 +100,7 @@
 				
 				// Column
                 output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
-				output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; color: " + config.chartfgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
+				output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
                 output += "</a>"
 
 				leftShim = leftShim + shimAdjustment;
