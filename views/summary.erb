@@ -1,5 +1,5 @@
 <div class="container">
-  <h1>churnoscope</h1>
+  <h1><%= request.host.downcase %></h1>
   <%= erb :'summary/filter_form' %>
 </div>
 
@@ -68,14 +68,17 @@
           <h3>PROJECT DETAIL</h3>
           login: nuw
           pass: nuwnuw
-          <br/>
-          <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/todo_lists/18435429">Report Bugs</a>
-          <br/>
-          <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/writeboards">Docs</a>
-          <br/>
-          <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/files">Files</a>
-          <br/>
-
+          <ul>
+            <li>
+                <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/todo_lists/18435429">Report Bugs</a>
+            </li>
+            <li>
+                <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/writeboards">Docs</a>
+            </li>
+            <li>
+                <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/files">Files</a>
+            </li>
+           </ul>
           <h3>MONITORING</h3>
           login: administrator
           <br/>
