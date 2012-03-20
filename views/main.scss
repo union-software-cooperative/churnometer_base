@@ -86,6 +86,18 @@ $line: 18px;
       text-align:right;
       font-weight:bold;
     }
+
+    tbody tr:nth-child(odd) td, tbody tr.even td{
+      background: #ffe;
+    }
+
+    tbody tr:nth-child(odd) td, tbody tr.even td{
+      background: #ffe;
+    }
+
+    tbody tr:nth-child(even) td, tbody tr.even td {
+      background: #E5ECF9;
+    }
   }
 }
 
@@ -209,4 +221,13 @@ pre {
   white-space: -moz-pre-wrap; /* Mozilla */
   white-space: -hp-pre-wrap;  /* HP Printers */
   word-wrap: break-word;      /* IE 5+ */
+}
+
+.flash {
+  background-color: #DFDF00;
+  border-bottom: 1px solid grey;
+  padding: 7px 0;
+  text-align: center;
+  font-weight: bold;
+  color: #C60C30
 }

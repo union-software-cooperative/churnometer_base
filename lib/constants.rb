@@ -1,6 +1,13 @@
 # Short names to help shorten URL
 Filter = "f"
 FilterNames = "fn"
+TransferWarningThreshold = 0.05
+DateFormatDisplay = "%e %B %Y"
+DateFormatPicker = "'d MM yy'"
+DateFormatDB = "%Y-%m-%d"
+
+EarliestStartDate = Date.new(2011,8,14)
+
 
 module Mappings
   class << self

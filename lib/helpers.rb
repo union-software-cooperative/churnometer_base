@@ -18,6 +18,10 @@ module Helpers
     
     t
   end
+
+  def get_transfers
+    db.ex(data_sql.transfer_sql(leader?))
+  end
   
   def filter_columns 
     %w{
@@ -103,14 +107,14 @@ module Helpers
       'row_header1'     => Mappings.groups_by_collection[(params['group_by'] || 'branchid')].downcase,
       'row_header'     => Mappings.groups_by_collection[(params['group_by'] || 'branchid')].downcase,
       'a1p_real_gain'   => 'total cards in',
-      'a1p_to_other'    => 'never started paying',
-      'paying_start_count' => 'paying at start',
+      'a1p_to_other'    => 'cards failed',
+      'paying_start_count' => 'paying at start date',
       'paying_real_gain'  => 'started paying',
       'paying_real_loss'  => 'stopped paying',
       'a1p_start_count' => 'a1p at start',
       'a1p_end_count' => 'a1p at end',
       'paying_real_net'   => 'paying net',
-      'paying_end_count'  => 'paying at end',
+      'paying_end_count'  => 'paying at end date',
       'posted'            => 'income posted',
       'unposted'            => 'income corrections',
       'income_net'            => 'income net',
@@ -265,7 +269,7 @@ module Helpers
       'paying_real_net' => "The number of members whose status became 'paying' during the period minus those that lost the 'paying' status", 
       'paying_end_count' => "The number of members with the 'paying' status at the end of the period.  '#{col_names['paying_end_count']}' is equal to '#{col_names['paying_start_count']}' plus '#{col_names['paying_real_gain']}' minus '#{col_names['paying_real_loss']}' plus '#{col_names['paying_other_gain']}' minus '#{col_names['paying_other_loss']}'.",
       'a1p_real_gain' => "The number of people who became 'awaiting first payment' during the period.  Most of these are new joiners (see '#{col_names['a1p_newjoin']}') but some may have already been members or become 'awaiting first payment' for administrative reasons (see '#{col_names['a1p_rejoin']}') .",
-      'a1p_to_other' => "The number of 'awaiting first payment' members who were struck off during the period before they paid any dues.",
+      'a1p_to_other' => "The number of 'awaiting first payment' members who were removed from the database during the period.",
       'paying_start_count' => "The number of members with the 'paying' status at the beginning of the period.",
       'paying_real_gain' => "The number of members whose status become 'paying' during the period.",
       'paying_real_loss' => "The number of members whose status ceased to be 'paying' during the period.",
@@ -391,4 +395,7 @@ module Helpers
   def row_header_id_list
     @data.group_by{ |row| row['row_header1_id'] }.collect{ | rh | rh[0] }.join(",")
   end
+
+
 end
+

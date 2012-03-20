@@ -1,2 +1,2 @@
-require './start' 
+require './start'
 run Churnobyl

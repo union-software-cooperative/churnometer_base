@@ -1,17 +1,55 @@
+<% if !@warning.empty? %>
+    <div class="flash">
+      <%= @warning %>
+    </div>
+<% end %>
+
 <div class="container">
   <h1><%= request.host.downcase %></h1>
   <%= erb :'summary/filter_form' %>
 </div>
 
 <section id="data">
-	<div id="card_target">
-		<% if leader? && params['column'].to_s == '' %>
-			<%= "We grew by #{data_sql.growth(@data)}% p.a." %><br/>
+	<% if leader? && params['column'].to_s == '' %>
+      <div id="card_target">
+            <%= "We grew by #{data_sql.growth(@data)}% p.a." %><br/>
 			<%="#{data_sql.get_cards_in(@data)} cards brought in per week. " %>
 			<%= "#{data_sql.get_cards_in_target(@data)} needed to hold our ground. " %>
 			<%= " #{data_sql.get_cards_in_growth_target(@data)} needed to grow 10%." %>
-		<% end %>
-	</div>
+
+            <!-- Warn of transfers -->
+            <% if data_sql.transfers?(@data) %>
+                <br />
+                Warning:  Redistributions during this period
+            <% end %>
+      </div>
+            <% if data_sql.transfers?(@data) %>
+                <table>
+                    <thead>
+                        <th>Date</th>
+                        <th>Transfers In</th>
+                        <th>Transfers Out</th>
+                    </thead>
+                    <% get_transfers.each do |row| %>
+                        <tr>
+                            <td>
+                            <a href="<%= request.url + "&endDate=" + (Date.parse(row['changedate'])-1).strftime("%Y-%m-%d") %>" title="period before"><</a>
+                            <a href="<%= request.url + "&endDate=" + row['changedate'] + "&startDate=" + row['changedate'] + "&group_by=companyid" %>" title="date of transfer">
+                                <%= row['changedate'] %>
+                            </a>
+                            <a href="<%= request.url + "&startDate=" + (Date.parse(row['changedate'])+1).strftime("%Y-%m-%d") %>" title="period after">></a>
+                            </td>
+                            <td>
+                             <%= row['transfer_in'] %>
+                            </td>
+                            <td>
+                            <%= row['transfer_out'] %>
+                            </td>
+                        </tr>
+                    <% end  %>
+                </table>
+            <% end %>
+    <% end %>
 	<div id="card_target_tip" class="tooltip">
 		The formula to hold our ground is calculated as 
 			'<%= col_names['paying_real_loss'] %>' 
@@ -41,6 +79,7 @@
         <a class="printer screen_only" href="javascript:print_tab('graph');"><img src="images/printer32.png" title="print graph" alt="print graph"/></a>
         <%= erb :'summary/graph', :locals => {:i => i} %>
       </div>
+      <% i+= 1 %>
     <% end %>
 		
 		
@@ -216,7 +255,7 @@
     }
 
 	$(function() {
-		$(".datepicker input").datepicker({dateFormat: 'yy-mm-dd'});
+		$(".datepicker input").datepicker({dateFormat: <%=DateFormatPicker%>});
   		
 		$("table").tablesorter();
 		
@@ -248,8 +287,8 @@
 				<% if (tips[column_name] || "") != "" %>
 					$("#<%=column_name %>h<%=i%>").tooltip({
 						tip: '#<%=column_name %>tip<%=i %>',
-						position: 'center right',
-						offset: [-25, 0],
+						position: 'top center',
+						offset: [-25, -25],
 						delay: 0,
 						relative: true
 					});

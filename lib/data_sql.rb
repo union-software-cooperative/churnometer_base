@@ -7,6 +7,9 @@ class DataSql
   
   def summary_sql(leader)
     xml = filter_xml query[Filter], locks
+    start_date = (Date.parse(query['startDate'])).strftime(DateFormatDB)
+    end_date = (Date.parse(query['endDate'])+1).strftime(DateFormatDB)
+
 
     if query['interval'] == 'none'
       <<-SQL
@@ -15,8 +18,8 @@ class DataSql
                             'memberfacthelperpaying2',
                             '#{query['group_by']}', 
                             '',
-                            '#{query['startDate']}', 
-                            '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
+                            '#{start_date}',
+                            '#{end_date}',
                             #{leader.to_s}, 
                             '#{xml}'
                             )
@@ -28,8 +31,8 @@ class DataSql
                             'memberfacthelperpaying2',
                             '#{query['group_by']}', 
                             '#{query['interval']}', 
-                            '#{query['startDate']}', 
-                            '#{(Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")}',
+                            '#{start_date}',
+                            '#{end_date}',
                             #{leader.to_s}, 
                             '#{xml}'
                             )
@@ -39,13 +42,14 @@ class DataSql
   
   def member_sql(leader)
     xml = filter_xml query[Filter], locks
-    
-    end_date = (Date.parse(query['endDate'])+1).strftime("%Y-%m-%d")
+
+    start_date = (Date.parse(query['startDate'])).strftime(DateFormatDB)
+    end_date = (Date.parse(query['endDate'])+1).strftime(DateFormatDB)
     
     if static_cols.include?(query['column'])
 
       if query['column'].include?('start')
-        sample_date = query['startDate']
+        sample_date = start_date
       else
         sample_date = end_date
       end
@@ -69,7 +73,7 @@ class DataSql
                               'memberfacthelperpaying2',
                               '#{query['group_by']}', 
                               '#{query['column']}',  
-                              '#{query['startDate']}', 
+                              '#{start_date}',
                               '#{end_date}',
                               #{leader.to_s}, 
                               '#{xml}'
@@ -80,7 +84,41 @@ class DataSql
     sql
   end
   
-  
+  def transfer_sql(leader)
+    xml = filter_xml query[Filter], locks
+    start_date = (Date.parse(query['startDate'])).strftime(DateFormatDB)
+    end_date = (Date.parse(query['endDate'])+1).strftime(DateFormatDB)
+
+
+    sql = <<-SQL
+      select
+        changedate
+        , sum(a1p_other_gain + paying_other_gain) transfer_in
+        , sum(-a1p_other_loss - paying_other_loss) transfer_out
+        from
+          churndetailfriendly20(
+            'memberfacthelperpaying2',
+            'status',
+            '',
+            '#{start_date}',
+            '#{end_date}',
+            #{leader.to_s},
+            '#{xml}'
+          )
+        where
+          paying_other_gain <> 0
+          or paying_other_loss <> 0
+          or a1p_other_gain <> 0
+          or a1p_other_loss <> 0
+        group by
+          changedate
+        order by
+          changedate
+    SQL
+
+    sql
+  end
+
   def getdimstart_sql
     <<-SQL
       select getdimstart('#{(query['group_by'] || 'branchid')}')
@@ -153,7 +191,7 @@ class DataSql
       # to hold our ground we need to recruit the same number as those that stopped, 
       # less those that historically resume paying on their own (these are freebies)
       # plus those that new cards that failed to start paying
-      # plus a certain amount to acheive some growth figure.  The growth figure should reflect
+      # plus a certain amount to achieve some growth figure.  The growth figure should reflect
       cards_per_week = Float((Float(stopped - resume + failed + growth) / Float(end_date - start_date) * 7 )).round(1) 
     end
     
@@ -233,10 +271,13 @@ class DataSql
   end
   
   def query
+    start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
+    end_date = Time.now.strftime(DateFormatDisplay)
+
     {
       'group_by' => 'branchid',
-      'startDate' => '2011-8-14',
-      'endDate' => Time.now.strftime("%Y-%m-%d"),
+      'startDate' => start_date,
+      'endDate' => end_date,
       'column' => '',
       'interval' => 'none',
       Filter => {
@@ -244,11 +285,26 @@ class DataSql
       }
     }.rmerge(params)
   end
-            
+
+  def transfers?(data)
+    # count the transfers, including both in and out (not summing)
+    t=0
+    data.each do |row|
+      t += row['paying_other_gain'].to_i - row['paying_other_loss'].to_i + row['a1p_other_gain'].to_i - row['a1p__other_loss'].to_i
+    end
+
+    startcnt =  paying_start_total(data)
+    endcnt = paying_end_total(data)
+
+    t > ((startcnt + endcnt)/2 * TransferWarningThreshold) ? true : false
+  end
+
   private
 
   def paying_start_total(data)
     # can't figure out enumerable way to sum this
+    # group by is when running totals are shown because you don't want to sum a running start count.
+    # so only count the first row for each group (v[0])
     t=0
     data.group_by{ |row| row['row_header1'] }.each do | row, v |
       t += v[0]['paying_start_count'].to_i
@@ -256,10 +312,21 @@ class DataSql
     t
   end
 
+  def paying_end_total(data)
+    # can't figure out enumerable way to sum this
+    # group by is when running totals are shown because you don't want to sum a running end count.
+    # so only count the last row for each group (v.count-1)
+    t=0
+    data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += v[v.count-1]['paying_end_count'].to_i
+    end
+    t
+  end
+
   def paying_transfers_total(data)
     t=0
     data.group_by{ |row| row['row_header1'] }.each do | row, v |
-      t += v[0] ['paying_other_gain'].to_i + v[0] ['paying_other_loss'].to_i
+      t += v[0]['paying_other_gain'].to_i + v[0]['paying_other_loss'].to_i
     end
     t
   end
@@ -311,6 +378,5 @@ class DataSql
       'paying_start_count'
     ]
   end
-  
-  
+
 end
