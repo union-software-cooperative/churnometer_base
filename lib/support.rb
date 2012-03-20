@@ -2,52 +2,62 @@ module Support
   def fix_date_params
     @warning = ''  # this needs to go before the controller, not here
 
-    if params['startDate'].nil?
-      params['startDate'] = EarliestStartDate.strftime(DateFormatDisplay)
-    end
-
-    if params['endDate'].nil?
-      params['endDate'] = Date.today.strftime(DateFormatDisplay)
-    end
-
       # override date filters with interval filters
-    if !params['intervalStart'].nil?
-      params['startDate'] = params['intervalStart'] 
+    startDate = nil;
+    endDate = nil;
+    if !params['startDate'].nil?
+      startDate = Date.parse(params['startDate'])
     end
-    
-    if !params['intervalEnd'].nil? 
-      params['endDate'] = params['intervalEnd']
+    if !params['endDate'].nil?
+      endDate = Date.parse(params['endDate'])
+    end
+    if !params['intervalStart'].nil?
+      startDate = Date.parse(params['intervalStart'] )
+    end
+    if !params['intervalEnd'].nil?
+      endDate = Date.parse(params['intervalEnd'])
+    end
+
+    if startDate.nil?
+      startDate = EarliestStartDate
+    end
+
+    if endDate.nil?
+      endDate = Date.today
     end
     
     # make sure startDate isn't before data began
-    @start = Date.parse((db.ex data_sql.getdimstart_sql)[0]['getdimstart'])+1
-    if @start > Date.parse(params['startDate'])
+    startdb = Date.parse((db.ex data_sql.getdimstart_sql)[0]['getdimstart'])+1
+    if startdb > startDate
+      startDate = startdb
       @warning += 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')<br/>'
-      params['startDate'] = @start.to_s
     end
 
     # make sure endDate isn't in the future or before startDate
-    @start = Date.parse(params['startDate'])
-    @end = Date.parse(params['endDate'])
-
-    if Date.today < @end
-      @end = Date.today
+    if Date.today < endDate
+      endDate = Date.today
       @warning += 'WARNING: Adjusted end date to today (you had selected ' + params['endDate'] + ') <br/>'
     end
 
-    if Date.today < @start
-      @start = Date.today
+    if Date.today < startDate
+      startDate = Date.today
       @warning += 'WARNING: Adjusted start date to today (you had selected ' + params['startDate'] + ')<br/>'
     end
 
-    if @start > @end
-      @end = @start
-      @warning += "WARNING: Adjusted end date to #{@end.strftime(DateFormatDisplay)} (you had selected #{ params['endDate'] })<br/>"
+    if startDate > endDate
+      endDate = startDate
+      @warning += "WARNING: Adjusted end date to #{endDate.strftime(DateFormatDisplay)} (you had selected #{ params['endDate'] })<br/>"
     end
 
-    params['startDate'] = @start.strftime(DateFormatDisplay)
-    params['endDate'] = @end.strftime(DateFormatDisplay)
-
+    if (!params['startDate'].nil? || !params['intervalStart'].nil?)
+      params['startDate'] = startDate.strftime(DateFormatDisplay)
+    end
+    if (!params['startDate'].nil? || !params['intervalStart'].nil?)
+      params['endDate'] = endDate.strftime(DateFormatDisplay)
+    end
+    # I don't know what these global values are for
+    @start = startDate
+    @end = endDate
   end
 
   def data_to_excel(data)
