@@ -14,7 +14,7 @@ class DataSql
     if query['interval'] == 'none'
       <<-SQL
       select * 
-      from churnsummarydyn19(
+      from churnsummarydyn23(
                             'memberfacthelperpaying2',
                             '#{query['group_by']}', 
                             '',
@@ -27,7 +27,7 @@ class DataSql
     else
       <<-SQL
       select * 
-      from churnrunningdyn19(
+      from churnrunningdyn23(
                             'memberfacthelperpaying2',
                             '#{query['group_by']}', 
                             '#{query['interval']}', 
@@ -287,10 +287,10 @@ class DataSql
   end
 
   def transfers?(data)
-    # count the transfers, including both in and out (not summing)
+    # count the transfers, including both in and out
     t=0
     data.each do |row|
-      t += row['paying_other_gain'].to_i - row['paying_other_loss'].to_i + row['a1p_other_gain'].to_i - row['a1p__other_loss'].to_i
+      t += row['external_gain'].to_i - row['external_loss'].to_i
     end
 
     startcnt =  paying_start_total(data)

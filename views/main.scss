@@ -155,6 +155,15 @@ h1, h2, h3, h4 {
 	color: #ffd;
 }
 
+h1 a {
+	color: #ffd;
+	text-decoration:none;
+	:hover {
+		color: #ffd !important;
+		text-decoration:underline !important;
+	}
+}
+
 .ui-widget-header {
 	background:#DFDF00;
 	border:#ffe;

@@ -1,7 +1,7 @@
 module Support
   def fix_date_params
-    @warning = ''  # this needs to go before the controller, not here
-
+    warning = ''
+    
       # override date filters with interval filters
     startDate = nil;
     endDate = nil;
@@ -30,23 +30,23 @@ module Support
     startdb = Date.parse((db.ex data_sql.getdimstart_sql)[0]['getdimstart'])+1
     if startdb > startDate
       startDate = startdb
-      @warning += 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')<br/>'
+      warning += 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')<br/>'
     end
 
     # make sure endDate isn't in the future or before startDate
     if Date.today < endDate
       endDate = Date.today
-      @warning += 'WARNING: Adjusted end date to today (you had selected ' + params['endDate'] + ') <br/>'
+      warning += 'WARNING: Adjusted end date to today (you had selected ' + params['endDate'] + ') <br/>'
     end
 
     if Date.today < startDate
       startDate = Date.today
-      @warning += 'WARNING: Adjusted start date to today (you had selected ' + params['startDate'] + ')<br/>'
+      warning += 'WARNING: Adjusted start date to today (you had selected ' + params['startDate'] + ')<br/>'
     end
 
     if startDate > endDate
       endDate = startDate
-      @warning += "WARNING: Adjusted end date to #{endDate.strftime(DateFormatDisplay)} (you had selected #{ params['endDate'] })<br/>"
+      warning += "WARNING: Adjusted end date to #{endDate.strftime(DateFormatDisplay)} (you had selected #{ params['endDate'] })<br/>"
     end
 
     if (!params['startDate'].nil? || !params['intervalStart'].nil?)
@@ -58,6 +58,8 @@ module Support
     # I don't know what these global values are for
     @start = startDate
     @end = endDate
+    
+    warning
   end
 
   def data_to_excel(data)

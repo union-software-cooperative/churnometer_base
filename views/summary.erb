@@ -5,7 +5,9 @@
 <% end %>
 
 <div class="container">
-  <h1><%= request.host.downcase %></h1>
+  <h1><a href="/"><%= request.host.downcase %></a></h1>
+  	
+  <!-- Form -->
   <%= erb :'summary/filter_form' %>
 </div>
 
@@ -16,43 +18,8 @@
 			<%="#{data_sql.get_cards_in(@data)} cards brought in per week. " %>
 			<%= "#{data_sql.get_cards_in_target(@data)} needed to hold our ground. " %>
 			<%= " #{data_sql.get_cards_in_growth_target(@data)} needed to grow 10%." %>
-
-            <!-- Warn of transfers -->
-            <!--
-            <% #if data_sql.transfers?(@data) %>
-                <br />
-                Warning:  Redistributions during this period
-            <% #end %>
-            -->
       </div>
-            <!--
-            <% #if data_sql.transfers?(@data) %>
-                <table>
-                    <thead>
-                        <th>Date</th>
-                        <th>Transfers In</th>
-                        <th>Transfers Out</th>
-                    </thead>
-                    <% #get_transfers.each do |row| %>
-                        <tr>
-                            <td>
-                            <a href="<%#= request.url + "&endDate=" + (Date.parse(row['changedate'])-1).strftime("%Y-%m-%d") %>" title="period before"><</a>
-                            <a href="<%#= request.url + "&endDate=" + row['changedate'] + "&startDate=" + row['changedate'] + "&group_by=companyid" %>" title="date of transfer">
-                                <%#= row['changedate'] %>
-                            </a>
-                            <a href="<%#= request.url + "&startDate=" + (Date.parse(row['changedate'])+1).strftime("%Y-%m-%d") %>" title="period after">></a>
-                            </td>
-                            <td>
-                             <%#= row['transfer_in'] %>
-                            </td>
-                            <td>
-                            <%#= row['transfer_out'] %>
-                            </td>
-                        </tr>
-                    <%# end  %>
-                </table>
-            <%# end %>
-            -->
+            
     <% end %>
 	<div id="card_target_tip" class="tooltip">
 		The formula to hold our ground is calculated as 
@@ -71,6 +38,9 @@
 			<% end %>
 			<% tables.each do | table | %>
 				<li><a href="#tabs-<%=i+=1%>"><%=table[0] %></a></li>
+			<% end %>
+			<% if data_sql.transfers?(@data) %>
+				<li><a href="#tabs-<%=i+=1%>">Transfers</a></li>
 			<% end %>
 			
 			<li><a href="#tabs-<%=i+=1%>">Diagnostics</a></li>
@@ -91,6 +61,48 @@
               <%= erb :'summary/table', :locals => {:table => table, :cols => cols, :i => i} %>
 			</div>
 		<% end %>
+		
+		<% if data_sql.transfers?(@data) %>
+        	<div id="tabs-<%=i+=1%>" class="tab">
+		    	<table class="tablesorter">
+	                <thead>
+	                    <th>Transfer Date</th>
+	                    <th>Period Before</th>
+						<th>Period After</th>
+	                	<th>Transfers In</th>
+	                    <th>Transfers Out</th>
+					</thead>
+	                <% get_transfers.each do |row| %>
+	                    <tr>
+	                        <td>
+	                        <!-- <a href="<%= request.url + "&endDate=" + (Date.parse(row['changedate'])-1).strftime("%Y-%m-%d") %>" title="period before"><</a> -->
+	                        <a href="<%= request.url + "&endDate=" + row['changedate'] + "&startDate=" + row['changedate'] + "&group_by=companyid" %>" title="date of transfer">
+	                            <%= Date.parse(row['changedate']).strftime(DateFormatDisplay) %>
+	                        </a>
+	                        <!-- <a href="<%= request.url + "&startDate=" + (Date.parse(row['changedate'])+1).strftime("%Y-%m-%d") %>" title="period after">></a> -->
+	                        </td>
+	                       <td>
+								<a href="<%= request.url + "&endDate=" + (Date.parse(row['changedate'])-1).strftime("%Y-%m-%d") %>" title="period before">
+	                        		<%= "#{Date.parse(data_sql.query['startDate']).strftime(DateFormatDisplay)} to #{(Date.parse(row['changedate'])-1).strftime(DateFormatDisplay)}" %>
+	                       		</a>
+	 						</td>
+							<td>
+	                        	<a href="<%= request.url + "&startDate=" + (Date.parse(row['changedate'])+1).strftime("%Y-%m-%d") %>" title="period after">
+									<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(data_sql.query['endDate']).strftime(DateFormatDisplay)}" %>
+								</a>
+							</td>
+	                    	 <td>
+		                        <%= row['transfer_in'] %>
+	                        </td>
+	                        <td>
+	                        	<%= row['transfer_out'] %>
+	                        </td>
+						</tr>
+	                <% end  %>
+	            </table>
+      		</div>
+		<% end %>
+		
 		
 		<div id="tabs-<%=i+=1%>" class="screen_only tab">
           <a class="printer screen_only" href="javascript:print_diagnostics(<%=i %>);"><img src="images/printer32.png" title="print diagnostics" alt="print diagnostics"/></a>
@@ -127,19 +139,22 @@
           <a href="http://<%=request.host %>:2812">monit</a>
         </div>
 		
-		<!-- tooltip descriptions -->
-		<% i=0 %> 
 
-		<% tables.each do | table, cols | %>
-			<% i+=1 %>
-			<% merge_cols(@data[0], cols).each do |column_name, v| %>
-				<% if (tips[column_name] || "") != "" %>
-					<div id="<%=column_name %>tip<%=i %>" class="tooltip">
-						<%=tips[column_name]%>
-					</div>
-				<% end %>
-			<% end %>
-		<% end %>
+		<!-- tooltip descriptions -->
+		<% if @data.has_data? %>
+            <% i=0 %>
+
+            <% tables.each do | table, cols | %>
+                <% i+=1 %>
+                <% merge_cols(@data[0], cols).each do |column_name, v| %>
+                    <% if (tips[column_name] || "") != "" %>
+                        <div id="<%=column_name %>tip<%=i %>" class="tooltip">
+                            <%=tips[column_name]%>
+                        </div>
+                    <% end %>
+                <% end %>
+            <% end %>
+        <% end %>
 		
 	</div>
 	
@@ -276,23 +291,25 @@
 		<% end %>
 
 		// setup tooltip for a single DIV element
-		<% i=0 %> 
+		<% if @data.has_data? %>
+            <% i=0 %>
 
-		<% tables.each do | table, cols | %>
-            <% i+=1 %>
-            <% merge_cols(@data[0], cols).each do |column_name, v| %>
-				<% if (tips[column_name] || "") != "" %>
-					$("#<%=column_name %>h<%=i%>").tooltip({
-						tip: '#<%=column_name %>tip<%=i %>',
-						position: 'top center',
-						offset: [-25, -25],
-						delay: 0,
-						relative: true
-					});
-				<% end %>
-			<% end %>
+            <% tables.each do | table, cols | %>
+                <% i+=1 %>
+                <% merge_cols(@data[0], cols).each do |column_name, v| %>
+                    <% if (tips[column_name] || "") != "" %>
+                        $("#<%=column_name %>h<%=i%>").tooltip({
+                            tip: '#<%=column_name %>tip<%=i %>',
+                            position: 'top center',
+                            offset: [-25, -25],
+                            delay: 0,
+                            relative: true
+                        });
+                    <% end %>
+                <% end %>
+            <% end %>
         <% end %>
-		
+
 		$("#card_target").tooltip({
 			tip: '#card_target_tip',
 			position: 'top center',

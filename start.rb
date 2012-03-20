@@ -27,11 +27,15 @@ class Churnobyl < Sinatra::Base
   get '/' do
     cache_control :public, :max_age => 43200
     protected!
-  
-    fix_date_params
-   
+    @warning = fix_date_params
+
     @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql(leader?)
     @data = DataPresenter.new db.ex(@sql)  
+    
+    if data_sql.transfers?(@data)
+      @warning += 'WARNING:  There are transfers during this period that may make these results seem peculiar<br />'
+    end
+    
     erb :summary
   end
 
