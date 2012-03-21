@@ -102,38 +102,7 @@ module Helpers
     row_interval
   end
        
-  def col_names 
-    hash = {
-      'row_header1'     => Mappings.groups_by_collection[(params['group_by'] || 'branchid')].downcase,
-      'row_header'     => Mappings.groups_by_collection[(params['group_by'] || 'branchid')].downcase,
-      'a1p_real_gain'   => 'total cards in',
-      'a1p_to_other'    => 'cards failed',
-      'paying_start_count' => 'paying at start date',
-      'paying_real_gain'  => 'started paying',
-      'paying_real_loss'  => 'stopped paying',
-      'a1p_start_count' => 'a1p at start',
-      'a1p_end_count' => 'a1p at end',
-      'paying_real_net'   => 'paying net',
-      'paying_end_count'  => 'paying at end date',
-      'posted'            => 'income posted',
-      'unposted'            => 'income corrections',
-      'income_net'            => 'income net',
-      'running_paying_net'  => 'paying net (running total)',
-      'paying_other_loss'   => 'paying transfers out',
-      'paying_other_gain'   => 'paying transfers in',
-      'a1p_other_gain'     => 'a1p transfers in',
-      'a1p_other_loss'     => 'a1p transfers out',
-      'a1p_newjoin'        => 'cards in (new)',
-      'a1p_rejoin'         => 'cards in (rejoin)',
-      'a1p_to_paying'     => 'a1p started paying',
-      #'a1p_real_loss'     => 'a1p never paid',
-      'period_header'       => 'interval',
-      'start_date'          => 'start date',
-      'end_date'          => 'end date',
-      'annualisedavgcontribution' => 'estimated annual contribution',
-      'contributors'  => 'unique contributors'
-      }
-  end
+  
     
   def bold_col?(column_name)
     [

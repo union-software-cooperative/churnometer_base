@@ -224,6 +224,41 @@ class DataSql
     cards_per_week
   end
 
+  def getmath_get_cards_in_target(data)
+
+     # the number of people who stopped paying
+     stopped = 0
+     data.each { | row | stopped -= row['paying_real_loss'].to_i }
+
+     # count the people who start paying without giving us a card
+     # we calculate this by subtracting the people who become paying from a1p (a1p_to_paying which is negative) from the paying gain
+     resume = 0 
+     data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
+
+     paying_real_gain = 0 
+     data.each { | row | paying_real_gain += row['paying_real_gain'].to_i } 
+     
+     a1p_to_paying = 0 
+     data.each { | row | a1p_to_paying += row['a1p_to_paying'].to_i } 
+     
+     # count the joiners who fail to convert to paying
+     failed = 0 
+     data.each { | row | failed -= row['a1p_to_other'].to_i }
+
+     start_date = Date.parse(query['startDate'])
+     end_date = Date.parse(query['endDate'])
+
+     cards_per_week = 0.0
+     weeks = 0
+     if start_date != end_date 
+       weeks =  Float(end_date - start_date) / 7
+       cards = Float(stopped - resume + failed)
+       cards_per_week = Float(cards / weeks ).round(1)
+     end
+
+     "#{cards.round(0)} cards needed (#{stopped} #{col_names['paying_real_loss']} + #{failed} #{col_names['a1p_to_other']} - #{resume} resumed paying without a card (#{paying_real_gain} #{col_names['paying_real_gain']} - #{-a1p_to_paying} #{col_names['a1p_to_paying']}) ) / #{weeks.round(1)} weeks = #{cards_per_week}  cards per week"
+   end
+
   def get_cards_in(data)
     
     # the number of people who stopped paying
@@ -288,6 +323,28 @@ class DataSql
 
   def transfers?(data)
     # count the transfers, including both in and out
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
+    months = Float(end_date - start_date) / 30.34
+    
+    t=0
+    data.each do |row|
+      t += row['external_gain'].to_i - row['external_loss'].to_i
+    end
+
+    startcnt =  paying_start_total(data)
+    endcnt = paying_end_total(data)
+    
+    threshold = ((startcnt + endcnt)/2 * (MonthlyTransferWarningThreshold * months))
+    t > threshold ? true : false
+  end
+
+  def getmath_transfers?(data)
+    # count the transfers, including both in and out
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
+    months = Float(end_date - start_date) / 30.34
+    
     t=0
     data.each do |row|
       t += row['external_gain'].to_i - row['external_loss'].to_i
@@ -296,8 +353,12 @@ class DataSql
     startcnt =  paying_start_total(data)
     endcnt = paying_end_total(data)
 
-    t > ((startcnt + endcnt)/2 * TransferWarningThreshold) ? true : false
+    threshold = ((startcnt + endcnt)/2 * (MonthlyTransferWarningThreshold * months))
+    t > threshold ? true : false
+  
+    "warn if externalTransferTotal=#{t} is greater than (((startcnt=#{startcnt} + endcnt=#{endcnt})/2=#{(startcnt+endcnt)/2}=average_size * (MonthlyThreshold=#{MonthlyTransferWarningThreshold} x months=#{months})) = #{threshold} = threshold).  The rational behind this formula is that 100% of the membership will transfer to growth from development and back every three years, and this is typical and not due to restructuring."
   end
+  
 
   private
 
