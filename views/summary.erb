@@ -62,47 +62,44 @@
 		<% if data_sql.transfers?(@data) %>
         	<div id="tabs-<%=i+=1%>" class="tab">
 		    	<p>
-					This tab is shown because the transfer warning threshold has been reached. See the explanation and math below the table.  Select a period either before or after a significant transfer to get better weekly averages.   
+					This tab is shown because the transfer warning threshold has been reached.   Select a period either [before] or [after] a significant transfer to get more accurate weekly averages.  There is an explanation below the table.  
 				</p>
 				<table class="tablesorter">
 	                <thead>
 	                    <th>Transfer Date</th>
-	                    <th>Period Before</th>
-						<th>Period After</th>
-	                	<th>Transfers In</th>
+	                    <th></th>
+						<th>Transfers In</th>
 	                    <th>Transfers Out</th>
+						<th></th>
 					</thead>
 	                <% get_transfers.each do |row| %>
 	                    <tr>
 	                        <td>
-	                        <!-- <a href="<%= request.url + "&endDate=" + (Date.parse(row['changedate'])-1).strftime(DateFormatDisplay) %>" title="period before"><</a> -->
-	                        <a href="<%= request.url + "&endDate=" + Date.parse(row['changedate']).strftime(DateFormatDisplay) + "&startDate=" + Date.parse(row['changedate']).strftime(DateFormatDisplay) + "&group_by=companyid" %>" title="date of transfer">
-	                            <%= Date.parse(row['changedate']).strftime(DateFormatDisplay) %>
-	                        </a>
-	                        <!-- <a href="<%= request.url + "&startDate=" + (Date.parse(row['changedate'])+1).strftime(DateFormatDisplay) %>" title="period after">></a> -->
-	                        </td>
-	                       <td>
-								<a href="<%= request.url + "&endDate=" + (Date.parse(row['changedate'])-1).strftime(DateFormatDisplay) %>" title="period before">
-	                        		<%= "#{Date.parse(data_sql.query['startDate']).strftime(DateFormatDisplay)} to #{(Date.parse(row['changedate'])-1).strftime(DateFormatDisplay)}" %>
-	                       		</a>
-	 						</td>
+                       			<a href="<%= request.url + "&endDate=" + Date.parse(row['changedate']).strftime(DateFormatDisplay) + "&startDate=" + Date.parse(row['changedate']).strftime(DateFormatDisplay) + "&group_by=companyid" %>" title="date of transfer">
+		                            <%= Date.parse(row['changedate']).strftime(DateFormatDisplay) %>
+		                        </a>
+						    </td>
 							<td>
-	                        	<a href="<%= request.url + "&startDate=" + (Date.parse(row['changedate'])+1).strftime(DateFormatDisplay) %>" title="period after">
-									<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(data_sql.query['endDate']).strftime(DateFormatDisplay)}" %>
+								<a href="<%= request.url + "&endDate=" + (Date.parse(row['changedate'])-1).strftime(DateFormatDisplay) %>" title="<%= "#{Date.parse(data_sql.query['startDate']).strftime(DateFormatDisplay)} to #{(Date.parse(row['changedate'])-1).strftime(DateFormatDisplay)}" %>">
+	                        		[before]
 								</a>
 							</td>
-	                    	 <td>
+							<td>
 		                        <%= row['transfer_in'] %>
 	                        </td>
 	                        <td>
 	                        	<%= row['transfer_out'] %>
 	                        </td>
+	                    	<td>
+		 						<a href="<%= request.url + "&startDate=" + (Date.parse(row['changedate'])+1).strftime(DateFormatDisplay) %>" title="<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(data_sql.query['endDate']).strftime(DateFormatDisplay)}" %>">
+									[after]
+								</a>
+							</td>
 						</tr>
 	                <% end  %>
 	            </table>
 				<p>
-					Shown in the table are external transfers of both paying and a1p members.  An external transfer is a reallocation of member from outside this selection to inside this selection or vice versa. If a significant volume of these occur, they can affect any average or growth calculation by drastically changing the composition of the selection.  
-				</p>
+					Shown in the table are external transfers of both paying and a1p members.  An external transfer is a reassignment of one or more members from outside the current selection to inside the current selection or vice versa. e.g. during the period, a growth site was handed back to the development organiser.  If a significant volume of these occur (think patch reassignment) during the selected period, the composition of the selection will be drastically altered having an unpredictable affect on averages and growth calculations.  </p>
 				<p>
 					<%= data_sql.getmath_transfers?(@data) %>
 				</p>

@@ -33,7 +33,7 @@ class Churnobyl < Sinatra::Base
     @data = DataPresenter.new db.ex(@sql)  
     
     if data_sql.transfers?(@data)
-      @warning += 'WARNING:  There are transfers during this period that may make these results seem peculiar<br />'
+      @warning += 'WARNING:  There are transfers during this period that may make influence the results.  See the transfer tab below. <br />'
     end
     
     erb :summary
