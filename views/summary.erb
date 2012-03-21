@@ -14,7 +14,7 @@
 <section id="data">
 	<% if (leader? || lead?) && params['column'].to_s == '' %>
       <div id="card_target">
-            <%= "We grew by #{data_sql.growth(@data)}% p.a." %><br/>
+            <%= "We grew by #{data_sql.growth(@data)}% p.a. over #{data_sql.weeks.round(1)} weeks" %><br/>
 			<%="#{data_sql.get_cards_in(@data)} cards brought in per week. " %>
 			<%= "#{data_sql.get_cards_in_target(@data)} needed to hold our ground. " %>
 			<%= " #{data_sql.get_cards_in_growth_target(@data)} needed to grow 10%." %>

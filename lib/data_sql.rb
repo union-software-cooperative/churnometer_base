@@ -125,6 +125,13 @@ class DataSql
     SQL
   end
 
+  def weeks
+    start_date = Date.parse(query['startDate'])
+    end_date = Date.parse(query['endDate'])
+    
+    Float(end_date - start_date) / 7
+  end
+  
   def growth(data) 
     start_date = Date.parse(query['startDate'])
     end_date = Date.parse(query['endDate'])
