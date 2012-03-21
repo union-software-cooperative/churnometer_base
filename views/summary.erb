@@ -61,7 +61,9 @@
 		
 		<% if data_sql.transfers?(@data) %>
         	<div id="tabs-<%=i+=1%>" class="tab">
-		    	Showing below are external transfers of both paying and a1p members.  An external transfer is a reallocation of members from outside this selection to inside this selection or vice versa. These transfers will affect any average or growth calculation.  Select a period either before or after a significant transfer to get better averages.   
+		    	<p>
+					This tab is shown because the transfer warning threshold has been reached. See the explanation and math below the table.  Select a period either before or after a significant transfer to get better weekly averages.   
+				</p>
 				<table class="tablesorter">
 	                <thead>
 	                    <th>Transfer Date</th>
@@ -98,8 +100,14 @@
 						</tr>
 	                <% end  %>
 	            </table>
+				<p>
+					Shown in the table are external transfers of both paying and a1p members.  An external transfer is a reallocation of member from outside this selection to inside this selection or vice versa. If a significant volume of these occur, they can affect any average or growth calculation by drastically changing the composition of the selection.  
+				</p>
+				<p>
+					<%= data_sql.getmath_transfers?(@data) %>
+				</p>
 				Not counted are internal transfers which are movements within this selection that don't affect the selection's averages.   
-      		</div>
+			</div>
 		<% end %>
 		
 		
