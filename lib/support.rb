@@ -1,6 +1,6 @@
 
 module Support
-  def fix_params
+  def validate_params
     # @uri when constructing html links - it is better than request.url because we can remove parameters that don't pass validation
     # do a bunch of replacements to simplify swapping url parameters with search and replace 
     @uri= request.url.gsub('+', ' ').gsub('%20', ' ').gsub(' =','=').gsub('= ', '')

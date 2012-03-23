@@ -87,9 +87,8 @@ module Helpers
 
    def drill_down_cell(row)
      row_filter = h "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header1_id']}"
-     row_filter_name = h "#{FilterNames}[#{row['row_header1_id']}]=#{row['row_header1']}"
-
-     "&" + row_filter + "&" + row_filter_name  + "&" + (row_interval(row))
+     
+     "&" + row_filter  + "&" + (row_interval(row))
    end
    
   def row_interval(row)
