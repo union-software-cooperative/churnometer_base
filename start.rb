@@ -26,7 +26,7 @@ class Churnobyl < Sinatra::Base
 
   get '/' do
      
-    @warning = fix_date_params
+    @warning = fix_params
     
     # if !data_sql.query['site_constrain'].nil?
     #       sql = data_sql.sites_at_date(leader?)

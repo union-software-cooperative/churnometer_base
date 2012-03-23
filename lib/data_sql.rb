@@ -28,7 +28,7 @@ class DataSql
     else
       <<-SQL
       select * 
-      from running_summary(
+      from summary_running(
                             'memberfacthelperpaying2',
                             '#{query['group_by']}', 
                             '#{query['interval']}', 
@@ -49,25 +49,23 @@ class DataSql
     end_date = (Date.parse(query['endDate'])+1).strftime(DateFormatDB)
     
     if static_cols.include?(query['column'])
-
-      if query['column'].include?('start')
-        sample_date = start_date
-      else
-        sample_date = end_date
-      end
-      
+    
+      member_date = query['column'].include?('start') ? start_date : end_date
+      site_date = query['site_constrain'] == 'end' ? end_date : start_date
+    
       filter_column = query['column'].sub('_start_count', '').sub('_end_count', '')
-      
+    
       sql = <<-SQL 
         select * 
-        from staticdetailfriendly20(
+        from detail_static_friendly(
                               'memberfacthelperpaying2',
                               '#{query['group_by']}', 
                               '#{filter_column}',  
-                              '#{sample_date}',
+                              '#{member_date}',
+                              '#{site_date}',
                               '#{xml}'
                             )
-        SQL
+      SQL
     else
       sql = <<-SQL 
         select * 
@@ -119,13 +117,14 @@ class DataSql
         , sum(a1p_other_gain + paying_other_gain) transfer_in
         , sum(-a1p_other_loss - paying_other_loss) transfer_out
         from
-          churndetailfriendly20(
+          detail_friendly(
             'memberfacthelperpaying2',
             'status',
             '',
             '#{start_date}',
             '#{end_date}',
             #{leader.to_s},
+            '#{query['site_constrain']}',
             '#{xml}'
           )
         where
@@ -388,7 +387,7 @@ class DataSql
     threshold = ((startcnt + endcnt)/2 * (MonthlyTransferWarningThreshold * months))
     t > threshold ? true : false
   
-    "The system will warn the user when the external transfer total (#{t}) is greater than the external transfer threshold (#{threshold.round(0)} = (average size (#{(startcnt+endcnt)/2} = (#{col_names['paying_start_count']} (#{startcnt}) + #{col_names['paying_end_count']} (#{endcnt}))/2) * MonthlyThreshold (#{(MonthlyTransferWarningThreshold*100).round(1)}%) x months (#{months.round(1)}))).  The rational behind this formula is that 100% of the membership will transfer to growth from development and back every three years (2.8% in and 2.8% out each month). So transfers below this threshold are typical and can be ignored, as opposed to atypical area restructuring of which the user needs warning."
+    "The system will warn the user and display this tab, when the external transfer total (#{t}) is greater than the external transfer threshold (#{threshold.round(0)} = (average size (#{(startcnt+endcnt)/2} = (#{col_names['paying_start_count']} (#{startcnt}) + #{col_names['paying_end_count']} (#{endcnt}))/2) * MonthlyThreshold (#{(MonthlyTransferWarningThreshold*100).round(1)}%) x months (#{months.round(1)}))).  The rational behind this formula is that 100% of the membership will transfer to growth from development and back every three years (2.8% in and 2.8% out each month). So transfers below this threshold are typical and can be ignored, as opposed to atypical area restructuring of which the user needs warning."
   end
   
 

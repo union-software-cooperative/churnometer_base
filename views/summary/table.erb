@@ -14,7 +14,7 @@
 	<!--</ul>-->
   <% totals = {} %>
   <h2 class="print_only"><%=table %></h2>
-  <table class="tablesorter" id='table<%=table %>'>
+  <table class="tablesorter" id='table<%=table.sub(' ', '') %>'>
     <thead>
       <tr>
         <% merge_cols(@data[0], cols).each do |column_name, v| %>
@@ -73,7 +73,9 @@
                 <strong>
               <% end %>
   	      	  <% if !no_total.include?(column_name) %>
-              	<% if can_export_cell? column_name, total %>
+              	<% if can_detail_cell? column_name, total %>
+			      <a href="<%= detail_column(column_name) %>"><%= total %></a>
+				<% elsif can_export_cell? column_name, total %>
                   <a href="<%= export_column(column_name) %>"><%= total %></a>
                 <% else %>
                   <%= total %>

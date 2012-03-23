@@ -1,5 +1,7 @@
 module Support
-  def fix_date_params
+  def fix_params
+    @uri= request.url
+    
     warning = ''
     
       # override date filters with interval filters
@@ -50,14 +52,24 @@ module Support
     end
 
     if (!params['startDate'].nil? || !params['intervalStart'].nil?)
+      @uri = @uri.sub("startDate=#{params['startDate']}", "startDate=#{startDate.strftime(DateFormatDisplay)}")
       params['startDate'] = startDate.strftime(DateFormatDisplay)
     end
     if (!params['startDate'].nil? || !params['intervalStart'].nil?)
+      @uri = @uri.sub("startDate=#{params['endDate']}", "startDate=#{endDate.strftime(DateFormatDisplay)}")
       params['endDate'] = endDate.strftime(DateFormatDisplay)
     end
     # I don't know what these global values are for
     @start = startDate
     @end = endDate
+    
+    if (params['group_by']!='companyid' &&  !(params['site_constrain'] == '' || params['site_constrain'].nil?))
+      @uri = @uri.sub("site_constrain=#{params['site_constrain']}", '')
+      params['site_constrain'] = ''
+      warning +="WARNING:  Disabled site constraint because it only makes sense when grouping by Work Site <br/>"
+    end
+    
+    @uri = @uri.sub('&&', '&')
     
     warning
   end

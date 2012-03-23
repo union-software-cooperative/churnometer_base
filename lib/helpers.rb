@@ -86,8 +86,8 @@ module Helpers
   end
 
    def drill_down_cell(row)
-     row_filter = "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header1_id']}"
-     row_filter_name = "#{FilterNames}[#{row['row_header1_id']}]=#{row['row_header1']}"
+     row_filter = h "#{Filter}[#{(params['group_by'] || 'branchid')}]=#{row['row_header1_id']}"
+     row_filter_name = h "#{FilterNames}[#{row['row_header1_id']}]=#{row['row_header1']}"
 
      "&" + row_filter + "&" + row_filter_name  + "&" + (row_interval(row))
    end
@@ -332,11 +332,17 @@ module Helpers
     URI.escape "#{Filter}[#{data_sql.query['group_by']}]=#{row_header1_id}"
   end
   
+  def uri
+    uri = request.host_with_port + '?'
+    params.each {|k,v| uri += h "#{k}=#{v}&"}
+    uri 
+  end
+  
   def uri_join_queries(*queries)
     if params == {}
-      request.url + '?' + queries.join('&')
+      @uri + '?' + queries.join('&')
     else
-      request.url + '&' + queries.join('&')
+      @uri + '&' + queries.join('&')
     end
   end
     

@@ -18,6 +18,9 @@
 			<%="#{data_sql.get_cards_in(@data)} cards brought in per week. " %>
 			<%= "#{data_sql.get_cards_in_target(@data)} needed to hold our ground. " %>
 			<%= " #{data_sql.get_cards_in_growth_target(@data)} needed to grow 10%." %>
+			<% if data_sql.transfers?(@data) %> 
+	      		<br/>WARNING: These results are influenced by transfers.  See the transfer tab.
+			<% end %>
       </div>
             
     <% end %>
@@ -62,50 +65,58 @@
 		<% if data_sql.transfers?(@data) %>
         	<div id="tabs-<%=i+=1%>" class="tab">
 		    	<p>
-					This tab is shown because the transfer warning threshold has been reached.   
-				<p>
-					Either select sites assigned at the <a href="<%= uri_join_queries 'site_constrain=start' %>">start</a> or <a href="<%= uri_join_queries 'site_constrain=end' %>">end</a> of the period.
-				</p>	
-				<p>
-					Or select a transfer free period either [before] or [after] a significant transfer to get more accurate weekly averages.  There is an explanation below the table.  
+					To get more accurate weekly averages you must refine your search.  There is an explanation below the table   
 				</p>
-				
-				<table class="tablesorter">
-	                <thead>
-	                    <th>Transfer Date</th>
-	                    <th></th>
-						<th>Transfers In</th>
-	                    <th>Transfers Out</th>
-						<th></th>
-					</thead>
-	                <% get_transfers.each do |row| %>
-	                    <tr>
-	                        <td>
-                       			<a href="<%= request.url + "&endDate=" + Date.parse(row['changedate']).strftime(DateFormatDisplay) + "&startDate=" + Date.parse(row['changedate']).strftime(DateFormatDisplay) + "&group_by=companyid" %>" title="date of transfer">
-		                            <%= Date.parse(row['changedate']).strftime(DateFormatDisplay) %>
-		                        </a>
-						    </td>
-							<td>
-								<a href="<%= request.url + "&endDate=" + (Date.parse(row['changedate'])-1).strftime(DateFormatDisplay) %>" title="<%= "#{Date.parse(data_sql.query['startDate']).strftime(DateFormatDisplay)} to #{(Date.parse(row['changedate'])-1).strftime(DateFormatDisplay)}" %>">
-	                        		[before]
-								</a>
-							</td>
-							<td>
-		                        <%= row['transfer_in'] %>
-	                        </td>
-	                        <td>
-	                        	<%= row['transfer_out'] %>
-	                        </td>
-	                    	<td>
-		 						<a href="<%= request.url + "&startDate=" + (Date.parse(row['changedate'])+1).strftime(DateFormatDisplay) %>" title="<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(data_sql.query['endDate']).strftime(DateFormatDisplay)}" %>">
-									[after]
-								</a>
-							</td>
-						</tr>
-	                <% end  %>
-	            </table>
 				<p>
-					Shown in the table are external transfers of both paying and a1p members.  An external transfer is a reassignment of one or more members from outside the current selection to inside the current selection or vice versa. e.g. during the period, a growth site was handed back to the development organiser.  If a significant volume of these occur (think patch reassignment) during the selected period, the composition of the selection will be drastically altered having an unpredictable affect on averages and growth calculations.  </p>
+					To see results without transfers select;
+					<ul>
+						<li>
+							<a href="<%= uri_join_queries 'site_constrain=start', 'group_by=companyid' %>">sites as assigned at the <strong>start</strong> of the period</a> 
+						</li>
+						<li>
+							<a href="<%= uri_join_queries 'site_constrain=end', 'group_by=companyid' %>">sites as assigned at the <strong>end</strong> of the period</a>
+						</li>
+						<li>
+							Or select a mostly transfer free period either [before] or [after] a significant transfer in the table below  
+				
+							<table class="tablesorter">
+				                <thead>
+				                    <th>Transfer Date</th>
+				                    <th></th>
+									<th>Transfers In</th>
+				                    <th>Transfers Out</th>
+									<th></th>
+								</thead>
+				                <% get_transfers.each do |row| %>
+				                    <tr>
+				                        <td>
+			                       			<a href="<%= uri_join_queries "endDate=" + Date.parse(row['changedate']).strftime(DateFormatDisplay), "startDate="+ Date.parse(row['changedate']).strftime(DateFormatDisplay), "group_by=companyid" %>" title="date of transfer">
+					                            <%= Date.parse(row['changedate']).strftime(DateFormatDisplay) %>
+					                        </a>
+									    </td>
+										<td>
+											<a href="<%= uri_join_queries "endDate=" + (Date.parse(row['changedate'])-1).strftime(DateFormatDisplay) %>" title="<%= "#{Date.parse(data_sql.query['startDate']).strftime(DateFormatDisplay)} to #{(Date.parse(row['changedate'])-1).strftime(DateFormatDisplay)}" %>">
+				                        		[before]
+											</a>
+										</td>
+										<td>
+					                        <%= row['transfer_in'] %>
+				                        </td>
+				                        <td>
+				                        	<%= row['transfer_out'] %>
+				                        </td>
+				                    	<td>
+					 						<a href="<%= uri_join_queries  "startDate=" + (Date.parse(row['changedate'])+1).strftime(DateFormatDisplay) %>" title="<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(data_sql.query['endDate']).strftime(DateFormatDisplay)}" %>">
+												[after]
+											</a>
+										</td>
+									</tr>
+				                <% end  %>
+				            </table>
+						</li>
+					</ul>
+				<p>
+					Transfers can potentially affect these results because one or more sites weren't held for the entire period.  For instance, if the sites were only held for half the period, averages will be halved as they are calculated over the whole period.  Start or end counts may show zero for a site when it had members because the current selection didn't contain that site at the time.  Shown in the table are transfers of both paying and a1p members that moved from outside the current selection to inside the current selection or vice versa. e.g. a growth site (outside this selection) was handed back to the development organiser (inside this selection).  If a significant volume of these occur (think patch reassignment) during the selected period, the composition of the selection may be drastically altered having an unpredictable affect on totals, averages and growth calculations.  </p>
 				<p>
 					<%= data_sql.getmath_transfers?(@data) %>
 				</p>
@@ -294,7 +305,7 @@
 		});
 		
 		<% tables.each do | table, cols | %>
-			$('#table<%=table %>').floatHeader( { recalculate: true, fadeIn:0 }); // recalculate is needed to work with tabs but causes high cpu
+			$('#table<%=table.sub(' ', '') %>').floatHeader( { recalculate: true, fadeIn:0 }); // recalculate is needed to work with tabs but causes high cpu
 		<% end %>
 		
 		<% if (line_chart_ok?) %>
@@ -331,6 +342,14 @@
 		});
 		$(".site_constrain").tooltip({
 			tip: '#site_constrain',
+			position: 'center right',
+			offset: [25, 50],
+			delay: 0,
+			relative: true
+		});
+		
+		$(".site_constrain_default").tooltip({
+			tip: '#site_constrain_default',
 			position: 'center right',
 			offset: [25, 50],
 			delay: 0,
