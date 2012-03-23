@@ -75,13 +75,13 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/export_summary' do
-    fix_date_params
+    validate_params
   
     data_to_excel db.ex(data_sql.summary_sql(leader?))
   end
 
   get '/export_member_details' do
-    fix_date_params
+    validate_params
   
     data_to_excel db.ex(data_sql.member_sql(leader?))
   end
