@@ -43,7 +43,7 @@ class Churnobyl < Sinatra::Base
     #       @warning += h companyids + "<br />"
     #     end
     
-    #cache_control :public, :max_age => 1
+    cache_control :public, :max_age => 28800
     protected!
     
     @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql(leader?)
