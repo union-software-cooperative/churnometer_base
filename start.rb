@@ -25,12 +25,33 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/' do
-    cache_control :public, :max_age => 43200
-    protected!
+     
     @warning = fix_date_params
-
+    
+    # if !data_sql.query['site_constrain'].nil?
+    #       sql = data_sql.sites_at_date(leader?)
+    #       sites = db.ex(sql)
+    #       companyids = sites.collect{ |r| r['companyid']}.join(',')
+    #       if companyids.empty? 
+    #           companyids = 'none' 
+    #       end
+    #       
+    #       dest = "/?startDate=#{h data_sql.query['startDate']}&endDate=#{h data_sql.query['endDate']}&group_by=#{h data_sql.query['group_by']}&lock[companyid]=#{h companyids}" 
+    # 
+    #       redirect URI.encode(dest)
+    #       @warning += h sql + "<br />"
+    #       @warning += h companyids + "<br />"
+    #     end
+    
+    #cache_control :public, :max_age => 1
+    protected!
+    
     @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql(leader?)
     @data = DataPresenter.new db.ex(@sql)  
+    
+    if !@data.has_data?
+      @warning += 'WARNING:  No data found'
+    end
     
     if data_sql.transfers?(@data)
       @warning += 'WARNING:  There are transfers during this period that may influence the results.  See the transfer tab below. <br />'

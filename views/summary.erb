@@ -62,8 +62,14 @@
 		<% if data_sql.transfers?(@data) %>
         	<div id="tabs-<%=i+=1%>" class="tab">
 		    	<p>
-					This tab is shown because the transfer warning threshold has been reached.   Select a period either [before] or [after] a significant transfer to get more accurate weekly averages.  There is an explanation below the table.  
+					This tab is shown because the transfer warning threshold has been reached.   
+				<p>
+					Either select sites assigned at the <a href="<%= uri_join_queries 'site_constrain=start' %>">start</a> or <a href="<%= uri_join_queries 'site_constrain=end' %>">end</a> of the period.
+				</p>	
+				<p>
+					Or select a transfer free period either [before] or [after] a significant transfer to get more accurate weekly averages.  There is an explanation below the table.  
 				</p>
+				
 				<table class="tablesorter">
 	                <thead>
 	                    <th>Transfer Date</th>
@@ -322,6 +328,13 @@
 			position: 'top center',
 			delay: 0,
 			relative: false
+		});
+		$(".site_constrain").tooltip({
+			tip: '#site_constrain',
+			position: 'center right',
+			offset: [25, 50],
+			delay: 0,
+			relative: true
 		});
 		
 		$(".remove_filter").tooltip({

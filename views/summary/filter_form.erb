@@ -56,7 +56,18 @@
 					
     				  </tr>
     			  <% end %>
-			
+				<% if data_sql.query['site_constrain'].to_s != ''%>
+                    <tr>
+                        <td class="form span-5 filters">
+                            <%="Constrain search to sites assigned at:"  %>
+                        </td>
+                        <td class="filters">
+                            <input class="selections site_constrain" type="radio" name="site_constrain" value="">Off&nbsp;&nbsp;&nbsp;&nbsp;
+							<input class="selections site_constrain" type="radio" name="site_constrain" value="start" <%=data_sql.query['site_constrain'].to_s=='start' ? 'checked' : '' %>><%=Date.parse(data_sql.query['startDate']).strftime(DateFormatDisplay) %>&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input class="selections site_constrain" type="radio" name="site_constrain" value="end" <%=data_sql.query['site_constrain'].to_s=='end' ? 'checked' : '' %>><%=Date.parse(data_sql.query['endDate']).strftime(DateFormatDisplay) %>&nbsp;&nbsp;&nbsp;&nbsp;
+                        </td>
+                    </tr>
+				<% end %>
     			<% if data_sql.query['column'].to_s != ''%>
                     <tr>
                         <td class="form span-5 filters">
@@ -89,6 +100,9 @@
             <input  type="submit" value="Refresh">
           </div>
     	</ul>
+		<div id="site_constrain" class="tooltip">
+  			This search option finds the sites assigned to the selection at the start or end date, then looks at only those sites for the entire period, irrespective the potentially changing allocation.  It is useful for determining averages for a fixed set of sites as currently assigned.  You can also use it to see where transfers came from or went to.
+  		</div>
   		<div id="removefiltertip" class="tooltip">
   			When removed, this filter will be ignored by the system and removed from the screen.  When removing or disabling a filter, please carefully consider the 'Group By' setting.  If 'Work Site' is set thousands of rows could be returned and your browser could hang.
   		</div>

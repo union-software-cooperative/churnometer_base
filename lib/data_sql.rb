@@ -14,26 +14,28 @@ class DataSql
     if query['interval'] == 'none'
       <<-SQL
       select * 
-      from churnsummarydyn23(
+      from summary(
                             'memberfacthelperpaying2',
                             '#{query['group_by']}', 
                             '',
                             '#{start_date}',
                             '#{end_date}',
                             #{leader.to_s}, 
+                            '#{query['site_constrain']}',
                             '#{xml}'
                             )
       SQL
     else
       <<-SQL
       select * 
-      from churnrunningdyn23(
+      from running_summary(
                             'memberfacthelperpaying2',
                             '#{query['group_by']}', 
                             '#{query['interval']}', 
                             '#{start_date}',
                             '#{end_date}',
                             #{leader.to_s}, 
+                            '#{query['site_constrain']}',
                             '#{xml}'
                             )
       SQL
@@ -69,19 +71,40 @@ class DataSql
     else
       sql = <<-SQL 
         select * 
-        from churndetailfriendly20(
+        from detail_friendly(
                               'memberfacthelperpaying2',
                               '#{query['group_by']}', 
                               '#{query['column']}',  
                               '#{start_date}',
                               '#{end_date}',
                               #{leader.to_s}, 
+                              '#{query['site_constrain']}',
                               '#{xml}'
                               )
       SQL
     end
     
     sql
+  end
+  
+  def sites_at_date(leader)
+    xml = filter_xml query[Filter], locks
+
+    start_date = (Date.parse(query['startDate'])).strftime(DateFormatDB)
+    end_date = (Date.parse(query['endDate'])+1).strftime(DateFormatDB)
+    dte = query['site_constrain'] == 'end' ? end_date : start_date
+    
+    sql = <<-SQL 
+      select * 
+      from sites_at_date(
+                          'memberfacthelperpaying2',
+                          '#{query['group_by']}', 
+                          '',
+                          '#{dte}',
+                          #{leader.to_s}, 
+                          '#{xml}'
+                          )
+    SQL
   end
   
   def transfer_sql(leader)
@@ -257,6 +280,8 @@ class DataSql
 
      cards_per_week = 0.0
      weeks = 0
+     cards = 0 
+     cards_per_week = 0
      if start_date != end_date 
        weeks =  Float(end_date - start_date) / 7
        cards = Float(stopped - resume + failed)
