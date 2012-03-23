@@ -1,6 +1,9 @@
+
 module Support
   def fix_params
-    @uri= request.url
+    # @uri when constructing html links - it is better than request.url because we can remove parameters that don't pass validation
+    # do a bunch of replacements to simplify swapping url parameters with search and replace 
+    @uri= request.url.gsub('+', ' ').gsub('%20', ' ').gsub(' =','=').gsub('= ', '')
     
     warning = ''
     
@@ -55,8 +58,8 @@ module Support
       @uri = @uri.sub("startDate=#{params['startDate']}", "startDate=#{startDate.strftime(DateFormatDisplay)}")
       params['startDate'] = startDate.strftime(DateFormatDisplay)
     end
-    if (!params['startDate'].nil? || !params['intervalStart'].nil?)
-      @uri = @uri.sub("startDate=#{params['endDate']}", "startDate=#{endDate.strftime(DateFormatDisplay)}")
+    if (!params['endDate'].nil? || !params['intervalEnd'].nil?)
+      @uri = @uri.sub("endDate=#{params['endDate']}", "endDate=#{endDate.strftime(DateFormatDisplay)}")
       params['endDate'] = endDate.strftime(DateFormatDisplay)
     end
     # I don't know what these global values are for
@@ -64,12 +67,13 @@ module Support
     @end = endDate
     
     if (params['group_by']!='companyid' &&  !(params['site_constrain'] == '' || params['site_constrain'].nil?))
-      @uri = @uri.sub("site_constrain=#{params['site_constrain']}", '')
+      @uri = @uri.gsub("site_constrain=#{params['site_constrain']}", '')
+      @uri = @uri.gsub('&&', '&')
       params['site_constrain'] = ''
       warning +="WARNING:  Disabled site constraint because it only makes sense when grouping by Work Site <br/>"
     end
     
-    @uri = @uri.sub('&&', '&')
+    #warning +=h @uri
     
     warning
   end
