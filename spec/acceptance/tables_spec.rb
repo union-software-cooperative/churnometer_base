@@ -31,7 +31,11 @@ describe "Tables" do
   it "Has the expected data" do
     visit "/"
     
-    page.should have_content("prototype")
+    page.should have_content("Start Date") 
+    page.should have_content("End Date") 
+    page.should have_content("Group by") 
+    page.should have_content("Running total") 
+    page.should have_no_content "Error"
     
     check_home_summary
 
@@ -48,12 +52,19 @@ describe "Tables" do
     
     select "Weekly", :from => "Running total"
     click_button "Refresh"
-    page.should have_content "prototype"
+    page.should have_content("Start Date") 
+    page.should have_content("End Date") 
+    page.should have_content("Group by") 
+    page.should have_content("Running total")
     page.should have_no_content "Error"
-
+    
+    
     select "Monthly", :from => "Running total"
     click_button "Refresh"
-    page.should have_content "prototype"
+    page.should have_content("Start Date") 
+    page.should have_content("End Date") 
+    page.should have_content("Group by") 
+    page.should have_content("Running total")
     page.should have_no_content "Error"
   end
   
@@ -65,17 +76,84 @@ describe "Tables" do
       click_link "230"
     end
     
-    page.should have_content "prototype"
+    page.should have_content("Start Date") 
+    page.should have_content("End Date") 
+    page.should have_content("Group by") 
+    page.should have_content("Running total")
     page.should have_no_content "Error"
   end
+  
+  it "Displays transfer warning" do
+    visit "/?f[branchid]=NV&group_by=lead&f[lead]=bjacobi&group_by=org"
+    
+    within '#filters' do
+      page.should have_content "Branch: Victorian Branch"
+      page.should have_content "Lead Organiser: Belinda Jacobi"
+    end
+    
+    within('#filter') do
+      fill_in 'startDate', :with => '14 August 2011'
+      fill_in 'endDate', :with => '22 March 2012'
+    end
+    click_button "Refresh"
+    
+    within('#card_target') do
+      page.should have_content "WARNING: These results are influenced by transfers. See the transfer tab."
+    end
+    
+    click_link "Transfers"
+    within('table#transferDates tbody tr:nth-child(8)') do
+      row_has "12 November 2011", %w{[before 4978 754 after]}
+    end
+    
+    click_link "sites as assigned at the end of the period"
+    within '#filters' do
+      page.should have_content "Any time during the period"
+      page.should have_content "22 March 2012"
+    end
+    
+    within('#card_target') do
+      page.should have_no_content "WARNING: These results are influenced by transfers. See the transfer tab."
+    end
+    
+    click_link "Paying"
+    within 'table#tablePaying tfoot' do
+      row_has "", %w{9508 1459 -1367 92 -39 9653}
+    end
+    
+    within '#filters' do
+      choose 'constrain_start'
+    end
+    click_button 'Refresh'
+    
+    click_link "Paying"
+    within 'table#tablePaying tfoot' do
+      row_has "", %w{4333 628 -701 15 -25 4250}
+    end
+    
+    # Can drill down to members held by organiser the start but not at the end
+    within 'table#tablePaying tbody tr:nth-child(2)' do
+      click_link "16"
+    end
+    
+    within '#filters' do
+      page.should have_content "Members: paying at end date"
+    end
+    
+    click_link "Member Summary"
+    within 'table#tableMemberSummary tbody tr:nth-child(16)' do
+      row_has "Acquos Master Batch Pty Ltd", %w{2012-02-16 Parisi Paying Paying Paying Acquos	Acquos Acquos	}
+    end
+  end
+  
   
   def check_home_summary 
     click_link "Summary"
     within 'table#tableSummary tbody tr:nth-child(1)' do
-      row_has "General Branch", %w{230 23 10147 302 -437 -135 10012 9093 631362.47}
+      row_has "General Branch", %w{230 23 10147 302 -437 -135 10012 9114 633364.37}
     end
     within 'table#tableSummary tbody tr:nth-child(3)' do
-      row_has "Victorian Branch", %w{320 -69 22259 361 -413 -52 22207 16649 958618.40}
+      row_has "Victorian Branch", %w{320 -69 22259 361 -413 -52 22207 16665 959220.00}
     end
     
     click_link "Paying" 
@@ -95,7 +173,7 @@ describe "Tables" do
     
     click_link "Summary"
     within 'table#tableSummary tbody tr:nth-child(1)' do
-      row_has "Belinda Jacobi", %w{173 -5 10107 178 -187 -9 9962 7242 401376.06}
+      row_has "Belinda Jacobi", %w{173 -5 10107 178 -187 -9 9962 7245 401622.41}
     end
     within 'table#tableSummary tbody tr:nth-child(2)' do
       row_has "Chris Kalomiris", %W{0 0 3 0 0 0 3 2 81.20}
@@ -119,10 +197,10 @@ describe "Tables" do
     
     click_link "Summary"
     within 'table#tableSummary tbody tr:nth-child(1)' do
-      row_has "Adam Auld", %w{15 -1 1505 20 -27 -7 1498 1171 57203.55}      
+      row_has "Adam Auld", %w{15 -1 1505 20 -27 -7 1498 1171 57244.15}      
     end
     within 'table#tableSummary tbody tr:nth-child(2)' do
-      row_has "Belinda Jacobi", %w{8 -3 1166 78 -27 51 1215 1062 54700.28}
+      row_has "Belinda Jacobi", %w{8 -3 1166 78 -27 51 1215 1063 54743.63}
     end
     
     click_link "Paying" 
@@ -157,6 +235,7 @@ describe "Tables" do
       row_has "Charles Parsons (Vic) P/L", %w{2 4 0 0 -6 0}
     end
   end
+ 
   
   def row_has(*items)
     items.flatten.each_with_index do |item, i|

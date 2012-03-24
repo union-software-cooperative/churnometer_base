@@ -63,8 +63,8 @@
                         </td>
                         <td class="filters">
                             <input class="selections site_constrain_default" type="radio" name="site_constrain" value="">Any time during the period&nbsp;&nbsp;&nbsp;&nbsp;
-							<input class="selections site_constrain" type="radio" name="site_constrain" value="start" <%=data_sql.query['site_constrain'].to_s=='start' ? 'checked' : '' %>><%=Date.parse(data_sql.query['startDate']).strftime(DateFormatDisplay) %>&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input class="selections site_constrain" type="radio" name="site_constrain" value="end" <%=data_sql.query['site_constrain'].to_s=='end' ? 'checked' : '' %>><%=Date.parse(data_sql.query['endDate']).strftime(DateFormatDisplay) %>&nbsp;&nbsp;&nbsp;&nbsp;
+							<input id="constrain_start" class="selections site_constrain" type="radio" name="site_constrain" value="start" <%=data_sql.query['site_constrain'].to_s=='start' ? 'checked' : '' %>><%=Date.parse(data_sql.query['startDate']).strftime(DateFormatDisplay) %>&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input id="constrain_end" class="selections site_constrain" type="radio" name="site_constrain" value="end" <%=data_sql.query['site_constrain'].to_s=='end' ? 'checked' : '' %>><%=Date.parse(data_sql.query['endDate']).strftime(DateFormatDisplay) %>&nbsp;&nbsp;&nbsp;&nbsp;
                         </td>
                     </tr>
 				<% end %>

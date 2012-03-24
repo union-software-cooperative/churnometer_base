@@ -29,8 +29,8 @@ describe "Internal error" do
   it "shows stack trace" do
     Pony.should_receive(:mail)
 
-    visit "/?startDate=20-01-01"
+    visit "/?startDate=33-33-33"
   
-    page.should have_content "date/time field value out of range"    
+    page.should have_content "invalid date"    
   end
 end

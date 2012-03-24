@@ -331,12 +331,6 @@ module Helpers
     URI.escape "#{Filter}[#{data_sql.query['group_by']}]=#{row_header1_id}"
   end
   
-  def uri
-    uri = request.host_with_port + '?'
-    params.each {|k,v| uri += h "#{k}=#{v}&"}
-    uri 
-  end
-  
   def uri_join_queries(*queries)
     if params == {}
       @uri + '?' + queries.join('&')
