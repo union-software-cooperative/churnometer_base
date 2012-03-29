@@ -134,7 +134,7 @@ class DataSql
         , sum(-a1p_other_loss - paying_other_loss) transfer_out
         from
           detail_friendly(
-            'memberfacthelperpaying2',
+            'memberfacthelper3',
             'status',
             '',
             '#{start_date}',
