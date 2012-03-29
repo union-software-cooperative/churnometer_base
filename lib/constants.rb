@@ -16,7 +16,7 @@ def col_names
     'a1p_to_other'    => 'cards failed',
     'paying_start_count' => 'paying at start date',
     'paying_real_gain'  => 'started paying',
-    'paying_real_loss'  => 'stopped paying',
+    'paying_real_loss'  => 'ceased paying',
     'a1p_start_count' => 'a1p at start',
     'a1p_end_count' => 'a1p at end',
     'paying_real_net'   => 'paying net',
@@ -37,7 +37,13 @@ def col_names
     'start_date'          => 'start date',
     'end_date'          => 'end date',
     'annualisedavgcontribution' => 'estimated annual contribution',
-    'contributors'  => 'unique contributors'
+    'contributors'  => 'unique contributors',
+    'stopped_start_count' => 'stopped paying at start date', 
+    'stopped_end_count' => 'stopped paying at end date',
+    'stopped_real_gain' => 'became stopped paying',
+    'stopped_real_loss' => 'ceased stopped paying',
+    'stopped_other_gain' => 'stopped transfers in',
+    'stopped_other_loss' => 'stopped transfers out'
     }
 end
 
@@ -52,11 +58,12 @@ module Mappings
         "areaid"        => "Area",
         "companyid"     => "Work Site",
         "industryid"    => "Industry",
-        "del"           => "Delegate Training",
-        "hsr"           => "HSR Training",
+        #"del"           => "Delegate Training",
+        #"hsr"           => "HSR Training",
         "nuwelectorate" => "Electorate",
         "state"         => "State",
-        "feegroupid"    => "Fee Group"
+        "feegroupid"    => "Fee Group",
+        "staffid"       => "Staff"
       }
     end
     

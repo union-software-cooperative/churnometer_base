@@ -10,9 +10,13 @@ module Authorization
   def user?
     auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['user', '']
   end
+  
+  def staff?
+    auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['staff', 'followup']
+  end
 
   def protected!
-    unless leader? || user? || lead?
+    unless leader? || user? || lead? || staff?
       response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
       throw(:halt, [401, "Not authorized\n"])
     end

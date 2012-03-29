@@ -36,31 +36,31 @@ describe DataSql do
     
     describe 'summary_sql' do
       it do
-        compress(datasql.summary_sql(true)).should == "select * from summary( 'memberfacthelperpaying2', 'branchid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
+        compress(datasql.summary_sql(true)).should == "select * from summary_stopped( 'memberfacthelper3', 'branchid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
       end
 
       it do
         datasql.params.rmerge!({'group_by' => 'lead'})
-        compress(datasql.summary_sql(true)).should == "select * from summary( 'memberfacthelperpaying2', 'lead', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
+        compress(datasql.summary_sql(true)).should == "select * from summary_stopped( 'memberfacthelper3', 'lead', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
       end
     end
     
     describe 'member_sql' do
       it do
-        compress(datasql.member_sql(true)).should == "select * from detail_friendly( 'memberfacthelperpaying2', 'branchid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
+        compress(datasql.member_sql(true)).should == "select * from detail_friendly( 'memberfacthelper3', 'branchid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
       end
 
       it do
         datasql.params.rmerge!({'group_by' => 'lead'})
-        compress(datasql.member_sql(true)).should == "select * from detail_friendly( 'memberfacthelperpaying2', 'lead', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
+        compress(datasql.member_sql(true)).should == "select * from detail_friendly( 'memberfacthelper3', 'lead', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
       end
 
       it do
         datasql.params.rmerge!({'group_by' => 'areaid'})
-        compress(datasql.member_sql(true)).should == "select * from detail_friendly( 'memberfacthelperpaying2', 'areaid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
+        compress(datasql.member_sql(true)).should == "select * from detail_friendly( 'memberfacthelper3', 'areaid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status></search>' )"
       end
     end
-    
+     
     def compress(s)
       s.gsub(/\s+/, ' ').gsub(/^\s|\s$/, '')
     end

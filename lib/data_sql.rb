@@ -5,6 +5,22 @@ class DataSql
     @params = params
   end
   
+  def query
+    start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
+    end_date = Time.now.strftime(DateFormatDisplay)
+
+    {
+      'group_by' => 'branchid',
+      'startDate' => start_date,
+      'endDate' => end_date,
+      'column' => '',
+      'interval' => 'none',
+      Filter => {
+        'status' => [1, 14, 11]
+      }
+    }.rmerge(params)
+  end
+  
   def summary_sql(leader)
     xml = filter_xml query[Filter], locks
     start_date = (Date.parse(query['startDate'])).strftime(DateFormatDB)
@@ -14,8 +30,8 @@ class DataSql
     if query['interval'] == 'none'
       <<-SQL
       select * 
-      from summary(
-                            'memberfacthelperpaying2',
+      from summary_stopped(
+                            'memberfacthelper3',
                             '#{query['group_by']}', 
                             '',
                             '#{start_date}',
@@ -29,7 +45,7 @@ class DataSql
       <<-SQL
       select * 
       from summary_running(
-                            'memberfacthelperpaying2',
+                            'memberfacthelper3',
                             '#{query['group_by']}', 
                             '#{query['interval']}', 
                             '#{start_date}',
@@ -58,7 +74,7 @@ class DataSql
       sql = <<-SQL 
         select * 
         from detail_static_friendly(
-                              'memberfacthelperpaying2',
+                              'memberfacthelper3',
                               '#{query['group_by']}', 
                               '#{filter_column}',  
                               '#{member_date}',
@@ -70,7 +86,7 @@ class DataSql
       sql = <<-SQL 
         select * 
         from detail_friendly(
-                              'memberfacthelperpaying2',
+                              'memberfacthelper3',
                               '#{query['group_by']}', 
                               '#{query['column']}',  
                               '#{start_date}',
@@ -95,7 +111,7 @@ class DataSql
     sql = <<-SQL 
       select * 
       from sites_at_date(
-                          'memberfacthelperpaying2',
+                          'memberfacthelper3',
                           '#{query['group_by']}', 
                           '',
                           '#{dte}',
@@ -334,22 +350,6 @@ class DataSql
     end
   
     series
-  end
-  
-  def query
-    start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
-    end_date = Time.now.strftime(DateFormatDisplay)
-
-    {
-      'group_by' => 'branchid',
-      'startDate' => start_date,
-      'endDate' => end_date,
-      'column' => '',
-      'interval' => 'none',
-      Filter => {
-        'status' => [1, 14]
-      }
-    }.rmerge(params)
   end
 
   def transfers?(data)

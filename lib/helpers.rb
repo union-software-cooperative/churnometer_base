@@ -160,6 +160,21 @@ module Helpers
         'a1p_net'
         ],
       }
+      shash = {
+        'Stopped' =>
+        [
+        'row_header', 
+        'row_header1', 
+        'period_header',
+        'stopped_start_count',
+        'stopped_real_gain',
+        'stopped_real_loss',
+        'stopped_other_gain',
+        'stopped_other_loss',
+        'stopped_end_count'
+        ]
+      }
+      
       fhash = {
         'Financial' => 
           [
@@ -175,6 +190,10 @@ module Helpers
     }
     if leader?
       hash = hash.merge(fhash);
+    end
+    
+    if staff?
+      hash = hash.merge(shash);
     end
     
     hash
@@ -256,7 +275,13 @@ module Helpers
       'a1p_other_loss' => "The number of 'awaiting first payment' members lost without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers. ",
       'posted'  => "The amount of money posted to members during the period, including money reposted because of corrections (see '#{col_names['unposted']}).  NB corrections are applied to the period for which they money belongs in order to ensure historical consistency.",
       'unposted' => "The amount of money deducted during the period, usually because of undoing a payment.  Be aware that when an undone payment is reposted, the amount will appear in '#{col_names['posted']}'.",
-      'annualisedavgcontribution' => "The total amount of money posted during the period, divided by the number of unique contributors, scaled to make the period equivalent to a year.  NB If, for any reason, money isn't received for a large portion of members for a large portion of the period, this figure will be low.  e.g.  Members were redistributed (think area changes) or reclassified (think industry changes) mid way through the period."
+      'annualisedavgcontribution' => "The total amount of money posted during the period, divided by the number of unique contributors, scaled to make the period equivalent to a year.  NB If, for any reason, money isn't received for a large portion of members for a large portion of the period, this figure will be low.  e.g.  Members were redistributed (think area changes) or reclassified (think industry changes) mid way through the period.",
+      'stopped_start_count' => 'The number of members with the stopped paying status at the start of the period.', 
+      'stopped_end_count' => 'The number of members with the stopped paying status at the end of the period.',
+      'stopped_real_gain' => 'The number of members who changed to the stopped paying status during the period.',
+      'stopped_real_loss' => 'The number of members who changed from the stopped paying status to something else during the period.',
+      'stopped_other_gain' => 'The number of members with the stopped paying status who transfered into this group without changing status.',
+      'stopped_other_loss' => 'The number of members with the stopped paying status who transfered out of this group without changing status.'
     }
   end
   
