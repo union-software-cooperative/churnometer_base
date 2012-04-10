@@ -30,8 +30,8 @@ class DataSql
     if query['interval'] == 'none'
       <<-SQL
       select * 
-      from summary_stopped(
-                            'memberfacthelper3',
+      from summary(
+                            'memberfacthelper4',
                             '#{query['group_by']}', 
                             '',
                             '#{start_date}',
@@ -45,7 +45,7 @@ class DataSql
       <<-SQL
       select * 
       from summary_running(
-                            'memberfacthelper3',
+                            'memberfacthelper4',
                             '#{query['group_by']}', 
                             '#{query['interval']}', 
                             '#{start_date}',
@@ -67,18 +67,24 @@ class DataSql
     if static_cols.include?(query['column'])
     
       member_date = query['column'].include?('start') ? start_date : end_date
-      site_date = query['site_constrain'] == 'end' ? end_date : start_date
-    
+      site_date = ''
+      if query['site_constrain'] == 'end' 
+        site_date = end_date
+      end
+      if query['site_constrain'] == 'start' 
+        site_date = start_date
+      end
+      
       filter_column = query['column'].sub('_start_count', '').sub('_end_count', '')
     
       sql = <<-SQL 
         select * 
         from detail_static_friendly(
-                              'memberfacthelper3',
+                              'memberfacthelper4',
                               '#{query['group_by']}', 
                               '#{filter_column}',  
                               '#{member_date}',
-                              '#{site_date}',
+                              #{site_date == '' ? 'NULL' : "'#{site_date}'"},
                               '#{xml}'
                             )
       SQL
@@ -86,7 +92,7 @@ class DataSql
       sql = <<-SQL 
         select * 
         from detail_friendly(
-                              'memberfacthelper3',
+                              'memberfacthelper4',
                               '#{query['group_by']}', 
                               '#{query['column']}',  
                               '#{start_date}',
@@ -111,7 +117,7 @@ class DataSql
     sql = <<-SQL 
       select * 
       from sites_at_date(
-                          'memberfacthelper3',
+                          'memberfacthelper4',
                           '#{query['group_by']}', 
                           '',
                           '#{dte}',
@@ -134,7 +140,7 @@ class DataSql
         , sum(-a1p_other_loss - paying_other_loss) transfer_out
         from
           detail_friendly(
-            'memberfacthelper3',
+            'memberfacthelper4',
             'status',
             '',
             '#{start_date}',
@@ -467,7 +473,9 @@ class DataSql
       'a1p_end_count',
       'a1p_start_count',
       'paying_end_count',
-      'paying_start_count'
+      'paying_start_count',
+      'stopped_start_count',
+      'stopped_end_count'
     ]
   end
 

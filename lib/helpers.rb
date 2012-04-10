@@ -26,6 +26,7 @@ module Helpers
   def filter_columns 
     %w{
       a1p_real_gain 
+      a1p_unchanged_gain
       a1p_real_loss 
       a1p_other_gain 
       a1p_other_loss 
@@ -46,6 +47,15 @@ module Helpers
       a1p_start_count
       paying_end_count
       paying_start_count
+      stopped_start_count
+      stopped_real_gain
+      stopped_unchanged_gain
+      stopped_real_loss
+      stopped_to_paying
+      stopped_to_other
+      stopped_other_gain
+      stopped_end_count
+      stopped_other_loss
       contributors
       income_net
       posted
@@ -152,6 +162,7 @@ module Helpers
         'a1p_newjoin',
         'a1p_rejoin',
         'a1p_real_gain',
+        'a1p_unchanged_gain',
         'a1p_to_other',
         'a1p_to_paying',
         'a1p_other_gain',
@@ -168,10 +179,28 @@ module Helpers
         'period_header',
         'stopped_start_count',
         'stopped_real_gain',
+        'stopped_unchanged_gain',
         'stopped_real_loss',
         'stopped_other_gain',
         'stopped_other_loss',
         'stopped_end_count'
+        ]
+      }
+      
+      shash2 = {
+        'Status Updates' =>
+        [
+        'row_header', 
+        'row_header1', 
+        'period_header',
+        'a1p_real_gain',
+        'a1p_unchanged_gain',
+        'a1p_to_other',
+        'a1p_to_paying',
+        'stopped_real_gain',
+        'stopped_unchanged_gain',
+        'stopped_to_other',
+        'stopped_to_paying'
         ]
       }
       
@@ -194,6 +223,9 @@ module Helpers
     
     if staff?
       hash = hash.merge(shash);
+      if data_sql.query['group_by'] == 'statusstaffid' 
+        hash = shash2
+      end
     end
     
     hash
@@ -281,7 +313,9 @@ module Helpers
       'stopped_real_gain' => 'The number of members who changed to the stopped paying status during the period.',
       'stopped_real_loss' => 'The number of members who changed from the stopped paying status to something else during the period.',
       'stopped_other_gain' => 'The number of members with the stopped paying status who transfered into this group without changing status.',
-      'stopped_other_loss' => 'The number of members with the stopped paying status who transfered out of this group without changing status.'
+      'stopped_other_loss' => 'The number of members with the stopped paying status who transfered out of this group without changing status.',
+      'stopped_unchanged_gain' => 'The number of members who became stopped paying and still are stopped paying',
+      'a1p_unchanged_gain' => 'The number of members who became awaiting first payment and still are awaiting first payment ',
     }
   end
   
@@ -305,7 +339,9 @@ module Helpers
         'paying_end_count',
         'period_header',
         'a1p_start_count',
-        'a1p_end_count'
+        'a1p_end_count',
+        'stopped_start_count',
+        'stopped_end_count'
       ]
     end
     
@@ -318,13 +354,15 @@ module Helpers
       'lead'          => 'org',
       'org'           => 'companyid',
       'state'         => 'areaid',
-      'areaid'          => 'companyid',
+      'areaid'        => 'companyid',
       'feegroupid'    => 'companyid',
       'nuwelectorate' => 'org',
       'del'           => 'companyid',
       'hsr'           => 'companyid',
       'industryid'	  => 'companyid',
-      'companyid'     => 'companyid'
+      'companyid'     => 'companyid',
+      'statusstaffid' => 'companyid',
+      'supportstaffid' => 'companyid'
     }
 
     URI.escape "group_by=#{hash[data_sql.query['group_by']]}"
@@ -377,12 +415,12 @@ module Helpers
   end
   
   def line_chart_ok?
-    data_sql.series_count(@data) <= 30 && data_sql.query['column'].empty? && data_sql.query['interval'] != 'none'
+    data_sql.query['group_by'] != 'statusstaffid' && data_sql.series_count(@data) <= 30 && data_sql.query['column'].empty? && data_sql.query['interval'] != 'none'
   end
 
   def waterfall_chart_ok?
     cnt =  @data.reject{ |row | row["paying_real_gain"] == '0' && row["paying_real_loss"] == '0' }.count
-    data_sql.query['column'].empty? && data_sql.query['interval'] == 'none' && cnt > 0  && cnt <= 30
+    data_sql.query['group_by'] != 'statusstaffid' && data_sql.query['column'].empty? && data_sql.query['interval'] == 'none' && cnt > 0  && cnt <= 30
   end
 
   def row_header_id_list
