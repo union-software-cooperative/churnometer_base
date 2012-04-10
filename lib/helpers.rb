@@ -239,6 +239,7 @@ module Helpers
          'row_header2',
          'changedate',
          'member',
+         'contactdetail',
          'oldstatus',
          'newstatus',
          'currentstatus',
