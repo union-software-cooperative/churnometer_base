@@ -44,7 +44,7 @@ def col_names
     'stopped_real_loss' => 'ceased stopped paying',
     'stopped_other_gain' => 'stopped transfers in',
     'stopped_other_loss' => 'stopped transfers out',
-    'stopped_to_paying' => 'stopped resume paying',
+    'stopped_to_paying' => 'stopped resumed paying',
     'stopped_to_other' => 'stopped followed-up',
     'stopped_unchanged_gain' => 'became stopped unchanged',
     'a1p_unchanged_gain' => 'became a1p unchanged'

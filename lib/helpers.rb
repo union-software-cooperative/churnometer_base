@@ -180,7 +180,8 @@ module Helpers
         'stopped_start_count',
         'stopped_real_gain',
         'stopped_unchanged_gain',
-        'stopped_real_loss',
+        'stopped_to_other',
+        'stopped_to_paying',
         'stopped_other_gain',
         'stopped_other_loss',
         'stopped_end_count'
@@ -317,6 +318,8 @@ module Helpers
       'stopped_other_loss' => 'The number of members with the stopped paying status who transfered out of this group without changing status.',
       'stopped_unchanged_gain' => 'The number of members who became stopped paying and still are stopped paying',
       'a1p_unchanged_gain' => 'The number of members who became awaiting first payment and still are awaiting first payment ',
+      'stopped_to_paying' => "The number of 'stopped paying' members who resumed paying",
+      'stopped_to_other' => "The number of 'stopped paying' members who got a new status (other than paying) probably due to some follow up process."
     }
   end
   
@@ -363,7 +366,7 @@ module Helpers
       'industryid'	  => 'companyid',
       'companyid'     => 'companyid',
       'statusstaffid' => 'companyid',
-      'supportstaffid' => 'companyid'
+      'supportstaffid' => 'org'
     }
 
     URI.escape "group_by=#{hash[data_sql.query['group_by']]}"
