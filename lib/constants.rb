@@ -42,18 +42,19 @@ def col_names
     'stopped_end_count' => 'stopped paying at end date',
     'stopped_real_gain' => 'became stopped paying',
     'stopped_real_loss' => 'ceased stopped paying',
-    'stopped_other_gain' => 'stopped transfers in',
-    'stopped_other_loss' => 'stopped transfers out',
-    'stopped_to_paying' => 'stopped resumed paying',
-    'stopped_to_other' => 'stopped followed-up',
-    'stopped_unchanged_gain' => 'became stopped unchanged',
+    'stopped_other_gain' => 'stopped paying transfers in',
+    'stopped_other_loss' => 'stopped paying transfers out',
+    'stopped_to_paying' => 'stopped paying resumed paying',
+    'stopped_to_other' => 'stopped paying followed up',
+    'stopped_unchanged_gain' => 'became stopped paying and unchanged',
     'a1p_unchanged_gain' => 'became a1p unchanged',
     'contactdetail' => 'current contact detail',
     'followupnotes' => 'follow up notes',
     'payrollcontactdetail' => 'payroll/hr contact',
     'lateness' => 'payment lateness',
     'paymenttype' => 'payment type',
-    'newemployer' => 'employer'
+    'newemployer' => 'employer',
+    'currentstatus' => 'current status'
     }
 end
 

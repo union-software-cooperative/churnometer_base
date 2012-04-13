@@ -431,7 +431,7 @@ class DataSql
 
   def filter_xml(filters, locks)
     # Example XML
-    # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status></search>
+    # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status><status>11</status></search>
     result = "<search>"
     filters.each do |k, v|
       if v.is_a?(Array)
