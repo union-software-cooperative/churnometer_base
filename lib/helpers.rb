@@ -188,7 +188,7 @@ module Helpers
         ]
       }
       
-      shash2 = {
+      updatehash = {
         'Status Updates' =>
         [
         'row_header', 
@@ -224,11 +224,31 @@ module Helpers
     
     if staff?
       hash = hash.merge(shash);
-      if data_sql.query['group_by'] == 'statusstaffid' 
-        hash = shash2
-      end
     end
-    
+
+    if data_sql.query['group_by'] == 'employerid' 
+     flhash = { 
+       'Remittance' => 
+         [
+         'row_header',
+         'row_header1',
+         'period_header',
+         'paying_end_count',
+         'paymenttype',
+         'paidto',
+         'lateness',
+         'payrollcontactdetail',
+         ]
+       }
+
+     hash = hash.merge(flhash)
+    end
+
+    if data_sql.query['group_by'] == 'statusstaffid' 
+     # None of the other tabs make sense when grouping by statusstaffid
+     hash = updatehash
+    end
+
     hash
   end
  
@@ -240,7 +260,6 @@ module Helpers
          'row_header2',
          'changedate',
          'member',
-         'contactdetail',
          'oldstatus',
          'newstatus',
          'currentstatus',
@@ -260,7 +279,20 @@ module Helpers
           'oldlead',
           'newlead',
           'currentlead'
-          ]
+          ], 
+         'Follow up' => [
+            'row_header',
+            'row_header1',
+            'row_header2',
+            'changedate',
+            'currentstatus',
+            'member',
+            'followupnotes',
+            'paymenttype',
+            'contactdetail',
+            'newemployer',
+            'payrollcontactdetail'
+            ]
      }
      
      fhash = {

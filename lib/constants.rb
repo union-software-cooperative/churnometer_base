@@ -47,7 +47,13 @@ def col_names
     'stopped_to_paying' => 'stopped resumed paying',
     'stopped_to_other' => 'stopped followed-up',
     'stopped_unchanged_gain' => 'became stopped unchanged',
-    'a1p_unchanged_gain' => 'became a1p unchanged'
+    'a1p_unchanged_gain' => 'became a1p unchanged',
+    'contactdetail' => 'current contact detail',
+    'followupnotes' => 'follow up notes',
+    'payrollcontactdetail' => 'payroll/hr contact',
+    'lateness' => 'payment lateness',
+    'paymenttype' => 'payment type',
+    'newemployer' => 'employer'
     }
 end
 
@@ -55,7 +61,7 @@ end
 module Mappings
   class << self
     def groups_by_collection
-      {
+      group_by = {
         "branchid"      => "Branch",
         "lead"          => "Lead Organiser",
         "org"           => "Organiser",
@@ -67,9 +73,16 @@ module Mappings
         "nuwelectorate" => "Electorate",
         "state"         => "State",
         "feegroupid"    => "Fee Group",
-        "supportstaffid"       => "Support Staff", 
+        "employerid"  => "Employer",
+        "supportstaffid"       => "Support Staff",
         "statusstaffid" => "Status Updater"
       }
+      
+      # if leader?
+      #        group_by.merge({"statusstaffid" => "Status Updater"})
+      #      end
+     
+      group_by
     end
     
     
