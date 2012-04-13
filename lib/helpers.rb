@@ -3,22 +3,6 @@ module Helpers
     URI.parse(request.url).query
   end
 
-  def get_display_text(column, id)
-    t = "error!"
-    
-    if id == "unassigned" 
-      t = "unassigned"
-    else
-      val = db.ex(data_sql.get_display_text_sql(column,id.sub('!','').sub('-','')))
-      
-      if val.count != 0 
-        t = val[0]['displaytext']
-      end
-    end 
-    
-    t
-  end
-
   def get_transfers
     db.ex(data_sql.transfer_sql(leader?))
   end
@@ -438,9 +422,7 @@ public
     end
   end
     
-  def filter_value(value)
-    value.sub('!','').sub('-','')
-  end
+
   
   def safe_add(a, b)
     if (a =~ /\./) || (b =~ /\./ )
@@ -458,11 +440,5 @@ public
     cnt =  @data.reject{ |row | row["paying_real_gain"] == '0' && row["paying_real_loss"] == '0' }.count
     data_sql.query['group_by'] != 'statusstaffid' && data_sql.query['column'].empty? && data_sql.query['interval'] == 'none' && cnt > 0  && cnt <= 30
   end
-
-  def row_header_id_list
-    @data.group_by{ |row| row['row_header1_id'] }.collect{ | rh | rh[0] }.join(",")
-  end
-
-
 end
 

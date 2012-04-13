@@ -22,7 +22,7 @@ class Churnobyl
   
   # Override data_sql object's class
   def data_sql
-    @churn_data ||= ChurnDataOverride.new params
+    @db ||= ChurnDataOverride.new params
   end
 end
 

@@ -26,70 +26,52 @@ class Churnobyl < Sinatra::Base
     include Helpers
   end
 
-  def db
-    @db ||= Db.new
-  end
-  
-  def churn_data
-    @churn_data ||= ChurnData.new db, params
-  end
-  
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
   end
+  
+  def db
+    @db ||= ChurnData.new
+  end
+  
+  def query
+    if @query.nil? 
+      @warning = validate_params
 
-  def query(churn_data, params)
-    @warning = validate_params(churn_data, params)
+      start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
+      end_date = Time.now.strftime(DateFormatDisplay)
+
+      @query = {
+        'group_by' => 'branchid',
+        'startDate' => start_date,
+        'endDate' => end_date,
+        'column' => '',
+        'interval' => 'none',
+        Filter => {
+          'status' => [1, 14, 11]
+        }
+      }.rmerge(params)
+    end
     
-    start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
-    end_date = Time.now.strftime(DateFormatDisplay)
-
-    {
-      'group_by' => 'branchid',
-      'startDate' => start_date,
-      'endDate' => end_date,
-      'column' => '',
-      'interval' => 'none',
-      Filter => {
-        'status' => [1, 14, 11]
-      }
-    }.rmerge(params)
+    @query
   end
 
   get '/' do
-     
-    @warning = validate_params
-    
-    # if !data_sql.query['site_constrain'].nil?
-    #       sql = data_sql.sites_at_date(leader?)
-    #       sites = db.ex(sql)
-    #       companyids = sites.collect{ |r| r['companyid']}.join(',')
-    #       if companyids.empty? 
-    #           companyids = 'none' 
-    #       end
-    #       
-    #       dest = "/?startDate=#{h data_sql.query['startDate']}&endDate=#{h data_sql.query['endDate']}&group_by=#{h data_sql.query['group_by']}&lock[companyid]=#{h companyids}" 
-    # 
-    #       redirect URI.encode(dest)
-    #       @warning += h sql + "<br />"
-    #       @warning += h companyids + "<br />"
-    #     end
-    
     cache_control :public, :max_age => 28800
     protected!
     
-    @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql(leader?)
-    @data = ChurnPresenter.new db.ex(@sql)  
+    @data = query['column'].empty? ? db.summary(query, leader?) : db.detail(query, leader?)
+    @presenter = ChurnPresenter.new @data, query, leader?, staff? 
     
-    if !@data.has_data?
+    if !@presenter.has_data?
       @warning += 'WARNING:  No data found'
     end
     
-    if data_sql.transfers?(@data)
+    if @presenter.transfers.exists?
       @warning += 'WARNING:  There are transfers during this period that may influence the results.  See the transfer tab below. <br />'
     end
     
-    erb :summary
+    erb :index, :locals => {:model => @presenter, :params => query, :warning => @warning}
   end
 
   get '/get_data' do
@@ -114,14 +96,92 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/export_member_details' do
-    @query = query(churn_data, params)
-    @data = churn_data.detail(@query, leader?)
-    @data = ChurnPresenter.new @data, @query, leader?, staff?
+    @data = db.detail(query, leader?)
+    @data = ChurnPresenter.new @data, query, leader?, staff?
     
     path = @data.to_excel
     send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
 
+
+  def validate_params
+    # @uri when constructing html links - it is better than request.url because we can remove parameters that don't pass validation
+    # do a bunch of replacements to simplify swapping url parameters with search and replace 
+    @uri= request.url.gsub('+', ' ').gsub('%20', ' ').gsub(' =','=').gsub('= ', '=')
+  
+    warning = ''
+  
+      # override date filters with interval filters
+    startDate = nil;
+    endDate = nil;
+    if !params['startDate'].nil?
+      startDate = Date.parse(params['startDate'])
+    end
+    if !params['endDate'].nil?
+      endDate = Date.parse(params['endDate'])
+    end
+    if !params['intervalStart'].nil?
+      startDate = Date.parse(params['intervalStart'] )
+    end
+    if !params['intervalEnd'].nil?
+      endDate = Date.parse(params['intervalEnd'])
+    end
+
+    if startDate.nil?
+      startDate = EarliestStartDate
+    end
+
+    if endDate.nil?
+      endDate = Date.today
+    end
+  
+    # make sure startDate isn't before data began
+    startdb = Date.parse((db.getdimstart(params['group_by']))[0]['getdimstart'])+1
+    if startdb > startDate
+      startDate = startdb
+      warning += 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')<br/>'
+    end
+
+    # make sure endDate isn't in the future or before startDate
+    if Date.today < endDate
+      endDate = Date.today
+      warning += 'WARNING: Adjusted end date to today (you had selected ' + params['endDate'] + ') <br/>'
+    end
+
+    if Date.today < startDate
+      startDate = Date.today
+      warning += 'WARNING: Adjusted start date to today (you had selected ' + params['startDate'] + ')<br/>'
+    end
+
+    if startDate > endDate
+      endDate = startDate
+      warning += "WARNING: Adjusted end date to #{endDate.strftime(DateFormatDisplay)} (you had selected #{ params['endDate'] })<br/>"
+    end
+
+    if (!params['startDate'].nil? || !params['intervalStart'].nil?)
+      @uri = @uri.sub("startDate=#{params['startDate']}", "startDate=#{startDate.strftime(DateFormatDisplay)}")
+      params['startDate'] = startDate.strftime(DateFormatDisplay)
+    end
+    if (!params['endDate'].nil? || !params['intervalEnd'].nil?)
+      @uri = @uri.sub("endDate=#{params['endDate']}", "endDate=#{endDate.strftime(DateFormatDisplay)}")
+      params['endDate'] = endDate.strftime(DateFormatDisplay)
+    end
+    # I don't know what these global values are for
+    @start = startDate
+    @end = endDate
+  
+    if (params['group_by']!='companyid' &&  !(params['site_constrain'] == '' || params['site_constrain'].nil?))
+      @uri = @uri.gsub("site_constrain=#{params['site_constrain']}", '')
+      @uri = @uri.gsub('&&', '&')
+      params['site_constrain'] = ''
+      warning +="WARNING:  Disabled site constraint because it only makes sense when grouping by Work Site <br/>"
+    end
+  
+    #warning +=h @uri
+  
+    warning
+  end
+  
 
   run! if app_file == $0
 end
