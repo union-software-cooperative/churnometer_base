@@ -124,7 +124,7 @@ module Helpers
   def tables
     params['column'].to_s == '' ? summary_tables : member_tables
   end
-
+public 
  def summary_tables
     hash = {
       'Summary' => [
@@ -226,7 +226,7 @@ module Helpers
       hash = hash.merge(shash);
     end
 
-    if data_sql.query['group_by'] == 'employerid' 
+    if params['group_by'] == 'employerid' 
      flhash = { 
        'Remittance' => 
          [
@@ -244,7 +244,7 @@ module Helpers
      hash = hash.merge(flhash)
     end
 
-    if data_sql.query['group_by'] == 'statusstaffid' 
+    if params['group_by'] == 'statusstaffid' 
      # None of the other tabs make sense when grouping by statusstaffid
      hash = updatehash
     end

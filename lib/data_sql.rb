@@ -1,43 +1,29 @@
-class DataSql
+class ChurnData
+  attr_reader :db
   attr_reader :params
-
-  def initialize(params)
+  
+  def initialize(db, params)
+    @db = db
     @params = params
   end
-  
-  def query
-    start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
-    end_date = Time.now.strftime(DateFormatDisplay)
-
-    {
-      'group_by' => 'branchid',
-      'startDate' => start_date,
-      'endDate' => end_date,
-      'column' => '',
-      'interval' => 'none',
-      Filter => {
-        'status' => [1, 14, 11]
-      }
-    }.rmerge(params)
-  end
-  
-  def summary_sql(leader)
-    xml = filter_xml query[Filter], locks
-    start_date = (Date.parse(query['startDate'])).strftime(DateFormatDB)
-    end_date = (Date.parse(query['endDate'])+1).strftime(DateFormatDB)
+    
+  def summary_sql(params, leader)
+    xml = filter_xml params[Filter], locks
+    start_date = (Date.parse(params['startDate'])).strftime(DateFormatDB)
+    end_date = (Date.parse(params['endDate'])+1).strftime(DateFormatDB)
 
 
-    if query['interval'] == 'none'
+    if params['interval'] == 'none'
       <<-SQL
       select * 
       from summary(
                             'memberfacthelper4',
-                            '#{query['group_by']}', 
+                            '#{params['group_by']}', 
                             '',
                             '#{start_date}',
                             '#{end_date}',
                             #{leader.to_s}, 
-                            '#{query['site_constrain']}',
+                            '#{params['site_constrain']}',
                             '#{xml}'
                             )
       SQL
@@ -46,42 +32,46 @@ class DataSql
       select * 
       from summary_running(
                             'memberfacthelper4',
-                            '#{query['group_by']}', 
-                            '#{query['interval']}', 
+                            '#{params['group_by']}', 
+                            '#{params['interval']}', 
                             '#{start_date}',
                             '#{end_date}',
                             #{leader.to_s}, 
-                            '#{query['site_constrain']}',
+                            '#{params['site_constrain']}',
                             '#{xml}'
                             )
       SQL
     end
   end
   
-  def member_sql(leader)
-    xml = filter_xml query[Filter], locks
+  def summary(params, leader)
+    db.ex(summary_sql(params, leader))
+  end
+  
+  def member_sql(params, transactionsOn)
+    xml = filter_xml params[Filter], locks
 
-    start_date = (Date.parse(query['startDate'])).strftime(DateFormatDB)
-    end_date = (Date.parse(query['endDate'])+1).strftime(DateFormatDB)
+    start_date = (Date.parse(params['startDate'])).strftime(DateFormatDB)
+    end_date = (Date.parse(params['endDate'])+1).strftime(DateFormatDB)
     
-    if static_cols.include?(query['column'])
+    if static_cols.include?(params['column'])
     
-      member_date = query['column'].include?('start') ? start_date : end_date
+      member_date = params['column'].include?('start') ? start_date : end_date
       site_date = ''
-      if query['site_constrain'] == 'end' 
+      if params['site_constrain'] == 'end' 
         site_date = end_date
       end
-      if query['site_constrain'] == 'start' 
+      if params['site_constrain'] == 'start' 
         site_date = start_date
       end
       
-      filter_column = query['column'].sub('_start_count', '').sub('_end_count', '')
+      filter_column = params['column'].sub('_start_count', '').sub('_end_count', '')
     
       sql = <<-SQL 
         select * 
         from detail_static_friendly(
                               'memberfacthelper4',
-                              '#{query['group_by']}', 
+                              '#{params['group_by']}', 
                               '#{filter_column}',  
                               '#{member_date}',
                               #{site_date == '' ? 'NULL' : "'#{site_date}'"},
@@ -93,18 +83,22 @@ class DataSql
         select * 
         from detail_friendly(
                               'memberfacthelper4',
-                              '#{query['group_by']}', 
-                              '#{query['column']}',  
+                              '#{params['group_by']}', 
+                              '#{params['column']}',  
                               '#{start_date}',
                               '#{end_date}',
-                              #{leader.to_s}, 
-                              '#{query['site_constrain']}',
+                              #{transactionsOn.to_s}, 
+                              '#{params['site_constrain']}',
                               '#{xml}'
                               )
       SQL
     end
     
     sql
+  end
+  
+  def detail(params, leader)
+    db.ex(member_sql(params, leader))
   end
   
   def sites_at_date(leader)
@@ -163,10 +157,14 @@ class DataSql
     sql
   end
 
-  def getdimstart_sql
+  def getdimstart_sql(group_by)
     <<-SQL
-      select getdimstart('#{(query['group_by'] || 'branchid')}')
+      select getdimstart('#{(group_by || 'branchid')}')
     SQL
+  end
+  
+  def getdimstart(group_by)
+    db.ex(getdimstart_sql(group_by))
   end
 
   def weeks

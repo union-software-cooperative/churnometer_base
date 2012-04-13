@@ -6,7 +6,6 @@ require 'pg'
 require 'sass'
 require 'erb'
 require 'uri'
-require 'spreadsheet'
 require 'money'
 require "addressable/uri"
 require 'pony'
@@ -19,9 +18,42 @@ Dir["./lib/*.rb"].each { |f| require f }
 class Churnobyl < Sinatra::Base
   include Authorization
   include Support
+  
+  helpers do
+    include Rack::Utils
+    alias_method :h, :escape_html
+  
+    include Helpers
+  end
 
+  def db
+    @db ||= Db.new
+  end
+  
+  def churn_data
+    @churn_data ||= ChurnData.new db, params
+  end
+  
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
+  end
+
+  def query(churn_data, params)
+    @warning = validate_params(churn_data, params)
+    
+    start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
+    end_date = Time.now.strftime(DateFormatDisplay)
+
+    {
+      'group_by' => 'branchid',
+      'startDate' => start_date,
+      'endDate' => end_date,
+      'column' => '',
+      'interval' => 'none',
+      Filter => {
+        'status' => [1, 14, 11]
+      }
+    }.rmerge(params)
   end
 
   get '/' do
@@ -47,7 +79,7 @@ class Churnobyl < Sinatra::Base
     protected!
     
     @sql = data_sql.query['column'].empty? ? data_sql.summary_sql(leader?) : data_sql.member_sql(leader?)
-    @data = DataPresenter.new db.ex(@sql)  
+    @data = ChurnPresenter.new db.ex(@sql)  
     
     if !@data.has_data?
       @warning += 'WARNING:  No data found'
@@ -62,7 +94,7 @@ class Churnobyl < Sinatra::Base
 
   get '/get_data' do
     @sql = params[:sql]
-    @data = DataPresenter.new db.ex(@sql)
+    @data = ChurnPresenter.new db.ex(@sql)
     erb :summary
   end
 
@@ -77,30 +109,20 @@ class Churnobyl < Sinatra::Base
   get '/export_summary' do
     validate_params
   
-    data_to_excel db.ex(data_sql.summary_sql(leader?))
+    @data = ChurnPresenter.new db.ex(data_sql.summary_sql(leader?)), params, leader?, staff?
+    @data.to_excel
   end
 
   get '/export_member_details' do
-    validate_params
-  
-    data_to_excel db.ex(data_sql.member_sql(leader?))
+    @query = query(churn_data, params)
+    @data = churn_data.detail(@query, leader?)
+    @data = ChurnPresenter.new @data, @query, leader?, staff?
+    
+    path = @data.to_excel
+    send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
 
-  helpers do
-    include Rack::Utils
-    alias_method :h, :escape_html
-  
-    include Helpers
-  end
 
-  def db
-    @db ||= Db.new
-  end
-  
-  def data_sql
-    @data_sql ||= DataSql.new params
-  end
-  
   run! if app_file == $0
 end
 

@@ -10,12 +10,12 @@ class Sinatra::Base
   error do
     @error = env['sinatra.error']
     
-    Pony.mail({
-      :to   => Config['email_errors']['to'],
-      :from => Config['email_errors']['from'],
-      :subject => "[Error] #{@error.message}",
-      :body => erb(:'errors/error_email', layout: false)
-    })
+    # Pony.mail({
+    #       :to   => Config['email_errors']['to'],
+    #       :from => Config['email_errors']['from'],
+    #       :subject => "[Error] #{@error.message}",
+    #       :body => erb(:'errors/error_email', layout: false)
+    #     })
     
     erb :'errors/error'
   end
