@@ -40,17 +40,17 @@
     			<label class="form span-18 screen_only">Drilling down into...</label>
 			
     			<table id="filters" class="form span-18" >
-    			  <% model.filters.each do |column_name, value| %>
-    				 <tr class="<%=value['type'] == 'disable' ? 'screen_only': '' %>">
+    			  <% model.filters.each do |f| %>
+    				 <tr class="<%= f.type == 'disable' ? 'screen_only': '' %>">
     					<td class="form span-5 filters ">
-    		    			<%=h(value['group'] +": " + value['display']) %>
+    		    			<%=h(f.group.to_s + ": " + f.display.to_s) %>
     					</td>
     					<td class="filters">
-    					<input class="selections" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%=value['id'] %>" <%=value['type'] == 'apply' ? 'checked' : '' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
-    					<input class="selections invert_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="!#{value['id']}" %>" <%=value['type'] == 'invert' ? 'checked' : '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
+    					<input class="selections" type="radio" name="<%="#{Filter}[#{f.name}]" %>" value="<%=f.id %>" <%=f.type == 'apply' ? 'checked' : '' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
+    					<input class="selections invert_filter" type="radio" name="<%="#{Filter}[#{f.name}]" %>" value="!<%=f.id %>" <%=f.type == 'invert' ? 'checked' : '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
     					<span class="screen_only">
-                           <input class="selections disable_filter" type="radio" name="<%="#{Filter}[#{column_name}]" %>" value="<%="-#{value['id']}" %>" <%=value['type'] == 'disable' ? 'checked' : '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
-    					   <input class="selections remove_filter" type="radio" id="<%="#{Filter}#{column_name}remove" %>" name="<%="#{Filter}[#{column_name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+                           <input class="selections disable_filter" type="radio" name="<%="#{Filter}[#{f.name}]" %>" value="-<%=f.id %>" <%=f.type == 'disable' ? 'checked' : '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
+    					   <input class="selections remove_filter" type="radio" id="<%="#{Filter}#{f.name}remove" %>" name="<%="#{Filter}[#{f.name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
 				  	    </span>
     					</td>
 					

@@ -92,5 +92,24 @@ module Mappings
       ["month", "Monthly"],
     ]
   end
+  
+  def next_group_by
+    hash = {
+      'branchid'      => 'lead',
+      'lead'          => 'org',
+      'org'           => 'companyid',
+      'state'         => 'areaid',
+      'areaid'        => 'companyid',
+      'feegroupid'    => 'companyid',
+      'nuwelectorate' => 'org',
+      'del'           => 'companyid',
+      'hsr'           => 'companyid',
+      'industryid'	  => 'companyid',
+      'companyid'     => 'companyid',
+      'statusstaffid' => 'companyid',
+      'supportstaffid' => 'org'
+    }
+
+  end
 
 end

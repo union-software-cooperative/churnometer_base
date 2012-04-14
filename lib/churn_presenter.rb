@@ -10,6 +10,8 @@ class ChurnPresenter
   attr_accessor :transfers
   attr_accessor :target
   attr_accessor :form
+  attr_accessor :tables
+  attr_accessor :graph
   
   include Enumerable
   include Helpers
@@ -22,10 +24,10 @@ class ChurnPresenter
     
     @transfers = ChurnPresenter_Transfers.new data, params
     @form = ChurnPresenter_Form.new data, params
+    @target = ChurnPresenter_Target.new data, params if (auth.leader? || auth.lead?) && params['column'].to_s == ''
+    @graph = ChurnPresenter_Graph.new data, params
+    @graph = nil unless (@graph.line? || @graph.waterfall?)
     
-    if (auth.leader? || auth.lead?) && params['column'].to_s == ''
-      @target = ChurnPresenter_Target.new data, params
-    end
   end
 
   # Properties
@@ -48,6 +50,27 @@ class ChurnPresenter
     data[index]
   end
   
+  def tabs
+    hash = Hash.new
+    
+    if !@graph.nil? 
+      hash['graph'] = 'Graph'
+    end
+    
+    if !@tables.nil?
+        @tables.each do | key, value |
+          hash[key] = value
+        end
+    end
+    
+    if !@transfers.nil?
+        hash['transfers'] = 'Transfers'
+    end
+    
+    hash['diags'] = 'Diagnostics'
+    
+    hash
+  end
   
   def to_excel
     book = Spreadsheet::Excel::Workbook.new
@@ -96,6 +119,9 @@ end
 
 module ChurnPresenter_Helpers
   
+  include Rack::Utils
+  alias_method :h, :escape_html # needed for build_uri - refactor
+  
   def paying_start_total(data)
     # can't figure out enumerable way to sum this
     # group by is when running totals are shown because you don't want to sum a running start count.
@@ -126,7 +152,33 @@ module ChurnPresenter_Helpers
     t
   end
 
+  def drill_down_header_link(group, value, next_group)
+    # TODO I think this should be somewhere that abstracts filter logic
+    build_uri ({"#{Filter}[#{group}]" => value, "group_by" => next_group })
+  end
   
+  def build_uri(query_hashes)
+    #TODO refactor out params if possible, or put this somewhere better
+    
+    # build uri from params
+    query = params.reject{ |k,v| v.empty? }.reject{ |k, v| k == Filter}
+    
+    # flatten filters
+    params[Filter].reject{ |k,v| k == 'status'}.each do |k, v|
+      query["#{Filter}[#{k}]"] = v
+    end
+    
+    # merge new items
+    query.merge! query_hashes
+    
+    # make uri string
+    uri = '/?'
+    query.each do |key, value|
+      uri += "&#{h key}=#{h value}" 
+    end
+    
+    uri.sub('/?&', '/?')
+  end
   
 end
 
@@ -181,18 +233,20 @@ class ChurnPresenter_Form
   
   def filters
     if @filters.nil?
-      @filters = Hash.new
+      @filters = Array.new
       
       f1 = (params[Filter]).reject{ |column_name, id | id.empty? }
       f1 = f1.reject{ |column_name, id | column_name == 'status' }
       
       if !f1.nil?
         f1.each do |column_name, id|
-          @filters[column_name] = Hash.new
-          @filters[column_name]["group"]=group_names[column_name]
-          @filters[column_name]["id"]=filter_value(id)
-          @filters[column_name]["display"]=db.get_display_text(column_name, filter_value(id))
-          @filters[column_name]["type"]= (id[0] == '-' ? "disable" : ( id[0] == '!' ? "invert" : "apply" ))
+          i = (Struct.new(:name, :group, :id, :display, :type)).new
+          i[:name] = column_name
+          i[:group] = group_names[column_name]
+          i[:id] = filter_value(id)
+          i[:display] = db.get_display_text(column_name, filter_value(id))
+          i[:type] = (id[0] == '-' ? "disable" : ( id[0] == '!' ? "invert" : "apply" ))
+          @filters << i
         end
       end 
     end
@@ -252,10 +306,6 @@ class ChurnPresenter_Target
     end_count = start_count + stopped + started
     
     start_date == end_date || start_count == 0 ? Float(1/0.0) : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
-  end
-
-  def series_count
-    rows = data.group_by{ |row| row['row_header1'] }.count
   end
 
   def get_cards_in_growth_target
@@ -432,6 +482,55 @@ class ChurnPresenter_Target
   
     "The system will warn the user and display this tab, when the external transfer total (#{t}) is greater than the external transfer threshold (#{threshold.round(0)} = (average size (#{(startcnt+endcnt)/2} = (#{col_names['paying_start_count']} (#{startcnt}) + #{col_names['paying_end_count']} (#{endcnt}))/2) * MonthlyThreshold (#{(MonthlyTransferWarningThreshold*100).round(1)}%) x months (#{months.round(1)}))).  The rational behind this formula is that 100% of the membership will transfer to growth from development and back every three years (2.8% in and 2.8% out each month). So transfers below this threshold are typical and can be ignored, as opposed to atypical area restructuring of which the user needs warning."
   end
+end
+
+class ChurnPresenter_Graph
+  attr_reader :data
+  attr_reader :params
   
+  include Helpers
+  include Mappings
+  include ChurnPresenter_Helpers
   
+  def initialize(data, params)
+    @data = data
+    @params = params
+  end
+    
+  def series_count
+    rows = data.group_by{ |row| row['row_header1'] }.count
+  end
+
+  def line?
+    series_count <= 30 && params['group_by'] != 'statusstaffid' && params['column'].empty? && params['interval'] != 'none'
+  end
+
+  def waterfall?
+    cnt =  data.reject{ |row | row["paying_real_gain"] == '0' && row["paying_real_loss"] == '0' }.count
+    cnt > 0  && cnt <= 30 && params['group_by'] != 'statusstaffid' && params['column'].empty? && params['interval'] == 'none'
+  end
+  
+  def items
+    a = Array.new
+    data.each do |row|
+      i = (Struct.new(:name, :gain, :loss, :link)).new
+      i[:name] = row['row_header1']
+      i[:gain] = row['paying_real_gain']
+      i[:loss] = row['paying_real_loss']
+      i[:link] = drill_down_header_link(params['group_by'], row['row_header1_id'], next_group_by[params['group_by']]) 
+      a << i
+    end
+    a
+  end
+  
+  def total
+    t = 0;
+    data.each do |row|
+      t += row['paying_real_gain'].to_i + row['paying_real_loss'].to_i
+    end
+    t
+  end
+end
+
+class ChurnPresenter_Tables
 end

@@ -48,7 +48,7 @@ class Churnobyl < Sinatra::Base
         'column' => '',
         'interval' => 'none',
         Filter => {
-          'status' => [1, 14, 11]
+          'status' => [1, 14, 11] # todo - get rid of this because excepts are required for it when displaying filters
         }
       }.rmerge(params)
     end

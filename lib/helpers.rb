@@ -367,38 +367,15 @@ public
     
     nt
   end
- 
-  def next_group_by
-    hash = {
-      'branchid'      => 'lead',
-      'lead'          => 'org',
-      'org'           => 'companyid',
-      'state'         => 'areaid',
-      'areaid'        => 'companyid',
-      'feegroupid'    => 'companyid',
-      'nuwelectorate' => 'org',
-      'del'           => 'companyid',
-      'hsr'           => 'companyid',
-      'industryid'	  => 'companyid',
-      'companyid'     => 'companyid',
-      'statusstaffid' => 'companyid',
-      'supportstaffid' => 'org'
-    }
 
-    URI.escape "group_by=#{hash[data_sql.query['group_by']]}"
-  end
-
-  def filters
-    (params[Filter] || []).reject{ |column_name, value | value.empty? }
-  end
-
-  def filter_names
-    params[FilterNames] || []
-  end
+  # def filters
+  #   (params[Filter] || []).reject{ |column_name, value | value.empty? }
+  # end
+  # 
+  # def filter_names
+  #   params[FilterNames] || []
+  # end
     
-  def drill_down_link_header(row)
-    uri_join_queries drill_down(row), next_group_by
-  end
   
   def drill_down_link_interval(row)
     # This one shows all week two without intervals
@@ -408,19 +385,9 @@ public
     uri_join_queries drill_down(row), next_group_by, row_interval(row), 'interval=none'
   end
   
-  def drill_down(row)
-    row_header1_id = row['row_header1_id']
-    row_header1 = row['row_header1']
-    URI.escape "#{Filter}[#{data_sql.query['group_by']}]=#{row_header1_id}"
-  end
+
   
-  def uri_join_queries(*queries)
-    if params == {}
-      @uri + '?' + queries.join('&')
-    else
-      @uri + '&' + queries.join('&')
-    end
-  end
+
     
 
   
@@ -432,13 +399,5 @@ public
     end
   end
   
-  def line_chart_ok?
-    data_sql.query['group_by'] != 'statusstaffid' && data_sql.series_count(@data) <= 30 && data_sql.query['column'].empty? && data_sql.query['interval'] != 'none'
-  end
-
-  def waterfall_chart_ok?
-    cnt =  @data.reject{ |row | row["paying_real_gain"] == '0' && row["paying_real_loss"] == '0' }.count
-    data_sql.query['group_by'] != 'statusstaffid' && data_sql.query['column'].empty? && data_sql.query['interval'] == 'none' && cnt > 0  && cnt <= 30
-  end
 end
 

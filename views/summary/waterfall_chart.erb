@@ -1,0 +1,38 @@
+<h2 class="print_only">Graph</h2>
+<div id="chart">
+	
+	<table id="waterfall">
+		<caption>Paying gain vs loss</caption>
+		<thead>
+			<tr>
+				<th>Item</th>
+				<th>Change</th>
+	            <th>URL</th>
+			</tr>
+
+		</thead>
+		<tbody>
+			    <% model.items.each do |i| %>
+	               <tr>
+	                    <td><%= i.name %> gain</td>
+	                    <td><%= i.gain %></td>
+	                    <td><%= i.link %></td>
+	                </tr>
+	                <tr>
+	                    <td><%= i.name %> loss</td>
+	                    <td><%= i.loss %></td>
+	                    <td><%= i.link %></td>
+	                </tr>
+	            <% end %>
+			<tr>
+				<td>Net</td>
+				<td><%= model.total %></td>
+				<td></td>
+		  	</tr>
+		</tbody>			
+	</table>
+</div>
+
+<script type="text/javascript">
+    $("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#336699", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
+</script>
