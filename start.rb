@@ -60,8 +60,8 @@ class Churnobyl < Sinatra::Base
     cache_control :public, :max_age => 28800
     protected!
     
-    @data = query['column'].empty? ? db.summary(query, leader?) : db.detail(query, leader?)
-    @presenter = ChurnPresenter.new @data, query, leader?, staff? 
+    @data = query['column'].empty? ? db.summary(query, auth.leader?) : db.detail(query, auth.leader?)
+    @presenter = ChurnPresenter.new @data, query, auth
     
     if !@presenter.has_data?
       @warning += 'WARNING:  No data found'

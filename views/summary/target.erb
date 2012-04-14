@@ -1,0 +1,14 @@
+<div id="card_target">
+	<%= "We grew by #{model.growth}% p.a. over #{model.weeks} weeks" %><br/>
+	<%= "#{model.get_cards_in} cards brought in per week. " %>
+	<%= "#{model.get_cards_in_target} needed to hold our ground. " %>
+	<%= "#{model.get_cards_in_growth_target} needed to grow 10% p.a." %>
+	<% if transfers %> 
+		<br/>WARNING: These results are influenced by transfers.  See the transfer tab.
+	<% end %>
+</div>
+        
+<div id="card_target_tip" class="tooltip">
+	The formula to hold our ground is calculated as follows:
+	<%= model.getmath_get_cards_in_target %> 
+</div>

@@ -1,28 +1,42 @@
 module Authorization
-  def leader?
-    auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']
+  
+  def auth
+    @auth ||=  Authorize.new Rack::Auth::Basic::Request.new(request.env)
   end
   
-  def lead?
-    auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['lead', 'growth']
-  end
-
-  def user?
-    auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['user', '']
-  end
-  
-  def staff?
-    auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['staff', 'followup']
-  end
-
   def protected!
-    unless leader? || user? || lead? || staff?
+    unless auth.leader? || auth.user? || auth.lead? || auth.staff?
       response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
       throw(:halt, [401, "Not authorized\n"])
     end
   end
   
-  def auth
-    @auth ||=  Rack::Auth::Basic::Request.new(request.env)
+  class Authorize
+    attr_accessor :auth
+    
+    def leader? 
+      @leader
+    end
+    
+    def lead?
+      @lead
+    end
+    
+    def staff?
+      @staff
+    end
+    
+    def user?
+      @user
+    end
+    
+    def initialize(auth)
+      @auth = auth
+      @leader = auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']
+      @lead = auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['lead', 'growth']
+      @user = auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['user', '']
+      @staff = auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['staff', 'followup']
+    end
   end
+  
 end

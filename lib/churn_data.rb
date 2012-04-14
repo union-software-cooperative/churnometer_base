@@ -197,16 +197,6 @@ class ChurnData
 
   private
 
-
-
-  def paying_transfers_total(data)
-    t=0
-    data.group_by{ |row| row['row_header1'] }.each do | row, v |
-      t += v[0]['paying_other_gain'].to_i + v[0]['paying_other_loss'].to_i
-    end
-    t
-  end
-
   def filter_xml(filters, locks)
     # Example XML
     # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status><status>11</status></search>

@@ -5,37 +5,33 @@ require 'spreadsheet'
 class ChurnPresenter
   attr_reader :data
   attr_reader :params
-  attr_reader :leader
-  attr_reader :staff
+  attr_reader :auth
+  
   attr_accessor :transfers
+  attr_accessor :target
   attr_accessor :form
   
   include Enumerable
   include Helpers
   include Mappings # for to_excel - todo refactor
   
-  def initialize(data, params, leader, staff)
+  def initialize(data, params, auth)
     @data = data
     @params = params
-    @leader = leader
-    @staff = staff
+    @auth = auth
     
     @transfers = ChurnPresenter_Transfers.new data, params
     @form = ChurnPresenter_Form.new data, params
+    
+    if (auth.leader? || auth.lead?) && params['column'].to_s == ''
+      @target = ChurnPresenter_Target.new data, params
+    end
   end
 
   # Properties
   
   def has_data?
     data && data.count > 0
-  end
-  
-  def leader?
-    leader
-  end
-  
-  def staff?
-    staff
   end
   
   # Wrappers
@@ -98,12 +94,49 @@ class ChurnPresenter
   
 end
 
+module ChurnPresenter_Helpers
+  
+  def paying_start_total(data)
+    # can't figure out enumerable way to sum this
+    # group by is when running totals are shown because you don't want to sum a running start count.
+    # so only count the first row for each group (v[0])
+    t=0
+    data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += v[0]['paying_start_count'].to_i
+    end
+    t
+  end
+
+  def paying_end_total(data)
+    # can't figure out enumerable way to sum this
+    # group by is when running totals are shown because you don't want to sum a running end count.
+    # so only count the last row for each group (v.count-1)
+    t=0
+    data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += v[v.count-1]['paying_end_count'].to_i
+    end
+    t
+  end
+  
+  def paying_transfers_total(data)
+    t=0
+    data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += v[0]['paying_other_gain'].to_i + v[0]['paying_other_loss'].to_i
+    end
+    t
+  end
+
+  
+  
+end
+
 class ChurnPresenter_Transfers
   attr_reader :data
   attr_reader :params
   
   include Helpers
   include Mappings
+  include ChurnPresenter_Helpers
   
   def initialize(data, params)
     @data = data
@@ -126,28 +159,6 @@ class ChurnPresenter_Transfers
     
     threshold = ((startcnt + endcnt)/2 * (MonthlyTransferWarningThreshold * months))
     t > threshold ? true : false
-  end
-  
-  def paying_start_total(data)
-    # can't figure out enumerable way to sum this
-    # group by is when running totals are shown because you don't want to sum a running start count.
-    # so only count the first row for each group (v[0])
-    t=0
-    data.group_by{ |row| row['row_header1'] }.each do | row, v |
-      t += v[0]['paying_start_count'].to_i
-    end
-    t
-  end
-
-  def paying_end_total(data)
-    # can't figure out enumerable way to sum this
-    # group by is when running totals are shown because you don't want to sum a running end count.
-    # so only count the last row for each group (v.count-1)
-    t=0
-    data.group_by{ |row| row['row_header1'] }.each do | row, v |
-      t += v[v.count-1]['paying_end_count'].to_i
-    end
-    t
   end
   
 end
@@ -211,6 +222,9 @@ class ChurnPresenter_Target
   attr_reader :data
   attr_reader :params
   
+  include ChurnPresenter_Helpers
+  include Mappings
+  
   def initialize(data, params)
     @data = data
     @params = params
@@ -220,7 +234,7 @@ class ChurnPresenter_Target
     start_date = Date.parse(params['startDate'])
     end_date = Date.parse(params['startDate'])
     
-    Float(end_date - start_date) / 7
+    (Float(end_date - start_date) / 7).round(1)
   end
   
   def growth
