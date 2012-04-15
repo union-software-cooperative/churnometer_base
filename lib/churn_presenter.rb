@@ -160,10 +160,10 @@ module ChurnPresenter_Helpers
   def build_uri(query_hashes)
     #TODO refactor out params if possible, or put this somewhere better
     
-    # build uri from params
+    # build uri from params - rejecting filters because the need special treatment
     query = params.reject{ |k,v| v.empty? }.reject{ |k, v| k == Filter}
     
-    # flatten filters
+    # flatten filters, rejecting status because that is there for every filter
     params[Filter].reject{ |k,v| k == 'status'}.each do |k, v|
       query["#{Filter}[#{k}]"] = v
     end
@@ -286,7 +286,7 @@ class ChurnPresenter_Target
   
   def weeks
     start_date = Date.parse(params['startDate'])
-    end_date = Date.parse(params['startDate'])
+    end_date = Date.parse(params['endDate'])
     
     (Float(end_date - start_date) / 7).round(1)
   end
@@ -440,29 +440,6 @@ class ChurnPresenter_Target
     cards_per_week
   end
    
-  def periods
-    data.group_by{ |row| row['period_header'] }.sort{|a,b| a[0] <=> b[0] }
-  end
-  
-  def pivot(next_group_by)
-    series = Hash.new
-    
-    rows = data.group_by{ |row| row['row_header1'] }
-    rows.each do | row |
-      series[row[0]] = Array.new
-      periods(data).each do | period |
-        intersection = row[1].find { | r | r['period_header'] == period[0] }
-        if intersection.nil? 
-          series[row[0]] << "{ y: null }"
-        else
-          series[row[0]] << "{ y: #{intersection['running_paying_net'] }, id:'&intervalStart=#{intersection['period_start']}&intervalEnd=#{intersection['period_end']}&interval=none&f[#{(params['group_by'] || 'branchid')}]=#{intersection['row_header1_id']}&#{next_group_by}' }"
-        end
-      end
-    end
-  
-    series
-  end
-
   def getmath_transfers?
     # count the transfers, including both in and out
     start_date = Date.parse(params['startDate'])
@@ -510,7 +487,7 @@ class ChurnPresenter_Graph
     cnt > 0  && cnt <= 30 && params['group_by'] != 'statusstaffid' && params['column'].empty? && params['interval'] == 'none'
   end
   
-  def items
+  def waterfallItems
     a = Array.new
     data.each do |row|
       i = (Struct.new(:name, :gain, :loss, :link)).new
@@ -523,13 +500,51 @@ class ChurnPresenter_Graph
     a
   end
   
-  def total
+  def waterfallTotal
     t = 0;
     data.each do |row|
       t += row['paying_real_gain'].to_i + row['paying_real_loss'].to_i
     end
     t
   end
+  
+  def periods
+    data.group_by{ |row| row['period_header'] }.sort{|a,b| a[0] <=> b[0] }
+  end
+  
+  def pivot(next_group_by)
+    series = Hash.new
+    
+    rows = data.group_by{ |row| row['row_header1'] }
+    rows.each do | row |
+      series[row[0]] = Array.new
+      periods.each do | period |
+        intersection = row[1].find { | r | r['period_header'] == period[0] }
+        if intersection.nil? 
+          series[row[0]] << "{ y: null }"
+        else
+          # assemble point data - url used when user clicks to drill down
+          # TODO figure out how to fix this horrible mess
+          series[row[0]] << "{ y: #{intersection['running_paying_net'] }, id:'&intervalStart=#{intersection['period_start']}&intervalEnd=#{intersection['period_end']}&interval=none&f[#{(params['group_by'] || 'branchid')}]=#{intersection['row_header1_id']}&#{next_group_by[params['group_by']]}' }"
+        end
+      end
+    end
+  
+    series
+  end
+  
+  def lineCategories
+    periods.collect { | k | "'#{k[0]}'"}.join(",") 
+  end
+  
+  def lineSeries
+    pivot(next_group_by[params['group_by']]).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") 
+  end
+  
+  def lineHeader
+    col_names['row_header1']
+  end
+  
 end
 
 class ChurnPresenter_Tables

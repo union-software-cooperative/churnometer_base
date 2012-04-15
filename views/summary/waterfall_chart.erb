@@ -12,7 +12,7 @@
 
 		</thead>
 		<tbody>
-			    <% model.items.each do |i| %>
+			    <% model.waterfallItems.each do |i| %>
 	               <tr>
 	                    <td><%= i.name %> gain</td>
 	                    <td><%= i.gain %></td>
@@ -26,7 +26,7 @@
 	            <% end %>
 			<tr>
 				<td>Net</td>
-				<td><%= model.total %></td>
+				<td><%= model.waterfallTotal %></td>
 				<td></td>
 		  	</tr>
 		</tbody>			

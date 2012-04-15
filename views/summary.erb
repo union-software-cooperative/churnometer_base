@@ -211,7 +211,7 @@
 		      },
 		      xAxis: {
 		         categories: [
-					<%= data_sql.periods(@data).collect { | k | "'#{k[0]}'"}.join(",") %>
+					<%= model.categories %>
 				] ,
 				labels: {
 				            rotation: -45,
@@ -270,7 +270,6 @@
 		      },
 			  series: [
 				<%= data_sql.pivot(@data, next_group_by).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") %>
-			
 				]
 		   });
 		};
