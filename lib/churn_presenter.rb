@@ -160,16 +160,24 @@ module ChurnPresenter_Helpers
   def build_uri(query_hashes)
     #TODO refactor out params if possible, or put this somewhere better
     
-    # build uri from params - rejecting filters because the need special treatment
-    query = params.reject{ |k,v| v.empty? }.reject{ |k, v| k == Filter}
+    # build uri from params - rejecting filters & lock because they need special treatment
+    query = params.reject{ |k,v| v.empty? }.reject{ |k, v| k == Filter}.reject{ |k, v| k == "lock"}
     
-    # flatten filters, rejecting status because that is there for every filter
-    params[Filter].reject{ |k,v| k == 'status'}.each do |k, v|
+    # flatten filters, rejecting status - TODO get rid of status
+    (params[Filter] || {}).reject{ |k,v| v.empty? }.reject{ |k,v| k == 'status'}.each do |k, v|
       query["#{Filter}[#{k}]"] = v
+    end
+    
+    # flatten lock
+    (params["lock"] || {}).reject{ |k,v| v.empty? }.each do |k, v|
+      query["lock[#{k}]"] = v
     end
     
     # merge new items
     query.merge! query_hashes
+    
+    # remove any empty/blanked-out items
+    query = query.reject{ |k,v| v.empty? }
     
     # make uri string
     uri = '/?'
@@ -512,7 +520,7 @@ class ChurnPresenter_Graph
     data.group_by{ |row| row['period_header'] }.sort{|a,b| a[0] <=> b[0] }
   end
   
-  def pivot(next_group_by)
+  def pivot
     series = Hash.new
     
     rows = data.group_by{ |row| row['row_header1'] }
@@ -525,7 +533,8 @@ class ChurnPresenter_Graph
         else
           # assemble point data - url used when user clicks to drill down
           # TODO figure out how to fix this horrible mess
-          series[row[0]] << "{ y: #{intersection['running_paying_net'] }, id:'&intervalStart=#{intersection['period_start']}&intervalEnd=#{intersection['period_end']}&interval=none&f[#{(params['group_by'] || 'branchid')}]=#{intersection['row_header1_id']}&#{next_group_by[params['group_by']]}' }"
+          drilldown_url = build_uri({ "startDate" => intersection['period_start'], "endDate" => intersection['period_end'], "interval" => 'none', "#{Filter}[#{params['group_by'] || 'branchid' }]" => "#{intersection['row_header1_id']}", "group_by" => "#{next_group_by[params['group_by']]}" })
+          series[row[0]] << "{ y: #{intersection['running_paying_net'] }, id: '#{drilldown_url}' }"
         end
       end
     end
@@ -538,7 +547,7 @@ class ChurnPresenter_Graph
   end
   
   def lineSeries
-    pivot(next_group_by[params['group_by']]).collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") 
+    pivot.collect { | k, v | "{ name: '#{h(k)}', data: [#{v.collect{ | i | i }.join(',')}] }" }.join(",\n") 
   end
   
   def lineHeader

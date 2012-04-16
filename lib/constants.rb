@@ -109,7 +109,6 @@ module Mappings
       'statusstaffid' => 'companyid',
       'supportstaffid' => 'org'
     }
-
   end
 
 end
