@@ -1,0 +1,46 @@
+<div id="tab-diags" class="screen_only tab">
+  <a class="printer screen_only" href="javascript:print_diagnostics;"><img src="images/printer32.png" title="print diagnostics" alt="print diagnostics"/></a>
+  <h2 class="print_only">Diagnostics</h2>
+  <h3 class="screen_only">Data</h3>
+  <ul>
+	<li class="nav screen_only"><a href="/export_summary?<%= build_uri %>" class="button">Export All Summary Data</a></li>
+	<li class="nav screen_only"><a href="/export_detail?<%= build_uri %>" class="button">Export All Member Details</a></li>
+  </ul>
+
+  <h3>SQL</h3>
+  <pre><%= h @sql %></pre>
+
+  <h3>URL</h3>
+  <pre><%=h request.url %></pre>
+
+  <h3>Transfers</h3>
+  Warning threshold = <pre><%= data_sql.getmath_transfers?(@data) %></pre>
+
+  <h3>PROJECT DETAIL</h3>
+  login: nuw
+  pass: nuwnuw
+  <ul>
+    <li>
+        <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/todo_lists/18435429">Report Bugs</a>
+    </li>
+    <li>
+        <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/writeboards">Docs</a>
+    </li>
+    <li>
+        <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/files">Files</a>
+    </li>
+   </ul>
+  <h3>MONITORING</h3>
+  login: administrator
+  <br/>
+  <a href="http://<%=request.host %>:2812">monit</a>
+</div>
+
+<script type="text/javascript">
+	function print_diagnostics(index)
+	{
+	    $("#tab-diags").removeClass("screen_only") ;
+	    print_tab(index);
+	    $("#tab-diags").addClass("screen_only") ;
+	}
+</script>

@@ -122,3 +122,55 @@
 		</form>
   </div>
 </section>
+
+<script type="text/javascript">
+	$(".datepicker input").datepicker({dateFormat: <%=DateFormatPicker%>});
+	
+	$(".site_constrain").tooltip({
+		tip: '#site_constrain',
+		position: 'center right',
+		offset: [25, 50],
+		delay: 0,
+		relative: true
+	});
+	
+	$(".site_constrain_default").tooltip({
+		tip: '#site_constrain_default',
+		position: 'center right',
+		offset: [25, 50],
+		delay: 0,
+		relative: true
+	});
+	
+	$(".remove_filter").tooltip({
+		tip: '#removefiltertip',
+		position: 'center right',
+		offset: [25, 50],
+		delay: 0,
+		relative: true
+	});
+	
+	$(".disable_filter").tooltip({
+		tip: '#disablefiltertip',
+		position: 'center right',
+		offset: [25, 50],
+		delay: 0,
+		relative: true
+	});
+	
+	$(".invert_filter").tooltip({
+		tip: '#invertfiltertip',
+		position: 'center right',
+		offset: [25, 50],
+		delay: 0,
+		relative: true
+	});
+		
+	$(".constrain_filter").tooltip({
+		tip: '#constrainfiltertip',
+		position: 'center right',
+		offset: [0, 50],
+		delay: 0,
+		relative: true
+	});
+</script>
