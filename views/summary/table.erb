@@ -1,6 +1,6 @@
 <a class="printer screen_only" href="javascript:print_tab(<%= model.id%>);"><img src="images/printer32.png" title="print <%=model.name.downcase %> table" alt="print <%=model.name.downcase %> table"/></a>
 
-<a class="download screen_only" href="/export_<%=model.type %><%= model.build_uri({ 'table' => model.id }) %>" >
+<a class="download screen_only" href="/export<%= model.build_url({ 'table' => model.id }) %>" >
 	<img src="images/download32.png" title="export <%=model.name.downcase %> table to excel" alt="export <%=model.name.downcase %> table to excel"/>
 </a>
     

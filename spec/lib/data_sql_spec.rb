@@ -1,14 +1,14 @@
 require File.expand_path('../../spec_helper.rb', __FILE__)
 
-describe ChurnData do
+describe ChurnDB do
   let(:datasql) do
-    class ChurnData
+    class ChurnDB
       def initialize
         @params = {}
       end
       
     end
-    ChurnData.new 
+    ChurnDB.new 
   end
   
   describe 'query' do

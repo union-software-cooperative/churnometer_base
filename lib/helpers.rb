@@ -3,9 +3,7 @@ module Helpers
     URI.parse(request.url).query
   end
 
-  def get_transfers
-    db.ex(data_sql.transfer_sql(leader?))
-  end
+
   
   def filter_columns 
     %w{
@@ -70,7 +68,7 @@ module Helpers
   def export_column(column_name)
     column_filter = "column=#{column_name}"
     
-    "/export_member_details?#{query_string}&#{column_filter}&table=#{member_tables.first.first}"
+    "/export_detail?#{query_string}&#{column_filter}&table=#{member_tables.first.first}"
   end
   
   def detail_column(column_name)
@@ -97,17 +95,8 @@ module Helpers
        
   
     
-  def bold_col?(column_name)
-    [
-      'paying_real_net',
-      'running_paying_net',
-      'a1p_real_gain'
-    ].include?(column_name)
-  end
+
   
-  def tables
-    params['column'].to_s == '' ? summary_tables : member_tables
-  end
 public 
  def summary_tables
     hash = {
@@ -339,34 +328,7 @@ public
     }
   end
   
-  def no_total
-    
-    nt = [
-      'row_header',
-      'row_header_id',
-      'row_header1',
-      'row_header1_id',
-      'row_header2',
-      'row_header2_id',
-      'contributors', 
-      'annualisedavgcontribution',
-      'running_paying_net'
-    ]
-    
-    if data_sql.query['interval'] != 'none'
-      nt += [
-        'paying_start_count',
-        'paying_end_count',
-        'period_header',
-        'a1p_start_count',
-        'a1p_end_count',
-        'stopped_start_count',
-        'stopped_end_count'
-      ]
-    end
-    
-    nt
-  end
+
 
   # def filters
   #   (params[Filter] || []).reject{ |column_name, value | value.empty? }
@@ -391,13 +353,7 @@ public
     
 
   
-  def safe_add(a, b)
-    if (a =~ /\./) || (b =~ /\./ )
-      a.to_f + b.to_f
-    else
-      a.to_i + b.to_i
-    end
-  end
+
   
 end
 

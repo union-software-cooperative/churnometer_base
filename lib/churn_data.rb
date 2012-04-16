@@ -1,6 +1,21 @@
-require './lib/db.rb'
+class Db
+  def initialize
+    @conn = PGconn.open(
+      :host =>      Config['database']['host'],
+      :port =>      Config['database']['port'],
+      :dbname =>    Config['database']['dbname'],
+      :user =>      Config['database']['user'],
+      :password =>  Config['database']['password']
+    )
+  end
+  
+  def ex(sql)
+    @conn.exec(sql)
+  end
+end
 
-class ChurnData
+
+class ChurnDB
   attr_reader :db
   attr_reader :params
   
@@ -11,7 +26,10 @@ class ChurnData
     @db ||= Db.new
   end
   
-    
+  def ex(sql)
+    db.ex(sql)
+  end  
+  
   def summary_sql(params, leader)
     xml = filter_xml params[Filter], locks(params['lock'])
     start_date = (Date.parse(params['startDate'])).strftime(DateFormatDB)
@@ -107,7 +125,7 @@ class ChurnData
   end
   
   def sites_at_date(params, leader)
-    xml = filter_xml params[Filter], locks
+    xml = filter_xml params[Filter], locks(params['lock'])
 
     start_date = (Date.parse(params['startDate'])).strftime(DateFormatDB)
     end_date = (Date.parse(params['endDate'])+1).strftime(DateFormatDB)
@@ -126,8 +144,8 @@ class ChurnData
     SQL
   end
   
-  def transfer_sql(params, leader)
-    xml = filter_xml params[Filter], locks
+  def transfer_sql(params)
+    xml = filter_xml params[Filter], locks(params['lock'])
     start_date = (Date.parse(params['startDate'])).strftime(DateFormatDB)
     end_date = (Date.parse(params['endDate'])+1).strftime(DateFormatDB)
 
@@ -144,7 +162,7 @@ class ChurnData
             '',
             '#{start_date}',
             '#{end_date}',
-            #{leader.to_s},
+            false,
             '#{params['site_constrain']}',
             '#{xml}'
           )
@@ -160,6 +178,10 @@ class ChurnData
     SQL
 
     sql
+  end
+  
+  def get_transfers(params)
+    db.ex(transfer_sql(params))
   end
 
   def getdimstart_sql(group_by)

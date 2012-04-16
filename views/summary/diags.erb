@@ -3,18 +3,19 @@
   <h2 class="print_only">Diagnostics</h2>
   <h3 class="screen_only">Data</h3>
   <ul>
-	<li class="nav screen_only"><a href="/export_summary?<%= build_uri %>" class="button">Export All Summary Data</a></li>
-	<li class="nav screen_only"><a href="/export_detail?<%= build_uri %>" class="button">Export All Member Details</a></li>
+	<!-- TODO fix export for entire sheet -->
+	<li class="nav screen_only"><a href="/export_summary?<%= model.build_url(nil) %>" class="button">Export All Summary Data</a></li>
+	<li class="nav screen_only"><a href="/export_detail?<%= model.build_url(nil) %>" class="button">Export All Member Details</a></li>
   </ul>
 
   <h3>SQL</h3>
-  <pre><%= h @sql %></pre>
+  <pre><%= h model.sql %></pre>
 
   <h3>URL</h3>
-  <pre><%=h request.url %></pre>
+  <pre><%=h model.url %></pre>
 
   <h3>Transfers</h3>
-  Warning threshold = <pre><%= data_sql.getmath_transfers?(@data) %></pre>
+  Warning threshold = <pre><%= model.transfer_math %></pre>
 
   <h3>PROJECT DETAIL</h3>
   login: nuw

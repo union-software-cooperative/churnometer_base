@@ -1,8 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + "/acceptance_helper")
 
 
-class ChurnDataOverride < ChurnData
-  # Override ChurnData dates
+class ChurnDBOverride < ChurnDB
+  # Override ChurnDB dates
   def query
     super.rmerge({
       'startDate' => '2012-01-01',
@@ -22,7 +22,7 @@ class Churnobyl
   
   # Override data_sql object's class
   def data_sql
-    @db ||= ChurnDataOverride.new params
+    @db ||= ChurnDBOverride.new params
   end
 end
 
