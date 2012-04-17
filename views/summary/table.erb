@@ -19,10 +19,10 @@
    <tbody>
      <% model.each do |row| %>
        <tr>
-         <% row.each do |column_name, value| %>
-		<td>
-			<%= model.display_cell(column_name, value) %>
-		</td>
+         <% model.columns.each do |column_name| %>
+		 <td>
+			<%= model.display_cell(column_name, row) %>
+		 </td>
          <% end %>
        </tr>
      <% end %>

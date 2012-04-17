@@ -25,6 +25,7 @@ class ChurnPresenter
     @graph = ChurnPresenter_Graph.new request
     @graph = nil unless (@graph.line? || @graph.waterfall?)
     @tables = ChurnPresenter_Tables.new request if has_data?
+    @tables ||= {}
     @transfers = ChurnPresenter_Transfers.new request
     @diags = ChurnPresenter_Diags.new request, @transfers.getmath_transfers?
     
@@ -58,7 +59,7 @@ class ChurnPresenter
         end
     end
     
-    if !@transfers.nil?
+    if @transfers.exists?
         result['transfers'] = 'Transfers'
     end
     
@@ -511,6 +512,7 @@ class ChurnPresenter_Table
   attr_reader :id
   attr_reader :name
   attr_reader :type
+  attr_reader :columns
   
   include Mappings
   include ChurnPresenter_Helpers
@@ -518,17 +520,15 @@ class ChurnPresenter_Table
   def initialize(request, name, columns)
     @id = name.sub(' ', '').downcase
     @name = name
-    @columns = columns
+    @columns = columns.reject{ |c| !request.data[0].include?(c) } #include only columns in both data and column array
     @type = request.type
     @request = request
-    
-    @data = @request.data.collect do |row|
-      row.reject{ |k | !columns.include?(k)  }.sort{ |a,b| columns.index(a[0]) <=> columns.index(b[0]) }
-    end
+    @data = request.data
   end
   
   def header
-    @data[0]
+    #@data[ 0].reject{ |k| k.first=='row_header1_id'}
+    @columns
   end
   
   def footer
@@ -536,7 +536,8 @@ class ChurnPresenter_Table
       @footer = Hash.new
     
       @data.each do |row|
-        row.each do |column_name, value|
+        @columns.each do |column_name|
+          value = row[column_name]
           @footer[column_name] ||= 0
           @footer[column_name] = safe_add footer[column_name], value
         end
@@ -556,22 +557,20 @@ class ChurnPresenter_Table
     end
   end
   
-  def display_cell(column_name, value)
+  def display_cell(column_name, row)
 	  	
-    #     if column_name == 'row_header1'
-    #   content = "<a href=\"#{drill_down_link_header(row)}\">#{value}</a>"
-    # elsif column_name == 'period_header'
+    if column_name == 'row_header1'
+      content = "<a href=\"#{drill_down_header_link(@request.params['group_by'], row['row_header1_id'], next_group_by[@request.params['group_by']]) }\">#{row['row_header1']}</a>"
+    elsif column_name == 'period_header'
     #   content = "<a href=\"#{ drill_down_link_interval(row)}\">#{value}</a>"
     # elsif can_detail_cell? column_name, v
     #   content = "<a href=\"#{ detail_cell(row, column_name) }\">#{value}</a>"
     #     elsif can_export_cell? column_name, v
     #   content = "<a href=\"#{ export_cell(row, column_name)}\">#{value}</a>"
-    #     else
-    #   content = value
-    # end
+    else
+       content = row[column_name]
+    end
 		
-    content = value
-    
 		if bold_col?(column_name)
       "<strong>#{content}</strong>"
     else
