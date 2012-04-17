@@ -5,6 +5,7 @@ MonthlyTransferWarningThreshold = Float(1.0 * 2.0 / 36.0); # 100% of the members
 DateFormatDisplay = "%e %B %Y"
 DateFormatPicker = "'d MM yy'"
 DateFormatDB = "%Y-%m-%d"
+MaxMemberList = 500
 
 EarliestStartDate = Date.new(2011,8,14)
 

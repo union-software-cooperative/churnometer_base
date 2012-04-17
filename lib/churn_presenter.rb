@@ -1,4 +1,3 @@
-require './lib/helpers.rb'
 require './lib/constants.rb'
 require 'spreadsheet'
 
@@ -13,7 +12,6 @@ class ChurnPresenter
   attr_reader :warnings
   
   include Enumerable
-  include Helpers
   include Mappings # for to_excel - todo refactor
   
   def initialize(request)
@@ -68,6 +66,33 @@ class ChurnPresenter
     result
   end
  
+ 
+  def to_excel
+     # todo refactor this and ChurnPresenter_table.to_excel - consider common table format
+     book = Spreadsheet::Excel::Workbook.new
+     sheet = book.create_worksheet
+
+     # Add header
+     @request.data[0].each_with_index do |hash, x|
+       sheet[0, x] = (col_names[hash.first] || hash.first)
+     end
+
+     # Add data
+     @request.data.each_with_index do |row, y|
+       row.each_with_index do |hash,x|
+         if filter_columns.include?(hash.last) 
+           sheet[y + 1, x] = hash.last.to_f
+         else
+           sheet[y + 1, x] = hash.last
+         end  
+       end
+     end
+
+     path = "tmp/data.xls"
+     book.write path
+
+     path
+   end
 end
 
 module ChurnPresenter_Helpers
@@ -105,10 +130,55 @@ module ChurnPresenter_Helpers
     t
   end
 
-  def drill_down_header_link(group, value, next_group)
-    # TODO I think this should be somewhere that abstracts filter logic
-    build_url ({"#{Filter}[#{group}]" => value, "group_by" => next_group })
+  
+  
+  
+  
+  def can_detail_cell?(column_name, value)
+    (
+      filter_columns.include? column_name
+    ) && (value.to_i != 0 && value.to_i.abs < MaxMemberList)
   end
+
+  def can_export_cell?(column_name, value)
+    (
+      filter_columns.include? column_name
+    ) && (value.to_i != 0)
+  end
+  
+  def drill_down_header(row)
+    {
+      "#{Filter}[#{@request.params['group_by'] || 'branchid'}]" => row['row_header1_id'], 
+      "group_by" => next_group_by[@request.params['group_by']]
+    }
+  end   
+  
+  def drill_down_interval(row)
+    drill_down_header(row)
+      .merge!(
+        {
+          'startDate' => row['period_start'], 
+          'endDate' => row['period_end']
+        }
+      )
+  end
+  
+  def drill_down_cell(row, column_name)
+    (@request.params['interval'] == 'none' ? drill_down_header(row) : drill_down_interval(row))
+      .merge!( 
+        { 
+          'column' => column_name,
+          "group_by" => @request.params['group_by'] # this prevents the change to the group by option
+        } 
+      )
+  end
+  
+  def drill_down_footer(column_name)
+    { 
+      'column' => column_name
+    } 
+  end
+  
   
   def build_url(query_hashes)
     #TODO refactor out params if possible, or put this function somewhere better, with params maybe
@@ -130,7 +200,7 @@ module ChurnPresenter_Helpers
     query.merge! (query_hashes || {})
     
     # remove any empty/blanked-out items
-    query = query.reject{ |k,v| v.empty? }
+    query = query.reject{ |k,v| v.nil? }
     
     # make uri string
     uri = '/?'
@@ -145,7 +215,6 @@ end
 
 class ChurnPresenter_Transfers
   
-  include Helpers
   include Mappings
   include ChurnPresenter_Helpers
   
@@ -426,7 +495,6 @@ end
 
 class ChurnPresenter_Graph
   
-  include Helpers
   include Mappings
   include ChurnPresenter_Helpers
   
@@ -439,12 +507,12 @@ class ChurnPresenter_Graph
   end
 
   def line?
-    series_count <= 30 && @request.params['group_by'] != 'statusstaffid' && @request.params['column'].empty? && @request.params['interval'] != 'none'
+    series_count <= 30 && @request.params['group_by'] != 'statusstaffid' && @request.type == :summary && @request.params['interval'] != 'none'
   end
 
   def waterfall?
     cnt =  @request.data.reject{ |row | row["paying_real_gain"] == '0' && row["paying_real_loss"] == '0' }.count
-    cnt > 0  && cnt <= 30 && @request.params['group_by'] != 'statusstaffid' && @request.params['column'].empty? && @request.params['interval'] == 'none'
+    cnt > 0  && cnt <= 30 && @request.params['group_by'] != 'statusstaffid' && @request.type == :summary && @request.params['interval'] == 'none'
   end
   
   def waterfallItems
@@ -454,7 +522,7 @@ class ChurnPresenter_Graph
       i[:name] = row['row_header1']
       i[:gain] = row['paying_real_gain']
       i[:loss] = row['paying_real_loss']
-      i[:link] = drill_down_header_link(@request.params['group_by'], row['row_header1_id'], next_group_by[@request.params['group_by']]) 
+      i[:link] = build_url(drill_down_header(row))
       a << i
     end
     a
@@ -527,7 +595,6 @@ class ChurnPresenter_Table
   end
   
   def header
-    #@data[ 0].reject{ |k| k.first=='row_header1_id'}
     @columns
   end
   
@@ -558,17 +625,18 @@ class ChurnPresenter_Table
   end
   
   def display_cell(column_name, row)
-	  	
+	  value = row[column_name]
+	  
     if column_name == 'row_header1'
-      content = "<a href=\"#{drill_down_header_link(@request.params['group_by'], row['row_header1_id'], next_group_by[@request.params['group_by']]) }\">#{row['row_header1']}</a>"
+      content = "<a href=\"#{build_url(drill_down_header(row)) }\">#{row['row_header1']}</a>"
     elsif column_name == 'period_header'
-    #   content = "<a href=\"#{ drill_down_link_interval(row)}\">#{value}</a>"
-    # elsif can_detail_cell? column_name, v
-    #   content = "<a href=\"#{ detail_cell(row, column_name) }\">#{value}</a>"
-    #     elsif can_export_cell? column_name, v
-    #   content = "<a href=\"#{ export_cell(row, column_name)}\">#{value}</a>"
-    else
-       content = row[column_name]
+      content = "<a href=\"#{build_url(drill_down_interval(row))}\">#{value}</a>"
+    elsif can_detail_cell? column_name, value
+      content = "<a href=\"#{build_url(drill_down_cell(row, column_name)) }\">#{value}</a>"
+    elsif can_export_cell? column_name, value
+      content = "<a href=\"export_table#{build_url(drill_down_cell(row, column_name).merge!({'table' => 'membersummary'}))}\">#{value}</a>"
+    else 
+      content = row[column_name]
     end
 		
 		if bold_col?(column_name)
@@ -579,31 +647,20 @@ class ChurnPresenter_Table
   end
   
   def display_footer(column_name, total)
-    #       totals[column_name] ||= 0
-    #       totals[column_name] = safe_add totals[column_name], v
-    #       
-    #       
-    #       <% if bold_col?(column_name) %>
-    #               <strong>
-    #             <% end %>
-    #             <% if !no_total.include?(column_name) %>
-    #               <% if can_detail_cell? column_name, total %>
-    #           <a href="<%= detail_column(column_name) %>"><%= total %></a>
-    # <% elsif can_export_cell? column_name, total %>
-    #                 <a href="<%= export_column(column_name) %>"><%= total %></a>
-    #               <% else %>
-    #                 <%= total %>
-    #               <% end %>
-    #           <% end %>
-    #           <% if bold_col?(column_name) %>
-    #               <strong>
-    #           <% end %>
-    
+
     if !no_total.include?(column_name)
-      if bold_col?(column_name)
-        "<strong>#{total}</strong>"
+      if can_detail_cell?(column_name, total)
+        content = "<a href=\"#{build_url(drill_down_footer(column_name))}\">#{total}</a>"
+      elsif can_export_cell?(column_name, total)
+          content = "<a href=\"export_table#{build_url(drill_down_footer(column_name).merge!({'table' => 'membersummary'}))}\">#{total}</a>"
       else
-        total
+        content = total
+      end
+      
+      if bold_col?(column_name)
+        "<strong>#{content}</strong>"
+      else
+        content
       end
     end
   end
@@ -627,17 +684,17 @@ class ChurnPresenter_Table
      sheet = book.create_worksheet
 
      # Add header
-     @data[0].each_with_index do |hash, x|
-       sheet[0, x] = (col_names[hash.first] || hash.first)
+     @columns.each_with_index do |c, x|
+       sheet[0, x] = (col_names[c] || c)
      end
 
      # Add data
      @data.each_with_index do |row, y|
-       row.each_with_index do |hash,x|
-         if filter_columns.include?(hash.first) 
-           sheet[y + 1, x] = hash.last.to_i
+       @columns.each_with_index do |c,x|
+         if filter_columns.include?(c) 
+           sheet[y + 1, x] = row[c].to_f
          else
-             sheet[y + 1, x] = hash.last
+           sheet[y + 1, x] = row[c]
          end  
        end
      end
@@ -681,7 +738,7 @@ class ChurnPresenter_Tables
   end
   
   def [](index)
-    tables.first{ |t| t.name == index }
+    @tables.find{ |t| t.id == index.downcase }
   end
 end
 

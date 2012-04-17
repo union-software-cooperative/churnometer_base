@@ -17,13 +17,10 @@ Dir["./lib/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
   include Authorization
-  include Support
   
   helpers do
     include Rack::Utils
     alias_method :h, :escape_html
-  
-    include Helpers
   end
 
   before do
@@ -40,18 +37,29 @@ class Churnobyl < Sinatra::Base
     erb :index, :locals => {:model => presenter }
   end
 
-  get '/export' do
+  get '/export_table' do
     protected!
     
     query = ChurnRequest.new request.url, auth, params
     presenter = ChurnPresenter.new query
-    table = presenter.tables[params['table']]
+    table = presenter.tables[params['table']] if !params['table'].nil?
     
     if !table.nil?
       path = table.to_excel
       send_file(path, :disposition => 'attachment', :filename => File.basename(path))
+    else
+      raise "Export failed. Table not found!"
     end
   end  
+  
+  get '/export_all' do
+    protected!
+    
+    query = ChurnRequest.new request.url, auth, params
+    presenter = ChurnPresenter.new query
+    path = presenter.to_excel
+    send_file(path, :disposition => 'attachment', :filename => File.basename(path))
+  end
   
   get '/scss/:name.css' do |name|
     scss name.to_sym, :style => :expanded

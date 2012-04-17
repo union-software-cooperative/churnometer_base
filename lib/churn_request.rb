@@ -20,11 +20,12 @@ class ChurnRequest
     @auth = auth
     @params = query_defaults.rmerge(params)
     @warnings = validate_params(@params)
-    @type = @params['column'].empty? ? :summary : :detail
+    @type = :summary if @params['column'].to_s == ''
+    @type = :detail if @params['column'].to_s != '' or @params['export']=='detail'
     
     # load request
     @sql = db.summary_sql(@params, auth.leader?) if @type == :summary 
-    @sql = db.detail(@params, auth.leader?) if @type == :detail
+    @sql = db.detail_sql(@params, auth.leader?) if @type == :detail
     
     @data = db.ex(@sql)
   end

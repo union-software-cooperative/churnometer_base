@@ -71,7 +71,7 @@ class ChurnDB
     db.ex(summary_sql(params, leader))
   end
   
-  def member_sql(params, transactionsOn)
+  def detail_sql(params, transactionsOn)
     xml = filter_xml params[Filter], locks(params['lock'])
 
     start_date = (Date.parse(params['startDate'])).strftime(DateFormatDB)
@@ -121,7 +121,7 @@ class ChurnDB
   end
   
   def detail(params, leader)
-    db.ex(member_sql(params, leader))
+    db.ex(detail_sql(params, leader))
   end
   
   def sites_at_date(params, leader)
