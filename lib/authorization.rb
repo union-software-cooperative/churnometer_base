@@ -11,32 +11,29 @@ module Authorization
     end
   end
   
-  class Authorize
-    attr_accessor :auth
-    
-    def leader? 
-      @leader
-    end
-    
-    def lead?
-      @lead
-    end
-    
-    def staff?
-      @staff
-    end
-    
-    def user?
-      @user
-    end
-    
-    def initialize(auth)
-      @auth = auth
-      @leader = auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']
-      @lead = auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['lead', 'growth']
-      @user = auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['user', '']
-      @staff = auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['staff', 'followup']
-    end
+end
+
+
+class Authorize
+  attr_accessor :auth
+  
+  def leader? 
+    @leader ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']
   end
   
+  def lead?
+    @lead ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['lead', 'growth']
+  end
+  
+  def staff?
+    @staff ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['staff', 'followup']
+  end
+  
+  def user?
+    @user ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['user', '']
+  end
+  
+  def initialize(auth)
+    @auth = auth
+  end
 end

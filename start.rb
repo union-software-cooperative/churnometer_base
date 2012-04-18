@@ -27,12 +27,15 @@ class Churnobyl < Sinatra::Base
     #cache_control :public, :must_revalidate, :max_age => 60
   end  
   
+  def cr
+    @cr ||= ChurnRequest.new request.url, auth, params
+  end
+  
   get '/' do
     cache_control :public, :max_age => 28800
     protected!
     
-    query = ChurnRequest.new request.url, auth, params
-    presenter = ChurnPresenter.new query
+    presenter = ChurnPresenter.new cr
     
     erb :index, :locals => {:model => presenter }
   end
