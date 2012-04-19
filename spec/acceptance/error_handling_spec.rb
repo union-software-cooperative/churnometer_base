@@ -1,12 +1,19 @@
 require File.expand_path(File.dirname(__FILE__) + "/acceptance_helper")
 
-class Churnobyl
-  # Override authentication includes
+class AuthorizeOverride < Authorize
   def leader?
     true
   end
-  
+end
+
+class Churnobyl
+
+  # Override authentication
   def protected!
+  end
+  
+  def auth
+    @auth ||=  AuthorizeOverride.new Rack::Auth::Basic::Request.new(request.env)
   end
 end
 

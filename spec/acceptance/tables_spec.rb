@@ -1,13 +1,19 @@
 require File.expand_path(File.dirname(__FILE__) + "/acceptance_helper")
 
-
-class ChurnDBOverride < ChurnDB
+class ChurnRequestOverride < ChurnRequest
   # Override ChurnDB dates
-  def query
+  def query_defaults
     super.rmerge({
       'startDate' => '2012-01-01',
       'endDate'   => '2012-02-08',
-    }).rmerge(params)
+    })
+  end
+end
+
+
+class AuthorizeOverride < Authorize
+  def leader?
+    true
   end
 end
 
@@ -19,12 +25,24 @@ class Churnobyl
   
   def protected!
   end
+end
+
+class Churnobyl
+
+  # Override authentication
+  def protected!
+  end
   
-  # Override data_sql object's class
-  def data_sql
-    @db ||= ChurnDBOverride.new params
+  def auth
+    @auth ||=  AuthorizeOverride.new Rack::Auth::Basic::Request.new(request.env)
+  end
+
+  # Override user request class with test defaults
+  def cr
+    @cr ||= ChurnRequestOverride.new request.url, auth, params, ChurnDBDiskCache.new
   end
 end
+
 
 
 describe "Tables" do
@@ -57,7 +75,7 @@ describe "Tables" do
     page.should have_content("Group by") 
     page.should have_content("Running total")
     page.should have_no_content "Error"
-    
+    page.should have_no_content "LINE CHART SHOULD REPLACE THIS DIV"
     
     select "Monthly", :from => "Running total"
     click_button "Refresh"
@@ -66,13 +84,14 @@ describe "Tables" do
     page.should have_content("Group by") 
     page.should have_content("Running total")
     page.should have_no_content "Error"
+    page.should have_no_content "LINE CHART SHOULD REPLACE THIS DIV"
   end
   
   it "Can drill down into a member" do
     visit "/"
     click_link "Summary"
 
-    within 'table#tableSummary tbody tr:nth-child(1)' do
+    within 'table#table-summary tbody tr:nth-child(1)' do
       click_link "230"
     end
     
@@ -117,7 +136,7 @@ describe "Tables" do
     end
     
     click_link "Paying"
-    within 'table#tablePaying tfoot' do
+    within 'table#table-paying tfoot' do
 # Something has happened because results have changed
 # My only hope is that I wrote this test before 4pm on the 22 March  
 # The next test failed too, but only the paying at end values changed    
@@ -132,14 +151,14 @@ describe "Tables" do
     click_button 'Refresh'
     
     click_link "Paying"
-    within 'table#tablePaying tfoot' do
+    within 'table#table-paying tfoot' do
 #      row_has "", %w{4333 628 -701 15 -25 4250}
       row_has "", %w{4333 629 -701 15 -25 4251}
 
     end
     
     # Can drill down to members held by organiser the start but not at the end
-    within 'table#tablePaying tbody tr:nth-child(1) td:nth-child(7)' do
+    within 'table#table-paying tbody tr:nth-child(1) td:nth-child(7)' do
       # beware if any of the first 7 rows change their name, the list will be 
       # reordered and subsequent tests will fail
       click_link "10"
@@ -150,22 +169,22 @@ describe "Tables" do
     end
     
     click_link "Member Summary"
-    within 'table#tableMemberSummary tbody tr:nth-child(10)' do
+    within 'table#table-membersummary tbody tr:nth-child(10)' do
       row_has "1st Fleet Pty Ltd", "2012-02-06", "Bogve, Mirko (NV520348)", %w{ Paying Paying Paying 1st 1st 1st	}
     end
   end
   
   it "blah blah" do
-    visit "/?column=&startDate=14+August+2011&endDate=22+March+2012&group_by=companyid&interval=none&f%5Bbranchid%5D=NV&f%5Blead%5D=bjacobi&site_constrain=start&lock%5Bcompanyid%5D="
+    visit "/?column=&startDate=14+August+2011&endDate=22+March+2012&group_by=companyid&interval=none&f%5Bbranchid%5D=NV&f%5Blead%5D=bjacobi&site_constraint=start&lock%5Bcompanyid%5D="
     
     
     click_link "Paying"
-    within 'table#tablePaying tbody tr:nth-child(1)  td:nth-child(7)' do
+    within 'table#table-paying tbody tr:nth-child(1)  td:nth-child(7)' do
       click_link "10"
     end
     
     click_link "Member Summary"
-    within 'table#tableMemberSummary tbody tr:nth-child(10)' do
+    within 'table#table-membersummary tbody tr:nth-child(10)' do
       row_has "1st Fleet Pty Ltd", "2012-02-06", "Bogve, Mirko (NV520348)", %w{ Paying Paying Paying 1st 1st 1st	}
     end
   end
@@ -173,18 +192,18 @@ describe "Tables" do
   
   def check_home_summary 
     click_link "Summary"
-    within 'table#tableSummary tbody tr:nth-child(1)' do
+    within 'table#table-summary tbody tr:nth-child(1)' do
       row_has "General Branch", %w{230 23 10147 302 -437 -135 10012 9114 633364.37}
     end
-    within 'table#tableSummary tbody tr:nth-child(3)' do
+    within 'table#table-summary tbody tr:nth-child(3)' do
       row_has "Victorian Branch", %w{320 -69 22259 361 -413 -52 22207 16665 959220.00}
     end
     
     click_link "Paying" 
-    within 'table#tablePaying tbody tr:nth-child(1)' do
+    within 'table#table-paying tbody tr:nth-child(1)' do
       row_has "General Branch", %w{10147 302 -437 0 0 10012}
     end
-    within 'table#tablePaying tbody tr:nth-child(3)' do
+    within 'table#table-paying tbody tr:nth-child(3)' do
       row_has "Victorian Branch", %w{22259 361 -413 0 0 22207}
     end
   end
@@ -196,18 +215,18 @@ describe "Tables" do
     end
     
     click_link "Summary"
-    within 'table#tableSummary tbody tr:nth-child(1)' do
+    within 'table#table-summary tbody tr:nth-child(1)' do
       row_has "Belinda Jacobi", %w{173 -5 10107 178 -187 -9 9962 7245 401622.41}
     end
-    within 'table#tableSummary tbody tr:nth-child(2)' do
+    within 'table#table-summary tbody tr:nth-child(2)' do
       row_has "Chris Kalomiris", %W{0 0 3 0 0 0 3 2 81.20}
     end
     
     click_link "Paying" 
-    within 'table#tablePaying tbody tr:nth-child(1)' do
+    within 'table#table-paying tbody tr:nth-child(1)' do
       row_has "Belinda Jacobi", %w{10107 178 -187 4 -140 9962}
     end
-    within 'table#tablePaying tbody tr:nth-child(2)' do
+    within 'table#table-paying tbody tr:nth-child(2)' do
       row_has "Chris Kalomiris", %w{3 0 0 0 0 3}
     end
   end
@@ -220,18 +239,18 @@ describe "Tables" do
     end
     
     click_link "Summary"
-    within 'table#tableSummary tbody tr:nth-child(1)' do
+    within 'table#table-summary tbody tr:nth-child(1)' do
       row_has "Adam Auld", %w{15 -1 1505 20 -27 -7 1498 1171 57244.15}      
     end
-    within 'table#tableSummary tbody tr:nth-child(2)' do
+    within 'table#table-summary tbody tr:nth-child(2)' do
       row_has "Belinda Jacobi", %w{8 -3 1166 78 -27 51 1215 1063 54743.63}
     end
     
     click_link "Paying" 
-    within 'table#tablePaying tbody tr:nth-child(1)' do
+    within 'table#table-paying tbody tr:nth-child(1)' do
       row_has "Adam Auld", %w{1505 20 -27 0 0 1498}
     end
-    within 'table#tablePaying tbody tr:nth-child(6)' do
+    within 'table#table-paying tbody tr:nth-child(6)' do
       row_has "Gayle Burmeister", %w{613 13 -15 4 -7 608}
     end
   end
@@ -244,18 +263,18 @@ describe "Tables" do
       page.should have_content "Organiser: Gayle Burmeister"
     end
     click_link "Summary"
-    within 'table#tableSummary tbody tr:nth-child(1)' do
+    within 'table#table-summary tbody tr:nth-child(1)' do
       row_has "3D Geoshapes Australia Pty Ltd", %w{0 0 1 0 0 0 1 1 40.60}
     end
-    within 'table#tableSummary tbody tr:nth-child(15)' do
+    within 'table#table-summary tbody tr:nth-child(15)' do
       row_has "Charles Parsons (Vic) P/L", %w{7 0 2 4 0 4 0 6 196.23}
     end
     
     click_link "Paying" 
-    within 'table#tablePaying tbody tr:nth-child(1)' do
+    within 'table#table-paying tbody tr:nth-child(1)' do
       row_has "3D Geoshapes Australia Pty Ltd", %w{1 0 0 0 0 1}
     end
-    within 'table#tablePaying tbody tr:nth-child(15)' do
+    within 'table#table-paying tbody tr:nth-child(15)' do
       row_has "Charles Parsons (Vic) P/L", %w{2 4 0 0 -6 0}
     end
   end

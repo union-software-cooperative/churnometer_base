@@ -22,13 +22,13 @@ class Churnobyl < Sinatra::Base
     include Rack::Utils
     alias_method :h, :escape_html
   end
-
+  
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
   end  
   
   def cr
-    @cr ||= ChurnRequest.new request.url, auth, params
+    @cr ||= ChurnRequest.new request.url, auth, params, ChurnDBDiskCache.new
   end
   
   get '/' do

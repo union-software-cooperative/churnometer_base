@@ -9,7 +9,7 @@ class ChurnPresenter
   attr_reader :tables
   attr_reader :graph
   attr_reader :diags
-  attr_reader :warnings
+  attr_accessor :warnings
   
   include Enumerable
   include Mappings # for to_excel - todo refactor
@@ -34,6 +34,15 @@ class ChurnPresenter
     if transfers.exists?
       @warnings += 'WARNING:  There are transfers during this period that may influence the results.  See the transfer tab below. <br />'
     end
+    
+    # if @request.cache_hit
+    #       @warnings += "WARNING: This data has been loaded from cache <br/>"
+    #     end
+    #     
+    #     if ChurnDBDiskCache.cache_status != ""
+    #       @warnings += "WARNING: #{ChurnDBDiskCache.cache_status} <br/>"
+    #     end
+      
   end
 
   # Properties
@@ -43,6 +52,9 @@ class ChurnPresenter
   end
 
   # Summary Display Methods
+  def data
+    @request.data
+  end
   
   def tabs
     result = Hash.new
@@ -241,7 +253,7 @@ class ChurnPresenter_Transfers
   end
   
   def transfers
-    @request.db.get_transfers(@request.params)
+    @request.get_transfers
   end
   
   def getmath_transfers?
@@ -747,6 +759,7 @@ class ChurnPresenter_Diags
   attr_reader :sql
   attr_reader :url
   attr_reader :transfer_math
+  attr_reader :cache_status
   
   include ChurnPresenter_Helpers
   
@@ -755,6 +768,7 @@ class ChurnPresenter_Diags
     @url = request.url
     @transfer_math = transfer_math
     @request = request
+    @cache_status = ChurnDBDiskCache.cache_status
   end
   
 end

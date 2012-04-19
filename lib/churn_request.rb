@@ -7,6 +7,7 @@ class ChurnRequest
   attr_reader :sql
   attr_reader :auth
   attr_reader :data
+  attr_reader :cache_hit
   
   include Mappings
   
@@ -14,22 +15,51 @@ class ChurnRequest
     @db ||= ChurnDB.new
   end
   
-  def initialize(url, auth, params)
-    # setup request
+  def initialize(url, auth, params, churndb = nil)
+    # interpret request
     @url = url
     @auth = auth
     @params = query_defaults.rmerge(params)
+    @db = churndb
     @warnings = validate_params(@params)
-    @type = :summary if @params['column'].to_s == ''
-    @type = :detail if @params['column'].to_s != '' or @params['export']=='detail'
     
-    # load request
-    @sql = db.summary_sql(@params, auth.leader?) if @type == :summary 
-    @sql = db.detail_sql(@params, auth.leader?) if @type == :detail
+    # set private members
+    @header1 = @params['group_by'].to_s
+    @interval = @params['interval'].to_s
+    @filter_column = @params['column'].to_s
+    @export_type = @params['export'].to_s
+    @start_date = Date.parse(@params['startDate'])
+    @end_date = Date.parse(@params['endDate'])
+    @transactions = auth.leader?
+    @site_constraint = @params['site_constraint'].to_s
+    @xml = filter_xml @params[Filter], locks(@params['lock'])
+      
+    # load data and public members
+    @type = :summary if @filter_column == ''
+    @type = :detail if @filter_column != '' or @export_type=='detail'
     
-    @data = db.ex(@sql)
+    case @type
+    when :summary
+      if @interval == 'none'
+        @data = db.summary(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
+      else
+        @data = db.summary_running(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml)  
+      end
+    when :detail
+      @data = db.detail(@header1, @filter_column, @start_date, @end_date, @transactions, @site_constraint, @xml) 
+    else
+      raise "Cannot load data - unknown query type (#{@type.to_s})"
+    end
+    
+    @sql = db.sql
+    @cache_hit = db.cache_hit
   end
 
+  def get_transfers
+    db.get_transfers(@start_date, @end_date, @site_constraint, @xml)
+  end
+
+  private
 
   def validate_params(params)
     warning = ''
@@ -91,11 +121,51 @@ class ChurnRequest
     @start = startDate
     @end = endDate
 
-    if (params['group_by']!='companyid' &&  !(params['site_constrain'] == '' || params['site_constrain'].nil?))
-      params['site_constrain'] = ''
+    if (params['group_by']!='companyid' &&  !(params['site_constraint'] == '' || params['site_constraint'].nil?))
+      params['site_constraint'] = ''
       warning +="WARNING:  Disabled site constraint because it only makes sense when grouping by Work Site <br/>"
     end
 
     warning
   end
+  
+  def filter_xml(filters, locks)
+    # Example XML
+    # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status><status>11</status></search>
+    result = "<search>"
+    filters.each do |k, v|
+      if v.is_a?(Array)
+        v.each do |item|
+          result += filter_xml_node(k,item)
+        end
+      else
+        result += filter_xml_node(k,v)
+      end
+    end
+
+    locks.each do | k, csv|
+      csv.split(',').each do | item |
+        result += filter_xml_node(k,item)
+      end
+    end
+    
+    result += "</search>"
+    result
+  end
+  
+  def filter_xml_node(k,v)
+    case v[0]
+      when '!' 
+        "<not_#{k}>#{v.sub('!','')}</not_#{k}>" 
+      when '-' 
+        "<ignore_#{k}>#{v.sub('!','')}</ignore_#{k}>" 
+      else 
+        "<#{k}>#{v}</#{k}>"
+      end
+  end
+            
+  def locks(lock)
+    (lock || []).reject{ |column_name, value | value.empty? }
+  end
+  
 end
