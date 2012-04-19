@@ -125,22 +125,6 @@ class ChurnDB
     ex(@sql)
   end
   
-  # def sites_at_date(start_date, end_date, site_constraint, filter_xml)
-  #   dte = site_constraint == 'end' ? (end_date+1) : start_date
-  #   
-  #   sql = <<-SQL 
-  #     select * 
-  #     from sites_at_date(
-  #                         'memberfacthelper4',
-  #                         '#{params['group_by']}', 
-  #                         '',
-  #                         '#{dte.strftime(DateFormatDB)}',
-  #                         false, 
-  #                         '#{xml}'
-  #                         )
-  #   SQL
-  # end
-  
   def transfer_sql(start_date, end_date, site_constraint, filter_xml)
     
     sql = <<-SQL
@@ -309,7 +293,7 @@ private
   def self.update_cache(sql, result)
     filename = "tmp/cache-#{self.cache.size.to_s}.Marshal" # use index as filename
     
-    #write data to fil
+    #write data to file
     File.open(filename, 'w') do |f|
       f.puts Marshal::dump(result)
     end

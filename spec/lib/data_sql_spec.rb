@@ -4,60 +4,59 @@ describe ChurnDB do
   let(:datasql) do
     class ChurnDB
       def initialize
-        @params = {}
       end
       
     end
     ChurnDB.new 
   end
   
-  describe 'query' do
-    it "has sensible default" do
-      datasql.query.should == {
-        'group_by' => 'branchid',
-        'startDate' => '14 August 2011',
-        'endDate' => Time.now.strftime(DateFormatDisplay),
-        'column' => '',
-        'interval' => 'none',
-        Filter => {
-          'status' => [1, 14, 11]      
-        }
-      }
-    end
-  end
-  
+  # describe 'query' do
+  #     it "has sensible default" do
+  #       datasql.query.should == {
+  #         'group_by' => 'branchid',
+  #         'startDate' => '14 August 2011',
+  #         'endDate' => Time.now.strftime(DateFormatDisplay),
+  #         'column' => '',
+  #         'interval' => 'none',
+  #         Filter => {
+  #           'status' => [1, 14, 11]      
+  #         }
+  #       }
+  #     end
+  #   end
+  #   
   describe 'raw sql checks' do 
-    before :each do
-      datasql.params.rmerge!({
-        'startDate' => '2012-02-01',
-        'endDate'   => '2012-02-01'
-      })
-    end
-    
+    # before :each do
+    #       datasql.params.rmerge!({
+    #         'startDate' => '2012-02-01',
+    #         'endDate'   => '2012-02-01'
+    #       })
+    #     end
+    #     
     describe 'summary_sql' do
       it do
-        compress(datasql.summary_sql(true)).should == "select * from summary( 'memberfacthelper4', 'branchid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
+        compress(datasql.summary_sql('branchid',Date.parse('2012-02-01'), Date.parse('2012-02-01'), true, '', '<search><status>1</status><status>14</status><status>11</status></search>')).should == "select * from summary( 'memberfacthelper4', 'branchid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
       end
 
       it do
-        datasql.params.rmerge!({'group_by' => 'lead'})
-        compress(datasql.summary_sql(true)).should == "select * from summary( 'memberfacthelper4', 'lead', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
+        # datasql.params.rmerge!({'group_by' => 'lead'})
+        compress(datasql.summary_sql('lead',Date.parse('2012-02-01'),Date.parse('2012-02-01'), true, '', '<search><status>1</status><status>14</status><status>11</status></search>')).should == "select * from summary( 'memberfacthelper4', 'lead', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
       end
     end
     
     describe 'detail_sql' do
       it do
-        compress(datasql.detail_sql(true)).should == "select * from detail_friendly( 'memberfacthelper4', 'branchid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
+        compress(datasql.detail_sql('branchid','',Date.parse('2012-02-01'),Date.parse('2012-02-01'), true, '', '<search><status>1</status><status>14</status><status>11</status></search>')).should == "select * from detail_friendly( 'memberfacthelper4', 'branchid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
       end
 
       it do
-        datasql.params.rmerge!({'group_by' => 'lead'})
-        compress(datasql.detail_sql(true)).should == "select * from detail_friendly( 'memberfacthelper4', 'lead', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
+        #datasql.params.rmerge!({'group_by' => 'lead'})
+        compress(datasql.detail_sql('lead','', Date.parse('2012-02-01'),Date.parse('2012-02-01'), true, '', '<search><status>1</status><status>14</status><status>11</status></search>')).should == "select * from detail_friendly( 'memberfacthelper4', 'lead', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
       end
 
       it do
-        datasql.params.rmerge!({'group_by' => 'areaid'})
-        compress(datasql.detail_sql(true)).should == "select * from detail_friendly( 'memberfacthelper4', 'areaid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
+        #datasql.params.rmerge!({'group_by' => 'areaid'})
+        compress(datasql.detail_sql('areaid', '', Date.parse('2012-02-01'),Date.parse('2012-02-01'), true, '', '<search><status>1</status><status>14</status><status>11</status></search>')).should == "select * from detail_friendly( 'memberfacthelper4', 'areaid', '', '2012-02-01', '2012-02-02', true, '', '<search><status>1</status><status>14</status><status>11</status></search>' )"
       end
     end
      
