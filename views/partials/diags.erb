@@ -1,0 +1,48 @@
+ <a class="printer screen_only" href="javascript:print_diagnostics('diags');"><img src="images/printer32.png" title="print diagnostics" alt="print diagnostics"/></a>
+ <h2 class="print_only">Diagnostics</h2>
+ <h3 class="screen_only">Data</h3>
+ <ul>
+<!-- TODO fix export for entire sheet -->
+<li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'summary'}) %>" class="button">Export All Summary Data</a></li>
+<li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'detail'}) %>" class="button">Export All Member Details</a></li>
+ </ul>
+
+ <h3>SQL</h3>
+ <pre><%= h model.sql %></pre>
+
+ <h3>URL</h3>
+ <pre><%=h model.url %></pre>
+
+ <h3>CACHE</h3>
+ <pre><%= h model.cache_status %></pre>
+
+ <h3>Transfers</h3>
+ Warning threshold = <pre><%= model.transfer_math %></pre>
+
+ <h3>PROJECT DETAIL</h3>
+ login: nuw
+ pass: nuwnuw
+ <ul>
+   <li>
+       <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/todo_lists/18435429">Report Bugs</a>
+   </li>
+   <li>
+       <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/writeboards">Docs</a>
+   </li>
+   <li>
+       <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/files">Files</a>
+   </li>
+  </ul>
+ <h3>MONITORING</h3>
+ login: administrator
+ <br/>
+ <a href="http://<%=request.host %>:2812">monit</a>
+
+<script type="text/javascript">
+	function print_diagnostics(index)
+	{
+	    $("#tab-diags").removeClass("screen_only") ;
+	    print_tab(index);
+	    $("#tab-diags").addClass("screen_only") ;
+	}
+</script>
