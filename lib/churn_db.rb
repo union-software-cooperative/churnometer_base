@@ -37,7 +37,7 @@ class ChurnDB
     <<-SQL
       select * 
       from summary(
-        'memberfacthelper4',
+        '#{Config['database']['facttable']}',
         '#{header1}', 
         '',
         '#{start_date.strftime(DateFormatDB)}',
@@ -58,7 +58,7 @@ class ChurnDB
     <<-SQL
       select * 
       from summary_running(
-        'memberfacthelper4',
+        '#{Config['database']['facttable']}',
         '#{header1}', 
         '#{interval}',
         '#{start_date.strftime(DateFormatDB)}',
@@ -93,7 +93,7 @@ class ChurnDB
       sql = <<-SQL 
         select * 
         from detail_static_friendly(
-           'memberfacthelper4',
+           '#{Config['database']['facttable']}',
           '#{header1}', 
           '#{filter_column}',  
           '#{member_date}',
@@ -105,7 +105,7 @@ class ChurnDB
       sql = <<-SQL 
         select * 
         from detail_friendly(
-          'memberfacthelper4',
+          '#{Config['database']['facttable']}',
           '#{header1}', 
           '#{filter_column}',  
           '#{start_date.strftime(DateFormatDB)}',
@@ -134,7 +134,7 @@ class ChurnDB
         , sum(-a1p_other_loss - paying_other_loss) transfer_out
         from
           detail_friendly(
-            'memberfacthelper4',
+            '#{Config['database']['facttable']}',
             'status',
             '',
             '#{start_date.strftime(DateFormatDB)}',
