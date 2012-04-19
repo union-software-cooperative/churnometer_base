@@ -1,3 +1,5 @@
+require './lib/settings.rb'
+
 class ChurnRequest
 
   attr_reader :url
@@ -9,7 +11,7 @@ class ChurnRequest
   attr_reader :data
   attr_reader :cache_hit
   
-  include Mappings
+  include Settings
   
   def db
     @db ||= ChurnDB.new

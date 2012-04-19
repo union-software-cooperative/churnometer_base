@@ -1,4 +1,4 @@
-require './lib/constants.rb'
+require './lib/settings.rb'
 require 'spreadsheet'
 
 class ChurnPresenter
@@ -12,7 +12,7 @@ class ChurnPresenter
   attr_accessor :warnings
   
   include Enumerable
-  include Mappings # for to_excel - todo refactor
+  include Settings # for to_excel - todo refactor
   
   def initialize(request)
     @request = request
@@ -227,7 +227,7 @@ end
 
 class ChurnPresenter_Transfers
   
-  include Mappings
+  include Settings
   include ChurnPresenter_Helpers
   
   def initialize(request)
@@ -288,7 +288,7 @@ end
 
 class ChurnPresenter_Form
   
-  include Mappings
+  include Settings
   
   def initialize(request)
     @request = request
@@ -341,7 +341,7 @@ end
 class ChurnPresenter_Target
   
   include ChurnPresenter_Helpers
-  include Mappings
+  include Settings
   
   def initialize(request)
     @request=request
@@ -507,7 +507,7 @@ end
 
 class ChurnPresenter_Graph
   
-  include Mappings
+  include Settings
   include ChurnPresenter_Helpers
   
   def initialize(request)
@@ -594,7 +594,7 @@ class ChurnPresenter_Table
   attr_reader :type
   attr_reader :columns
   
-  include Mappings
+  include Settings
   include ChurnPresenter_Helpers
   
   def initialize(request, name, columns)
@@ -733,7 +733,7 @@ class ChurnPresenter_Tables
   attr_accessor :tables
   
   include Enumerable
-  include Mappings
+  include Settings
   
   def initialize(request)
     @request = request
