@@ -1,0 +1,79 @@
+<% if !model.warnings.empty? %>
+    <div class="flash">
+      <%= model.warnings %>
+    </div>
+<% end %>
+
+<div class="container">
+  <h1><a href="/"><%= request.host.downcase %></a></h1>
+  	
+  <%= erb :'partials/filter_form', :locals => {:model => model.form} %>
+</div>
+
+<section id="data">
+	
+	<% if !model.target.nil? %>
+		<%= erb :'partials/target', :locals => {:model => model.target, :transfers => model.transfers.exists?} %>
+	<% end %>
+	
+	<div id="tabs">
+		
+		<!-- tab index for jquery tab control -->
+		<ul>
+			<% model.tabs.each do | key, value | %>
+				<li>
+					<a href="#tab-<%= key %>"><%= value %></a>
+				</li>
+			<% end %>
+		</ul>
+
+		<!-- chart -->
+    	<% if !model.graph.nil? %>
+			<div id="tab-graph" class="tab">
+		        <a class="printer screen_only" href="javascript:print_tab('graph');"><img src="images/printer32.png" title="print graph" alt="print graph"/></a>
+				<%= erb :'partials/waterfall_chart', :locals => {:model => model.graph} if model.graph.waterfall? %>
+				<%= erb :'partials/line_chart', :locals => {:model => model.graph} if model.graph.line? %>
+			</div>
+	    <% end %>
+		
+		<!-- tables -->
+		<% model.tables.each do | table | %>
+			<div id="tab-<%=table.id %>" class="tab">
+				  <%= erb :'partials/table', :locals => {:model => table} %>
+            </div>
+		<% end %>
+		
+		
+		<!-- transfers -->
+		<% if model.transfers.exists?%>
+			<div id="tab-transfers" class="tab">
+				<%= erb :'partials/transfer', :locals => {:model => model.transfers} %>
+	        </div>
+		<% end %>
+		
+		<div id="tab-diags" class="screen_only tab">
+			<%= erb :'partials/diags', :locals => {:model => model.diags} %>
+		</div>
+
+	</div> <!-- end of tabs -->
+</section> <!-- end of data -->
+
+<script type="text/javascript">
+	$("table").tablesorter();
+
+	$("#tabs").tabs();
+
+	$('#tabs').bind('tabsshow', function(event, ui) {
+		$('.floatHeader').hide(); // necessary otherwise a retarded floating table header appears until you scroll
+	});
+	
+	function print_tab(index)
+    {
+        // remove ui-tabs-hide because it has displays:block for print media - so file-print show all tabs
+        $(".ui-tabs-hide").addClass("ui-tabs-hide-print");
+        $(".ui-tabs-hide").removeClass("ui-tabs-hide");
+        window.print();
+        $(".ui-tabs-hide-print").addClass("ui-tabs-hide");
+        $(".ui-tabs-hide-print").removeClass("ui-tabs-hide-print");
+    }
+</script>
