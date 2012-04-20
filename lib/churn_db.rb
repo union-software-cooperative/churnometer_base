@@ -291,7 +291,13 @@ private
   end
   
   def self.update_cache(sql, result)
-    filename = "tmp/cache-#{self.cache.size.to_s}.Marshal" # use index as filename
+    filename = ChurnDBDiskCache.cache[sql]
+    
+    # if we aren't replacing a missing file, a new key will be appended to the hash, 
+    # so the size of the hash will map to the index of this new value which will
+    # be new, so use this index as a unique file name (works as long as the no keys 
+    # are removed)
+    filename = "tmp/cache-#{self.cache.size.to_s}.Marshal" if filename.nil? 
     
     #write data to file
     File.open(filename, 'w') do |f|
