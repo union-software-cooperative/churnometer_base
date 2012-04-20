@@ -7,7 +7,7 @@
 <div class="container">
   <h1><a href="/"><%= request.host.downcase %></a></h1>
   	
-  <%= erb :'partials/filter_form', :locals => {:model => model.form} %>
+  <%= erb :'partials/form', :locals => {:model => model.form} %>
 </div>
 
 <section id="data">

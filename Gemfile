@@ -10,6 +10,7 @@ gem 'ruby-ole'
 gem 'money', '3.7.1'
 gem 'addressable'
 gem 'pony'
+gem 'active_support'
 
 group :development, :test do
   # For debugging

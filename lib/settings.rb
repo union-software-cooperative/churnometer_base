@@ -1,3 +1,4 @@
+
 # Short names to help shorten URL
 Filter = "f"
 FilterNames = "fn"
@@ -12,15 +13,20 @@ EarliestStartDate = Date.new(2011,8,14)
 module Settings
 
   def query_defaults
-    start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
-    end_date = Time.now.strftime(DateFormatDisplay)
-
+    if auth.staff?
+      start_date = (Time.now-(60*24*3600)).strftime("1 %B %Y")
+      end_date =  (Time.parse(Time.now.strftime("%Y-%m-01"))-24*3600).strftime(DateFormatDisplay)
+    else
+      start_date = Date.parse('2011-8-14').strftime(DateFormatDisplay)
+      end_date = Time.now.strftime(DateFormatDisplay)
+    end
+    
     defaults = {
-      'group_by' => 'branchid',
+      'group_by' => (auth.staff? ? 'supportstaffid' : 'branchid'),
       'startDate' => start_date,
       'endDate' => end_date,
       'column' => '',
-      'interval' => 'none',
+      'interval' => (auth.staff? ? 'month' : 'none'),
       Filter => {
         'status' => [1, 14, 11] # todo - get rid of this because exceptions are required for it when displaying filters
       }
@@ -41,13 +47,12 @@ module Settings
       "state"         => "State",
       "feegroupid"    => "Fee Group",
       "employerid"  => "Employer",
-      "supportstaffid"       => "Support Staff",
-      "statusstaffid" => "Status Updater"
+      "supportstaffid"       => "Support Staff"
     }
     
-    # if @request.auth.leader?
-    #        group_by.merge({"statusstaffid" => "Status Updater"})
-    #      end
+    if @request.auth.leader?
+      group_by.merge({"statusstaffid" => "Status Updater"})
+    end
    
     group_by
   end
@@ -124,22 +129,6 @@ module Settings
           'a1p_net'
           ],
         }
-        shash = {
-          'Stopped' =>
-          [
-          'row_header', 
-          'row_header1', 
-          'period_header',
-          'stopped_start_count',
-          'stopped_real_gain',
-          'stopped_unchanged_gain',
-          'stopped_to_other',
-          'stopped_to_paying',
-          'stopped_other_gain',
-          'stopped_other_loss',
-          'stopped_end_count'
-          ]
-        }
 
         updatehash = {
           'Status Updates' =>
@@ -174,9 +163,36 @@ module Settings
       if @request.auth.leader?
         hash = hash.merge(fhash);
       end
-
+      
       if @request.auth.staff?
+        shash = {
+          'Stopped' =>
+          [
+          'row_header', 
+          'row_header1', 
+          'period_header',
+          'stopped_start_count',
+          'stopped_real_gain',
+          'stopped_unchanged_gain',
+          'stopped_to_other',
+          'stopped_to_paying',
+          'stopped_other_gain',
+          'stopped_other_loss',
+          'stopped_end_count'
+          ]
+        }
+        
         hash = hash.merge(shash);
+        
+        hash['Summary'] = [
+          'row_header',
+          'row_header1',
+          'period_header',
+          'a1p_unchanged_gain',
+          'stopped_unchanged_gain',
+          'a1p_end_count',
+          'stopped_end_count'
+          ]
       end
 
       if @request.params['group_by'] == 'employerid' 
@@ -262,6 +278,27 @@ module Settings
          if @request.auth.leader?
            hash = hash.merge(fhash);
          end
+         
+         if @request.auth.staff?
+           hash = {
+             'Follow up' => [
+              'row_header',
+              'row_header1',
+              'row_header2',
+              'changedate',
+              'memberid',
+              'member',
+              'currentstatus',
+              'followupnotes',
+              'paymenttype',
+              'contactdetail',
+              'newcompany',
+              'newemployer',
+              'payrollcontactdetail',
+              'neworg'
+              ]
+           }
+         end
 
          hash
      end
@@ -275,8 +312,8 @@ module Settings
          'paying_start_count' => 'paying at start date',
          'paying_real_gain'  => 'started paying',
          'paying_real_loss'  => 'ceased paying',
-         'a1p_start_count' => 'a1p at start',
-         'a1p_end_count' => 'a1p at end',
+         'a1p_start_count' => 'a1p at start date',
+         'a1p_end_count' => 'a1p at end date',
          'paying_real_net'   => 'paying net',
          'paying_end_count'  => 'paying at end date',
          'posted'            => 'income posted',
@@ -291,7 +328,7 @@ module Settings
          'a1p_rejoin'         => 'cards in (rejoin)',
          'a1p_to_paying'     => 'a1p started paying',
          #'a1p_real_loss'     => 'a1p never paid',
-         'period_header'       => 'interval',
+         'period_header'       => "#{@request.params['interval']} beginning",
          'start_date'          => 'start date',
          'end_date'          => 'end date',
          'annualisedavgcontribution' => 'estimated annual contribution',
@@ -304,15 +341,16 @@ module Settings
          'stopped_other_loss' => 'stopped paying transfers out',
          'stopped_to_paying' => 'stopped paying resumed paying',
          'stopped_to_other' => 'stopped paying followed up',
-         'stopped_unchanged_gain' => 'became stopped paying and unchanged',
-         'a1p_unchanged_gain' => 'became a1p unchanged',
+         'stopped_unchanged_gain' => 'became stopped paying and still stopped paying',
+         'a1p_unchanged_gain' => 'became a1p and still a1p',
          'contactdetail' => 'current contact detail',
          'followupnotes' => 'follow up notes',
          'payrollcontactdetail' => 'payroll/hr contact',
          'lateness' => 'payment lateness',
          'paymenttype' => 'payment type',
-         'newemployer' => 'employer',
-         'currentstatus' => 'current status'
+         'newemployer' => 'current employer',
+         'currentstatus' => 'current status',
+         'newcompany' => 'current site'
          }
      end
      
@@ -360,7 +398,10 @@ module Settings
        [
          'paying_real_net',
          'running_paying_net',
-         'a1p_real_gain'
+         'a1p_real_gain',
+         'stopped_unchanged_gain',
+         'a1p_unchanged_gain',
+         
        ].include?(column_name)
      end
      
@@ -424,8 +465,8 @@ module Settings
          'stopped_real_loss' => 'The number of members who changed from the stopped paying status to something else during the period.',
          'stopped_other_gain' => 'The number of members with the stopped paying status who transfered into this group without changing status.',
          'stopped_other_loss' => 'The number of members with the stopped paying status who transfered out of this group without changing status.',
-         'stopped_unchanged_gain' => 'The number of members who became stopped paying and still are stopped paying',
-         'a1p_unchanged_gain' => 'The number of members who became awaiting first payment and still are awaiting first payment ',
+         'stopped_unchanged_gain' => 'The number of members who became stopped paying during the selected period and are still are stopped paying',
+         'a1p_unchanged_gain' => 'The number of members who became awaiting first payment during the selected period and are still are awaiting first payment ',
          'stopped_to_paying' => "The number of 'stopped paying' members who resumed paying",
          'stopped_to_other' => "The number of 'stopped paying' members who got a new status (other than paying) probably due to some follow up process."
        }
