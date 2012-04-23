@@ -6,6 +6,7 @@ class ChurnPresenter_Diags
   attr_reader :url
   attr_reader :transfer_math
   attr_reader :cache_status
+  attr_reader :role
   
   include ChurnPresenter_Helpers
   
@@ -15,6 +16,9 @@ class ChurnPresenter_Diags
     @transfer_math = transfer_math
     @request = request
     @cache_status = ChurnDBDiskCache.cache_status
+    @role = "staff" if request.auth.staff?
+    @role = "lead" if request.auth.lead?
+    @role = "leader" if request.auth.leader?
   end
   
 end

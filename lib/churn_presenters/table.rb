@@ -78,9 +78,9 @@ class ChurnPresenter_Table
   def display_cell(column_name, row)
 	  value = row[column_name]
 	  
-	  if column_name == 'period_header'
-	    value = Date.parse(row['period_start']).strftime(DateFormatDisplay)
-	  end
+	  if date_cols.include?(column_name)
+	    value = format_date(row[column_name])
+	  end 
 	  
 	  #todo figure out why this doesn't work for member tables
 	  if column_name == 'changedate'
@@ -96,7 +96,7 @@ class ChurnPresenter_Table
     elsif can_export_cell? column_name, value
       content = "<a href=\"export_table#{build_url(drill_down_cell(row, column_name).merge!({'table' => 'membersummary'}))}\">#{value}</a>"
     else 
-      content = row[column_name]
+      content = value
     end
 		
 		if bold_col?(column_name)

@@ -116,6 +116,10 @@ module ChurnPresenter_Helpers
     uri.sub('/?&', '?')
   end
   
+  def format_date(date)
+    Date.parse(date).strftime(DateFormatDisplay)
+  end
+  
   # exporting - expects an array of hash
   def to_excel(data)
      # todo refactor this and ChurnPresenter_table.to_excel - consider common table format

@@ -51,7 +51,7 @@ module Settings
     }
     
     if @request.auth.leader?
-      group_by.merge({"statusstaffid" => "Status Updater"})
+      group_by = group_by.merge({"statusstaffid" => "Status Updater"})
     end
    
     group_by
@@ -416,7 +416,14 @@ module Settings
          'row_header2_id',
          'contributors', 
          'annualisedavgcontribution',
-         'running_paying_net'
+         'running_paying_net', 
+         'lateness',
+         'paymenttype',
+         'paidto',
+         'followupnotes',
+         'contactdetail',
+         'newemployer',
+         'payrollcontactdetail'
        ]
 
        if @request.params['interval'] != 'none'
@@ -432,6 +439,14 @@ module Settings
        end
 
        nt
+     end
+
+     def date_cols
+       [
+         'period_header', 
+         'paidto', 
+         'changedate'
+       ]
      end
 
      def tips

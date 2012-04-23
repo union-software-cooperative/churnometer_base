@@ -7,6 +7,9 @@
 <li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'detail'}) %>" class="button">Export All Member Details</a></li>
  </ul>
 
+ <h3>LOGGED ON AS</h3>
+ <pre><%= h model.role %></pre>
+
  <h3>SQL</h3>
  <pre><%= h model.sql %></pre>
 
