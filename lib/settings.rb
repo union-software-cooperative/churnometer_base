@@ -51,7 +51,7 @@ module Settings
     }
     
     if @request.auth.leader?
-      group_by = group_by.merge({"statusstaffid" => "Status Updater"})
+      group_by = group_by.merge({"statusstaffid" => "Data Entry"})
     end
    
     group_by
@@ -131,7 +131,7 @@ module Settings
         }
 
         updatehash = {
-          'Status Updates' =>
+          'Summary' =>
           [
           'row_header', 
           'row_header1', 
@@ -413,7 +413,8 @@ module Settings
          'a1p_real_gain',
          'stopped_unchanged_gain',
          'a1p_unchanged_gain',
-         'rule59_unchanged_gain'
+         'rule59_unchanged_gain',
+         'transactions'
          
        ].include?(column_name)
      end
