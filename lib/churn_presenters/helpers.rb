@@ -117,7 +117,11 @@ module ChurnPresenter_Helpers
   end
   
   def format_date(date)
-    Date.parse(date).strftime(DateFormatDisplay)
+    if date.nil? || date == '1900-01-01'
+      ''
+    else
+      Date.parse(date).strftime(DateFormatDisplay)
+    end
   end
   
   # exporting - expects an array of hash

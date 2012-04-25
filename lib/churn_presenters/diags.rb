@@ -7,6 +7,7 @@ class ChurnPresenter_Diags
   attr_reader :transfer_math
   attr_reader :cache_status
   attr_reader :role
+  attr_reader :rows
   
   include ChurnPresenter_Helpers
   
@@ -19,6 +20,8 @@ class ChurnPresenter_Diags
     @role = "staff" if request.auth.staff?
     @role = "lead" if request.auth.lead?
     @role = "leader" if request.auth.leader?
+    @rows = request.data.length if !request.data.nil?
+    @rows ||= 0
   end
   
 end

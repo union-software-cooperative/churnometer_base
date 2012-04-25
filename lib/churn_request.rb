@@ -43,17 +43,17 @@ class ChurnRequest
     case @type
     when :summary
       if @interval == 'none'
-        @data = db.summary(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
+        @sql = db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
       else
-        @data = db.summary_running(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml)  
+        @sql = db.summary_running_sql(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml)  
       end
     when :detail
-      @data = db.detail(@header1, @filter_column, @start_date, @end_date, @transactions, @site_constraint, @xml) 
+      @sql = db.detail_sql(@header1, @filter_column, @start_date, @end_date, @transactions, @site_constraint, @xml) 
     else
       raise "Cannot load data - unknown query type (#{@type.to_s})"
     end
     
-    @sql = db.sql
+    @data = db.ex(@sql)
     @cache_hit = db.cache_hit
   end
 

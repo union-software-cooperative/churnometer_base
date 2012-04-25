@@ -75,6 +75,10 @@ class ChurnPresenter_Table
     end
   end
   
+  def date_col(column_name)
+    date_cols.include?(column_name) ? "class=\"{sorter: 'medDate'}\"" : ""
+  end
+  
   def display_cell(column_name, row)
 	  value = row[column_name]
 	  

@@ -143,7 +143,10 @@ module Settings
           'stopped_real_gain',
           'stopped_unchanged_gain',
           'stopped_to_other',
-          'stopped_to_paying'
+          'stopped_to_paying',
+          'transactions',
+          'posted',
+          'unposted'
           ]
         }
 
@@ -190,6 +193,7 @@ module Settings
           'period_header',
           'a1p_unchanged_gain',
           'stopped_unchanged_gain',
+          'rule59_unchanged_gain',
           'a1p_end_count',
           'stopped_end_count'
           ]
@@ -204,6 +208,7 @@ module Settings
            'period_header',
            'paying_end_count',
            'paymenttype',
+           'paymenttypeid',
            'paidto',
            'lateness',
            'payrollcontactdetail',
@@ -258,6 +263,7 @@ module Settings
               'member',
               'followupnotes',
               'paymenttype',
+              'paymenttypeid',
               'contactdetail',
               'newemployer',
               'payrollcontactdetail'
@@ -291,10 +297,12 @@ module Settings
               'currentstatus',
               'followupnotes',
               'paymenttype',
+              'paymenttypeid',
               'contactdetail',
               'newcompany',
               'newemployer',
               'payrollcontactdetail',
+              'lateness',
               'neworg'
               ]
            }
@@ -348,9 +356,11 @@ module Settings
          'payrollcontactdetail' => 'payroll/hr contact',
          'lateness' => 'payment lateness',
          'paymenttype' => 'payment type',
+         'paymenttypeid' => 'payment type',
          'newemployer' => 'current employer',
          'currentstatus' => 'current status',
-         'newcompany' => 'current site'
+         'newcompany' => 'current site',
+         'rule59_unchanged_gain' => 'became rule59 and still rule59'
          }
      end
      
@@ -381,6 +391,7 @@ module Settings
          stopped_start_count
          stopped_real_gain
          stopped_unchanged_gain
+         rule59_unchanged_gain
          stopped_real_loss
          stopped_to_paying
          stopped_to_other
@@ -391,6 +402,7 @@ module Settings
          income_net
          posted
          unposted
+         transactions
          }
      end
      
@@ -401,6 +413,7 @@ module Settings
          'a1p_real_gain',
          'stopped_unchanged_gain',
          'a1p_unchanged_gain',
+         'rule59_unchanged_gain'
          
        ].include?(column_name)
      end
@@ -419,6 +432,7 @@ module Settings
          'running_paying_net', 
          'lateness',
          'paymenttype',
+         'paymenttypeid',
          'paidto',
          'followupnotes',
          'contactdetail',
@@ -482,8 +496,10 @@ module Settings
          'stopped_other_loss' => 'The number of members with the stopped paying status who transfered out of this group without changing status.',
          'stopped_unchanged_gain' => 'The number of members who became stopped paying during the selected period and are still are stopped paying',
          'a1p_unchanged_gain' => 'The number of members who became awaiting first payment during the selected period and are still are awaiting first payment ',
+         'rule59_unchanged_gain' => 'The number of members who became rule59 (resigned by leaving union employment) during the selected period and are still are rule59 (incomplete retention follow-up) ',
          'stopped_to_paying' => "The number of 'stopped paying' members who resumed paying",
-         'stopped_to_other' => "The number of 'stopped paying' members who got a new status (other than paying) probably due to some follow up process."
+         'stopped_to_other' => "The number of 'stopped paying' members who got a new status (other than paying) probably due to some follow up process.",
+         'transactions' => "The number of individual transactions that were posted against members.  A out of pay payment will usually contain numerous transactions."
        }
      end
 

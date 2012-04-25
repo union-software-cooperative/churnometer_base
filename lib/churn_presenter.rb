@@ -17,14 +17,14 @@ class ChurnPresenter
     @request = request
     
     @warnings = @request.warnings
+    @transfers = ChurnPresenter_Transfers.new request
+    @diags = ChurnPresenter_Diags.new request, @transfers.getmath_transfers?
     @form = ChurnPresenter_Form.new request
     @target = ChurnPresenter_Target.new request if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary
     @graph = ChurnPresenter_Graph.new request
     @graph = nil unless (@graph.line? || @graph.waterfall?)
     @tables = ChurnPresenter_Tables.new request if has_data?
     @tables ||= {}
-    @transfers = ChurnPresenter_Transfers.new request
-    @diags = ChurnPresenter_Diags.new request, @transfers.getmath_transfers?
     
     if !has_data?
       @warnings += 'WARNING:  No data found'

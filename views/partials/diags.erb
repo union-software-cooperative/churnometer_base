@@ -5,6 +5,7 @@
 <!-- TODO fix export for entire sheet -->
 <li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'summary'}) %>" class="button">Export All Summary Data</a></li>
 <li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'detail'}) %>" class="button">Export All Member Details</a></li>
+<li><%= model.rows %> rows </li>
  </ul>
 
  <h3>LOGGED ON AS</h3>
