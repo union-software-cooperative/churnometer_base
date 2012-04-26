@@ -40,7 +40,7 @@ module Settings
       "org"           => "Organiser",
       "areaid"        => "Area",
       "companyid"     => "Work Site",
-      "employerid"    => "Employer",
+      "employerid"    => "Remitter",
       "hostemployerid"  => "Owner",
       "industryid"    => "Industry",
       #"del"           => "Delegate Training",
@@ -369,13 +369,14 @@ module Settings
          'contactdetail' => 'current contact detail',
          'followupnotes' => 'follow up notes',
          'payrollcontactdetail' => 'payroll/hr contact',
-         'lateness' => 'payment lateness',
+         'lateness' => 'payment status',
          'paymenttype' => 'payment type',
          'paymenttypeid' => 'payment type',
          'newemployer' => 'current employer',
          'currentstatus' => 'current status',
          'newcompany' => 'current site',
-         'rule59_unchanged_gain' => 'became rule59 and still rule59'
+         'rule59_unchanged_gain' => 'became rule59 and still rule59',
+         'paidto' => 'paid to date'
          }
      end
      
@@ -515,8 +516,11 @@ module Settings
          'rule59_unchanged_gain' => 'The number of members who became rule59 (resigned by leaving union employment) during the selected period and are still are rule59 (incomplete retention follow-up) ',
          'stopped_to_paying' => "The number of 'stopped paying' members who resumed paying",
          'stopped_to_other' => "The number of 'stopped paying' members who got a new status (other than paying) probably due to some follow up process.",
-         'transactions' => "The number of individual transactions that were posted against members.  A out of pay payment will usually contain numerous transactions."
-       }
+         'transactions' => "The number of individual transactions that were posted against members.  A out of pay payment will usually contain numerous transactions.",
+         'lateness' => "The remittance status of each employer with at least one OOP member attached. The next due date is determined from the '#{col_names['paidto']}' plus the average duration between payments (multipled by the number of unposted payments) plus half this average duration to allow for processing.",
+         'paidto' => "The date up to which money has been posted.  The employer may have paid past this date but unposted payment don't count toward the '#{col_names['paidto']}' because the '#{col_names['paidto']}' is determined during payment posting.",
+         'paymenttype' => 'Code representing either out of pay, direct debit, credit card or personal (invoice)',
+      }
      end
 
 end
