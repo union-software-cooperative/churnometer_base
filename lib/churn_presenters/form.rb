@@ -25,7 +25,7 @@ class ChurnPresenter_Form
           i[:name] = column_name
           i[:group] = group_names[column_name]
           i[:id] = filter_value(id)
-          i[:display] = db.get_display_text(column_name, filter_value(id))
+          i[:display] = @request.db.get_display_text(column_name, filter_value(id))
           i[:type] = (id[0] == '-' ? "disable" : ( id[0] == '!' ? "invert" : "apply" ))
           @filters << i
         end
@@ -40,11 +40,7 @@ class ChurnPresenter_Form
   end
   
   private
-  
-  def db
-    @db ||= ChurnDB.new
-  end
-  
+
   def filter_value(value)
     value.sub('!','').sub('-','')
   end

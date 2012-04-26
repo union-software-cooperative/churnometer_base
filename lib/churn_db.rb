@@ -185,7 +185,7 @@ class ChurnDB
     if id == "unassigned" 
       t = "unassigned"
     else
-      val = db.ex(get_display_text_sql(column,id))
+      val = ex(get_display_text_sql(column,id))
       
       if val.count != 0 
         t = val[0]['displaytext']
@@ -236,6 +236,7 @@ class ChurnDBDiskCache < ChurnDB
   end
   
   def ex(sql)
+     
      filename = ChurnDBDiskCache.cache[sql]
 
      if filename.nil? || !File.exists?(filename)
@@ -311,5 +312,7 @@ private
     end
   end
     
+    
+  
 end
 

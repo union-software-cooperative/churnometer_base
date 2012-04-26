@@ -40,13 +40,16 @@ module Settings
       "org"           => "Organiser",
       "areaid"        => "Area",
       "companyid"     => "Work Site",
+      "employerid"    => "Employer",
+      "hostemployerid"  => "Owner",
       "industryid"    => "Industry",
       #"del"           => "Delegate Training",
       #"hsr"           => "HSR Training",
       "nuwelectorate" => "Electorate",
       "state"         => "State",
+      "employmenttypeid" => "Employment Type",
+      "paymenttypeid" => "Payment Type",
       "feegroupid"    => "Fee Group",
-      "employerid"  => "Employer",
       "supportstaffid"       => "Support Staff"
     }
     
@@ -79,7 +82,11 @@ module Settings
       'industryid'	  => 'companyid',
       'companyid'     => 'companyid',
       'statusstaffid' => 'companyid',
-      'supportstaffid' => 'org'
+      'supportstaffid' => 'org',
+      'paymenttypeid' => 'paymenttypeid',
+      'employmenttypeid' => 'employmenttypeid',
+      'hostemployerid' => 'companyid',
+      'employerid'  => 'companyid'
     }
   end
   
@@ -97,6 +104,7 @@ module Settings
           'paying_real_net',
           'running_paying_net',
           'paying_end_count',
+          (@request.auth.leader? ? 'rule59_unchanged_gain' : ''), 
           (@request.auth.leader? ? 'contributors' : ''), 
           (@request.auth.leader? ? 'income_net' : '')
           ],
@@ -128,9 +136,57 @@ module Settings
           'a1p_end_count',
           'a1p_net'
           ],
-        }
+      }
+        
+      shash_option = {
+        'Stopped' =>
+        [
+        'row_header', 
+        'row_header1', 
+        'period_header',
+        'stopped_start_count',
+        'stopped_real_gain',
+        'stopped_unchanged_gain',
+        'stopped_to_other',
+        'stopped_to_paying',
+        'stopped_other_gain',
+        'stopped_other_loss',
+        'stopped_end_count'
+        ]
+      }
 
-        updatehash = {
+      fhash_option = {
+        'Financial' => 
+          [
+          'row_header',
+          'row_header1',
+          'period_header',
+          'posted',
+          'unposted',
+          'income_net',
+          'contributors',
+          'annualisedavgcontribution'
+          ]
+      }
+
+      flhash_option = { 
+         'Remittance' => 
+           [
+           #'employer',
+           #'employerid',
+           'row_header1',
+           'period_header',
+           'a1p_end_count',
+           'paying_end_count',
+           'paymenttype',
+           'paymenttypeid',
+           'paidto',
+           'lateness',
+           'payollcontactdetail',
+           ]
+      }
+      
+      data_entry_override = {
           'Summary' =>
           [
           'row_header', 
@@ -148,79 +204,38 @@ module Settings
           'posted',
           'unposted'
           ]
-        }
-
-        fhash = {
-          'Financial' => 
-            [
-            'row_header',
-            'row_header1',
-            'period_header',
-            'posted',
-            'unposted',
-            'income_net',
-            'contributors',
-            'annualisedavgcontribution'
-            ]
       }
-      if @request.auth.leader?
-        hash = hash.merge(fhash);
+
+      staff_summary_override = [
+        'row_header',
+        'row_header1',
+        'period_header',
+        'a1p_unchanged_gain',
+        'stopped_unchanged_gain',
+        'rule59_unchanged_gain',
+        'a1p_end_count',
+        'stopped_end_count'
+      ]
+    
+      if @request.auth.staff?   
+        hash['Summary'] = staff_summary_override
       end
       
-      if @request.auth.staff?
-        shash = {
-          'Stopped' =>
-          [
-          'row_header', 
-          'row_header1', 
-          'period_header',
-          'stopped_start_count',
-          'stopped_real_gain',
-          'stopped_unchanged_gain',
-          'stopped_to_other',
-          'stopped_to_paying',
-          'stopped_other_gain',
-          'stopped_other_loss',
-          'stopped_end_count'
-          ]
-        }
-        
-        hash = hash.merge(shash);
-        
-        hash['Summary'] = [
-          'row_header',
-          'row_header1',
-          'period_header',
-          'a1p_unchanged_gain',
-          'stopped_unchanged_gain',
-          'rule59_unchanged_gain',
-          'a1p_end_count',
-          'stopped_end_count'
-          ]
+      if @request.auth.staff? or @request.auth.leader?
+        hash = hash.merge(shash_option);
       end
-
-      if @request.params['group_by'] == 'employerid' 
-       flhash = { 
-         'Remittance' => 
-           [
-           'row_header',
-           'row_header1',
-           'period_header',
-           'paying_end_count',
-           'paymenttype',
-           'paymenttypeid',
-           'paidto',
-           'lateness',
-           'payrollcontactdetail',
-           ]
-         }
-
-       hash = hash.merge(flhash)
+      
+      if @request.auth.leader?
+        hash = hash.merge(fhash_option);
       end
-
+      
+      if @request.params['group_by'] == 'employerid'
+       hash = flhash_option.merge(hash)
+      end
+      
       if @request.params['group_by'] == 'statusstaffid' 
        # None of the other tabs make sense when grouping by statusstaffid
-       hash = updatehash
+       hash = data_entry_override
       end
 
       hash
