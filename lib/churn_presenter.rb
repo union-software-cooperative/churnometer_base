@@ -1,4 +1,5 @@
 require './lib/settings.rb'
+require './lib/churn_presenters/helpers.rb'
 
 class ChurnPresenter
   
@@ -11,7 +12,8 @@ class ChurnPresenter
   attr_accessor :warnings
   
   include Enumerable
-  include Settings # for to_excel - todo refactor
+  include Settings
+  include ChurnPresenter_Helpers
   
   def initialize(request)
     @request = request
@@ -20,7 +22,7 @@ class ChurnPresenter
     @transfers = ChurnPresenter_Transfers.new request
     @diags = ChurnPresenter_Diags.new request, @transfers.getmath_transfers?
     @form = ChurnPresenter_Form.new request
-    @target = ChurnPresenter_Target.new request if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary
+    @target = ChurnPresenter_Target.new request if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary && !@request.data_entry_view?
     @graph = ChurnPresenter_Graph.new request
     @graph = nil unless (@graph.line? || @graph.waterfall?)
     @tables = ChurnPresenter_Tables.new request if has_data?
@@ -34,6 +36,9 @@ class ChurnPresenter
       @warnings += 'WARNING:  There are transfers during this period that may influence the results.  See the transfer tab below. <br />'
     end
     
+    if @request.data_entry_view?
+      @warnings += 'WARNING:  When exploring data entry only stats about database changes are shown (this view is only available to leadership).'
+    end
     # if @request.cache_hit
     #       @warnings += "WARNING: This data has been loaded from cache <br/>"
     #     end
@@ -78,7 +83,7 @@ class ChurnPresenter
   end
  
   def to_excel
-    ChurnPresenter_Helpers::excel(data)
+    excel(data)
   end
  
 end

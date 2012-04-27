@@ -125,7 +125,7 @@ module ChurnPresenter_Helpers
   end
   
   # exporting - expects an array of hash
-  def to_excel(data)
+  def excel(data)
      # todo refactor this and ChurnPresenter_table.to_excel - consider common table format
      book = Spreadsheet::Excel::Workbook.new
      sheet = book.create_worksheet

@@ -6,6 +6,7 @@ class ChurnRequestOverride < ChurnRequest
     super.rmerge({
       'startDate' => '2012-01-01',
       'endDate'   => '2012-02-08',
+      'interval'  => 'none'
     })
   end
 end
@@ -169,8 +170,8 @@ describe "Tables" do
     end
     
     click_link "Member Summary"
-    within 'table#table-membersummary tbody tr:nth-child(10)' do
-      row_has "1st Fleet Pty Ltd", "2012-02-06", "Bogve, Mirko (NV520348)", %w{ Paying Paying Paying 1st 1st 1st	}
+    within 'table#table-membersummary tbody tr:nth-child(9)' do
+      row_has "1st Fleet Pty Ltd", "6 February 2012", "Bogve, Mirko (NV520348)", %w{ Paying Paying Paying 1st 1st 1st	}
     end
   end
   
@@ -184,8 +185,8 @@ describe "Tables" do
     end
     
     click_link "Member Summary"
-    within 'table#table-membersummary tbody tr:nth-child(10)' do
-      row_has "1st Fleet Pty Ltd", "2012-02-06", "Bogve, Mirko (NV520348)", %w{ Paying Paying Paying 1st 1st 1st	}
+    within 'table#table-membersummary tbody tr:nth-child(9)' do
+      row_has "1st Fleet Pty Ltd", "6 February 2012", "Bogve, Mirko (NV520348)", %w{ Paying Paying Paying 1st 1st 1st	}
     end
   end
   
@@ -193,10 +194,10 @@ describe "Tables" do
   def check_home_summary 
     click_link "Summary"
     within 'table#table-summary tbody tr:nth-child(1)' do
-      row_has "General Branch", %w{230 23 10147 302 -437 -135 10012 9114 633364.37}
+      row_has "General Branch", %w{230 23 10147 302 -437 -135 10012 -39 9114 633364.37}
     end
     within 'table#table-summary tbody tr:nth-child(3)' do
-      row_has "Victorian Branch", %w{320 -69 22259 361 -413 -52 22207 16665 959220.00}
+      row_has "Victorian Branch", %w{320 -69 22259 361 -413 -52 22207 -219 16665 959220.00}
     end
     
     click_link "Paying" 
@@ -216,10 +217,10 @@ describe "Tables" do
     
     click_link "Summary"
     within 'table#table-summary tbody tr:nth-child(1)' do
-      row_has "Belinda Jacobi", %w{173 -5 10107 178 -187 -9 9962 7245 401622.41}
+      row_has "Belinda Jacobi", %w{173 -5 10107 178 -187 -9 9962 -90 7245 401622.41}
     end
     within 'table#table-summary tbody tr:nth-child(2)' do
-      row_has "Chris Kalomiris", %W{0 0 3 0 0 0 3 2 81.20}
+      row_has "Chris Kalomiris", %W{0 0 3 0 0 0 3 0 2 81.20}
     end
     
     click_link "Paying" 
@@ -240,10 +241,10 @@ describe "Tables" do
     
     click_link "Summary"
     within 'table#table-summary tbody tr:nth-child(1)' do
-      row_has "Adam Auld", %w{15 -1 1505 20 -27 -7 1498 1171 57244.15}      
+      row_has "Adam Auld", %w{15 -1 1505 20 -27 -7 1498 -21 1171 57244.15}      
     end
     within 'table#table-summary tbody tr:nth-child(2)' do
-      row_has "Belinda Jacobi", %w{8 -3 1166 78 -27 51 1215 1063 54743.63}
+      row_has "Belinda Jacobi", %w{8 -3 1166 78 -27 51 1215 -8 1063 54743.63}
     end
     
     click_link "Paying" 
@@ -264,10 +265,10 @@ describe "Tables" do
     end
     click_link "Summary"
     within 'table#table-summary tbody tr:nth-child(1)' do
-      row_has "3D Geoshapes Australia Pty Ltd", %w{0 0 1 0 0 0 1 1 40.60}
+      row_has "3D Geoshapes Australia Pty Ltd", %w{0 0 1 0 0 0 1 0 1 40.60}
     end
     within 'table#table-summary tbody tr:nth-child(15)' do
-      row_has "Charles Parsons (Vic) P/L", %w{7 0 2 4 0 4 0 6 196.23}
+      row_has "Charles Parsons (Vic) P/L", %w{7 0 2 4 0 4 0 0 6 196.23}
     end
     
     click_link "Paying" 

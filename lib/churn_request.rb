@@ -60,6 +60,10 @@ class ChurnRequest
   def get_transfers
     db.get_transfers(@start_date, @end_date, @site_constraint, @xml)
   end
+  
+  def data_entry_view?
+    @header1 == 'statusstaffid' || @params[Filter].reject { |k,v| v.empty? }.has_key?('statusstaffid')
+  end
 
   private
 

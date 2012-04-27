@@ -40,7 +40,7 @@ module Settings
       "org"           => "Organiser",
       "areaid"        => "Area",
       "companyid"     => "Work Site",
-      "employerid"    => "Remitter",
+      "employerid"    => "Employer",
       "hostemployerid"  => "Owner",
       "industryid"    => "Industry",
       #"del"           => "Delegate Training",
@@ -104,7 +104,7 @@ module Settings
           'paying_real_net',
           'running_paying_net',
           'paying_end_count',
-          (@request.auth.leader? ? 'rule59_unchanged_gain' : ''), 
+          'stopped_to_other',
           (@request.auth.leader? ? 'contributors' : ''), 
           (@request.auth.leader? ? 'income_net' : '')
           ],
@@ -151,7 +151,8 @@ module Settings
         'stopped_to_paying',
         'stopped_other_gain',
         'stopped_other_loss',
-        'stopped_end_count'
+        'stopped_end_count',
+        'rule59_unchanged_gain'
         ]
       }
 
@@ -200,6 +201,7 @@ module Settings
           'stopped_unchanged_gain',
           'stopped_to_other',
           'stopped_to_paying',
+          'rule59_unchanged_gain',
           'transactions',
           'posted',
           'unposted'
@@ -213,6 +215,7 @@ module Settings
         'a1p_unchanged_gain',
         'stopped_unchanged_gain',
         'rule59_unchanged_gain',
+        'paying_end_count',
         'a1p_end_count',
         'stopped_end_count'
       ]
@@ -233,8 +236,9 @@ module Settings
        hash = flhash_option.merge(hash)
       end
       
-      if @request.params['group_by'] == 'statusstaffid' 
+      if @request.data_entry_view?
        # None of the other tabs make sense when grouping by statusstaffid
+       # Especially start and end counts, which don't add up correctly anyway (how could they?)
        hash = data_entry_override
       end
 
@@ -269,19 +273,23 @@ module Settings
             'newlead',
             'currentlead'
             ], 
-           'Follow up' => [
+            'Follow up' => [
               'row_header',
               'row_header1',
               'row_header2',
               'changedate',
-              'currentstatus',
+              'memberid',
               'member',
+              'currentstatus',
               'followupnotes',
               'paymenttype',
               'paymenttypeid',
               'contactdetail',
-              'newemployer',
-              'payrollcontactdetail'
+              @request.params['column'] == 'rule59_unchanged_gain' ? 'oldcompany' : 'newcompany',
+              @request.params['column'] == 'rule59_unchanged_gain' ? 'oldemployer' : 'newemployer',
+              @request.params['column'] == 'rule59_unchanged_gain' ? '' : 'payrollcontactdetail',
+              @request.params['column'] == 'rule59_unchanged_gain' ? '' : 'lateness',
+              @request.params['column'] == 'rule59_unchanged_gain' ? 'oldorg' : 'neworg' 
               ]
        }
 
@@ -301,26 +309,8 @@ module Settings
          end
          
          if @request.auth.staff?
-           hash = {
-             'Follow up' => [
-              'row_header',
-              'row_header1',
-              'row_header2',
-              'changedate',
-              'memberid',
-              'member',
-              'currentstatus',
-              'followupnotes',
-              'paymenttype',
-              'paymenttypeid',
-              'contactdetail',
-              'newcompany',
-              'newemployer',
-              'payrollcontactdetail',
-              'lateness',
-              'neworg'
-              ]
-           }
+           # only tab staff need for follow up is the follow up tab
+           hash = hash.reject { |k,v| k!='Follow up'}
          end
 
          hash
@@ -363,20 +353,24 @@ module Settings
          'stopped_other_gain' => 'stopped paying transfers in',
          'stopped_other_loss' => 'stopped paying transfers out',
          'stopped_to_paying' => 'stopped paying resumed paying',
-         'stopped_to_other' => 'stopped paying followed up',
-         'stopped_unchanged_gain' => 'became stopped paying and still stopped paying',
-         'a1p_unchanged_gain' => 'became a1p and still a1p',
+         'stopped_to_other' => 'became stopped paying followed up',
+         'stopped_unchanged_gain' => 'became stopped paying not followed up',
+         'a1p_unchanged_gain' => 'cards in not followed up',
          'contactdetail' => 'current contact detail',
          'followupnotes' => 'follow up notes',
          'payrollcontactdetail' => 'payroll/hr contact',
-         'lateness' => 'payment status',
+         'lateness' => 'current payment status',
          'paymenttype' => 'payment type',
          'paymenttypeid' => 'payment type',
          'newemployer' => 'current employer',
          'currentstatus' => 'current status',
          'newcompany' => 'current site',
-         'rule59_unchanged_gain' => 'became rule59 and still rule59',
-         'paidto' => 'paid to date'
+         'rule59_unchanged_gain' => 'became rule59 not followed up',
+         'paidto' => 'current paid to date',
+         'oldcompany' => 'old site',
+         'oldorg' => 'old organiser',
+         'oldemployer' => 'old employer',
+         'neworg' => "new organiser"
          }
      end
      
@@ -429,8 +423,9 @@ module Settings
          'a1p_real_gain',
          'stopped_unchanged_gain',
          'a1p_unchanged_gain',
+         'transactions',
          'rule59_unchanged_gain',
-         'transactions'
+         (!@request.auth.staff? ? 'stopped_to_other' : '')
          
        ].include?(column_name)
      end
