@@ -362,7 +362,7 @@ module Settings
          'stopped_other_gain' => 'stopped paying transfers in',
          'stopped_other_loss' => 'stopped paying transfers out',
          'stopped_to_paying' => 'stopped paying resumed paying',
-         'stopped_to_other' => 'became stopped paying followed up',
+         'stopped_to_other' => 'stopped paying followed up',
          'stopped_unchanged_gain' => 'became stopped paying not followed up',
          'a1p_unchanged_gain' => 'cards in not followed up',
          'contactdetail' => 'current contact detail',

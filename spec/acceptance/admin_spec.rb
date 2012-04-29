@@ -71,7 +71,7 @@ describe "admin" do
     
     click_link("Summary")
     within 'table#table-summary thead' do
-      table_header_has "data entry", "total cards in", "cards in not followed up", "cards failed", "a1p started paying", "became stopped paying", "became stopped paying not followed up", "became stopped paying followed up", "stopped paying resumed paying", "became rule59 not followed up", "transactions", "income posted", "income corrections"
+      table_header_has "data entry", "total cards in", "cards in not followed up", "cards failed", "a1p started paying", "became stopped paying", "became stopped paying not followed up", "stopped paying followed up", "stopped paying resumed paying", "became rule59 not followed up", "transactions", "income posted", "income corrections"
     end
     
     drill_down_into_data_entry
