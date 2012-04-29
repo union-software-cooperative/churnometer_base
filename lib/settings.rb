@@ -239,6 +239,7 @@ module Settings
       
       if @request.auth.leader?
         hash = hash.merge(fhash_option);
+        hash['Follow up'] = staff_summary_override;
       end
       
       if @request.params['group_by'] == 'employerid'
