@@ -5,7 +5,7 @@ module Authorization
   end
   
   def protected!
-    unless auth.leader? || auth.user? || auth.lead? || auth.staff?
+    unless auth.leader? || auth.user? || auth.lead? || auth.staff? || auth.admin?
       response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
       throw(:halt, [401, "Not authorized\n"])
     end
@@ -16,6 +16,11 @@ end
 
 class Authorize
   attr_accessor :auth
+  
+  def admin? 
+    @admin ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['admin', 'letmein']
+    @leader = @admin
+  end
   
   def leader? 
     @leader ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']

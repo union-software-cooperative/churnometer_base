@@ -41,13 +41,11 @@ module Settings
       "areaid"        => "Area",
       "companyid"     => "Work Site",
       "employerid"    => "Employer",
-      "hostemployerid"  => "Owner",
       "industryid"    => "Industry",
       #"del"           => "Delegate Training",
       #"hsr"           => "HSR Training",
       "nuwelectorate" => "Electorate",
       "state"         => "State",
-      "employmenttypeid" => "Employment Type",
       "paymenttypeid" => "Payment Type",
       "feegroupid"    => "Fee Group",
       "supportstaffid"       => "Support Staff"
@@ -56,7 +54,14 @@ module Settings
     if @request.auth.leader?
       group_by = group_by.merge({"statusstaffid" => "Data Entry"})
     end
-   
+    
+    if @request.auth.admin?
+      group_by = group_by.merge({
+        "employmenttypeid" => "Employment Type",
+        "hostemployerid"  => "Owner"  
+      })
+    end
+    
     group_by
   end
   
@@ -223,6 +228,10 @@ module Settings
       if @request.auth.staff?   
         hash['Summary'] = staff_summary_override
       end
+      
+      if @request.auth.admin?
+        hash['Follow up'] = staff_summary_override;
+      end 
       
       if @request.auth.staff? or @request.auth.leader?
         hash = hash.merge(shash_option);
