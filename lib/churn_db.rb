@@ -239,7 +239,7 @@ class ChurnDBDiskCache < ChurnDB
     if !defined? @@cache
       load_cache
     else
-      # if the creation date is greater, reload (updated by another server)
+      # reload if the modification date is greater (because it was updated by another server)
       if @@mtime < mtime
         @@cache_status += "cache has been updated. "
         load_cache
@@ -250,7 +250,10 @@ class ChurnDBDiskCache < ChurnDB
   end
   
   def initialize
-    ChurnDBDiskCache.cache_status = "" #The data is initialised every request but in production the cache should persist, this lets cache status to accumulated across during the page life
+    # The data is initialised every request but in production the cache should persist
+    # as a static (class) singleton. Cache status is reset at the start of the page 
+    # life when db class is instantiated
+    ChurnDBDiskCache.cache_status = "" 
   end
   
   def ex(sql)
@@ -321,7 +324,7 @@ private
     filename = "tmp/cache-#{self.cache.size.to_s}.Marshal" if filename.nil? 
     
     begin 
-      #write data to file
+      #write data to file - only if data file write succeeds will index file be updated
       File.open(filename, 'w') do |f|
         f.puts Marshal::dump(result)
         

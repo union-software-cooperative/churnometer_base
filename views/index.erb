@@ -87,10 +87,13 @@
 	function print_tab(index)
     {
         // remove ui-tabs-hide because it has displays:block for print media - so file-print show all tabs
-        $(".ui-tabs-hide").addClass("ui-tabs-hide-print");
+        $(".ui-tabs-hide").css("display", "none !important"); // added for old firefox
+		$(".ui-tabs-hide").addClass("ui-tabs-hide-print");
         $(".ui-tabs-hide").removeClass("ui-tabs-hide");
         window.print();
-        $(".ui-tabs-hide-print").addClass("ui-tabs-hide");
+		$(".ui-tabs-hide-print").addClass("ui-tabs-hide");
         $(".ui-tabs-hide-print").removeClass("ui-tabs-hide-print");
+		$(".ui-tabs-hide").css("display", ""); // added for old firefox
+		
     }
 </script>
