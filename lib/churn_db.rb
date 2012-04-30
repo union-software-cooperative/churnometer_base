@@ -215,7 +215,7 @@ class ChurnDBDiskCache < ChurnDB
   
   @@cache_file = 'tmp/cache.Marshal'
   @@cache_status = "Not in use."
-  @@ctime = Time.parse('1900-01-01')
+  @@mtime = Time.parse('1900-01-01')
   
   def self.cache_status
     @@cache_status
@@ -225,14 +225,14 @@ class ChurnDBDiskCache < ChurnDB
     @@cache_status = status
   end
   
-  def self.ctime
-    ctime = Time.parse('1900-01-01')
+  def self.mtime
+    mtime = Time.parse('1900-01-01')
     begin
-      ctime = File.ctime(@@cache_file)
+      mtime = File.mtime(@@cache_file)
     rescue
       # file doesn't exist or couldn't be read
     end
-    ctime
+    mtime
   end
   
   def self.cache
@@ -240,7 +240,7 @@ class ChurnDBDiskCache < ChurnDB
       load_cache
     else
       # if the creation date is greater, reload (updated by another server)
-      if @@ctime < ctime
+      if @@mtime < mtime
         @@cache_status += "cache has been updated. "
         load_cache
       end
@@ -299,7 +299,7 @@ private
             data+=line
           end
           
-          @@ctime = File.ctime(@@cache_file) # set modification time, so we can tell if we need to reload
+          @@mtime = File.mtime(@@cache_file) # set modification time, so we can tell if we need to reload
         end
             
         @@cache = Marshal::load(data)
@@ -331,7 +331,7 @@ private
           f.puts Marshal::dump(@@cache)
         end
         
-        @@ctime = File.ctime(@@cache_file) # set modification time, so we can tell if we need to reload
+        @@mtime = File.mtime(@@cache_file) # set modification time, so we can tell if we need to reload
       end
     
     rescue
