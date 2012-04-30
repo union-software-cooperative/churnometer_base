@@ -213,7 +213,9 @@ end
 
 class ChurnDBDiskCache < ChurnDB
   
+  @@cache_file = 'tmp/cache.Marshal'
   @@cache_status = "Not in use."
+  @@ctime = nil
   
   def self.cache_status
     @@cache_status
@@ -226,6 +228,12 @@ class ChurnDBDiskCache < ChurnDB
   def self.cache
     if !defined? @@cache
       load_cache
+    else
+      # if the creation date is greater, reload (updated by another server)
+      if @@ctime < File.ctime(@@cache_file)
+        @@cache_status += "cache has been updated. "
+        load_cache
+      end
     end
     
     @@cache
@@ -276,10 +284,12 @@ private
   def self.load_cache
       begin
         data = ""
-        File.open('tmp/cache.Marshal', 'r') do |f|
+        File.open(@@cache_file, 'r') do |f|
           while line=f.gets
             data+=line
           end
+          
+          @@ctime = File.ctime(@@cache_file) # set modification time, so we can tell if we need to reload
         end
             
         @@cache = Marshal::load(data)
@@ -300,15 +310,28 @@ private
     # are removed)
     filename = "tmp/cache-#{self.cache.size.to_s}.Marshal" if filename.nil? 
     
-    #write data to file
-    File.open(filename, 'w') do |f|
-      f.puts Marshal::dump(result)
-    end
+    begin 
+      #write data to file
+      File.open(filename, 'w') do |f|
+        f.puts Marshal::dump(result)
+        
+        #update index
+        @@cache[sql] = filename 
+        File.open(@@cache_file, 'w') do |f|
+          f.puts Marshal::dump(@@cache)
+        end
+        
+        @@ctime = File.ctime(@@cache_file) # set modification time, so we can tell if we need to reload
+      end
     
-    #update index
-    @@cache[sql] = filename 
-    File.open('tmp/cache.Marshal', 'w') do |f|
-      f.puts Marshal::dump(@@cache)
+    rescue
+      ChurnDBDiskCache.cache_status += "Failed to write to cache. Deleting cached data in case of inconsistency."
+      # remove cache file, so whatever ended up in the index gets reloaded next time
+      begin
+        File.delete(filename)
+      rescue
+        # ignore deletion error because I'm reasonably confident it won't cause a problem
+      end
     end
   end
     
