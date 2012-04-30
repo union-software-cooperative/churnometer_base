@@ -303,11 +303,11 @@ private
         end
             
         @@cache = Marshal::load(data)
-        ChurnDBDiskCache.cache_status += "Cache reloaded. "
+        ChurnDBDiskCache.cache_status += "cache reloaded. "
       rescue
         @@cache = Hash.new
         #throw "failed to load cache"
-        ChurnDBDiskCache.cache_status += "Failed to load cache. "
+        ChurnDBDiskCache.cache_status += "failed to load cache. "
       end
   end
   
