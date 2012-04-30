@@ -277,8 +277,9 @@ a:link, a:visited {
 
 .ui-tabs-nav { display: none; }
 .ui-tabs .ui-tabs-hide {
-    display: block;
-    padding: 0 !important;
+    /* display: block; */ /* remarked this because disabling whole page printing (when printing a tab) doesn't work in old firefix - boohoo! */
+    display:none; /* added this so single tab printing is now the default */
+	padding: 0 !important;
 }
 
 .ui-tabs-hide-print  {
