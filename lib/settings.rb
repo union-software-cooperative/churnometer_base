@@ -47,6 +47,7 @@ module Settings
       "nuwelectorate" => "Electorate",
       "state"         => "State",
       "paymenttypeid" => "Payment Type",
+      "employmenttypeid" => "Employment Type",
       "feegroupid"    => "Fee Group",
       "supportstaffid"       => "Support Staff"
     }
@@ -57,7 +58,6 @@ module Settings
     
     if @request.auth.admin?
       group_by = group_by.merge({
-        "employmenttypeid" => "Employment Type",
         "hostemployerid"  => "Owner"  
       })
     end
@@ -89,7 +89,7 @@ module Settings
       'statusstaffid' => 'companyid',
       'supportstaffid' => 'org',
       'paymenttypeid' => 'paymenttypeid',
-      'employmenttypeid' => 'employmenttypeid',
+      'employmenttypeid' => 'companyid',
       'hostemployerid' => 'companyid',
       'employerid'  => 'companyid'
     }
