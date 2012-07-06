@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'sinatra/base'
-
 require 'bundler/setup'
 require 'pg'
 require 'sass'

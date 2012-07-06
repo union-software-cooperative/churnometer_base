@@ -1,6 +1,9 @@
 email:
   to: 
   from: 
+email_errors:
+  to: 
+  from: 
 database:
   host: 
   port: 
