@@ -1028,7 +1028,6 @@ where
 
 drop table redundantchanges;
 
-
 drop table areastaff;
 drop table displaytextstaging;
 drop table employerstaging;
@@ -1074,3 +1073,31 @@ drop table transactionfact_anonymisedb;
 drop table employer_anonymisedb;
 drop table mash;
 
+update 
+	memberfacthelper5
+set
+	statusdelta = case when coalesce(m1.status,'') <> coalesce(m2.status,'') then m1.net else 0 end 
+	, leaddelta = case when coalesce(m1.lead,'') <> coalesce(m2.lead,'') then m1.net else 0 end
+	, branchiddelta = case when coalesce( m1.branchid,'') <>coalesce( m2.branchid,'') then m1.net else 0 end
+	, industryiddelta = case when coalesce(m1.industryid,0) <> coalesce(m2.industryid,0) then m1.net else 0 end
+	, orgdelta = case when coalesce(m1.org ,'') <> coalesce(m2.org ,'') then m1.net else 0 end
+	, areaiddelta = case when coalesce(m1.areaid ,'') <> coalesce(m2.areaid ,'') then m1.net else 0 end
+	, companyiddelta = case when coalesce(m1.companyid ,'') <> coalesce(m2.companyid ,'') then m1.net else 0 end
+	, agreementexpirydelta = case when coalesce(m1.agreementexpiry ,'1/1/1901') <> coalesce(m2.agreementexpiry ,'1/1/1901') then m1.net else 0 end
+	, deldelta = case when coalesce(m1.del ,-1) <> coalesce(m2.del , -1) then m1.net else 0 end
+	, hsrdelta = case when coalesce(m1.hsr ,-1) <> coalesce(m2.hsr ,-1) then m1.net else 0 end
+	, genderdelta = case when coalesce(m1.gender ,'') <> coalesce(m2.gender ,'') then m1.net else 0 end
+	, feegroupiddelta = case when coalesce(m1.feegroupid ,'') <> coalesce(m2.feegroupid ,'') then m1.net else 0 end
+	, statedelta = case when coalesce(m1.state ,'') <> coalesce(m2.state ,'') then m1.net else 0 end
+	, nuwelectoratedelta = case when coalesce(m1.nuwelectorate ,'') <> coalesce(m2.nuwelectorate ,'') then m1.net else 0 end
+	, statusstaffiddelta = case when coalesce(m1.statusstaffid ,'') <> coalesce(m2.statusstaffid ,'') then m1.net else 0 end
+	, employeriddelta = case when coalesce(m1.employerid ,'') <> coalesce(m2.employerid ,'') then m1.net else 0 end
+	, hostemployeriddelta = case when coalesce(m1.hostemployerid ,'') <> coalesce(m2.hostemployerid ,'') then m1.net else 0 end
+	, employmenttypeiddelta = case when coalesce(m1.employmenttypeid ,'') <> coalesce(m2.employmenttypeid ,'') then m1.net else 0 end
+	, paymenttypeiddelta = case when coalesce(m1.paymenttypeid ,'') <> coalesce(m2.paymenttypeid ,'') then m1.net else 0 end
+from
+	memberfacthelper5 m1
+	inner join memberfacthelper5 m2 on m1.changeid = m2.changeid and m1.net <> m2.net
+where
+	memberfacthelper5.net = m1.net 
+	and memberfacthelper5.changeid = m1.changeid;
