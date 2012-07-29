@@ -53,7 +53,7 @@ with members as (
 	select memberid from paying
 )
 insert into memberfacthelper5 select * from memberfacthelper4 where memberid in (select memberid from top5000);
-grant select, delete on memberfacthelper5 to churnuser;
+grant select, delete, update on memberfacthelper5 to churnuser;
 
 insert into displaytext (id, displaytext, attribute) select 'dbo', 'dbo', 'statusstaffid';
 insert into displaytext (id, displaytext, attribute) select 'Jbutterfield', 'janine', 'statusstaffid';
