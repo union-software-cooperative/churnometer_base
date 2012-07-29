@@ -53,7 +53,7 @@ with members as (
 	select memberid from paying
 )
 insert into memberfacthelper5 select * from memberfacthelper4 where memberid in (select memberid from top5000);
-grant select on memberfacthelper5 to churnuser;
+grant select, delete on memberfacthelper5 to churnuser;
 
 insert into displaytext (id, displaytext, attribute) select 'dbo', 'dbo', 'statusstaffid';
 insert into displaytext (id, displaytext, attribute) select 'Jbutterfield', 'janine', 'statusstaffid';
@@ -975,6 +975,59 @@ set
         '01/01/2012 njones: called payroll, on leave'
 where
         not followupnotes is null;
+
+
+with leadlag as 
+(
+	select 
+		*
+		, lead(changeid, 1) over (partition by memberid order by changeid ) nxt
+		, lag(changeid, 1) over (partition by memberid order by changeid ) prev
+	from 
+		memberfact
+)
+, redundant as 
+(
+select changeid, prev, nxt from leadlag
+where
+	coalesce(oldgender, '') = coalesce(newgender, '')
+	and coalesce(oldfeegroupid, '') = coalesce(newfeegroupid, '')
+	and coalesce(oldbranchid, '') = coalesce(newbranchid, '')
+	and coalesce(oldstate, '') = coalesce(newstate, '')
+	and coalesce(oldindustryid, 0) = coalesce(newindustryid, 0)
+	and coalesce(oldnuwelectorate, '') = coalesce(newnuwelectorate, '')
+	and coalesce(oldlead, '') = coalesce(newlead, '')
+	and coalesce(oldorg, '') = coalesce(neworg, '')
+	and coalesce(oldareaid, '') = coalesce(newareaid, '')
+	and coalesce(oldcompanyid, '') = coalesce(newcompanyid, '')
+	and coalesce(oldagreementexpiry, '1/1/1901') = coalesce(newagreementexpiry, '1/1/1901')
+	and coalesce(olddel, 0) = coalesce(newdel, 0)
+	and coalesce(oldhsr, 0) = coalesce(newhsr, 0)
+	and coalesce(oldstatus, '') = coalesce(newstatus, '')
+)
+select * into redundantchanges from redundant;
+
+update
+	transactionfact
+set 
+	changeid = prev
+from 
+	redundantchanges r
+where
+	transactionfact.changeid = r.changeid;
+
+delete from
+	memberfact
+where
+	changeid in (select changeid from redundantchanges);
+
+delete from 
+	memberfacthelper5
+where
+	changeid in (select changeid from redundantchanges);
+
+drop table redundantchanges;
+
 
 drop table areastaff;
 drop table displaytextstaging;
