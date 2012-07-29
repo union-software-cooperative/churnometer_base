@@ -40,7 +40,7 @@
                         	<%= row['transfer_out'] %>
                         </td>
                     	<td>
-	 						<a href="<%= model.build_url({"startDate" => Date.parse(row['changedate']).strftime(DateFormatDisplay) }) %>" title="<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(model.end_date).strftime(DateFormatDisplay)}" %>">
+	 						<a href="<%= model.build_url({"startDate" => (Date.parse(row['changedate'])+1).strftime(DateFormatDisplay) }) %>" title="<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(model.end_date).strftime(DateFormatDisplay)}" %>">
 								[after]
 							</a>
 						</td>
