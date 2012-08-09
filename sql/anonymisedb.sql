@@ -1,6 +1,7 @@
 -- WARNING This script will destroy the churnometer database!!!!
 -- It is designed to create a demo version of churnometer as a favourable subset of this data
 
+
 drop table if exists displaytext_anonymisedb;
 create table displaytext_anonymisedb (like displaytext including constraints including indexes including defaults);
 insert into displaytext_anonymisedb select * from displaytext;
@@ -588,10 +589,6 @@ where
 	employer.companyid = m.oldid and attribute = 'employerid'
 ;
 
-
-
-delete from displaytext where not id in (select memberid from memberfacthelper5) and attribute = 'memberid';
-
 with names as
 	(
 	select
@@ -623,7 +620,7 @@ where
 )
 , mixednames as 
 (
-select 
+select distinct 
 	firstname
 	, lastname
 	
@@ -644,11 +641,12 @@ from
 (
 	select
 		*
-		, mod(rank() over (order by id),5000) + 1 rank
+		, mod(rank() over (order by id),(select count(*) from mixednames)) + 1 rank
 	from
 		displaytext
 	where
-		attribute in ('lead', 'org', 'supportstaffid', 'statusstaffid', 'memberid')
+		attribute in ('lead', 'org', 'supportstaffid', 'statusstaffid')
+		or (attribute = 'memberid' and id in (select memberid from memberfacthelper5))
 ) , nameshift as
 (
 select 
@@ -667,6 +665,9 @@ from
 	nameshift
 where
 	displaytext.attribute = nameshift.attribute and displaytext.id = nameshift.id;
+
+
+delete from displaytext where attribute = 'memberid' and not id in (select memberid from memberfacthelper5);
 
 
 update 
@@ -1101,3 +1102,4 @@ from
 where
 	memberfacthelper5.net = m1.net 
 	and memberfacthelper5.changeid = m1.changeid;
+
