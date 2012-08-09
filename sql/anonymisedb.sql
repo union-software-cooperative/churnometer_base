@@ -977,6 +977,7 @@ set
 where
         not followupnotes is null;
 
+drop table if exists redundantchanges;
 
 with leadlag as 
 (
