@@ -13,6 +13,7 @@ require 'ir_b'
 
 Config = YAML.load(File.read("./config/config.yaml"))
 Dir["./lib/*.rb"].each { |f| require f }
+Dir["./lib/services/*.rb"].each { |f| require f }
 Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
@@ -69,6 +70,8 @@ class Churnobyl < Sinatra::Base
   get '/scss/:name.css' do |name|
     scss name.to_sym, :style => :expanded
   end
+
+  ServiceRequestHandlerAutocomplete.new(self)
 
   run! if app_file == $0
 end
