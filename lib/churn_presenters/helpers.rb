@@ -89,15 +89,17 @@ module ChurnPresenter_Helpers
     #TODO refactor out params if possible, or put this function somewhere better, with params maybe
     
     # build uri from params - rejecting filters & lock because they need special treatment
-    query = @request.params.reject{ |k,v| v.empty? }.reject{ |k, v| k == Filter}.reject{ |k, v| k == "lock"}
+    query = @request.parsed_params.reject{ |k,v| v.empty? }.reject{ |k, v| k == Filter}.reject{ |k, v| k == "lock"}
     
     # flatten filters, rejecting status - TODO get rid of status
-    (@request.params[Filter] || {}).reject{ |k,v| v.empty? }.reject{ |k,v| k == 'status'}.each do |k, v|
-      query["#{Filter}[#{k}]"] = v
+    (@request.params[Filter] || {}).reject{ |k,v| v.empty? }.reject{ |k,v| k == 'status'}.each do |k, vs|
+      Array(vs).each do |v|
+        query["#{Filter}[#{k}]"] = v
+      end
     end
     
     # flatten lock
-    (@request.params["lock"] || {}).reject{ |k,v| v.empty? }.each do |k, v|
+    (@request.parsed_params["lock"] || {}).reject{ |k,v| v.empty? }.each do |k, v|
       query["lock[#{k}]"] = v
     end
     
