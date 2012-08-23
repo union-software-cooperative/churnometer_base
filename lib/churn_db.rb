@@ -12,6 +12,14 @@ class Db
   def ex(sql)
     @conn.exec(sql)
   end
+
+  def quote(string)
+    "'#{string.gsub('\'', '\'\'')}'"
+  end
+
+  def quote_col(column_name)
+    "\"#{string.gsub('\"', '\"\"')}\""
+  end
 end
 
 
