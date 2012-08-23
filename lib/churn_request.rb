@@ -1,4 +1,5 @@
 require './lib/settings.rb'
+require 'cgi'
 
 class ChurnRequest
 
