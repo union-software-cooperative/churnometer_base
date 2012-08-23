@@ -1,6 +1,7 @@
 # Base class for services that provide autocomplete data to clients.
 class ServiceAutocomplete
-  def initialize(param_hash)
+  def initialize(db, param_hash)
+    @db = db
   end
 
   def present_db_result(db_result)
@@ -11,8 +12,8 @@ class ServiceAutocomplete
     20
   end
 
-  def execute(db)
-    db_result = db.ex(@query)
+  def execute
+    db_result = @db.ex(@query)
 
     result = []
 

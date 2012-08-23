@@ -13,15 +13,7 @@
         </li>
         <li class="group_by form span-5">
           <label>Group by</label>
-          <select name="group_by">
-            <% model.group_names.each do |column_name, name| %>
-              <% if column_name == model['group_by'] %>
-                <option value="<%= column_name %>" selected="selected"><%= name %></option>
-              <% else %> 
-                <option value="<%= column_name %>"><%= name %></option>
-              <% end %>
-            <% end %>
-          </select>
+		  <%= model.output_group_selector(model['group_by'], 'group_by') %>
     	  </li>
     	  <li class="group_by form span-5">
               <label for="input-internal-select">Running total</label>
@@ -40,23 +32,48 @@
     			<label class="form span-18 screen_only">Drilling down into...</label>
 			
     			<table id="filters" class="form span-18" >
-    			  <% model.filters.each do |f| %>
+    			  <% model.filters.each_with_index do |f, f_idx| %>
     				 <tr class="<%= f.type == 'disable' ? 'screen_only': '' %>">
     					<td class="form span-5 filters ">
-    		    			<%=h(f.group.to_s + ": " + f.display.to_s) %>
+    		    		  <%=h(f.group.to_s + ": " + f.display.to_s) %>
     					</td>
     					<td class="filters">
-    					<input class="selections" type="radio" name="<%="#{Filter}[#{f.name}]" %>" value="<%=f.id %>" <%=f.type == 'apply' ? 'checked' : '' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
-    					<input class="selections invert_filter" type="radio" name="<%="#{Filter}[#{f.name}]" %>" value="!<%=f.id %>" <%=f.type == 'invert' ? 'checked' : '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
+
+<%
+  # Note that the filter radio button names take the format "f!filter_index[columnname]".
+  # This supports having multiple radio groups that affect the same column, i.e. combining data from
+  # two branches.
+  # Churnometer's custom query parsing strips the exclamation mark and everything after it from the
+  # query string when forming the parameter name.
+  # If this functionality wasn't available, then the multiple filters of the same type would all share
+  # the same radio group, and one or other of the filters couldn't be disabled or removed.
+  # This problem could be better solved by changing the way that filter data is encoded in the
+  # query string.
+%>
+						  
+    					<input class="selections" type="radio" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="<%=f.id %>" <%=f.type == 'apply' ? 'checked' : '' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
+    					<input class="selections invert_filter" type="radio" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="!<%=f.id %>" <%=f.type == 'invert' ? 'checked' : '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
     					<span class="screen_only">
-                           <input class="selections disable_filter" type="radio" name="<%="#{Filter}[#{f.name}]" %>" value="-<%=f.id %>" <%=f.type == 'disable' ? 'checked' : '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
-    					   <input class="selections remove_filter" type="radio" id="<%="#{Filter}#{f.name}remove" %>" name="<%="#{Filter}[#{f.name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+                           <input class="selections disable_filter" type="radio" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="-<%=f.id %>" <%=f.type == 'disable' ? 'checked' : '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
+    					   <input class="selections remove_filter" type="radio" id="<%="#{Filter}#{f.name}remove" %>" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
 				  	    </span>
     					</td>
 					
     				  </tr>
     			  <% end %>
-				<% if model['site_constraint'].to_s != ''%>
+				  
+				  <tr>
+					<td class="form span-5 filters">
+					  Add filter:
+					</td>
+					<td class="filters">
+					  <span class="screen_only">
+						<%= model.output_filter_terms_adder %>
+					  </span>
+					</td>
+				  </tr>
+				  
+				  <% if model['site_constraint'].to_s != ''%>
                     <tr>
                         <td class="form span-5 filters">
                             <%="Instead, search by sites assigned to this selection at:"  %>
@@ -173,4 +190,29 @@
 		delay: 0,
 		relative: true
 	});
+
+	$("#search_term_add_group").change(function() {
+		update_add_filter_controls()
+		$("#search_term_add_text").val("")
+		$("#search_term_add_text").focus()	
+	})
+
+	$(function() {
+		update_add_filter_controls()
+
+		$("#search_term_add_text").autocomplete({
+			minLength: 0,
+
+			source: function(request, response) {
+				$.getJSON("services/autocomplete/displaytext", {attribute:$("#search_term_add_group").val(), term:request.term}, response)
+			},
+	
+			select: function(event, ui) {
+				$("#search_term_add_text").val(ui.item.value)
+				$("#search_term_add_id_hidden").attr("name", "f["+$("#search_term_add_group option:selected").val()+"]")
+				$("#search_term_add_id_hidden").val(ui.item.id)
+				event.preventDefault()
+			}
+		})
+	})
 </script>

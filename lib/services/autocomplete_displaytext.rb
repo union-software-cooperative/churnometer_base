@@ -6,7 +6,7 @@ class ServiceAutocompleteDisplaytext < ServiceAutocomplete
     super
 
     attribute = param_hash['attribute']
-    search = param_hash['search']
+    search = param_hash['term']
 
     raise "No attribute supplied." if attribute.nil?
     raise "No search parameter supplied." if search.nil?

@@ -4,17 +4,18 @@ require 'json'
 class ServiceRequestHandlerAutocomplete
   def initialize(churnobyl_app)
     services = { 
-      #'branch' => ServiceAutocompleteBranch 
-      'company' => ServiceAutocompleteCompany 
+      'displaytext' => ServiceAutocompleteDisplaytext
     }
 
-    churnobyl_app.get "/autocomplete/:handler_name" do |handler_name|
+    churnobyl_app.get "/services/autocomplete/:handler_name" do |handler_name|
+      content_type :json
+
       service_class = services[handler_name]
       if service_class.nil?
         "No autocomplete handler for '#{handler_name}'"
       else
-        service = service_class.new(params)
-        service.execute(ChurnDB.new)
+        service = service_class.new(ChurnDB.new, params)
+        service.execute
       end
     end
   end
