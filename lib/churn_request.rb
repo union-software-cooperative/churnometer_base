@@ -17,9 +17,10 @@ class ChurnRequest
     @db ||= ChurnDB.new
   end
   
-  def initialize(url, auth, params, churndb = nil)
+  def initialize(url, query_string, auth, params, churndb = nil)
     # interpret request
     @url = url
+    @query_string = query_string
     @auth = auth
     @params = query_defaults.rmerge(params)
     @db = churndb
@@ -34,7 +35,7 @@ class ChurnRequest
     @end_date = Date.parse(@params['endDate'])
     @transactions = auth.leader?
     @site_constraint = @params['site_constraint'].to_s
-    @xml = filter_xml @params[Filter], locks(@params['lock'])
+    @xml = filter_xml parsed_params()[Filter], locks(@params['lock'])
       
     # load data and public members
     @type = :summary if @filter_column == ''
@@ -55,6 +56,60 @@ class ChurnRequest
     
     @data = db.ex(@sql)
     @cache_hit = db.cache_hit
+  end
+
+  # When multiple parameters of the same name are passed in the query string, Sinatra only uses the last
+  # one. To fix that, this method mirrors Sinatra's usual parsing but also makes arrays from 
+  # duplicate parameter keys in the query string.
+  #
+  # Also, query parameters in the format "param_name!text[key]=value" have the "!text" portion removed,
+  # i.e. "parsed_params()[key1][key2] == value" for query string "?key1!discarded[key2]=value".
+  # This functionality is currently used when displaying filters. See comments in form.erb.
+  #
+  # tbd: make all code use this method, replace "params" method with this method.
+  def parsed_params
+    @parsed_params ||= 
+      begin
+        result = {}
+
+        CGI::parse(@query_string).each do |key, val|
+        	# Expand arrays that have only one element
+        	val = if val.length == 1
+            val.first
+          else
+            val
+          end
+
+					# Handle parameters that should be encoded in a hash, of the format "?param_name[key]=value".
+        	
+        	# Extract param_name and key, and strip "!text" from the param_name.
+        	match = /^([^\[!]+)(?:[^\[]*)\[([^\]]+)\]/.match(key)
+         	is_hash_param = !match.nil?
+
+          if is_hash_param
+            param_name = match[1]
+            param_key_name = match[2]
+
+            hash = result[param_name] ||= {}
+            
+            # If the parameter is already in the hash, create an array, otherwise just set
+            # the value. This handles duplicate instances of hash format parameters in the
+            # query string.
+            if hash.has_key?(param_key_name)
+              hash[param_key_name] = Array(hash[param_key_name]) + [val]
+            else
+              # 'val' may be an array or a single element, but this code gives the proper
+              # result in both cases.
+              hash[param_key_name] = val
+            end
+          else
+            # The value is not a hash format value, so just set it as normal.
+            result[key] = val
+          end
+      	end
+
+      	query_defaults.rmerge(result)
+      end
   end
 
   def get_transfers

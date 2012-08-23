@@ -29,7 +29,7 @@ class Churnobyl < Sinatra::Base
   end  
   
   def cr
-    @cr ||= ChurnRequest.new request.url, auth, params, ChurnDBDiskCache.new
+    @cr ||= ChurnRequest.new(request.url, request.query_string, auth, params, ChurnDBDiskCache.new)
     @sql = @cr.sql # This is set for error message
     @cr
   end
@@ -39,8 +39,8 @@ class Churnobyl < Sinatra::Base
     protected!
     
     presenter = ChurnPresenter.new cr
-    
-    erb :index, :locals => {:model => presenter }
+
+    erb :index, :locals => { :model => presenter }
   end
 
   get '/export_table' do
