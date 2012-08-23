@@ -192,13 +192,41 @@
 	});
 
 	$("#search_term_add_group").change(function() {
-		update_add_filter_controls()
 		$("#search_term_add_text").val("")
 		$("#search_term_add_text").focus()	
 	})
 
+	var text_for_search_term_add_id = ''
+	
 	$(function() {
-		update_add_filter_controls()
+		$("#search_term_add_text").val("")
+	
+		<!--Prevent form submission on enter-->
+		$("input,select").keypress(function(event) { return event.keyCode != 13; });
+
+		$("form").submit(function(event) {
+			var problem = false
+		
+			if ($("#search_term_add_id_hidden").val() == "") {
+				if ($("#search_term_add_text").val() != "") {
+					alert("The 'Add Filter' text wasn't entered correctly. Please clear the field or select a value from the autocomplete box.")
+					problem = true
+				}
+			}
+			else
+			{
+				if (text_for_search_term_add_id != $("#search_term_add_text").val()) {
+					alert("The 'Add Filter' text was changed after a selection was made. Please clear the field or select a value from the autocomplete box.")
+				}
+			}
+
+			if (problem) {
+				$("#search_term_add_text").focus()
+				$("#search_term_add_text").autocomplete("search")
+			}
+
+			return !problem
+		})
 
 		$("#search_term_add_text").autocomplete({
 			minLength: 0,
@@ -211,6 +239,7 @@
 				$("#search_term_add_text").val(ui.item.value)
 				$("#search_term_add_id_hidden").attr("name", "f["+$("#search_term_add_group option:selected").val()+"]")
 				$("#search_term_add_id_hidden").val(ui.item.id)
+				text_for_search_term_add_id = $("#search_term_add_text").val()
 				event.preventDefault()
 			}
 		})
