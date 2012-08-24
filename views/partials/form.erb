@@ -27,9 +27,7 @@
                 <% end %>
               </select>
     	  </li>
-			</ul>
-			<ul>
-				<lI class="add_filter span-5">
+				<li class="add_filter span-5">
 					<label>Add filter</label>
 					<%= model.output_group_selector(nil, '', "search_term_add_group") %>
 				</li>
@@ -37,8 +35,6 @@
 					<label>Filter term</label>
 					<%= model.output_filter_group_search_term_editor() %>
 				</li>
-			</ul>
-			<ul>
     	 <li >
               <% if model.filters.count > 0 || model['column'].to_s != ''%>
     			<label class="form span-18 screen_only">Drilling down into...</label>
