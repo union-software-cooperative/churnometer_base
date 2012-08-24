@@ -27,6 +27,18 @@
                 <% end %>
               </select>
     	  </li>
+			</ul>
+			<ul>
+				<lI class="add_filter span-5">
+					<label>Add filter</label>
+					<%= model.output_group_selector(nil, '', "search_term_add_group") %>
+				</li>
+				<li class="add_filter span-5">
+					<label>Filter term</label>
+					<%= model.output_filter_group_search_term_editor() %>
+				</li>
+			</ul>
+			<ul>
     	 <li >
               <% if model.filters.count > 0 || model['column'].to_s != ''%>
     			<label class="form span-18 screen_only">Drilling down into...</label>
@@ -61,17 +73,6 @@
 					
     				  </tr>
     			  <% end %>
-				  
-				  <tr>
-					<td class="form span-5 filters">
-					  Add filter:
-					</td>
-					<td class="filters">
-					  <span class="screen_only">
-						<%= model.output_filter_terms_adder %>
-					  </span>
-					</td>
-				  </tr>
 				  
 				  <% if model['site_constraint'].to_s != ''%>
                     <tr>
@@ -115,8 +116,8 @@
           </li>
 
     	  <div class="screen_only span-24" >
-            <input  type="submit" value="Refresh">
-          </div>
+          <input  type="submit" value="Refresh">
+        </div>
     	</ul>
 		<div id="site_constraint_default" class="tooltip">
   			By default, the system searches for sites assigned to the selection any time during the period.  Selecting this removes the option, returning the system to its default behaviour.  
@@ -191,9 +192,14 @@
 		relative: true
 	});
 
+	function focus_search_term_add_text() {
+		$("#search_term_add_text").focus()	
+		$("#search_term_add_text").autocomplete("search")
+	}
+
 	$("#search_term_add_group").change(function() {
 		$("#search_term_add_text").val("")
-		$("#search_term_add_text").focus()	
+		focus_search_term_add_text()
 	})
 
 	var text_for_search_term_add_id = ''
@@ -221,8 +227,7 @@
 			}
 
 			if (problem) {
-				$("#search_term_add_text").focus()
-				$("#search_term_add_text").autocomplete("search")
+				focus_search_term_add_text()
 			}
 
 			return !problem

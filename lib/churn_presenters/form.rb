@@ -67,13 +67,6 @@ class ChurnPresenter_Form
 		EOS
   end
 
-  def output_filter_terms_adder
-    output = ''
-    output << output_group_selector(nil, '', "search_term_add_group")
-    output << output_filter_group_search_term_editor()
-    output
-  end
-  
   private
 
   def filter_value(value)
