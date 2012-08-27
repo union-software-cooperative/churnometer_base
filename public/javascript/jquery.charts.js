@@ -82,7 +82,6 @@
 					if (isPositive) {
 						//alert (barHeight);
 						bottomPosition = runningTotal - barHeight -1  ; /* I don't know why I need the -1 */
-						
 					}
 					else {
 						bottomPosition = runningTotal;
@@ -160,7 +159,7 @@
 				if (valueString.length > 0) {
 					var valueAmount = parseFloat(valueString, 10);
 					
-					if (valueAmount != 0 || i == (values.length - 2) /* include net, even if 0 */ ) {
+					if (valueAmount != 0 || i == (values.length - 1) /* include net, even if 0 */ ) {
 						
 						labelArray[labelArray.length] = $(values[i]).children("td").eq(config.labelcolumn).html();
 						labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
