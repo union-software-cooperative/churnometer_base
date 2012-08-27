@@ -9,7 +9,7 @@ class ServiceAutocomplete
   end
 
   def max_results
-    20
+    50
   end
 
   def execute
