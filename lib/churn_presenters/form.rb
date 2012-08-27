@@ -23,13 +23,15 @@ class ChurnPresenter_Form
       if !f1.nil?
         f1.each do |column_name, ids|
           Array(ids).each do |id|
-            i = (Struct.new(:name, :group, :id, :display, :type)).new
-            i[:name] = column_name
-            i[:group] = group_names[column_name]
-            i[:id] = filter_value(id)
-            i[:display] = @request.db.get_display_text(column_name, filter_value(id))
-            i[:type] = (id[0] == '-' ? "disable" : ( id[0] == '!' ? "invert" : "apply" ))
-            @filters << i
+            if (filter_value(id) != '')
+              i = (Struct.new(:name, :group, :id, :display, :type)).new
+              i[:name] = column_name
+              i[:group] = group_names[column_name]
+              i[:id] = filter_value(id)
+              i[:display] = @request.db.get_display_text(column_name, filter_value(id))
+              i[:type] = (id[0] == '-' ? "disable" : ( id[0] == '!' ? "invert" : "apply" ))
+              @filters << i
+            end
           end
         end
       end 

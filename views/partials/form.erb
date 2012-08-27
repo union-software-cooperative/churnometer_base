@@ -28,11 +28,11 @@
               </select>
     	  </li>
 				<li class="add_filter span-5">
-					<label>Add filter</label>
+					<label>Add search</label>
 					<%= model.output_group_selector(nil, '', "search_term_add_group") %>
 				</li>
 				<li class="add_filter span-5">
-					<label>Filter term</label>
+					<label>Search term</label>
 					<%= model.output_filter_group_search_term_editor() %>
 				</li>
     	 <li >
@@ -211,7 +211,7 @@
 		
 			if ($("#search_term_add_id_hidden").val() == "") {
 				if ($("#search_term_add_text").val() != "") {
-					alert("The 'Add Filter' text wasn't entered correctly. Please clear the field or select a value from the autocomplete box.")
+					alert("The 'Add Filter' text wasn't entered correctly. Please clear the field or select a value from the Search term box.")
 					problem = true
 				}
 			}

@@ -92,7 +92,7 @@ module ChurnPresenter_Helpers
     query = @request.parsed_params.reject{ |k,v| v.empty? }.reject{ |k, v| k == Filter}.reject{ |k, v| k == "lock"}
     
     # flatten filters, rejecting status - TODO get rid of status
-    (@request.params[Filter] || {}).reject{ |k,v| v.empty? }.reject{ |k,v| k == 'status'}.each do |k, vs|
+    (@request.parsed_params[Filter] || {}).reject{ |k,v| v.empty? }.reject{ |k,v| k == 'status'}.each do |k, vs|
       Array(vs).each do |v|
         query["#{Filter}[#{k}]"] = v
       end

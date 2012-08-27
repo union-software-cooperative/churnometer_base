@@ -18,13 +18,28 @@ protected
   def json_to_db_column_mapping
     {
       'id' => 'id',
-      'label' => 'displaytext',
+      'label' => 'dropdown',
       'value' => 'displaytext'
     }
   end
 
   def sql_text(db, attribute, search_string)
-    "select id, displaytext from displaytext where attribute = #{db.db.quote(attribute)} and displaytext ilike #{db.db.quote('%'+search_string+'%')} order by displaytext"
+    # tokenise search string
+    search_array = search_string.split(' ')
+    
+    where_clause = ""
+    search_array.each do | item |
+      if (!where_clause.empty?) 
+        where_clause += ' AND '
+      end
+      where_clause += "(lower(displaytext || ' (' || id || ')') like #{db.db.quote('%'+item+'%')})"
+    end 
+    
+    if (where_clause.empty?) 
+      where_clause = ' 1=1 '
+    end
+    
+    "select id, displaytext, displaytext || ' (' || id || ')' as dropdown from displaytext where attribute = #{db.db.quote(attribute)} and (#{where_clause}) order by displaytext"
   end
 end
 

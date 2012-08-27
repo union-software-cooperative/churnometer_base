@@ -8,6 +8,7 @@ require 'uri'
 require 'money'
 require "addressable/uri"
 require 'pony'
+#require 'ruby-debug/debugger'
 
 require 'ir_b'
 
