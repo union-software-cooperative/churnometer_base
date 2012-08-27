@@ -3,19 +3,19 @@
     <form action="/">
 	    <input type="hidden" name="column" value="<%= model['column'] %>"/>
       <ul>
-        <li class="datepicker form span-5">
+        <li class="datepicker form span-3">
           <label>Start Date</label>
           <input type="text" name="startDate" value="<%= model['startDate'] %>">
         </li>
-        <li class="datepicker form span-5">
+        <li class="datepicker form span-3">
           <label>End Date</label>
           <input type="text" name="endDate" value="<%= model['endDate'] %>">
         </li>
-        <li class="group_by form span-5">
+        <li class="group_by form span-3">
           <label>Group by</label>
 		  <%= model.output_group_selector(model['group_by'], 'group_by') %>
     	  </li>
-    	  <li class="group_by form span-5">
+    	  <li class="group_by form span-3">
               <label for="input-internal-select">Running total</label>
               <select id="input-internal-select" name="interval">
                 <% model.interval_names.each do |column_name, name| %>
@@ -27,14 +27,18 @@
                 <% end %>
               </select>
     	  </li>
-				<li class="add_filter span-5">
-					<label>Add search for...</label>
-					<%= model.output_group_selector(nil, '', "search_term_add_group") %>
-				</li>
-				<li class="add_filter span-5">
-					<label>Search term</label>
-					<%= model.output_filter_group_search_term_editor() %>
-				</li>
+		<li class="add_filter span-3 screen_only search">
+			<label>Search on</label>
+			<%= model.output_group_selector(nil, '', "search_term_add_group") %>
+		</li>
+		<li class="add_filter span-3 screen_only search">
+			<label>Search for</label>
+			<%= model.output_filter_group_search_term_editor() %>
+		</li>
+		<li class="add_filter span-3 screen_only search_button">
+			<label>&nbsp;</label>
+			<input type="button" value="Add Search" onclick="show_search()" >
+		</li>
     	 <li >
               <% if model.filters.count > 0 || model['column'].to_s != ''%>
     			<label class="form span-18 screen_only">Drilling down into...</label>
@@ -140,6 +144,8 @@
 <script type="text/javascript">
 	$(".datepicker input").datepicker({dateFormat: <%=DateFormatPicker%>});
 	
+	$(".search").hide();
+	
 	$(".site_constraint").tooltip({
 		tip: '#site_constraint',
 		position: 'center right',
@@ -187,6 +193,12 @@
 		delay: 0,
 		relative: true
 	});
+
+	function show_search() {
+		$(".search").show();
+		$(".search_button").hide();
+		
+	}
 
 	function focus_search_term_add_text() {
 		$("#search_term_add_text").focus()	
