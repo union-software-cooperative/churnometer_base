@@ -32,7 +32,7 @@ protected
       if (!where_clause.empty?) 
         where_clause += ' AND '
       end
-      where_clause += "(lower(displaytext || ' (' || id || ')') like #{db.db.quote('%'+item+'%')})"
+      where_clause += "(lower(displaytext || ' (' || id || ')') like lower(#{db.db.quote('%'+item+'%')}))"
     end 
     
     if (where_clause.empty?) 
