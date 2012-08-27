@@ -47,8 +47,7 @@ class Churnobyl < Sinatra::Base
   get '/export_table' do
     protected!
     
-    query = ChurnRequest.new request.url, auth, params, ChurnDBDiskCache.new
-    presenter = ChurnPresenter.new query
+    presenter = ChurnPresenter.new cr
     table = presenter.tables[params['table']] if !params['table'].nil?
     
     if !table.nil?
@@ -62,8 +61,7 @@ class Churnobyl < Sinatra::Base
   get '/export_all' do
     protected!
     
-    query = ChurnRequest.new request.url, auth, params, ChurnDBDiskCache.new
-    presenter = ChurnPresenter.new query
+    presenter = ChurnPresenter.new cr
     path = presenter.to_excel
     send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
