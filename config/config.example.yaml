@@ -9,4 +9,5 @@ database:
   port: 
   dbname: 
   user: 
-  password: 
+  password:
+  facttable: 
