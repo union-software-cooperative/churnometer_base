@@ -45,7 +45,7 @@
 			
     			<table id="filters" class="form span-18" >
     			  <% model.filters.each_with_index do |f, f_idx| %>
-    				 <tr class="<%= f.type == 'disable' ? 'screen_only': '' %>">
+    				 <tr class="filter_row <%= f.type == 'disable' ? 'screen_only': '' %>">
     					<td class="form span-5 filters ">
     		    		  <%=h(f.group.to_s + ": " + f.display.to_s) %>
     					</td>
@@ -111,7 +111,13 @@
     			</table>
 			
     		<% else %>
-    			<label class="form span-18  screen_only">Start exploring by clicking interesting links in the charts and tables below.</label>
+    			<label class="form span-18 screen_only filter_header">Start exploring by clicking interesting links in the charts and tables below.</label>
+				
+    			<table id="filters" class="form span-18" >
+    				<tr class="filter_row">
+					</tr>
+				</table>
+				
     		<% end %>
           </li>
 
@@ -215,31 +221,31 @@
 	$(function() {
 		$("#search_term_add_text").val("")
 	
-		<!--Prevent form submission on enter-->
-		$("input,select").keypress(function(event) { return event.keyCode != 13; });
+		//<!--Prevent form submission on enter-->
+		//$("input,select").keypress(function(event) { return event.keyCode != 13; });
 
-		$("form").submit(function(event) {
-			var problem = false
+		//$("form").submit(function(event) {
+		//	var problem = false
 		
-			if ($("#search_term_add_id_hidden").val() == "") {
-				if ($("#search_term_add_text").val() != "") {
-					alert("The 'Add Filter' text wasn't entered correctly. Please clear the field or select a value from the 'Search for' drop down list.")
-					problem = true
-				}
-			}
-			else
-			{
-				if (text_for_search_term_add_id != $("#search_term_add_text").val()) {
-					alert("The 'Add Filter' text was changed after a selection was made. Please clear the field or select a value from the autocomplete box.")
-				}
-			}
+		//	if ($("#search_term_add_id_hidden").val() == "") {
+		//		if ($("#search_term_add_text").val() != "") {
+		//			alert("The 'Add Filter' text wasn't entered correctly. Please clear the field or select a value from the 'Search for' drop down list.")
+		//			problem = true
+		//		}
+		//	}
+		//	else
+		//	{
+		//		if (text_for_search_term_add_id != $("#search_term_add_text").val()) {
+		//			alert("The 'Add Filter' text was changed after a selection was made. Please clear the field or select a value from the autocomplete box.")
+		//		}
+		//	}
 
-			if (problem) {
-				focus_search_term_add_text()
-			}
+		//	if (problem) {
+		//		focus_search_term_add_text()
+		//	}
 
-			return !problem
-		})
+		//	return !problem
+		//})
 
 		$("#search_term_add_text").autocomplete({
 			minLength: 0,
@@ -249,12 +255,39 @@
 			},
 	
 			select: function(event, ui) {
-				$("#search_term_add_text").val(ui.item.value)
-				$("#search_term_add_id_hidden").attr("name", "f["+$("#search_term_add_group option:selected").val()+"]")
-				$("#search_term_add_id_hidden").val(ui.item.id)
-				text_for_search_term_add_id = $("#search_term_add_text").val()
+				//$("#search_term_add_id_hidden").attr("name", "f["+$("#search_term_add_group option:selected").val()+"]");
+				//$("#search_term_add_id_hidden").val(ui.item.id);
+				//text_for_search_term_add_id = $("#search_term_add_text").val();
+				//$("#search_term_add_text").text("");
+				
 				event.preventDefault()
+				
+				// Add filter option
+				filter_count = $("#search_term_filter_count_hidden").val();
+				var block = " \
+					<tr> \
+						<td class=\"form span-5 filters \"> \
+			    		 	" + $("#search_term_add_group option:selected").text() + ": " + ui.item.value + " \
+						</td> \
+						<td class=\"filters\"> \
+						<input class=\"selections\" type=\"radio\" name=\"" + "f!" + filter_count + "["+$("#search_term_add_group option:selected").val()+"]" + "\" value=\"" + ui.item.id + "\" checked >Apply filter&nbsp;&nbsp;&nbsp;&nbsp; \
+						<input class=\"selections invert_filter\" type=\"radio\" name=\"" + "f!" + filter_count + "["+$("#search_term_add_group option:selected").val()+"]" + "\" value=\"!" + ui.item.id + "\" >Invert filter&nbsp;&nbsp;&nbsp;&nbsp; \
+						<span class=\"screen_only\"> \
+	                    	<input class=\"selections disable_filter\" type=\"radio\" name=\"" + "f!" + filter_count + "["+$("#search_term_add_group option:selected").val()+"]" + "\" value=\"-" + ui.item.id + "\" >Disable filter&nbsp;&nbsp;&nbsp;&nbsp; \
+							<input class=\"selections remove_filter\" type=\"radio\" name=\"" + "f!" + filter_count + "["+$("#search_term_add_group option:selected").val()+"]" + "\" value=\"\" >Remove filter&nbsp;&nbsp;&nbsp;&nbsp; \
+						</span> \
+						</td> \
+				  	</tr>";
+				
+				$('#filters tr:first').before(block);
+				
+				$("#search_term_add_text").val("")
+				$("#search_term_filter_count_hidden").val(filter_count+1)
+				
 			}
 		})
 	})
 </script>
+
+
+

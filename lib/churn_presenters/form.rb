@@ -66,7 +66,8 @@ class ChurnPresenter_Form
     <<-EOS
 			<input type=text id=search_term_add_text />
 			<input type=hidden id=search_term_add_id_hidden />
-		EOS
+		  <input type=hidden id=search_term_filter_count_hidden value=#{filters.count} />
+    EOS
   end
 
   private
