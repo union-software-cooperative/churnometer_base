@@ -93,8 +93,8 @@ module ChurnPresenter_Helpers
     
     # flatten filters, rejecting status - TODO get rid of status
     (@request.parsed_params[Filter] || {}).reject{ |k,v| v.empty? }.reject{ |k,v| k == 'status'}.each do |k, vs|
-      Array(vs).each do |v|
-        query["#{Filter}[#{k}]"] = v
+      Array(vs).each_with_index do |v, x|
+        query["#{Filter}!#{x}[#{k}]"] = v
       end
     end
     
