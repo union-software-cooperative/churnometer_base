@@ -37,7 +37,7 @@
 		</li>
 		<li class="add_filter span-3 screen_only search_button">
 			<label>&nbsp;</label>
-			<input type="button" value="Add Drill Down" onclick="show_search()" >
+			<a class="screen_only" onclick="show_search()" onmouseover="this.style.cursor='hand';" onmouseout="this.style.cursor='auto';"><img src="images/search32.png" title="add filter" alt="add filter"/></a>
 		</li>
     	 <li >
               <% if model.filters.count > 0 || model['column'].to_s != ''%>
@@ -66,8 +66,8 @@
     					<input class="selections" type="radio" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="<%=f.id %>" <%=f.type == 'apply' ? 'checked' : '' %> >Apply filter&nbsp;&nbsp;&nbsp;&nbsp;
     					<input class="selections invert_filter" type="radio" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="!<%=f.id %>" <%=f.type == 'invert' ? 'checked' : '' %>>Invert filter&nbsp;&nbsp;&nbsp;&nbsp;
     					<span class="screen_only">
-                           <input class="selections disable_filter" type="radio" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="-<%=f.id %>" <%=f.type == 'disable' ? 'checked' : '' %>>Disable Filter&nbsp;&nbsp;&nbsp;&nbsp;
-    					   <input class="selections remove_filter" type="radio" id="<%="#{Filter}#{f.name}remove" %>" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="">Remove Filter&nbsp;&nbsp;&nbsp;&nbsp;
+                           <input class="selections disable_filter" type="radio" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="-<%=f.id %>" <%=f.type == 'disable' ? 'checked' : '' %>>Disable filter&nbsp;&nbsp;&nbsp;&nbsp;
+    					   <input class="selections remove_filter" type="radio" id="<%="#{Filter}#{f.name}remove" %>" name="<%="#{Filter}!#{f_idx}[#{f.name}]" %>" value="">Remove filter&nbsp;&nbsp;&nbsp;&nbsp;
 				  	    </span>
     					</td>
 					
@@ -223,7 +223,7 @@
 		
 			if ($("#search_term_add_id_hidden").val() == "") {
 				if ($("#search_term_add_text").val() != "") {
-					alert("The 'Add Filter' text wasn't entered correctly. Please clear the field or select a value from the Search term box.")
+					alert("The 'Add Filter' text wasn't entered correctly. Please clear the field or select a value from the 'Search for' drop down list.")
 					problem = true
 				}
 			}
