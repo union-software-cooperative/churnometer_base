@@ -203,12 +203,11 @@
 	function show_search() {
 		$(".search").show();
 		$(".search_button").hide();
-		
+		focus_search_term_add_text();
 	}
 
 	function focus_search_term_add_text() {
 		$("#search_term_add_text").focus()	
-		$("#search_term_add_text").autocomplete("search")
 	}
 
 	$("#search_term_add_group").change(function() {

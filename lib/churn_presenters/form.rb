@@ -64,7 +64,7 @@ class ChurnPresenter_Form
 
   def output_filter_group_search_term_editor
     <<-EOS
-			<input type=text id=search_term_add_text />
+			<input type=text id=search_term_add_text onfocus='$("#search_term_add_text").autocomplete("search");'/>
 			<input type=hidden id=search_term_add_id_hidden />
 		  <input type=hidden id=search_term_filter_count_hidden value=#{filters.count} />
     EOS
