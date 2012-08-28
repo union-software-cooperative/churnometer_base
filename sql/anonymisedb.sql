@@ -1028,36 +1028,36 @@ delete from
 where
 	changeid in (select changeid from redundantchanges);
 
-drop table redundantchanges;
+drop table if exists redundantchanges;
 
-drop table areastaff;
-drop table displaytextstaging;
-drop table employerstaging;
-drop table industryfix;
-drop table log;
-drop table memberfacthelper cascade;
-drop table memberfacthelper1;
-drop table memberfacthelper2;
-drop table memberfacthelper3;
+drop table if exists areastaff cascade;
+drop table if exists displaytextstaging cascade;
+drop table if exists employerstaging cascade;
+drop table if exists industryfix cascade;
+drop table if exists log cascade;
+drop table if exists memberfacthelper cascade;
+drop table if exists memberfacthelper1 cascade;
+drop table if exists memberfacthelper2 cascade;
+drop table if exists memberfacthelper3 cascade;
 
-drop table memberfacthelper4_staging;
-drop table memberfacthelperpaying;
-drop table memberfacthelperpaying2;
-drop table memberfacthelperpaying2_backup;
-drop table membersource cascade;
-drop table missingchange;
-drop table missingchangetranslation;
-drop table redundantchanges;
-drop table statuschangestaff;
-drop table statuschangestafftrans;
-drop table transactionchanges;
-drop table transactionfactbackup;
-drop table transactionsource;
-drop table transactionsourceprev;
-drop table transactionsourceprev_backup;
+drop table if exists memberfacthelper4_staging cascade;
+drop table if exists memberfacthelperpaying cascade;
+drop table if exists memberfacthelperpaying2 cascade;
+drop table if exists memberfacthelperpaying2_backup cascade;
+drop table if exists membersource cascade;
+drop table if exists missingchange cascade;
+drop table if exists missingchangetranslation cascade;
+drop table if exists redundantchanges cascade;
+drop table if exists statuschangestaff cascade;
+drop table if exists statuschangestafftrans cascade;
+drop table if exists transactionchanges cascade;
+drop table if exists transactionfactbackup cascade;
+drop table if exists transactionsource cascade;
+drop table if exists transactionsourceprev cascade;
+drop table if exists transactionsourceprev_backup cascade;
 
-drop table employerbackup;
-drop table memberfacthelper4;
+drop table if exists employerbackup cascade;
+drop table if exists memberfacthelper4 cascade;
 
 drop function insertchange() cascade;
 drop function insertmemberfact() cascade;
@@ -1067,13 +1067,13 @@ drop function updatedisplaytext() cascade;
 drop function updateemployer() cascade;
 drop function insertmemberchangefromlastchange() cascade;
 
-drop view lastchange;
-drop view memberchangehelper;
+drop view lastchange cascade;
+drop view memberchangehelper cascade;
 
-drop table displaytext_anonymisedb;
-drop table transactionfact_anonymisedb;
-drop table employer_anonymisedb;
-drop table mash;
+drop table  if exists displaytext_anonymisedb cascade;
+drop table  if exists transactionfact_anonymisedb cascade;
+drop table  if exists employer_anonymisedb cascade;
+drop table  if exists mash cascade;
 
 update 
 	memberfacthelper5
