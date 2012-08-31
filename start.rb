@@ -40,12 +40,12 @@ class Churnobyl < Sinatra::Base
       Pony.mail({
                 :to   => Config['email_errors']['to'],
                 :from => Config['email_errors']['from'],
-                :subject => "[Demo]",
+                :subject => "[Demo] #{request.ip}",
                 :body => erb(:'demo_email', layout: false)
               })
     end
     
-    logger.info request.ip +  "\t" + request.user_agent  + "\t" +request.url + "\t" + ((Time.new - @start_time) * 1000).to_s
+    logger.info "\t" + request.ip +  "\t" + request.user_agent  + "\t" +request.url + "\t" + ((Time.new - @start_time) * 1000).to_s
   end
   
   def cr
