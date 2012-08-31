@@ -1,5 +1,5 @@
 == IP
-<%= request.ip %>
+<%= @env['REMOTE_ADDR'] %>
 
 == Time
 <%= ((Time.new - @start_time) * 1000).to_s %>
