@@ -23,7 +23,11 @@ class Authorize
   end
   
   def leader? 
-    @leader ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']
+    if Config['demo']
+      @leader ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['demo', 'demo']
+    else
+      @leader ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']
+    end
   end
   
   def lead?

@@ -20,6 +20,10 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 class Churnobyl < Sinatra::Base
   include Authorization
   
+  configure :production, :development do
+    enable :logging
+  end
+  
   helpers do
     include Rack::Utils
     alias_method :h, :escape_html
@@ -27,7 +31,22 @@ class Churnobyl < Sinatra::Base
   
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
+    @start_time = Time.new
   end  
+  
+  after '/' do
+    #cache_control :public, :must_revalidate, :max_age => 60
+    if Config['demo']
+      Pony.mail({
+                :to   => Config['email_errors']['to'],
+                :from => Config['email_errors']['from'],
+                :subject => "[Demo]",
+                :body => erb(:'demo_email', layout: false)
+              })
+    end
+    
+    logger.info request.ip +  "\t" + request.user_agent  + "\t" +request.url + "\t" + ((Time.new - @start_time) * 1000).to_s
+  end
   
   def cr
     @cr ||= ChurnRequest.new(request.url, request.query_string, auth, params, ChurnDBDiskCache.new)
