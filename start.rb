@@ -19,7 +19,8 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
   include Authorization
-  
+  logger = Logger.new('log/churnometer.log')
+      
   configure :production, :development do
     enable :logging
   end
