@@ -1,5 +1,5 @@
 == IP
-<%= @env['REMOTE_ADDR'] %>
+<%= request.env['HTTP_X_FORWARDED_FOR'] %>
 
 == Time
 <%= ((Time.new - @start_time) * 1000).to_s %>

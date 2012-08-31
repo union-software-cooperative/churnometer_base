@@ -41,18 +41,18 @@ class Churnobyl < Sinatra::Base
       Pony.mail({
                 :to   => Config['email_errors']['to'],
                 :from => Config['email_errors']['from'],
-                :subject => "[Demo] #{request.ip}",
+                :subject => "[Demo] #{request.env['HTTP_X_FORWARDED_FOR']}",
                 :body => erb(:'demo_email', layout: false)
               })
     end
     
-    logger.info "\t" + @env['REMOTE_ADDR'] +  "\t" + request.user_agent  + "\t" +request.url + "\t" + ((Time.new - @start_time) * 1000).to_s
+    logger.info "\t" + request.env['HTTP_X_FORWARDED_FOR'] +  "\t" + request.user_agent  + "\t" +request.url + "\t" + ((Time.new - @start_time) * 1000).to_s
   end
   
   def cr
     @cr ||= ChurnRequest.new(request.url, request.query_string, auth, params, ChurnDBDiskCache.new)
     @sql = @cr.sql # This is set for error message
-    @cr
+e   @cr
   end
   
   get '/' do
