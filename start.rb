@@ -46,7 +46,7 @@ class Churnobyl < Sinatra::Base
               })
     end
     
-    logger.info "\t" + request.env['HTTP_X_FORWARDED_FOR'] +  "\t" + request.user_agent  + "\t" +request.url + "\t" + ((Time.new - @start_time) * 1000).to_s
+    logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
   end
   
   def cr
