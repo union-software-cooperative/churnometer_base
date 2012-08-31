@@ -1,0 +1,21 @@
+== IP
+<%= request.ip %>
+
+== Time
+<%= ((Time.new - @start_time) * 1000).to_s %>
+
+== User Agency
+<%= request.user_agent %>
+
+== Referrer
+<%= request.referrer %>
+
+== URL
+<%= request.url %>
+
+== Params
+<%= params.inspect %>
+
+== SQL
+<%= @sql %>
+
