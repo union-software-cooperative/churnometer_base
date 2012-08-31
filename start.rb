@@ -52,7 +52,7 @@ class Churnobyl < Sinatra::Base
   def cr
     @cr ||= ChurnRequest.new(request.url, request.query_string, auth, params, ChurnDBDiskCache.new)
     @sql = @cr.sql # This is set for error message
-e   @cr
+    @cr
   end
   
   get '/' do
