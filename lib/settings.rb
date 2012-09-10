@@ -16,6 +16,13 @@ Config = YAML.load(File.read("./config/config.yaml"))
 
 module Settings
 
+  # The first iteration of Churnometer retrieved its results by calling a large SQL function.
+  # Set 'use_new_summary_method: true' in config.yaml to use the new method that produces the same
+  # output, but builds the query string in the Ruby domain rather than SQL.
+  def use_new_summary_method
+    Config['use_new_summary_method'] == true
+  end
+
   def query_defaults
     if auth().staff?
       start_date = (Time.now-(60*24*3600)).strftime("1 %B %Y")

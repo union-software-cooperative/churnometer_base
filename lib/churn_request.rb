@@ -1,4 +1,5 @@
-require './lib/settings.rb'
+require './lib/settings'
+require './lib/query/query_summary'
 require 'cgi'
 
 class ChurnRequest
@@ -45,7 +46,11 @@ class ChurnRequest
     case @type
     when :summary
       if @interval == 'none'
-        @sql = db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
+        if use_new_summary_method()
+          @sql = QuerySummary.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, @xml).query_string
+        else
+          @sql = db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
+        end
       else
         @sql = db.summary_running_sql(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml)  
       end
