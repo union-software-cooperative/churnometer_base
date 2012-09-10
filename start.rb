@@ -12,8 +12,6 @@ require 'pony'
 
 require 'ir_b'
 
-require 'config'
-
 Dir["./lib/*.rb"].each { |f| require f }
 Dir["./lib/services/*.rb"].each { |f| require f }
 Dir["./lib/churn_presenters/*.rb"].each { |f| require f }

@@ -429,12 +429,9 @@ sql << <<-EOS
 		, c.stopped_other_gain::int
 		, c.stopped_other_loss::int
 		, c.stopped_end_count::int
-		, c.other_gain::int
-		, c.other_loss::int
--- dbeswick: other_other_gain/loss is not a parameter of the 'summary' function's SQL equivalent, so
--- it isn't returned in that query and shouldn't be returned here, unless needed by something later.
---		, c.other_other_gain::int
---		, c.other_other_loss::int
+-- dbeswick: other_other_gain/loss is returned as other_gain/loss in the SQL function.
+		, c.other_other_gain::int other_gain
+		, c.other_other_loss::int other_loss
 		, c.external_gain::int
 		, c.external_loss::int
 		, c.net::int

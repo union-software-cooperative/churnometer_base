@@ -83,6 +83,7 @@ DEPENDENCIES
   ir_b
   launchy
   money (= 3.7.1)
+  nokogiri
   pg
   pony
   rspec

@@ -7,6 +7,7 @@ class ChurnPresenter_Form
   
   def initialize(request)
     @request = request
+    @group_names = group_names(@request.auth.leader?, @request.auth.admin?)
   end
   
   def [](index)
@@ -19,14 +20,14 @@ class ChurnPresenter_Form
       
       f1 = @request.parsed_params[Filter].reject{ |column_name, id | id.empty? }
       f1 = f1.reject{ |column_name, id | column_name == 'status' }
-      
+
       if !f1.nil?
         f1.each do |column_name, ids|
           Array(ids).each do |id|
             if (filter_value(id) != '')
               i = (Struct.new(:name, :group, :id, :display, :type)).new
               i[:name] = column_name
-              i[:group] = group_names[column_name]
+              i[:group] = @group_names[column_name]
               i[:id] = filter_value(id)
               i[:display] = @request.db.get_display_text(column_name, filter_value(id))
               i[:type] = (id[0] == '-' ? "disable" : ( id[0] == '!' ? "invert" : "apply" ))
@@ -47,7 +48,7 @@ class ChurnPresenter_Form
   def output_group_selector(selected_group_id, control_name, control_id='')
     output = "<select name='#{control_name}' id='#{control_id}'>"
 
-    group_names().each do |column_name, name|
+    @group_names.each do |column_name, name|
       attributes = 
         if column_name == selected_group_id
           "selected='selected'"

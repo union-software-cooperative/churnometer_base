@@ -37,7 +37,7 @@ module Settings
     }
   end
 
-  def group_names
+  def group_names(is_leader, is_admin)
     group_by = {
       "branchid"      => "Branch",
       "lead"          => "Lead Organiser",
@@ -56,11 +56,11 @@ module Settings
       "supportstaffid"       => "Support Staff"
     }
     
-    if @request.auth.leader?
+    if is_leader
       group_by = group_by.merge({"statusstaffid" => "Data Entry"})
     end
     
-    if @request.auth.admin?
+    if is_admin
       group_by = group_by.merge({
         "hostemployerid"  => "Owner"  
       })
@@ -331,6 +331,8 @@ module Settings
      end
      
      def col_names 
+       group_names = group_names(@request.auth.leader?, @request.auth.admin?)
+
        hash = {
          'row_header1'     => group_names[(@request.params['group_by'] || 'branchid')].downcase,
          'row_header'     => group_names[(@request.params['group_by'] || 'branchid')].downcase,
