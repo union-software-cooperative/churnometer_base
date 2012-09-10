@@ -1,3 +1,5 @@
+require 'date'
+require 'yaml'
 
 # Short names to help shorten URL
 Filter = "f"
@@ -10,10 +12,12 @@ MaxMemberList = 500
 
 EarliestStartDate = Date.new(2011,8,14)
 
+Config = YAML.load(File.read("./config/config.yaml"))
+
 module Settings
 
   def query_defaults
-    if auth.staff?
+    if auth().staff?
       start_date = (Time.now-(60*24*3600)).strftime("1 %B %Y")
       end_date =  (Time.parse(Time.now.strftime("%Y-%m-01"))-24*3600).strftime(DateFormatDisplay)
     else

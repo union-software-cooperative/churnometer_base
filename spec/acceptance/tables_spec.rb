@@ -38,9 +38,8 @@ class Churnobyl
     @auth ||=  AuthorizeOverride.new Rack::Auth::Basic::Request.new(request.env)
   end
 
-  # Override user request class with test defaults
-  def cr
-    @cr ||= ChurnRequestOverride.new request.url, auth, params, ChurnDBDiskCache.new
+  def churn_request_class
+    ChurnRequestOverride
   end
 end
 

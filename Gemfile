@@ -11,6 +11,7 @@ gem 'money', '3.7.1'
 gem 'addressable'
 gem 'pony'
 gem 'thin'
+gem 'nokogiri'
 
 group :development, :test do
   # For debugging

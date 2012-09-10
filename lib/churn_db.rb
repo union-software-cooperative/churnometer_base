@@ -1,3 +1,7 @@
+require './lib/settings'
+require 'time'
+require 'pg'
+
 class Db
   def initialize
     @conn = PGconn.open(
@@ -40,12 +44,20 @@ class ChurnDB
     @cache_hit = false
     db.ex(sql)
   end  
-  
+
+  def database_config_key
+    'database'
+  end
+
+  def fact_table
+    Config[database_config_key()]['facttable']
+  end
+
   def summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml)
     <<-SQL
       select * 
       from summary(
-        '#{Config['database']['facttable']}',
+        '#{fact_table()}',
         '#{header1}', 
         '',
         '#{start_date.strftime(DateFormatDB)}',
@@ -66,7 +78,7 @@ class ChurnDB
     <<-SQL
       select * 
       from summary_running(
-        '#{Config['database']['facttable']}',
+        '#{fact_table()}',
         '#{header1}', 
         '#{interval}',
         '#{start_date.strftime(DateFormatDB)}',
@@ -101,7 +113,7 @@ class ChurnDB
       sql = <<-SQL 
         select * 
         from detail_static_friendly(
-           '#{Config['database']['facttable']}',
+          '#{fact_table()}',
           '#{header1}', 
           '#{filter_column}',  
           '#{member_date}',
@@ -113,7 +125,7 @@ class ChurnDB
       sql = <<-SQL 
         select * 
         from detail_friendly(
-          '#{Config['database']['facttable']}',
+          '#{fact_table()}',
           '#{header1}', 
           '#{filter_column}',  
           '#{start_date.strftime(DateFormatDB)}',
@@ -142,7 +154,7 @@ class ChurnDB
         , sum(-a1p_other_loss - paying_other_loss) transfer_out
         from
           detail_friendly(
-            '#{Config['database']['facttable']}',
+            '#{fact_table()}',
             'status',
             '',
             '#{start_date.strftime(DateFormatDB)}',

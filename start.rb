@@ -12,7 +12,8 @@ require 'pony'
 
 require 'ir_b'
 
-Config = YAML.load(File.read("./config/config.yaml"))
+require 'config'
+
 Dir["./lib/*.rb"].each { |f| require f }
 Dir["./lib/services/*.rb"].each { |f| require f }
 Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
@@ -50,11 +51,15 @@ class Churnobyl < Sinatra::Base
   end
   
   def cr
-    @cr ||= ChurnRequest.new(request.url, request.query_string, auth, params, ChurnDBDiskCache.new)
+    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, ChurnDBDiskCache.new)
     @sql = @cr.sql # This is set for error message
     @cr
   end
-  
+
+  def churn_request_class
+    ChurnRequest
+  end
+
   get '/' do
     cache_control :public, :max_age => 28800
     protected!
