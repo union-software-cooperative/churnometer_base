@@ -17,12 +17,29 @@ class Db
     @conn.exec(sql)
   end
 
+  # Quotes the string as appropriate for insertion into an SQL query string.
   def quote(string)
     "'#{string.gsub('\'', '\'\'')}'"
   end
 
+  # Quotes the given string assuming that it's intended to refer to a column name in an SQL query string.
   def quote_col(column_name)
     "\"#{string.gsub('\"', '\"\"')}\""
+  end
+
+  # Returns a string representing a literal array suitable for use in a query string. Individual elements
+  # are quoted appropriately.
+  # If 'type' is a string, then the return string also expresses a cast to the given sql data type.
+  def sql_array(array, type=nil)
+    result = "ARRAY[#{array.collect{ |x| quote(x) }.join(', ')}]"
+    result << "::#{type}[]" if type
+    result
+  end
+
+  # Returns the date portion of the given ruby Time object, formatted appropriately for use in a 
+  # query string.
+  def sql_date(time)
+    quote(time.strftime('%Y-%m-%d'))
   end
 end
 
