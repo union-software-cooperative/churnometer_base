@@ -10,6 +10,11 @@ class Query
   end
 
 protected
+  # Returns the object representing the actual database (not the ChurnDB abstraction.)
+  def db
+    @churn_db.db
+  end
+
   def query_string
     raise 'Provide implementation.'
   end

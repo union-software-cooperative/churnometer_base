@@ -12,6 +12,7 @@ class ChurnRequest
   attr_reader :auth
   attr_reader :data
   attr_reader :cache_hit
+  attr_reader :xml
   
   include Settings
   

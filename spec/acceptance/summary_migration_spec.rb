@@ -16,6 +16,8 @@ describe "'Summary' function Ruby migration" do
       attr_accessor :group
       attr_accessor :with_trans
       attr_accessor :site_constraint
+      attr_accessor :filter
+      attr_accessor :filter_description
 
       def to_s
         transactions_descriptor =
@@ -32,7 +34,7 @@ describe "'Summary' function Ruby migration" do
             "site constraint '#{@site_constraint}'"
           end
 
-        "group '#{group}', #{transactions_descriptor}, #{site_constraint_descriptor}"
+        "group '#{group}', #{transactions_descriptor}, #{site_constraint_descriptor}, #{filter_description}"
       end
     end
 
@@ -42,12 +44,31 @@ describe "'Summary' function Ruby migration" do
 
       transaction_options = [true, false]
       site_constraint_options = ['', 'start', 'end']
-      
-      @test_option_combinations = groups.product(transaction_options, site_constraint_options).collect do |tuple|
+
+      # the tuples here are [filter xml, filter description]
+      filter_options = 
+        [['<search><status>1</status><status>14</status><status>11</status>', 'no filter'],
+         ['<search><status>1</status><status>14</status><status>11</status><branchid>b1</branchid>', 'simple filter'],
+         ['<search><status>1</status><status>14</status><status>11</status><branchid>b2</branchid><lead>l2</lead><not_org>o7</not_org></search>', 'complex filter'],
+         ['<search><status>1</status><status>14</status><status>11</status><branchid>b2</branchid><not_lead>l2</not_lead><statusstaffid>d2</statusstaffid></search>', 'complex filter with statusstaffid term']
+        ]
+
+      options_for_combination = 
+        [
+         groups,
+         transaction_options,
+         site_constraint_options,
+         filter_options
+        ]
+
+      # Make test runs for all combinations of the option groups given above. 
+      @test_option_combinations = options_for_combination.first.product(*options_for_combination[1..-1]).collect do |tuple|
         t = TestRun.new
         t.group = tuple[0]
         t.with_trans = tuple[1]
         t.site_constraint = tuple[2]
+        t.filter = tuple[3].first
+        t.filter_description = tuple[3].last
         t
       end
     end
