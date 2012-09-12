@@ -7,7 +7,7 @@
 <div class="container">
   <h1><a href="/"><%= "churnometer" %></a></h1>
   	
-  <%= erb :'partials/form', :locals => {:model => model.form} %>
+  <%= erb :'partials/form', :locals => {:model => model.form, :group_names => model.request_group_names} %>
 </div>
 
 <section id="data">

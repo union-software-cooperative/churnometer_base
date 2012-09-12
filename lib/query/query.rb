@@ -10,16 +10,6 @@ class Query
   end
 
 protected
-  def sql_array(array, type)
-    result = "ARRAY[#{array.join(', ')}]"
-    result << "::#{type}[]" if type
-    result
-  end
-
-  def sql_datetime(time)
-    "'#{time.strftime('%Y-%m-%d')}'"
-  end
-
   def query_string
     raise 'Provide implementation.'
   end
