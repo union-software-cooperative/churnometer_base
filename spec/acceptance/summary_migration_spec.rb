@@ -2,6 +2,8 @@ require './lib/churn_db'
 require './lib/query/query_summary'
 require './lib/settings'
 
+Dir["./lib/query/*.rb"].each { |f| require f }
+
 db = ChurnDB.new
 def db.database_config_key
   'database_regression'
@@ -18,6 +20,7 @@ describe "'Summary' function Ruby migration" do
       attr_accessor :site_constraint
       attr_accessor :filter
       attr_accessor :filter_description
+      attr_accessor :query_class
 
       def to_s
         transactions_descriptor =
@@ -26,14 +29,14 @@ describe "'Summary' function Ruby migration" do
           else
             'transactions disabled'
           end
-
+        
         site_constraint_descriptor =
           if @site_constraint.empty?
             'no site constraint'
           else
             "site constraint '#{@site_constraint}'"
           end
-
+        
         "group '#{group}', #{transactions_descriptor}, #{site_constraint_descriptor}, #{filter_description}"
       end
     end
@@ -41,10 +44,10 @@ describe "'Summary' function Ruby migration" do
     def initialize
       # Pass 'is_leader' and 'is_admin' true to get the full set of groups
       groups = group_names(true, true).keys
-
+      
       transaction_options = [true, false]
       site_constraint_options = ['', 'start', 'end']
-
+      
       # the tuples here are [filter xml, filter description]
       filter_options = 
         [['<search><status>1</status><status>14</status><status>11</status>', 'no filter'],
@@ -52,7 +55,7 @@ describe "'Summary' function Ruby migration" do
          ['<search><status>1</status><status>14</status><status>11</status><branchid>b2</branchid><lead>l2</lead><not_org>o7</not_org></search>', 'complex filter'],
          ['<search><status>1</status><status>14</status><status>11</status><branchid>b2</branchid><not_lead>l2</not_lead><statusstaffid>d2</statusstaffid></search>', 'complex filter with statusstaffid term']
         ]
-
+      
       options_for_combination = 
         [
          groups,
@@ -60,15 +63,20 @@ describe "'Summary' function Ruby migration" do
          site_constraint_options,
          filter_options
         ]
-
+      
       # Make test runs for all combinations of the option groups given above. 
       @test_option_combinations = options_for_combination.first.product(*options_for_combination[1..-1]).collect do |tuple|
         t = TestRun.new
+        
         t.group = tuple[0]
         t.with_trans = tuple[1]
         t.site_constraint = tuple[2]
+        
         t.filter = tuple[3].first
         t.filter_description = tuple[3].last
+        
+        t.query_class = query_class_for_group(t.group)
+        
         t
       end
     end
@@ -94,17 +102,28 @@ describe "'Summary' function Ruby migration" do
                                     site_constraint, 
                                     filter)
         
-        query = QuerySummary.new(db, 
-                                 header1, 
-                                 start_date, 
-                                 end_date, 
-                                 with_trans, 
-                                 site_constraint, 
-                                 filter)
+        query = test_run.query_class.new(db, 
+                                         header1, 
+                                         start_date, 
+                                         end_date, 
+                                         with_trans, 
+                                         site_constraint, 
+                                         filter)
         
         result_rubyfunc = query.execute
+
+        sql_result = result_sqlfunc.to_a.collect do |hash|
+          # These fields are no longer expected to be returned for groups othen than employerid.
+          if test_run.group != 'employerid'
+            hash.delete('lateness')
+            hash.delete('payrollcontactdetail')
+            hash.delete('paidto')
+            hash.delete('paymenttype')
+          end
         
-        sql_result = result_sqlfunc.to_a.collect{ |hash| hash.to_a}
+          hash.to_a
+        end
+
         ruby_result = result_rubyfunc.to_a.collect{ |hash| hash.to_a}
         
         ruby_result.should eq(sql_result)

@@ -48,7 +48,9 @@ class ChurnRequest
     when :summary
       if @interval == 'none'
         if use_new_summary_method()
-          @sql = QuerySummary.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, @xml).query_string
+          query_class = query_class_for_group(@header1)
+
+          @sql = query_class.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, @xml).query_string
         else
           @sql = db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
         end

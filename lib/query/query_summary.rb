@@ -88,16 +88,16 @@ sql = <<-EOS
  			or u1.changeid in (select changeid from userselections u where a1pgain <> 0 or a1ploss <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
  			or u1.#{@header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items
  	)
-, trans as
-(
-	select 
+	, trans as
+	(
+		select 
 EOS
 
 sql <<
 	if @header1 == 'statusstaffid'
-	   "case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end row_header1"
+    "			case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end row_header1"
 	else
-		"case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end row_header1"
+		"			case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end row_header1"
 	end
 
 sql << <<-EOS
@@ -120,14 +120,18 @@ sql << <<-EOS
 		-- statusstaffid is about who actually changed a status or who actually posted the transaction.
 		-- for this reason, we filter status staff on staffid field in transactionfact.  
 		#{sql_for_filter_terms(statusstaffid_filter, true)}
-	group by 
+EOS
+
+sql << <<-EOS
+	group by
+
 EOS
 
 sql <<
 	if @header1 == 'statusstaffid' 
-	   "case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end"
+    "		case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end"
 	else
-		"case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end"
+		"		case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end"
 	end
 
 sql << <<-EOS
@@ -143,20 +147,11 @@ sql << <<-EOS
 			, sum(case when changedate <= #{db.sql_date(@start_date)} and status = '14' then net else 0 end) as a1p_start_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
 			, sum(case when changedate <= #{db.sql_date(@start_date)} and status = '1' then net else 0 end) as paying_start_count
 			, sum(case when changedate <= #{db.sql_date(@start_date)} and status = '11' then net else 0 end) as stopped_start_count
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then a1pgain else 0 end) a1p_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and _changeid is null then a1pgain else 0 end) a1p_unchanged_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and coalesce(_status, '') = '' then a1pgain else 0 end) a1p_newjoin
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and coalesce(_status, '') <>'' then a1pgain else 0 end) a1p_rejoin			
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then a1ploss else 0 end) a1p_loss
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and coalesce(_status,'') = '1' then a1ploss else 0 end) a1p_to_paying
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and coalesce(_status,'') <> '1' then a1ploss else 0 end) a1p_to_other			
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then payinggain else 0 end) paying_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then payingloss else 0 end) paying_loss
-
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then stoppedgain else 0 end) stopped_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and _changeid is null and coalesce(_status,'') = '3' then loss else 0 end) rule59_unchanged_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then stoppedloss else 0 end) stopped_loss
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and coalesce(_status,'') = '1' then stoppedloss else 0 end) stopped_to_paying
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and coalesce(_status,'') <> '1' then stoppedloss else 0 end) stopped_to_other			
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and status = '14' then othergain else 0 end) a1p_other_gain
@@ -167,19 +162,29 @@ sql << <<-EOS
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and status = '11' then otherloss else 0 end) stopped_other_loss
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and not (status = '1' or status = '14' or status = '11') then othergain else 0 end) other_other_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and not (status = '1' or status = '14' or status = '11') then otherloss else 0 end) other_other_loss
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then othergain else 0 end) other_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then otherloss else 0 end) other_loss
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and _changeid is null and coalesce(_status,'') = '3' then loss else 0 end) rule59_unchanged_gain
+			, sum(case when status = '14' then net else 0 end) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
+			, sum(case when status = '1' then net else 0 end) as paying_end_count
+			, sum(case when status = '11' then net else 0 end) as stopped_end_count
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and not internalTransfer then othergain else 0 end) external_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} and not internalTransfer then otherloss else 0 end) external_loss
+			, sum(net) as end_count
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then a1pgain else 0 end) a1p_gain
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then a1ploss else 0 end) a1p_loss
+
+-- dbeswick: common form, summing a data column or expression between start and end date
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then payinggain else 0 end) paying_gain
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then payingloss else 0 end) paying_loss
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then stoppedgain else 0 end) stopped_gain
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then stoppedloss else 0 end) stopped_loss
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then othergain else 0 end) other_gain
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then otherloss else 0 end) other_loss
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then a1pgain+a1ploss else 0 end) a1p_net
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then payinggain+payingloss else 0 end) paying_net
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then stoppedgain+stoppedloss else 0 end) stopped_net
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then othergain+otherloss else 0 end) other_net
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(@end_date)} then coalesce(c.net,0) else 0 end) net
-			, sum(net) as end_count
-			, sum(case when status = '14' then net else 0 end) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
-			, sum(case when status = '1' then net else 0 end) as paying_end_count
-			, sum(case when status = '11' then net else 0 end) as stopped_end_count
 			
 		from 
 			nonegations c
@@ -283,6 +288,46 @@ end
 
 sql << <<-EOS
 	)
+EOS
+
+	sql << sql_final_select_outputs()
+
+sql << <<-EOS		
+	from 
+		withtrans c
+		left join displaytext d1 on d1.attribute = '#{@header1}' and d1.id = c.row_header1
+EOS
+
+if @header1 == 'employerid'
+	   sql << "left join employer e on c.row_header1 = e.companyid"
+end
+
+sql << <<-EOS
+	where
+		c.a1p_gain <> 0
+		or c.a1p_loss <> 0
+		or c.paying_gain <> 0
+		or c.paying_loss <> 0
+		or c.stopped_gain <> 0
+		or c.stopped_loss <> 0
+		or c.other_gain <> 0
+		or c.other_loss <> 0
+		or start_count <> 0
+		or end_count <> 0
+	    or posted <> 0
+		or unposted <> 0
+	order by
+		coalesce(d1.displaytext, c.row_header1)::varchar(200) asc
+		--, row_header2
+;
+EOS
+
+		sql
+  end
+
+protected
+	def sql_final_select_outputs
+    <<-EOS
 	select 
 		coalesce(d1.displaytext, c.row_header1)::varchar(200) row_header1 -- c.row_header
 		--, c.row_header2::varchar(200) row_header2
@@ -336,54 +381,5 @@ sql << <<-EOS
 -- function definition as opposed to column name.
 		, c.annualizedavgcontribution annualisedavgcontribution
 EOS
-
-sql <<
-	if @header1 == 'employerid'
-<<-EOS	
-		, e.lateness::text
-		, e.payrollcontactdetail::text
-		, e.paidto::date
-		, e.paymenttype::text
-EOS
-else
-<<-EOS
-		, ''::text lateness
-		, ''::text payrollcontactdetail
-		, null::date paidto
-		, ''::text paymenttype
-EOS
-end
-
-sql << <<-EOS		
-	from 
-		withtrans c
-		left join displaytext d1 on d1.attribute = '#{@header1}' and d1.id = c.row_header1
-EOS
-
-if @header1 == 'employerid'
-	   sql << "left join employer e on c.row_header1 = e.companyid"
-end
-
-sql << <<-EOS
-	where
-		c.a1p_gain <> 0
-		or c.a1p_loss <> 0
-		or c.paying_gain <> 0
-		or c.paying_loss <> 0
-		or c.stopped_gain <> 0
-		or c.stopped_loss <> 0
-		or c.other_gain <> 0
-		or c.other_loss <> 0
-		or start_count <> 0
-		or end_count <> 0
-	    or posted <> 0
-		or unposted <> 0
-	order by
-		coalesce(d1.displaytext, c.row_header1)::varchar(200) asc
-		--, row_header2
-;
-EOS
-
-	sql
-  end
+	end
 end
