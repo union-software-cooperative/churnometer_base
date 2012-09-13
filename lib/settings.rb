@@ -75,7 +75,30 @@ module Settings
     
     group_by
   end
-  
+
+  # The default class used to execute summary queries.
+  def summary_query_class
+    :QuerySummary
+  end
+
+  # Classes that should be used to handle queries for specific groups.
+  def summary_query_class_groupby_overrides
+    {
+      "employerid" => :QuerySummaryGroupByEmployer
+    }    
+  end
+
+  def query_class_for_group(group_column_name)
+    query_class_symbol = 
+      if summary_query_class_groupby_overrides().has_key?(group_column_name)
+        summary_query_class_groupby_overrides()[group_column_name]
+      else
+        summary_query_class()
+      end
+        
+    query_class = eval(query_class_symbol.to_s)
+  end
+
   def interval_names
     [
       ["none", "Off"],

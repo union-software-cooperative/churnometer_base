@@ -4,10 +4,10 @@ class ChurnPresenter_Form
   
   include ChurnPresenter_Helpers
   include Settings
-  
-  def initialize(request)
+
+  def initialize(request, group_names)
     @request = request
-    @group_names = group_names(@request.auth.leader?, @request.auth.admin?)
+    @group_names = group_names
   end
   
   def [](index)

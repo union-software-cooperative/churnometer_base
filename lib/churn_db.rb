@@ -22,9 +22,10 @@ class Db
     "'#{string.gsub('\'', '\'\'')}'"
   end
 
-  # Quotes the given string assuming that it's intended to refer to a column name in an SQL query string.
-  def quote_col(column_name)
-    "\"#{string.gsub('\"', '\"\"')}\""
+  # Quotes the given string assuming that it's intended to refer to a database element (column, 
+  # table, etc) in an SQL query string.
+  def quote_db(db_element_name)
+    "\"#{db_element_name.gsub('\"', '\"\"')}\""
   end
 
   # Returns a string representing a literal array suitable for use in a query string. Individual elements

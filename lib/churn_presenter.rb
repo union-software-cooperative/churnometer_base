@@ -21,7 +21,7 @@ class ChurnPresenter
     @warnings = @request.warnings
     @transfers = ChurnPresenter_Transfers.new request
     @diags = ChurnPresenter_Diags.new request, @transfers.getmath_transfers?
-    @form = ChurnPresenter_Form.new request
+    @form = ChurnPresenter_Form.new(request, request_group_names())
     @target = ChurnPresenter_Target.new request if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary && !@request.data_entry_view?
     @graph = ChurnPresenter_Graph.new request
     @graph = nil unless (@graph.line? || @graph.waterfall?)
@@ -50,7 +50,12 @@ class ChurnPresenter
   end
 
   # Properties
-  
+
+  # An array of group names applicable to the current request.
+  def request_group_names
+    @group_names ||= group_names(@request.auth.leader?, @request.auth.admin?)
+  end
+
   def has_data?
     @request.data && @request.data.count > 0
   end

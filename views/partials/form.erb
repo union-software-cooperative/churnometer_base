@@ -100,7 +100,7 @@
     			    <tr class="screen_only">
                         <td class="form span-5 filters">
 							<!-- TODO refactor the default group branchid -->
-                            Constrain search to this <%= model.group_names[model['group_by'] || 'branchid'].downcase %> list
+                            Constrain search to this <%= group_names[model['group_by'] || 'branchid'].downcase %> list
                         </td>
                         <td class="filters">
                             <input class="selections" type="radio" name="<%="lock[#{model['group_by']}]" %>" value="" checked>Off&nbsp;&nbsp;&nbsp;&nbsp;

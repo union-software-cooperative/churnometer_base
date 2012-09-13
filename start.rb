@@ -14,6 +14,7 @@ require 'ir_b'
 
 Dir["./lib/*.rb"].each { |f| require f }
 Dir["./lib/services/*.rb"].each { |f| require f }
+Dir["./lib/query/*.rb"].each { |f| require f }
 Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base

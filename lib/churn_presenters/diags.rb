@@ -8,6 +8,8 @@ class ChurnPresenter_Diags
   attr_reader :cache_status
   attr_reader :role
   attr_reader :rows
+  attr_reader :filter
+  attr_reader :filter_xml
   
   include ChurnPresenter_Helpers
   
@@ -22,6 +24,8 @@ class ChurnPresenter_Diags
     @role = "leader" if request.auth.leader?
     @rows = request.data.length if !request.data.nil?
     @rows ||= 0
+    @filter = request.parsed_params()[Filter]
+    @filter_xml = request.xml
   end
   
 end
