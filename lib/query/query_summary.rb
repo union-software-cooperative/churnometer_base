@@ -4,8 +4,8 @@ require './lib/settings'
 require 'nokogiri'
 
 class QuerySummary < QueryFilter
-  def initialize(churn_db, header1, start_date, end_date, with_trans, site_constraint, filter_xml)
-    super(churn_db, filter_xml)
+  def initialize(churn_db, header1, start_date, end_date, with_trans, site_constraint, filter_param_hash)
+    super(churn_db, filter_param_hash)
     @source = churn_db.fact_table
     @header1 = header1
     @start_date = start_date
@@ -37,22 +37,28 @@ class QuerySummary < QueryFilter
         site_query = QuerySitesAtDate.new(@churn_db, @header1, dte, filter_terms())
         site_results = site_query.execute
 
-        modified_filter['companyid'] = 
-          if site_results.num_tuples == 0
-            ['none']
-          else
-            site_results.collect { |record| record['companyid'] }
-          end
+        if site_results.num_tuples == 0
+          modified_filter.append('companyid', 'none', false)
+        else
+          site_results.each do |record| 
+          	modified_filter.append('companyid', record['companyid'], false)
+        	end
+        end
 
         # keep original status filter
-        modified_filter['status'] = filter_terms()['status']
+        modified_filter.set_term(filter_terms()['status'])
         
         modified_filter
       end
 
-    statusstaffid_filter = filter.include('statusstaffid', 'not_statusstaffid')
-    non_status_filter = filter.exclude('status', 'statusstaffid', 'not_statusstaffid')
-    user_selections_filter = QueryFilterTerms.from_terms(statusstaffid_filter.terms + [ filter['status'] ])
+    non_status_filter = filter.exclude('status', 'statusstaffid')
+    user_selections_filter = filter.include('status', 'statusstaffid')
+
+    # Used in the 'trans' block. The statusstaffid filter term should map to the 'staffid' column there.
+    trans_statusstaffid_filter = QueryFilterTerms.new
+    statusstaffid_remapped_term = filter['statusstaffid'].clone
+    statusstaffid_remapped_term.db_column_override = 'staffid'
+    trans_statusstaffid_filter.set_term(statusstaffid_remapped_term)
 
 sql = <<-EOS
 	with nonstatusselections as
@@ -119,7 +125,7 @@ sql << <<-EOS
 		-- statusstaffid is special.  Rather than members and their transactions being assigned to an organising area
 		-- statusstaffid is about who actually changed a status or who actually posted the transaction.
 		-- for this reason, we filter status staff on staffid field in transactionfact.  
-		#{sql_for_filter_terms(statusstaffid_filter, true)}
+		#{sql_for_filter_terms(trans_statusstaffid_filter, true)}
 EOS
 
 sql << <<-EOS
@@ -321,6 +327,8 @@ sql << <<-EOS
 		--, row_header2
 ;
 EOS
+
+#puts sql
 
 		sql
   end
