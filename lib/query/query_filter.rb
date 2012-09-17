@@ -2,9 +2,9 @@ require './lib/query/query'
 
 # A query of Churnometer data that makes use of filtering by dimension.
 class QueryFilter < Query
-  def initialize(db, filter_xml)
+  def initialize(db, filter_parameter_hash)
     super(db)
-    @filter_xml = filter_xml
+    @filter_parameter_hash = filter_parameter_hash
   end
 
 protected
@@ -17,15 +17,38 @@ protected
   # Pass 'true' for is_appending if the text is intended to be appended to terms in an existing where clause.
   # An initial 'and' is prepended in that case where appropriate.
   def sql_for_filter_terms(filter_terms, is_appending)
-    valid_inclusive_terms = filter_terms.inclusive_terms.reject { |term| term.empty? }
-    valid_exclusive_terms = filter_terms.exclusive_terms.reject { |term| term.empty? }
+    valid_terms = filter_terms.reject { |term| term.empty? }
 
-    term_sqls = valid_inclusive_terms.collect do |term|
-      "(coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(term.values, 'varchar')}) or (coalesce(#{db().quote_db(term.db_column)},'') = '' and 'unassigned' = any (#{db().sql_array(term.values, 'varchar')})))"
-    end
-    
-    term_sqls += valid_exclusive_terms.collect do |term|
-      "(not coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(term.values, 'varchar')}) or (coalesce(#{db().quote_db(term.db_column)},'') = '' and not 'unassigned' = any (#{db().sql_array(term.values, 'varchar')})))"
+    term_sqls = []
+
+    filter_terms.terms.each do |term|
+      if !term.values.empty?
+        has_unassigned = term.values.include?('unassigned')
+
+        result = "(coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(term.values, 'varchar')})"
+
+        if has_unassigned
+          result << " or (coalesce(#{db().quote_db(term.db_column)},'') = ''))"
+        else
+          result << ")"
+        end
+        
+        term_sqls << result
+      end
+
+      if !term.exclude_values.empty?
+        has_unassigned = term.values.include?('unassigned')
+
+        result = "(not coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(term.exclude_values, 'varchar')})"
+
+        if has_unassigned
+          result << " or (not coalesce(#{db().quote_db(term.db_column)},'') = ''))"
+        else
+          result << ")"
+        end
+        
+        term_sqls << result
+      end
     end
 
     result_string = term_sqls.join("\n\tand ")
@@ -37,9 +60,9 @@ protected
     end
 	end
 
-  # Returns filter terms for the xml initially supplied to the object.
+  # Returns filter terms for the parameters initially supplied to the object.
   def filter_terms
-    @filter_terms ||= QueryFilterTerms.from_xml(@filter_xml)
+    @filter_terms ||= QueryFilterTerms.from_request_params(@filter_parameter_hash)
   end
 end
 
@@ -48,68 +71,60 @@ class FilterTerm
 
   attr_reader :name
   attr_accessor :values
+  attr_accessor :exclude_values
+
+  # If set, then this value is used as the column name when generating sql statements for the filter term.
+  attr_accessor :db_column_override
 
   def initialize(name)
     @name = name.downcase
     @values = []
+    @exclude_values = []
   end
 
   # Provide deep copies of filter terms.
   def clone
     copy = self.class.new(@name.dup)
     copy.values = @values.dup
+    copy.exclude_values = @exclude_values.dup
+    copy.db_column_override = @db_column_override.dup if @db_column_override
+    copy
   end
 
   # The database column that the filter refers to.
   def db_column
-    # Remove 'not_' from the start of the name string.
-    @name.sub(/^not_/, '')
+    if @db_column_override 
+      @db_column_override
+    else
+      @name
+    end
   end
 
-  # Iterate over each value for the term.
-  def each(&block)
-    @values.each(&block)
-  end
-
+  # True if values and exclusive values are empty.
   def empty?
-    @values.empty?
-  end
-
-  # Whether the term describes an exclusive criteria, meaning that the values in the filter should be 
-  # excluded from the results when present in the data represented by the term name.
-  def exclusive?
-    @name.start_with?('not_')
-  end 
-
-  def hash
-    @name.hash
+    @values.empty? && @exclude_values.empty?
   end
 end
 
 # Describes filtering of Churnometer query results.
-# Given xml of the following format:
-#
-# <search>
-#		<term1>any_text</term1>
-#		<term1>any_other_text</term1>
-#		<term2>more_text</term2>
-# </search>
-#
-# Then the [] method of this class returns arrays of FilterTerms for the keys 'term1', 'term2', etc.
 #
 # Filter term names are case-insensitive.
+#
+# Methods from Enumerable can be used to iterate over FilterTerm instances.
 class QueryFilterTerms
   include Enumerable
 
-  def self.from_xml(filter_xml)
+  # Creates an instance from the HTTP request's parameter hash.
+  def self.from_request_params(parameter_hash)
     instance = self.new
-    instance.from_xml(filter_xml)
+    instance._from_request_params(parameter_hash)
     instance
   end
 
+  # Creates an instance from copies of the given FilterTerm instances.
   def self.from_terms(filter_terms)
     instance = self.new
-    instance.from_terms(filter_terms)
+    instance._from_terms(filter_terms)
     instance
   end
 
@@ -119,37 +134,15 @@ class QueryFilterTerms
     @terms = {}
   end
 
-  # Creates an instance from copies of the given FilterTerm instances.
-  def from_terms(filter_terms)
-    filter_terms.each do |term|
-      @terms[term.name] = term.dup
-    end
-  end
-
-  def from_xml(filter_xml)
-    xml = Nokogiri::XML(filter_xml)
-
-    xml.xpath('//search').children.each do |term|
-      # The 'Ignore Filter' option prepends terms with "ignore_". Those terms shouldn't be included.
-      next if term.name.start_with?('ignore_')
-
-      # As a side effect of removing a term, the controller provides an empty xml node for that term.
-      if !term.children.empty?
-        append(term.name, term.children.first.text)
-      end
-    end
-  end
-
   # Returns a FilterTerm instance for the given filter name, or the 'unassigned' FilterTerm object if the term isn't available.
   def [] (filter_term_name)
     @terms.fetch(filter_term_name.downcase, @undefined_term)
   end
 
-  # Replaces a set of filter term values with the given array. Creates the term if it doesn't exist.
-  def []= (filter_term_name, value_array)
-    term = @terms[filter_term_name.downcase] ||= FilterTerm.new(filter_term_name)
-
-    term.values = value_array
+  # Replaces a filter term instance with a copy of the given FilterTerm instance, or adds the term if not
+  # already present.
+  def set_term(filter_term)
+    @terms[filter_term.name] = filter_term.clone
   end
 
   # Returns FilterTerm instances describing the filter terms.
@@ -158,25 +151,23 @@ class QueryFilterTerms
   end
 
   # Adds a value for the given filter term. Creates the term if it doesn't exist.
-  def append(filter_term_name, value)
+  # If 'exclude' is true, then the value should be excluded from search results.
+  def append(filter_term_name, value, exclude)
     term = @terms[filter_term_name.downcase] ||= FilterTerm.new(filter_term_name)
 
-    term.values << value
+    target =
+      if !exclude
+        term.values
+      else
+        term.exclude_values
+      end
+
+    target << value
   end
 
   # :yields: |FilterTerm instance|
   def each(&block)
     @terms.values.each(&block)
-  end
-
-  # Returns every 'exclusive' filter term (meaning values should be excluded from search results.)
-  def exclusive_terms(&block)
-    @terms.values.select{ |term| term.exclusive? }
-  end
-
-  # Returns every 'inclusive' filter term (meaning values should be included in search results.)
-  def inclusive_terms(&block)
-    @terms.values.select{ |term| !term.exclusive? }
   end
 
   # Returns a new FilterTerms object with only the given terms included.
@@ -195,5 +186,41 @@ class QueryFilterTerms
     included_terms = @terms.values.reject { |term| downcase_term_names.include?(term.name) }
 
     self.class.from_terms(included_terms)
+  end
+
+  def _from_terms(filter_terms)
+    filter_terms.each do |term|
+      @terms[term.name] = term.dup
+    end
+  end
+
+  def _from_request_params(parameter_hash)
+    parameter_hash.each do |key, values|
+      values = Array(values)
+      
+      values.each do |value|
+        # If value is a string, then parse it to interpret any modifiers in the value.
+        # Otherwise, just use the value. This conserves type information that arrives from the parameter
+        # hash.
+        is_exclude = nil
+
+        if value.kind_of?(String)
+          value_parse = /^([-!]?)(.+)/.match(value)
+          
+          value_modifier = value_parse[1]
+          
+          # values starting with '-' should be ignored.
+          next if value_modifier == '-'
+          
+          is_exclude = value_modifier == '!'
+          
+          value = value_parse[2]
+        else
+          is_exclude = false
+        end
+
+        append(key, value, is_exclude)
+      end
+    end
   end
 end

@@ -38,7 +38,7 @@ class ChurnRequest
     @end_date = Date.parse(@params['endDate'])
     @transactions = auth.leader?
     @site_constraint = @params['site_constraint'].to_s
-    @xml = filter_xml parsed_params()[Filter], locks(@params['lock'])
+    @xml = self.class.filter_xml parsed_params()[Filter], locks(@params['lock'])
       
     # load data and public members
     @type = :summary if @filter_column == ''
@@ -50,7 +50,7 @@ class ChurnRequest
         if use_new_summary_method()
           query_class = query_class_for_group(@header1)
 
-          @sql = query_class.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, @xml).query_string
+          @sql = query_class.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, parsed_params()[Filter]).query_string
         else
           @sql = db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
         end
@@ -199,7 +199,7 @@ class ChurnRequest
     warning
   end
   
-  def filter_xml(filters, locks)
+  def self.filter_xml(filters, locks)
     # Example XML
     # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status><status>11</status></search>
     result = "<search>"
@@ -223,7 +223,7 @@ class ChurnRequest
     result
   end
   
-  def filter_xml_node(k,v)
+  def self.filter_xml_node(k,v)
     case v[0]
       when '!' 
         "<not_#{k}>#{v.sub('!','')}</not_#{k}>" 

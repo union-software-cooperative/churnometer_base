@@ -18,8 +18,12 @@ class Db
   end
 
   # Quotes the string as appropriate for insertion into an SQL query string.
-  def quote(string)
-    "'#{string.gsub('\'', '\'\'')}'"
+  def quote(value)
+    if value == true || value == false
+      "#{value}"
+    else
+      "'#{value.to_s.gsub('\'', '\'\'')}'"
+    end
   end
 
   # Quotes the given string assuming that it's intended to refer to a database element (column, 

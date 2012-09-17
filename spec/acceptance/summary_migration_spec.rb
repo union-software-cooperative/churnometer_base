@@ -1,4 +1,5 @@
 require './lib/churn_db'
+require './lib/churn_request'
 require './lib/query/query_summary'
 require './lib/settings'
 
@@ -50,10 +51,10 @@ describe "'Summary' function Ruby migration" do
       
       # the tuples here are [filter xml, filter description]
       filter_options = 
-        [['<search><status>1</status><status>14</status><status>11</status>', 'no filter'],
-         ['<search><status>1</status><status>14</status><status>11</status><branchid>b1</branchid>', 'simple filter'],
-         ['<search><status>1</status><status>14</status><status>11</status><branchid>b2</branchid><lead>l2</lead><not_org>o7</not_org></search>', 'complex filter'],
-         ['<search><status>1</status><status>14</status><status>11</status><branchid>b2</branchid><not_lead>l2</not_lead><statusstaffid>d2</statusstaffid></search>', 'complex filter with statusstaffid term']
+        [[{"status"=>[1,14,11]}, 'no filter'],
+         [{"status"=>[1,14,11],"branchid"=>'b1'}, 'simple filter'],
+         [{"status"=>[1,14,11],"branchid"=>['-b1','b2'],"lead"=>'l2',"org"=>'!o7'}, 'complex filter'],
+         [{"status"=>[1,14,11],'branchid'=>'b2','lead'=>'!l2','statusstaffid'=>'d2'}, 'complex filter with statusstaffid term']
         ]
       
       options_for_combination = 
@@ -92,7 +93,7 @@ describe "'Summary' function Ruby migration" do
       it "should return results matching the SQL summary function with #{test_run}, and with dates #{date_range_description}." do
         header1 = test_run.group
         site_constraint = test_run.site_constraint
-        filter = '<search><status>1</status><status>14</status><status>11</status></search>'
+        filter = test_run.filter
         with_trans = test_run.with_trans
         
         result_sqlfunc = db.summary(header1, 
@@ -100,7 +101,7 @@ describe "'Summary' function Ruby migration" do
                                     end_date, 
                                     with_trans, 
                                     site_constraint, 
-                                    filter)
+                                    ChurnRequest.filter_xml(filter, []))
         
         query = test_run.query_class.new(db, 
                                          header1, 
@@ -125,6 +126,10 @@ describe "'Summary' function Ruby migration" do
         end
 
         ruby_result = result_rubyfunc.to_a.collect{ |hash| hash.to_a}
+
+        #if ruby_result != sql_result
+        #  puts query.query_string
+        #end
         
         ruby_result.should eq(sql_result)
       end
