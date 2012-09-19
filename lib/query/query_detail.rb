@@ -59,8 +59,6 @@ class QueryDetail < QueryFilter
   end
 
   def query_string
-#CREATE OR REPLACE FUNCTION detail(IN source text, IN header1 text, IN filter_column character varying, IN start_date timestamp without time zone, IN end_date timestamp without time zone, IN with_trans boolean, IN site_constrain text, IN selection xml, OUT memberid character varying, OUT changeid bigint, OUT row_header character varying, OUT row_header_id character varying, OUT a1p_real_gain bigint, OUT a1p_unchanged_gain bigint, OUT a1p_newjoin bigint, OUT a1p_rejoin bigint, OUT a1p_real_loss bigint, OUT a1p_to_paying bigint, OUT a1p_to_other bigint, OUT a1p_other_gain bigint, OUT a1p_other_loss bigint, OUT paying_real_gain bigint, OUT paying_real_loss bigint, OUT paying_real_net bigint, OUT paying_other_gain bigint, OUT paying_other_loss bigint, OUT stopped_real_gain bigint, OUT stopped_unchanged_gain bigint, OUT rule59_unchanged_gain bigint, OUT stopped_real_loss bigint, OUT stopped_to_paying bigint, OUT stopped_to_other bigint, OUT stopped_other_loss bigint, OUT stopped_other_gain bigint, OUT other_gain bigint, OUT other_loss bigint, OUT posted numeric, OUT unposted numeric)
-
     db = @churn_db.db
 
     filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date, @header1)
@@ -344,7 +342,7 @@ EOS
 
 sql << <<-EOS
 	order by
-		c.row_header asc;
+		c.row_header asc
 EOS
 
 	sql

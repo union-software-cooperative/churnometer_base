@@ -48,11 +48,26 @@ class SQLRubyRefactorTestRuns
     end
   end
 
-  def initialize
+  # If limit is non-nil, the number of combinations is limited to a randomly-chosen set of 'limit'
+  # combinations. Specifying the random_seed allows repeatable testing.
+  def initialize(limit = nil, random_seed = nil)
+    combinations = options_for_combination()
+    combinations = combinations.first.product(*combinations[1..-1])
+
+    if limit
+      @rnd = Random.new
+      @rnd.srand(random_seed) if random_seed
+      combinations = combinations.sort_by{ @rnd.rand }[0...limit]
+    end
+
     # Make test runs for all combinations of the option groups given above. 
-    @test_option_combinations = options_for_combination().first.product(*options_for_combination()[1..-1]).collect do |tuple|
+    @test_option_combinations = combinations.collect do |tuple|
       make_testrun(tuple)
     end
+  end
+
+  def finalize
+    puts "RANDOM SEED WAS #{@rnd.seed}" if @limit
   end
 
   def testrun_class
