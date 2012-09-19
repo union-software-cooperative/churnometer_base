@@ -50,7 +50,7 @@ class ChurnRequest
         if use_new_summary_method()
           query_class = query_class_for_group(@header1)
 
-          @sql = query_class.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, parsed_params()[Filter]).query_string
+          @sql = query_class.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, QueryFilterTerms.from_request_params(parsed_params()[Filter])).query_string
         else
           @sql = db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
         end

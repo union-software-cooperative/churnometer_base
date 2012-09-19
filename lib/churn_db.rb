@@ -17,6 +17,10 @@ class Db
     @conn.exec(sql)
   end
 
+  def async_ex(sql)
+    @conn.async_exec(sql)
+  end
+
   # Quotes the string as appropriate for insertion into an SQL query string.
   def quote(value)
     if value == true || value == false
@@ -44,7 +48,7 @@ class Db
   # Returns the date portion of the given ruby Time object, formatted appropriately for use in a 
   # query string.
   def sql_date(time)
-    quote(time.strftime('%Y-%m-%d'))
+    quote(time.strftime(DateFormatDB))
   end
 end
 
@@ -65,6 +69,11 @@ class ChurnDB
   def ex(sql)
     @cache_hit = false
     db.ex(sql)
+  end  
+
+  def ex_async(sql)
+    @cache_hit = false
+    db.async_ex(sql)
   end  
 
   def database_config_key

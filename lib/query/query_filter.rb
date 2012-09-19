@@ -2,13 +2,13 @@ require './lib/query/query'
 
 # A query of Churnometer data that makes use of filtering by dimension.
 class QueryFilter < Query
-  def initialize(db, filter_parameter_hash)
+  def initialize(db, filter_terms)
     super(db)
-    @filter_parameter_hash = filter_parameter_hash
+    @filter_terms = filter_terms
   end
 
 protected
-  attr_reader :filter_xml
+  attr_reader :filter_terms
 
   # Generates a string of blocks of SQL text, expressing WHERE clauses that can be used to filter 
   # Churnometer data.
@@ -60,9 +60,43 @@ protected
     end
 	end
 
-  # Returns filter terms for the parameters initially supplied to the object.
-  def filter_terms
-    @filter_terms ||= QueryFilterTerms.from_request_params(@filter_parameter_hash)
+  # Returns filter terms modified as appropriate given the supplied site constraint.
+  # site_constraint should be empty, 'start' or 'end'.
+  # start_date, end_date are the start and end date under consideration for the current query.
+  # header1 is the groupby term for the current query.
+  def modified_filter_for_site_constraint(filter_terms, site_constraint, start_date, end_date, header1)
+    if site_constraint.empty?
+      filter_terms
+    else
+      modified_filter = QueryFilterTerms.new
+
+      # return the results for sites found at either the end of the beginning of this selection
+      # this is a way of ruling out the effect of transfers, to determine what the targets should be
+      # for sites as currently held (end_date) or held at the start (start_date)
+      dte = 
+        if site_constraint == 'start'
+          start_date
+        else
+          end_date + 1
+        end
+      
+      # override the filter to be sites as at the start or end
+      site_query = QuerySitesAtDate.new(@churn_db, header1, dte, filter_terms())
+      site_results = site_query.execute
+
+      if site_results.num_tuples == 0
+        modified_filter.append('companyid', 'none', false)
+      else
+        site_results.each do |record| 
+          modified_filter.append('companyid', record['companyid'], false)
+        end
+      end
+
+      # keep original status filter
+      modified_filter.set_term(filter_terms()['status'])
+      
+      modified_filter
+    end
   end
 end
 
@@ -114,7 +148,9 @@ end
 class QueryFilterTerms
   include Enumerable
 
-  # Creates an instance from the HTTP request's parameter hash.
+  # Creates an instance from the HTTP request's filter parameter hash.
+  # The hash should be only the "filter" part of the request hash, not the complete request hash with
+  # all other parameters present.
   def self.from_request_params(parameter_hash)
     instance = self.new
     instance._from_request_params(parameter_hash)

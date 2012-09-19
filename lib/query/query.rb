@@ -9,6 +9,11 @@ class Query
     @churn_db.ex(query_string())
   end
 
+  # Should be called when executing a query from a thread.
+  def execute_async
+    @churn_db.ex_async(query_string())
+  end
+
 protected
   # Returns the object representing the actual database (not the ChurnDB abstraction.)
   def db
