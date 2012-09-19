@@ -68,8 +68,6 @@ describe "'Detail' function Ruby refactoring" do
         ruby_result.should eq(sql_result)
       end
     end
-
-    testruns.finalize
   end
 
   sql_proc = proc do |testruns, test_run|
@@ -89,6 +87,7 @@ describe "'Detail' function Ruby refactoring" do
   end
 
   # Use 'seed' to reproduce failing test results.
+  # This query is slow, so only test 100 combinations of parameters.
   seed = nil
   test_migration(sql_proc, QueryDetailFriendly, SQLRubyRefactorTestRunsDetail.new(100, seed))
 

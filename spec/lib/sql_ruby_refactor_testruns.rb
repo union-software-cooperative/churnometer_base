@@ -57,6 +57,7 @@ class SQLRubyRefactorTestRuns
     if limit
       @rnd = Random.new
       @rnd.srand(random_seed) if random_seed
+      $stdout.puts "NOTE: TESTING RANDOM SET OF #{limit} COMBINATIONS, SEED #{@rnd.seed}."
       combinations = combinations.sort_by{ @rnd.rand }[0...limit]
     end
 
@@ -64,10 +65,6 @@ class SQLRubyRefactorTestRuns
     @test_option_combinations = combinations.collect do |tuple|
       make_testrun(tuple)
     end
-  end
-
-  def finalize
-    puts "RANDOM SEED WAS #{@rnd.seed}" if @limit
   end
 
   def testrun_class
