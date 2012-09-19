@@ -67,7 +67,6 @@ class SQLRubyRefactorTestRuns
     @test_option_combinations.each(&block)
   end
 
-
   def groups
     # Pass 'is_leader' and 'is_admin' true to get the full set of groups
     group_names(true, true).keys
@@ -104,6 +103,21 @@ class SQLRubyRefactorTestRuns
      filter_options(),
      date_options()
     ]
+  end
+
+  def db(index)
+    @dbs ||= {}
+    
+    @dbs[index] ||= 
+      begin
+        db = ChurnDB.new
+        
+        def db.database_config_key
+          'database_regression'
+        end
+        
+        db
+      end
   end
 end
 

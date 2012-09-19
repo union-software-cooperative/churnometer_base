@@ -3,16 +3,6 @@ require './lib/churn_request'
 require './lib/query/query_detail'
 require './spec/lib/sql_ruby_refactor_testruns'
 
-db1 = ChurnDB.new
-def db1.database_config_key
-  'database_regression'
-end
-
-db2 = ChurnDB.new
-def db2.database_config_key
-  'database_regression'
-end
-
 class SQLRubyRefactorTestRunsDetail < SQLRubyRefactorTestRuns
   class TestRunDetail < TestRun
     attr_reader :filter_column
@@ -47,18 +37,20 @@ class SQLRubyRefactorTestRunsDetail < SQLRubyRefactorTestRuns
 end
 
 describe "'Detail' function Ruby refactoring" do
-  def self.test_migration(db1, db2)
+  def self.test_migration
     # Run for all groups, with and without transactions and site constraints.
-    SQLRubyRefactorTestRunsDetail.new.each do |test_run|
+    testruns = SQLRubyRefactorTestRunsDetail.new
+
+    testruns.each do |test_run|
       it "should return results matching the SQL detail function with #{test_run}" do
         detail_sql = <<-SQL
       select * 
       from detail(
-        '#{db1.fact_table()}',
+        '#{testruns.db(0).fact_table()}',
         '#{test_run.group}', 
         '#{test_run.filter_column}',
-        #{db1.db.sql_date(test_run.date_start)},
-        #{db1.db.sql_date(test_run.date_end + 1)},
+        #{testruns.db(0).db.sql_date(test_run.date_start)},
+        #{testruns.db(0).db.sql_date(test_run.date_end + 1)},
         #{test_run.with_trans},
         '#{test_run.site_constraint}',
         '#{ChurnRequest.filter_xml(test_run.filter, [])}'
@@ -66,10 +58,10 @@ describe "'Detail' function Ruby refactoring" do
     SQL
 
         t1 = Thread.new{ 
-          db1.ex_async(detail_sql).to_a.collect{ |hash| hash.to_a }
+          testruns.db(0).ex_async(detail_sql).to_a.collect{ |hash| hash.to_a }
         }.run
         
-        query = QueryDetail.new(db2, 
+        query = QueryDetail.new(testruns.db(1), 
                                 test_run.group,
                                 test_run.date_start,
                                 test_run.date_end,
@@ -94,5 +86,5 @@ describe "'Detail' function Ruby refactoring" do
     end
   end
 
-  test_migration(db1, db2)
+  test_migration
 end
