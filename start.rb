@@ -8,6 +8,8 @@ require 'uri'
 require 'money'
 require "addressable/uri"
 require 'pony'
+require 'open3.rb'
+
 #require 'ruby-debug/debugger'
 
 require 'ir_b'
@@ -36,6 +38,15 @@ class Churnobyl < Sinatra::Base
   end  
   
   after '/' do
+    log
+  end
+  
+  after '/upload/' do
+    log
+  end
+
+  def log
+
     #cache_control :public, :must_revalidate, :max_age => 60
     if Config['demo']
       Pony.mail({
@@ -48,7 +59,7 @@ class Churnobyl < Sinatra::Base
     
     logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
   end
-  
+
   def cr
     @cr ||= ChurnRequest.new(request.url, request.query_string, auth, params, ChurnDBDiskCache.new)
     @sql = @cr.sql # This is set for error message
@@ -93,7 +104,49 @@ class Churnobyl < Sinatra::Base
   ServiceRequestHandlerAutocomplete.new(self)
 
   run! if app_file == $0
+
+
+
+  # Handle GET-request (Show the upload form)
+  get "/upload" do
+    logger.info "here"
+    erb :upload 
+  end      
+    
+  # Handle POST-request (Receive and save the uploaded file)
+  post "/upload" do
+    logger.info "post" 
+    @flash = ""
+    
+    if params['myfile'].nil?
+      @flash="No file uploaded"
+      return erb :upload
+    end
+ 
+    file = params['myfile'][:tempfile] 
+    filename = params['myfile'][:filename]
+   
+    begin
+      File.open('uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H:%M:%S"), "w") do |f|
+        #    Open3.popen3("gpg --no-permission-warning --trust-model always --yes -e -r 'freeChangde'") { |i,o,e,t| 
+        #   i.puts(file.read) 
+        #   i.close_write
+        #   @flash = e.read
+        #   if (@flash == "") 
+        #     f.write(o.read)
+        #   end
+        #   @flash
+        #}
+        f.write(file.read)
+      end
+    rescue StandardError => err
+      @flash = "File upload failed: " + err.message
+    end
+    
+    if @flash == "" 
+      @flash = "#{filename} was successfully uploaded"
+    end
+
+    erb :upload
+  end
 end
-
-
-
