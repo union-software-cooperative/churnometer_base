@@ -43,14 +43,21 @@ class ChurnRequest
     # load data and public members
     @type = :summary if @filter_column == ''
     @type = :detail if @filter_column != '' or @export_type=='detail'
-    
+
+    query_filter = 
+      if use_new_query_generation_method()
+        QueryFilterTerms.from_request_params(parsed_params()[Filter])
+      else
+        nil
+      end
+
     case @type
     when :summary
       if @interval == 'none'
-        if use_new_summary_method()
+        if use_new_query_generation_method()
           query_class = query_class_for_group(@header1)
 
-          @sql = query_class.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, QueryFilterTerms.from_request_params(parsed_params()[Filter])).query_string
+          @sql = query_class.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, query_filter).query_string
         else
           @sql = db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
         end

@@ -16,11 +16,11 @@ Config = YAML.load(File.read("./config/config.yaml"))
 
 module Settings
 
-  # The first iteration of Churnometer retrieved its results by calling a large SQL function.
-  # Set 'use_new_summary_method: true' in config.yaml to use the new method that produces the same
+  # The first iteration of Churnometer retrieved its results by calling SQL functions.
+  # Set 'use_new_query_generation_method: true' in config.yaml to use the new method that produces the same
   # output, but builds the query string in the Ruby domain rather than SQL.
-  def use_new_summary_method
-    Config['use_new_summary_method'] == true
+  def use_new_query_generation_method
+    Config['use_new_query_generation_method'] == true
   end
 
   def query_defaults
