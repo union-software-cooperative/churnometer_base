@@ -73,6 +73,50 @@ def execute_testrun(testruns, input_proc, test_run)
   [ruby_result, sql_result]
 end
 
+describe "'detail_static_friendly' function Ruby refactoring" do
+  sql_proc = proc do |testruns, test_run|
+    site_date = 
+      if test_run.site_constraint == 'end' 
+        test_run.date_end
+      elsif test_run.site_constraint == 'start' 
+        test_run.date_start
+      else
+        nil
+      end
+    
+    sql = <<-SQL 
+        select * 
+        from detail_static_friendly(
+        	'#{testruns.db(0).fact_table()}',
+        	'#{test_run.group}', 
+        	'#{test_run.filter_column}',
+        	#{testruns.db(0).db.sql_date(test_run.date_end)},
+          #{site_date.nil? ? 'NULL' : testruns.db(0).db.sql_date(site_date)},
+        	'#{ChurnRequest.filter_xml(test_run.filter, [])}'
+          )
+      SQL
+
+
+    query = testruns.query_class.new(testruns.db(1), 
+                                     test_run.group,
+                                     test_run.filter_column,
+                                     test_run.date_end,
+                                     site_date, 
+                                     QueryFilterTerms.from_request_params(test_run.filter))
+    
+    [sql, query]
+  end
+
+  testruns = SQLRubyRefactorTestRunsDetail.new(QueryDetailStaticFriendly, 100)
+
+  testruns.each do |test_run|
+    it "should return results matching the SQL function with #{test_run}" do
+      ruby_result, sql_result = execute_testrun(testruns, sql_proc, test_run)
+      ruby_result.should eq(sql_result)
+    end
+  end
+end
+
 describe "'detail_static' function Ruby refactoring" do
   sql_proc = proc do |testruns, test_run|
     site_date = 
@@ -110,7 +154,7 @@ describe "'detail_static' function Ruby refactoring" do
   testruns = SQLRubyRefactorTestRunsDetail.new(QueryDetailStatic)
 
   testruns.each do |test_run|
-    it "should return results matching the SQL detail function with #{test_run}" do
+    it "should return results matching the SQL function with #{test_run}" do
       ruby_result, sql_result = execute_testrun(testruns, sql_proc, test_run)
       ruby_result.should eq(sql_result)
     end
@@ -152,7 +196,7 @@ describe "'detail_friendly' function Ruby refactoring" do
   testruns = SQLRubyRefactorTestRunsDetail.new(QueryDetailFriendly, 100, seed)
 
   testruns.each do |test_run|
-    it "should return results matching the SQL detail function with #{test_run}" do
+    it "should return results matching the SQL function with #{test_run}" do
       ruby_result, sql_result = execute_testrun(testruns, sql_proc, test_run)
       ruby_result.should eq(sql_result)
     end
@@ -190,7 +234,7 @@ describe "'detail' function Ruby refactoring" do
   testruns = SQLRubyRefactorTestRunsDetail.new(QueryDetail)
 
   testruns.each do |test_run|
-    it "should return results matching the SQL detail function with #{test_run}" do
+    it "should return results matching the SQL function with #{test_run}" do
       ruby_result, sql_result = execute_testrun(testruns, sql_proc, test_run)
       ruby_result.should eq(sql_result)
     end
