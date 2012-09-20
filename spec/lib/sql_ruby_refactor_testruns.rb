@@ -15,6 +15,7 @@ class SQLRubyRefactorTestRuns
     attr_reader :date_start
     attr_reader :date_end
     attr_reader :date_description
+    attr_accessor :message
 
     def initialize(option_tuple)
       @group = option_tuple[0]
@@ -27,6 +28,10 @@ class SQLRubyRefactorTestRuns
       @date_start = option_tuple[4][0]
       @date_end = option_tuple[4][1]
       @date_description = option_tuple[4][2]
+    end
+
+    def start
+      $stdout.puts @message if @message
     end
 
     def to_s
@@ -51,20 +56,33 @@ class SQLRubyRefactorTestRuns
   # If limit is non-nil, the number of combinations is limited to a randomly-chosen set of 'limit'
   # combinations. Specifying the random_seed allows repeatable testing.
   def initialize(limit = nil, random_seed = nil)
-    combinations = options_for_combination()
-    combinations = combinations.first.product(*combinations[1..-1])
+    @limit = limit
+    @random_seed = random_seed
+  end
 
-    if limit
-      @rnd = Random.new
-      @rnd.srand(random_seed) if random_seed
-      $stdout.puts "NOTE: TESTING RANDOM SET OF #{limit} COMBINATIONS, SEED #{@rnd.seed}."
-      combinations = combinations.sort_by{ @rnd.rand }[0...limit]
-    end
+  def test_option_combinations
+    @test_options_combinations ||= 
+      begin
+        combinations = options_for_combination()
+        combinations = combinations.first.product(*combinations[1..-1])
 
-    # Make test runs for all combinations of the option groups given above. 
-    @test_option_combinations = combinations.collect do |tuple|
-      make_testrun(tuple)
-    end
+        testrun_initiation_message = nil
+        if @limit
+          @rnd = Random.new
+          @rnd.srand(@random_seed) if @random_seed
+          testrun_initiation_message = "NOTE: TESTING RANDOM SET OF #{@limit} COMBINATIONS, SEED #{@rnd.seed}."
+          combinations = combinations.sort_by{ @rnd.rand }[0...@limit]
+        end
+
+        # Make test runs for all combinations of the option groups given above.
+        combinations.collect! do |tuple|
+        	make_testrun(tuple)
+      	end
+        
+        combinations.first.message = testrun_initiation_message
+
+        combinations
+      end
   end
 
   def testrun_class
@@ -76,7 +94,7 @@ class SQLRubyRefactorTestRuns
   end
 
   def each(&block)
-    @test_option_combinations.each(&block)
+    test_option_combinations().each(&block)
   end
 
   def groups

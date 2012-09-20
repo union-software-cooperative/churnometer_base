@@ -7,7 +7,6 @@ class QuerySummary < QueryFilter
   # filter_terms: A FilterTerms instance.
   def initialize(churn_db, header1, start_date, end_date, with_trans, site_constraint, filter_terms)
     super(churn_db, filter_terms)
-    @source = churn_db.fact_table
     @header1 = header1
     @start_date = start_date
     @end_date = end_date

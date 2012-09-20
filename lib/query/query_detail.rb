@@ -1,15 +1,12 @@
-require './lib/query/query_filter'
+require './lib/query/query_detail_base'
 
-class QueryDetail < QueryFilter
+class QueryDetail < QueryDetailBase
   def initialize(churn_db, header1, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
-    super(churn_db, filter_param_hash)
-    @source = churn_db.fact_table
-    @header1 = header1
+    super(churn_db, header1, filter_column, filter_param_hash)
     @start_date = start_date
     @end_date = end_date
     @with_trans = with_trans
     @site_constraint = site_constraint
-    @filter_column = filter_column
   end
 
   # True if filtering by the given filter column must always require transactions to be disabled.
@@ -21,6 +18,7 @@ class QueryDetail < QueryFilter
      'unposted'].include?(filter_column_name.downcase) == false
   end
 
+  # See base class documentation.
   def self.filter_column_to_where_clause
     @filter_column_to_where_clause ||= {
       'a1p_real_gain' => 'where c.a1p_real_gain<>0',
@@ -338,7 +336,7 @@ sql << <<-EOS
 EOS
 
 	# dbeswick: tbd: raise exception on invalid filter column
-	sql << self.class.filter_column_to_where_clause()[@filter_column]
+	sql << self.class.filter_column_to_where_clause[@filter_column]
 
 sql << <<-EOS
 	order by

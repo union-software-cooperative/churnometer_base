@@ -1,7 +1,7 @@
-require './lib/query/query'
+require './lib/query/query_memberfact'
 
 # A query of Churnometer data that makes use of filtering by dimension.
-class QueryFilter < Query
+class QueryFilter < QueryMemberfact
   def initialize(db, filter_terms)
     super(db)
     @filter_terms = filter_terms
