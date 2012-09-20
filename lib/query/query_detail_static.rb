@@ -10,6 +10,7 @@ class QueryDetailStatic < QueryDetailBase
 
   def self.filter_column_to_where_clause
     {
+      '' => '', # empty filter column
       'paying' => 'where c.paying<>0',
       'a1p' => 'where c.a1p<>0',
       'stopped' => 'where c.stopped<>0',
@@ -18,7 +19,6 @@ class QueryDetailStatic < QueryDetailBase
   end
 
   def query_string
-#CREATE OR REPLACE FUNCTION detail_static(IN source text, IN header1 text, IN filter_column character varying, IN member_date timestamp without time zone, IN site_date timestamp without time zone, IN selection xml, OUT memberid character varying, OUT changeid bigint, OUT row_header character varying, OUT row_header_id character varying, OUT paying bigint, OUT a1p bigint, OUT stopped bigint, OUT other bigint)
     filter = 
       if @site_date.nil?
         filter_terms()

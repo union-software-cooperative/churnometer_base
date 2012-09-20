@@ -54,6 +54,8 @@ end
 
 
 class ChurnDB
+  include Settings
+
   attr_reader :db
   attr_reader :params
   attr_reader :sql
@@ -84,81 +86,20 @@ class ChurnDB
     Config[database_config_key()]['facttable']
   end
 
-  def summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml)
-    <<-SQL
-      select * 
-      from summary(
-        '#{fact_table()}',
-        '#{header1}', 
-        '',
-        '#{start_date.strftime(DateFormatDB)}',
-        '#{(end_date+1).strftime(DateFormatDB)}',
-        #{transactions.to_s}, 
-        '#{site_constraint}',
-        '#{filter_xml}'
-        )
-    SQL
-  end
-    
-  def summary(header1, start_date, end_date, transactions, site_constraint, filter_xml)
-    @sql = summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml)
-    ex(@sql)
-  end
-  
-  def summary_running_sql(header1, interval, start_date, end_date, transactions, site_constraint, filter_xml)
-    <<-SQL
-      select * 
-      from summary_running(
-        '#{fact_table()}',
-        '#{header1}', 
-        '#{interval}',
-        '#{start_date.strftime(DateFormatDB)}',
-        '#{(end_date+1).strftime(DateFormatDB)}',
-        #{transactions.to_s}, 
-        '#{site_constraint}',
-        '#{filter_xml}'
-        )
-    SQL
-  end
-  
-  def summary_running(header1, interval, start_date, end_date, transactions,  site_constraint, filter_xml)
-    @sql = summary_running_sql(header1, interval, start_date, end_date, transactions, site_constraint, filter_xml)
-    ex(@sql)
-  end
-  
-  def detail_sql(header1, filter_column, start_date, end_date, transactions,  site_constraint, filter_xml)
-    
-    if static_cols.include?(filter_column)
-    
-      member_date = filter_column.include?('start') ? start_date : (end_date+1)
-      site_date = ''
-      if site_constraint == 'end' 
-        site_date = end_date
-      end
-      if site_constraint == 'start' 
-        site_date = start_date
-      end
+  def summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml, filter_terms)
+    if use_new_query_generation_method()
+      raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
+
+      query_class = query_class_for_group(@header1)
       
-      filter_column = filter_column.sub('_start_count', '').sub('_end_count', '')
-    
-      sql = <<-SQL 
-        select * 
-        from detail_static_friendly(
-          '#{fact_table()}',
-          '#{header1}', 
-          '#{filter_column}',  
-          '#{member_date}',
-          #{site_date == '' ? 'NULL' : "'#{site_date}'"},
-          '#{filter_xml}'
-          )
-      SQL
+      @sql = query_class.new(self, header1, start_date, end_date, transactions, site_constraint, filter_terms).query_string
     else
-      sql = <<-SQL 
+      <<-SQL
         select * 
-        from detail_friendly(
+        from summary(
           '#{fact_table()}',
           '#{header1}', 
-          '#{filter_column}',  
+          '',
           '#{start_date.strftime(DateFormatDB)}',
           '#{(end_date+1).strftime(DateFormatDB)}',
           #{transactions.to_s}, 
@@ -167,6 +108,101 @@ class ChurnDB
           )
       SQL
     end
+  end
+    
+  def summary(header1, start_date, end_date, transactions, site_constraint, filter_xml)
+    @sql = summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml)
+    ex(@sql)
+  end
+  
+  def summary_running_sql(header1, interval, start_date, end_date, transactions, site_constraint, filter_xml, filter_terms = nil)
+    if use_new_query_generation_method()
+      raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
+
+      @sql = QuerySummaryRunning.new(self, header1, interval, start_date, end_date, transactions, site_constraint, filter_terms).query_string
+    else
+      <<-SQL
+        select * 
+        from summary_running(
+          '#{fact_table()}',
+          '#{header1}', 
+          '#{interval}',
+          '#{start_date.strftime(DateFormatDB)}',
+          '#{(end_date+1).strftime(DateFormatDB)}',
+          #{transactions.to_s}, 
+          '#{site_constraint}',
+          '#{filter_xml}'
+          )
+      SQL
+    end
+  end
+  
+  def summary_running(header1, interval, start_date, end_date, transactions,  site_constraint, filter_xml)
+    @sql = summary_running_sql(header1, interval, start_date, end_date, transactions, site_constraint, filter_xml)
+    ex(@sql)
+  end
+  
+  def detail_sql(header1, filter_column, start_date, end_date, transactions,  site_constraint, filter_xml, filter_terms = nil)
+    
+    sql = 
+      if static_cols.include?(filter_column)
+        site_date_for_query = 
+          if use_new_query_generation_method()
+            if site_date == ''
+              nil
+            else
+              site_date
+            end
+          else
+            if site_date == ''
+              'NULL'
+            else
+              "'#{site_date}'"
+            end
+          end
+
+        member_date = filter_column.include?('start') ? start_date : (end_date+1)
+        
+        filter_column = filter_column.sub('_start_count', '').sub('_end_count', '')
+
+        if use_new_query_generation_method()
+          raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
+
+          QueryDetailStaticFriendly.new(@db, header1, filter_column, member_date, site_date_for_query, filter_terms).query_string 
+        else
+          <<-SQL 
+	        select * 
+  	      from detail_static_friendly(
+    	      '#{fact_table()}',
+      	    '#{header1}', 
+        	  '#{filter_column}',  
+          	'#{member_date}',
+          	#{site_date_for_query},
+          	'#{filter_xml}'
+         	 )
+      	SQL
+        end
+      else
+        if use_new_query_generation_method()
+          raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
+
+          QueryDetailFriendly.new(self, header1, start_date, end_date, transactions, site_constraint, filter_column, filter_terms).query_string 
+        else
+          <<-SQL 
+            select * 
+            from detail_friendly(
+              '#{fact_table()}',
+              '#{header1}', 
+              '#{filter_column}',  
+              '#{start_date.strftime(DateFormatDB)}',
+              '#{(end_date+1).strftime(DateFormatDB)}',
+              #{transactions.to_s}, 
+              '#{site_constraint}',
+              '#{filter_xml}'
+              )
+          SQL
+        end
+      end
     
     sql
   end
@@ -176,7 +212,7 @@ class ChurnDB
     ex(@sql)
   end
   
-  def transfer_sql(start_date, end_date, site_constraint, filter_xml)
+  def transfer_sql(start_date, end_date, site_constraint, filter_xml, filter_terms = nil)
     
     sql = <<-SQL
       select
@@ -184,6 +220,15 @@ class ChurnDB
         , sum(a1p_other_gain + paying_other_gain) transfer_in
         , sum(-a1p_other_loss - paying_other_loss) transfer_out
         from
+    SQL
+
+    sql << if use_new_query_generation_method()
+      raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
+
+      detail_friendly_sql = QueryDetailFriendly.new(self, 'status', start_date, end_date, false, site_constraint, '', filter_terms).query_string 
+      "(#{detail_friendly_sql}) as detail_friendly"
+    else
+      <<-SQL
           detail_friendly(
             '#{fact_table()}',
             'status',
@@ -194,6 +239,10 @@ class ChurnDB
             '#{site_constraint}',
             '#{filter_xml}'
           )
+      SQL
+    end
+
+    sql << <<-SQL
         where
           paying_other_gain <> 0
           or paying_other_loss <> 0
@@ -208,8 +257,8 @@ class ChurnDB
     sql
   end
   
-  def get_transfers(start_date, end_date, site_constraint, filter_xml)
-    @sql = transfer_sql(start_date, end_date, site_constraint, filter_xml)
+  def get_transfers(start_date, end_date, site_constraint, filter_xml, filter_terms = nil)
+    @sql = transfer_sql(start_date, end_date, site_constraint, filter_xml, filter_terms)
     ex(@sql)
   end
 

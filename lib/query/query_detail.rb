@@ -21,6 +21,7 @@ class QueryDetail < QueryDetailBase
   # See base class documentation.
   def self.filter_column_to_where_clause
     @filter_column_to_where_clause ||= {
+      '' => '', # empty filter column
       'a1p_real_gain' => 'where c.a1p_real_gain<>0',
       'a1p_unchanged_gain' => 'where c.a1p_unchanged_gain<>0',
       'a1p_newjoin' => 'where c.a1p_newjoin<>0',
@@ -335,8 +336,7 @@ sql << <<-EOS
 		left join displaytext d1 on d1.attribute = #{db.quote(@header1)} and d1.id = c.row_header
 EOS
 
-	# dbeswick: tbd: raise exception on invalid filter column
-	sql << self.class.filter_column_to_where_clause[@filter_column]
+  sql << where_clause_for_filter_column(@filter_column)
 
 sql << <<-EOS
 	order by

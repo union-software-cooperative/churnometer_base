@@ -44,28 +44,22 @@ class ChurnRequest
     @type = :summary if @filter_column == ''
     @type = :detail if @filter_column != '' or @export_type=='detail'
 
-    query_filter = 
+    @query_filterterms = 
       if use_new_query_generation_method()
         QueryFilterTerms.from_request_params(parsed_params()[Filter])
       else
         nil
       end
 
-    case @type
+    @sql = case @type
     when :summary
       if @interval == 'none'
-        if use_new_query_generation_method()
-          query_class = query_class_for_group(@header1)
-
-          @sql = query_class.new(@db, @header1, @start_date, @end_date, @transactions, @site_constraint, query_filter).query_string
-        else
-          @sql = db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml)  
-        end
+        db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)  
       else
-        @sql = db.summary_running_sql(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml)  
+        db.summary_running_sql(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml)  
       end
     when :detail
-      @sql = db.detail_sql(@header1, @filter_column, @start_date, @end_date, @transactions, @site_constraint, @xml) 
+      db.detail_sql(@header1, @filter_column, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)
     else
       raise "Cannot load data - unknown query type (#{@type.to_s})"
     end
@@ -129,7 +123,7 @@ class ChurnRequest
   end
 
   def get_transfers
-    db.get_transfers(@start_date, @end_date, @site_constraint, @xml)
+    db.get_transfers(@start_date, @end_date, @site_constraint, @xml, @query_filterterms)
   end
   
   def data_entry_view?

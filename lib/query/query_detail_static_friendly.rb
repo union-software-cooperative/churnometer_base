@@ -2,8 +2,6 @@ require './lib/query/query_detail_static'
 
 class QueryDetailStaticFriendly < QueryDetailStatic
   def query_string
-#CREATE OR REPLACE FUNCTION detail_static_friendly(IN sourcetable text, IN header1 text, IN filter_column text, IN member_date timestamp without time zone, IN site_date timestamp without time zone, IN selection xml, OUT memberid character varying, OUT row_header character varying, OUT paying bigint, OUT a1p bigint, OUT other bigint, OUT changedate date, OUT member text, OUT oldstatus text, OUT newstatus text, OUT currentstatus text, OUT oldcompany text, OUT newcompany text, OUT currentcompany text, OUT oldorg text, OUT neworg text, OUT currentorg text, OUT oldlead text, OUT newlead text, OUT currentlead text, OUT oldstate text, OUT newstate text, OUT currentstate text, OUT oldbranch text, OUT newbranch text, OUT currentbranch text, OUT oldnuwelectorate text, OUT newnuwelectorate text, OUT currentnuwelectorate text, OUT oldindustry text, OUT newindustry text, OUT currentindustry text, OUT oldarea text, OUT newarea text, OUT currentarea text, OUT olddel text, OUT newdel text, OUT currentdel text, OUT oldhsr text, OUT newhsr text, OUT currenthsr text, OUT oldfeegroup text, OUT newfeegroup text, OUT currentfeegroup text)
-
 		sql = <<-EOS
 with detail as
 (

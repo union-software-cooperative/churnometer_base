@@ -13,4 +13,14 @@ class QueryDetailBase < QueryFilter
   def self.filter_column_to_where_clause
     {}
   end
+
+  def where_clause_for_filter_column(filter_column)
+    clause = self.class.filter_column_to_where_clause[filter_column]
+
+    if clause.nil?
+      raise "Invalid filter column '#{filter_column}'"
+    end
+
+    clause
+  end
 end
