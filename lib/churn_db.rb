@@ -61,7 +61,8 @@ class ChurnDB
   attr_reader :sql
   attr_reader :cache_hit
   
-  def initialize()
+  def initialize(app)
+    @app = app
   end
   
   def db
@@ -87,12 +88,15 @@ class ChurnDB
   end
 
   def summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml, filter_terms)
-    if use_new_query_generation_method()
+    if @app.use_new_query_generation_method?()
       raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
-      query_class = query_class_for_group(@header1)
-      
-      @sql = query_class.new(self, header1, start_date, end_date, transactions, site_constraint, filter_terms).query_string
+      query_class = query_class_for_group(header1)
+
+      groupby_dimension = @app.dimensions[header1]
+      raise "Invalid groupby dimension '#{groupby_dimension}'." if groupby_dimension.nil?
+
+      @sql = query_class.new(self, groupby_dimension, start_date, end_date, transactions, site_constraint, filter_terms).query_string
     else
       <<-SQL
         select * 
@@ -116,7 +120,7 @@ class ChurnDB
   end
   
   def summary_running_sql(header1, interval, start_date, end_date, transactions, site_constraint, filter_xml, filter_terms = nil)
-    if use_new_query_generation_method()
+    if @app.use_new_query_generation_method?()
       raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
       @sql = QuerySummaryRunning.new(self, header1, interval, start_date, end_date, transactions, site_constraint, filter_terms).query_string
@@ -147,7 +151,7 @@ class ChurnDB
     sql = 
       if static_cols.include?(filter_column)
         site_date_for_query = 
-          if use_new_query_generation_method()
+          if @app.use_new_query_generation_method?()
             if site_date == ''
               nil
             else
@@ -165,7 +169,7 @@ class ChurnDB
         
         filter_column = filter_column.sub('_start_count', '').sub('_end_count', '')
 
-        if use_new_query_generation_method()
+        if @app.use_new_query_generation_method?()
           raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
           QueryDetailStaticFriendly.new(@db, header1, filter_column, member_date, site_date_for_query, filter_terms).query_string 
@@ -183,7 +187,7 @@ class ChurnDB
       	SQL
         end
       else
-        if use_new_query_generation_method()
+        if @app.use_new_query_generation_method?()
           raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
           QueryDetailFriendly.new(self, header1, start_date, end_date, transactions, site_constraint, filter_column, filter_terms).query_string 
@@ -222,7 +226,7 @@ class ChurnDB
         from
     SQL
 
-    sql << if use_new_query_generation_method()
+    sql << if @app.use_new_query_generation_method?()
       raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
       detail_friendly_sql = QueryDetailFriendly.new(self, 'status', start_date, end_date, false, site_constraint, '', filter_terms).query_string 
@@ -349,11 +353,12 @@ class ChurnDBDiskCache < ChurnDB
     @@cache
   end
   
-  def initialize
+  def initialize(app)
     # The data is initialised every request but in production the cache should persist
     # as a static (class) singleton. Cache status is reset at the start of the page 
     # life when db class is instantiated
     ChurnDBDiskCache.cache_status = "" 
+    @app = app
   end
   
   def ex(sql)

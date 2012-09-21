@@ -20,8 +20,9 @@ class ChurnRequest
     @db ||= ChurnDB.new
   end
   
-  def initialize(url, query_string, auth, params, churndb = nil)
+  def initialize(url, query_string, auth, params, app, churndb = nil)
     # interpret request
+    @app = app
     @url = url
     @query_string = query_string
     @auth = auth
@@ -45,8 +46,8 @@ class ChurnRequest
     @type = :detail if @filter_column != '' or @export_type=='detail'
 
     @query_filterterms = 
-      if use_new_query_generation_method()
-        QueryFilterTerms.from_request_params(parsed_params()[Filter])
+      if @app.use_new_query_generation_method?()
+        FilterTerms.from_request_params(parsed_params()[Filter], @app.dimensions)
       else
         nil
       end

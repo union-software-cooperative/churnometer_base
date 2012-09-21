@@ -103,22 +103,22 @@ end
 class FilterTerm
   include Enumerable
 
-  attr_reader :name
+  attr_reader :dimension
   attr_accessor :values
   attr_accessor :exclude_values
 
   # If set, then this value is used as the column name when generating sql statements for the filter term.
   attr_accessor :db_column_override
 
-  def initialize(name)
-    @name = name.downcase
+  def initialize(dimension)
+    @dimension = dimension
     @values = []
     @exclude_values = []
   end
 
   # Provide deep copies of filter terms.
   def clone
-    copy = self.class.new(@name.dup)
+    copy = self.class.new(@dimension)
     copy.values = @values.dup
     copy.exclude_values = @exclude_values.dup
     copy.db_column_override = @db_column_override.dup if @db_column_override
@@ -130,7 +130,7 @@ class FilterTerm
     if @db_column_override 
       @db_column_override
     else
-      @name
+      @dimension.column_base_name
     end
   end
 
@@ -145,15 +145,16 @@ end
 # Filter term names are case-insensitive.
 #
 # Methods from Enumerable can be used to iterate over FilterTerm instances.
-class QueryFilterTerms
+class FilterTerms
   include Enumerable
 
   # Creates an instance from the HTTP request's filter parameter hash.
   # The hash should be only the "filter" part of the request hash, not the complete request hash with
   # all other parameters present.
-  def self.from_request_params(parameter_hash)
+  # dimensions: The Dimensions instance containing all possible filterable dimensions.
+  def self.from_request_params(parameter_hash, dimensions)
     instance = self.new
-    instance._from_request_params(parameter_hash)
+    instance._from_request_params(parameter_hash, dimensions)
     instance
   end
 
@@ -165,20 +166,33 @@ class QueryFilterTerms
   end
 
   def initialize
-    # The default object for the Hash is an empty filter term called 'undefined'.
-    @undefined_term = FilterTerm.new('undefined').freeze
     @terms = {}
   end
 
-  # Returns a FilterTerm instance for the given filter name, or the 'unassigned' FilterTerm object if the term isn't available.
-  def [] (filter_term_name)
-    @terms.fetch(filter_term_name.downcase, @undefined_term)
+  def self.undefined_dimension
+    @undefined_dimension ||= Dimension.new(-1)
+  end
+
+  def self.undefined_term
+    # The default object for the Hash is an empty filter term called 'undefined'.
+    @undefined_term ||= FilterTerm.new(undefined_dimension()).freeze
+  end
+
+  # Returns a FilterTerm instance for the given dimension, or nil if a term for the dimension 
+  # isn't available.
+  # For convenience, a dimension id can be specified instead of a Dimension instance.
+  def [] (dimension_or_string)
+    if dimension_or_string.kind_of?(String)
+      @terms.values.find{ |term| term.dimension.id == dimension_or_string }
+    else
+      @terms[dimension]
+    end
   end
 
   # Replaces a filter term instance with a copy of the given FilterTerm instance, or adds the term if not
   # already present.
   def set_term(filter_term)
-    @terms[filter_term.name] = filter_term.clone
+    @terms[filter_term.dimension] = filter_term.clone
   end
 
   # Returns FilterTerm instances describing the filter terms.
@@ -186,10 +200,11 @@ class QueryFilterTerms
     @terms.values
   end
 
-  # Adds a value for the given filter term. Creates the term if it doesn't exist.
+  # Adds a value for a filter term on the given dimension. Creates the term if it doesn't exist.
   # If 'exclude' is true, then the value should be excluded from search results.
-  def append(filter_term_name, value, exclude)
-    term = @terms[filter_term_name.downcase] ||= FilterTerm.new(filter_term_name)
+  # dimension: Instance of a Dimension object.
+  def append(dimension, value, exclude)
+    term = @terms[dimension] ||= FilterTerm.new(dimension)
 
     target =
       if !exclude
@@ -206,31 +221,27 @@ class QueryFilterTerms
     @terms.values.each(&block)
   end
 
-  # Returns a new FilterTerms object with only the given terms included.
-  def include(*term_names)
-    downcase_term_names = term_names.collect { |name| name.downcase }
-
-    included_terms = @terms.values.select { |term| downcase_term_names.include?(term.name) }
+  # Returns a new FilterTerms object with only the dimensions with the given ids included.
+  def include(*dimension_ids)
+    included_terms = @terms.values.select { |term| dimension_ids.include?(term.dimension.id) }
 
     self.class.from_terms(included_terms)
   end
 
-  # Returns a new FilterTerms object with the given terms excluded.
-  def exclude(*term_names)
-    downcase_term_names = term_names.collect { |name| name.downcase }
-
-    included_terms = @terms.values.reject { |term| downcase_term_names.include?(term.name) }
+  # Returns a new FilterTerms object with the dimensions with the given ids excluded.
+  def exclude(*dimension_ids)
+    included_terms = @terms.values.reject { |term| dimension_ids.include?(term.dimension.id) }
 
     self.class.from_terms(included_terms)
   end
 
   def _from_terms(filter_terms)
     filter_terms.each do |term|
-      @terms[term.name] = term.dup
+      @terms[term.dimension] = term.dup
     end
   end
 
-  def _from_request_params(parameter_hash)
+  def _from_request_params(parameter_hash, dimensions)
     parameter_hash.each do |key, values|
       values = Array(values)
       
@@ -255,7 +266,11 @@ class QueryFilterTerms
           is_exclude = false
         end
 
-        append(key, value, is_exclude)
+        dimension = dimensions.dimension_for_id(key)
+
+        raise "Unknown dimension '#{key}' given for filter term." if dimension.nil?
+        
+        append(dimension, value, is_exclude)
       end
     end
   end
