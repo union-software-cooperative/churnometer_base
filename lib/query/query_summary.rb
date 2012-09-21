@@ -1,13 +1,12 @@
 require './lib/query/query_filter'
 require './lib/query/query_sites_at_date'
-require './lib/settings'
-require 'nokogiri'
 
 class QuerySummary < QueryFilter
+  # groupby_dimension: A Dimension instance by which results will be grouped.
   # filter_terms: A FilterTerms instance.
-  def initialize(churn_db, header1, start_date, end_date, with_trans, site_constraint, filter_terms)
+  def initialize(churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_terms)
     super(churn_db, filter_terms)
-    @header1 = header1
+    @groupby_dimension = groupby_dimension
     @start_date = start_date
     @end_date = end_date
     @with_trans = with_trans
@@ -23,12 +22,16 @@ class QuerySummary < QueryFilter
     user_selections_filter = filter.include('status', 'statusstaffid')
 
     # Used in the 'trans' block. The statusstaffid filter term should map to the 'staffid' column there.
-    trans_statusstaffid_filter = QueryFilterTerms.new
-    statusstaffid_remapped_term = filter['statusstaffid'].clone
-    statusstaffid_remapped_term.db_column_override = 'staffid'
-    trans_statusstaffid_filter.set_term(statusstaffid_remapped_term)
+    trans_statusstaffid_filter = FilterTerms.new
+    if !filter['statusstaffid'].nil?
+      statusstaffid_remapped_term = filter['statusstaffid'].clone
+      statusstaffid_remapped_term.db_column_override = 'staffid'
+      trans_statusstaffid_filter.set_term(statusstaffid_remapped_term)
+    end
 
     end_date = @end_date + 1
+
+    header1 = @groupby_dimension.column_base_name
 
 sql = <<-EOS
 	with nonstatusselections as
@@ -62,7 +65,7 @@ sql = <<-EOS
 			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection 
 			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 ) -- both sides (if in user selection) if one side is paying and there was a paying change 
  			or u1.changeid in (select changeid from userselections u where a1pgain <> 0 or a1ploss <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
- 			or u1.#{@header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items
+ 			or u1.#{header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items
  	)
 	, trans as
 	(
@@ -70,10 +73,10 @@ sql = <<-EOS
 EOS
 
 sql <<
-	if @header1 == 'statusstaffid'
+	if header1 == 'statusstaffid'
     "			case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end row_header1"
 	else
-		"			case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end row_header1"
+		"			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1"
 	end
 
 sql << <<-EOS
@@ -104,10 +107,10 @@ sql << <<-EOS
 EOS
 
 sql <<
-	if @header1 == 'statusstaffid' 
+	if header1 == 'statusstaffid' 
     "		case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end"
 	else
-		"		case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end"
+		"		case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end"
 	end
 
 sql << <<-EOS
@@ -117,7 +120,7 @@ sql << <<-EOS
 	(
 		-- sum changes, if status doesnt change, then the change is a transfer
 		select 
-			case when coalesce(#{@header1}::varchar(200),'') = '' then 'unassigned' else #{@header1}::varchar(200) end row_header1
+			case when coalesce(#{header1}::varchar(200),'') = '' then 'unassigned' else #{header1}::varchar(200) end row_header1
 			--, date_trunc('week', changedate)::date row_header2
 			, sum(case when changedate <= #{db.sql_date(@start_date)} then net else 0 end) as start_count
 			, sum(case when changedate <= #{db.sql_date(@start_date)} and status = '14' then net else 0 end) as a1p_start_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
@@ -165,8 +168,7 @@ sql << <<-EOS
 		from 
 			nonegations c
 		group by 
-			case when coalesce(#{@header1}::varchar(200),'') = '' then 'unassigned' else #{@header1}::varchar(200) end 
-			--, date_trunc('week', changedate)::date
+			case when coalesce(#{header1}::varchar(200),'') = '' then 'unassigned' else #{header1}::varchar(200) end 
 	)
 	, withtrans as
 	(
@@ -271,10 +273,10 @@ EOS
 sql << <<-EOS		
 	from 
 		withtrans c
-		left join displaytext d1 on d1.attribute = '#{@header1}' and d1.id = c.row_header1
+		left join displaytext d1 on d1.attribute = '#{header1}' and d1.id = c.row_header1
 EOS
 
-if @header1 == 'employerid'
+if header1 == 'employerid'
 	   sql << "left join employer e on c.row_header1 = e.companyid"
 end
 
@@ -297,8 +299,6 @@ sql << <<-EOS
 		--, row_header2
 ;
 EOS
-
-#puts sql
 
 		sql
   end
