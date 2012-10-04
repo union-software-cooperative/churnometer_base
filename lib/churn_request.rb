@@ -57,7 +57,7 @@ class ChurnRequest
       if @interval == 'none'
         db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)  
       else
-        db.summary_running_sql(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml)  
+        db.summary_running_sql(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)  
       end
     when :detail
       db.detail_sql(@header1, @filter_column, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)

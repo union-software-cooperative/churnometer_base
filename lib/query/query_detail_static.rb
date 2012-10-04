@@ -2,8 +2,9 @@ require './lib/query/query_detail_base'
 
 class QueryDetailStatic < QueryDetailBase
   # site_date may be nil.
-  def initialize(churn_db, header1, filter_column, member_date, site_date, filter_terms)
-    super(churn_db, header1, filter_column, filter_terms)
+  # groupby_dimension: A DimensionUser instance.
+  def initialize(churn_db, groupby_dimension, filter_column, member_date, site_date, filter_terms)
+    super(churn_db, groupby_dimension, filter_column, filter_terms)
     @site_date = site_date
     @member_date = member_date
   end
@@ -19,6 +20,8 @@ class QueryDetailStatic < QueryDetailBase
   end
 
   def query_string
+    header1 = @groupby_dimension.column_base_name
+
     filter = 
       if @site_date.nil?
         filter_terms()
@@ -75,7 +78,7 @@ sql = <<-EOS
 		select 
 			c.memberid
 			, c.changeid::bigint	
-			, case when coalesce(#{db.quote_db(@header1)}::varchar(50),'') = '' then 'unassigned' else #{db.quote_db(@header1)}::varchar(50) end row_header
+			, case when coalesce(#{db.quote_db(header1)}::varchar(50),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(50) end row_header
 			, case when coalesce(status, '') = '1' then 1 else 0 end::bigint paying
 			, case when coalesce(status, '') = '14' then 1 else 0 end::bigint a1p
 			, case when coalesce(status, '') = '11' then 1 else 0 end::bigint stopped
@@ -94,7 +97,7 @@ sql = <<-EOS
 		, c.other
 	from
 		counts c
-		left join displaytext d1 on d1.attribute = #{db.quote(@header1)} and d1.id = c.row_header
+		left join displaytext d1 on d1.attribute = #{db.quote(header1)} and d1.id = c.row_header
 	#{self.class.filter_column_to_where_clause[@filter_column]}
 	order by
 		c.row_header asc
