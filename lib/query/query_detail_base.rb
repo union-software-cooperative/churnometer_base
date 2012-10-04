@@ -2,9 +2,9 @@ require './lib/query/query_filter'
 
 # Abstract base class containing common functionality for the family of Detail queries.
 class QueryDetailBase < QueryFilter
-  def initialize(churn_db, header1, filter_column, filter_terms)
+  def initialize(churn_db, groupby_dimension, filter_column, filter_terms)
     super(churn_db, filter_terms)
-    @header1 = header1
+    @groupby_dimension = groupby_dimension
     @filter_column = filter_column
   end
 

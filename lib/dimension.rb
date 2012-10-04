@@ -5,6 +5,10 @@ class Dimensions
     @id_to_dimension = {}
   end
 
+  def initialize_copy(rhs)
+    @id_to_dimension = rhs.instance_variable_get(:@id_to_dimension).dup
+  end
+
   # config_hash: mappings from index numbers to hashes defining Dimension columns in the format defined by the Churnometer configuration scheme.
   def from_config_hash(config_hash)
     config_hash.each do |index, config_hash_entry|
@@ -65,6 +69,9 @@ end
 # A customisable dimension that is set up by users in the config file.
 class DimensionUser < Dimension
   attr_reader :name
+
+  # The index of the dimension as given in the user config file.
+  attr_reader :index
 
   # index: the index number of the generic column for the dimension.
   def initialize(index)

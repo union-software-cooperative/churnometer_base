@@ -1,10 +1,9 @@
 require './lib/query/query_filter'
 
 class QuerySitesAtDate < QueryFilter
-  def initialize(churn_db, header1, date, filter_terms)
+  def initialize(churn_db, date, filter_terms)
     super(churn_db, '')
     @source = churn_db.fact_table
-    @header1 = header1
     @date = date
     @filter_terms = filter_terms
   end

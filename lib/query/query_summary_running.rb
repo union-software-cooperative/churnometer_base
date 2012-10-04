@@ -23,7 +23,7 @@ class QuerySummaryRunning < QueryFilter
   def query_string
     db = @churn_db.db
 
-    filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date, @header1)
+    filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date)
 
     non_status_filter = filter.exclude('status', 'statusstaffid')
     user_selections_filter = filter.include('status', 'statusstaffid')

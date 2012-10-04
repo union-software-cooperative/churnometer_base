@@ -4,6 +4,7 @@ require './lib/query/query_sites_at_date'
 class QuerySummary < QueryFilter
   # groupby_dimension: A Dimension instance by which results will be grouped.
   # filter_terms: A FilterTerms instance.
+  # groupby_dimension: A Dimension instance.
   def initialize(churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_terms)
     super(churn_db, filter_terms)
     @groupby_dimension = groupby_dimension
@@ -16,7 +17,9 @@ class QuerySummary < QueryFilter
   def query_string
     db = @churn_db.db
 
-    filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date, @header1)
+    header1 = @groupby_dimension.column_base_name
+
+    filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date)
 
     non_status_filter = filter.exclude('status', 'statusstaffid')
     user_selections_filter = filter.include('status', 'statusstaffid')
@@ -30,8 +33,6 @@ class QuerySummary < QueryFilter
     end
 
     end_date = @end_date + 1
-
-    header1 = @groupby_dimension.column_base_name
 
 sql = <<-EOS
 	with nonstatusselections as
