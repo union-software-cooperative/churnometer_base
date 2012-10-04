@@ -120,7 +120,7 @@ sql = <<-EOS
 EOS
 
 sql <<
-	if header1 == 'statusstaffid'
+	if header == 'statusstaffid'
     "			case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end row_header1"
 	else
 		"			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1"
@@ -148,7 +148,7 @@ sql << <<-EOS
 EOS
 
 sql <<
-	if header1 == 'statusstaffid' 
+	if @groupby_dimension.id == 'statusstaffid' 
     "		case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end"
 	else
 		"		case when coalesce(u1.#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else u1.#{db.quote_db(header1)}::varchar(200) end"

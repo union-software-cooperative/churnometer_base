@@ -123,7 +123,10 @@ class ChurnDB
     if @app.use_new_query_generation_method?()
       raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
-      @sql = QuerySummaryRunning.new(self, header1, interval, start_date, end_date, transactions, site_constraint, filter_terms).query_string
+      groupby_dimension = @app.dimensions[header1]
+      raise "Invalid groupby dimension '#{header1}'." if groupby_dimension.nil?
+
+      @sql = QuerySummaryRunning.new(self, groupby_dimension, interval, start_date, end_date, transactions, site_constraint, filter_terms).query_string
     else
       <<-SQL
         select * 
@@ -147,11 +150,22 @@ class ChurnDB
   end
   
   def detail_sql(header1, filter_column, start_date, end_date, transactions,  site_constraint, filter_xml, filter_terms = nil)
-    
+
+    site_date = 
+      if site_constraint == 'end'
+        end_date
+      elsif site_constraint == 'start' 
+        start_date
+      else
+        ''
+      end
+
+    # If the filter column given is one of the 'static columns' (as per the static_cols() method) then
+    # use the static friendly detail query. Otherwise use the regular friendly detail query.
     sql = 
-      if static_cols.include?(filter_column)
+      if static_cols().include?(filter_column)
         site_date_for_query = 
-          if @app.use_new_query_generation_method?()
+          if @app.use_new_query_generation_method?
             if site_date == ''
               nil
             else
@@ -169,13 +183,13 @@ class ChurnDB
         
         filter_column = filter_column.sub('_start_count', '').sub('_end_count', '')
 
-        if @app.use_new_query_generation_method?()
+        if @app.use_new_query_generation_method?
           raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
           groupby_dimension = @app.dimensions[header1]
-          raise "Invalid groupby dimension '#{groupby_dimension}'." if groupby_dimension.nil?
+          raise "Invalid groupby dimension '#{header1}'." if groupby_dimension.nil?
 
-          QueryDetailStaticFriendly.new(@db, groupby_dimension, filter_column, member_date, site_date_for_query, filter_terms).query_string 
+          QueryDetailStaticFriendly.new(@app, self, groupby_dimension, filter_column, member_date, site_date_for_query, filter_terms).query_string 
         else
           <<-SQL 
 	        select * 
@@ -194,7 +208,7 @@ class ChurnDB
           raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
           groupby_dimension = @app.dimensions[header1]
-          raise "Invalid groupby dimension '#{groupby_dimension}'." if groupby_dimension.nil?
+          raise "Invalid groupby dimension '#{header1}'." if groupby_dimension.nil?
 
           QueryDetailFriendly.new(@app, self, groupby_dimension, start_date, end_date, transactions, site_constraint, filter_column, filter_terms).query_string 
         else

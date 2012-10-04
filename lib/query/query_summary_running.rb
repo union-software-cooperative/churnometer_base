@@ -3,15 +3,18 @@ require './lib/query/query_filter'
 #--
 # Should refactor to share a common base class with QuerySummary.
 #++
+# The 'summary running' query is run when an 'interval' is supplied in the page request.
+# The filter view initiates a running total query via the 'Running total' control.
 class QuerySummaryRunning < QueryFilter
-  def initialize(churn_db, group_by, interval, start_date, end_date, with_trans, site_constraint, filter_terms)
+  # groupby_dimension: An instance of DimensionUser.
+  def initialize(churn_db, groupby_dimension, interval, start_date, end_date, with_trans, site_constraint, filter_terms)
     super(churn_db, filter_terms)
 
     if interval.empty?
       raise "Interval must be supplied. Valid values are 'week', 'month', 'quarter', 'year'."
     end
 
-    @header1 = group_by
+    @groupby_dimension = groupby_dimension
     @header2 = interval
     @start_date = start_date
     @end_date = end_date
@@ -19,9 +22,10 @@ class QuerySummaryRunning < QueryFilter
     @site_constraint = site_constraint
   end
 
-#CREATE OR REPLACE FUNCTION summary_running(IN source text, IN header1 text, IN header2 text, IN start_date timestamp without time zone, IN end_date timestamp without time zone, IN with_trans boolean, IN site_constrain text, IN selection xml, OUT row_header1 character varying, OUT row_header1_id character varying, OUT period_header character varying, OUT running_a1p_net bigint, OUT running_paying_net bigint, OUT running_net bigint, OUT period_start date, OUT period_end date, OUT start_count bigint, OUT a1p_start_count bigint, OUT a1p_real_gain bigint, OUT a1p_unchanged_gain bigint, OUT a1p_newjoin bigint, OUT a1p_rejoin bigint, OUT a1p_real_loss bigint, OUT a1p_to_paying bigint, OUT a1p_to_other bigint, OUT a1p_other_gain bigint, OUT a1p_other_loss bigint, OUT a1p_end_count bigint, OUT paying_start_count bigint, OUT paying_real_gain bigint, OUT paying_real_loss bigint, OUT paying_real_net bigint, OUT paying_other_gain bigint, OUT paying_other_loss bigint, OUT paying_end_count bigint, OUT stopped_start_count bigint, OUT stopped_real_gain bigint, OUT stopped_unchanged_gain bigint, OUT rule59_unchanged_gain bigint, OUT stopped_real_loss bigint, OUT stopped_to_paying bigint, OUT stopped_to_other bigint, OUT stopped_net bigint, OUT stopped_other_gain bigint, OUT stopped_other_loss bigint, OUT stopped_end_count bigint, OUT other_gain bigint, OUT other_loss bigint, OUT external_gain bigint, OUT external_loss bigint, OUT net bigint, OUT end_count bigint, OUT cross_check bigint, OUT posted numeric, OUT unposted numeric, OUT income_net numeric, OUT contributors bigint, OUT transactions bigint, OUT annualisedavgcontribution numeric, OUT lateness text, OUT payrollcontactdetail text, OUT paidto date, OUT paymenttype text)
   def query_string
     db = @churn_db.db
+
+    header1 = @groupby_dimension.column_base_name
 
     filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date)
 
@@ -29,10 +33,12 @@ class QuerySummaryRunning < QueryFilter
     user_selections_filter = filter.include('status', 'statusstaffid')
 
     # Used in the 'trans' block. The statusstaffid filter term should map to the 'staffid' column there.
-    trans_statusstaffid_filter = QueryFilterTerms.new
-    statusstaffid_remapped_term = filter['statusstaffid'].clone
-    statusstaffid_remapped_term.db_column_override = 'staffid'
-    trans_statusstaffid_filter.set_term(statusstaffid_remapped_term)
+    trans_statusstaffid_filter = FilterTerms.new
+    if !filter['statusstaffid'].nil?
+      statusstaffid_remapped_term = filter['statusstaffid'].clone
+      statusstaffid_remapped_term.db_column_override = 'staffid'
+      trans_statusstaffid_filter.set_term(statusstaffid_remapped_term)
+    end
 
     end_date = @end_date + 1
 
@@ -72,7 +78,7 @@ class QuerySummaryRunning < QueryFilter
 			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection 
 			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 ) -- both sides (if in user selection) if one side is paying and there was a paying change 
  			or u1.changeid in (select changeid from userselections u where a1pgain <> 0 or a1ploss <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
- 			or u1.#{db.quote_db(@header1 + 'delta')} <> 0 -- unless the changes that cancel out but are transfers between grouped items
+ 			or u1.#{db.quote_db(header1 + 'delta')} <> 0 -- unless the changes that cancel out but are transfers between grouped items
  	)
 , trans as
 (
@@ -80,10 +86,10 @@ class QuerySummaryRunning < QueryFilter
 EOS
 
 sql <<
-	if @header1 == 'statusstaffid'
+	if @groupby_dimension.id == 'statusstaffid'
     "			case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end row_header1"
 	else
-		"			case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end row_header1"
+		"			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1"
 	end
 
 sql << <<-EOS
@@ -111,10 +117,10 @@ sql << <<-EOS
 EOS
 
 sql <<
-	if @header1 == 'statusstaffid' 
+	if @groupby_dimension.id == 'statusstaffid' 
     "		case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end"
 	else
-		"		case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end"
+		"		case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end"
 	end
 
 sql << <<-EOS
@@ -124,7 +130,7 @@ sql << <<-EOS
 	(
 		-- sum changes, if status doesnt change, then the change is a transfer
 		select 
-			case when coalesce(#{db.quote_db(@header1)}::varchar(200),'') = '' then 'unassigned' else #{db.quote_db(@header1)}::varchar(200) end row_header1
+			case when coalesce(#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(200) end row_header1
 			, date_trunc(#{db.quote(@header2)}, case when changedate <= #{db.sql_date(@start_date)} then #{db.sql_date(@start_date)} else changedate end)::date as period_header
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then a1pgain else 0 end) a1p_gain
 			
@@ -175,7 +181,7 @@ sql << <<-EOS
 		from 
 			nonegations c 
 		group by 
-			case when coalesce(#{db.quote_db(@header1)}::varchar(200),'') = '' then 'unassigned' else #{db.quote_db(@header1)}::varchar(200) end 
+			case when coalesce(#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(200) end 
 			, date_trunc(#{db.quote(@header2)}, case when changedate <= #{db.sql_date(@start_date)} then #{db.sql_date(@start_date)} else changedate end)::date  
 	)
 	, withtrans as
@@ -410,7 +416,7 @@ sql << <<-EOS
 EOS
 
 # dbeswick: tbd: refactor this out as per QuerySummary
-sql << if @header1 == 'employerid'
+sql << if @groupby_dimension.id == 'employerid'
 <<-EOS
 		, e.lateness::text
 		, e.payrollcontactdetail::text
@@ -429,10 +435,10 @@ EOS
 sql << <<-EOS
 	from 
 		running_start_counts c
-		left join displaytext d1 on d1.attribute = #{db.quote(@header1)} and d1.id = c.row_header1
+		left join displaytext d1 on d1.attribute = #{db.quote(header1)} and d1.id = c.row_header1
 EOS
 
-if @header1 == 'employerid'
+if @groupby_dimension.id == 'employerid'
 	sql << "left join employer e on c.row_header1 = e.companyid\n"
 end
 

@@ -1,4 +1,5 @@
 require './lib/query/query_detail'
+require './lib/query/detail_friendly_dimension_sql_generator'
 
 class QueryDetailFriendly < QueryDetail
   def initialize(churn_app, churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
@@ -14,7 +15,7 @@ class QueryDetailFriendly < QueryDetail
 
   def query_string
     friendly_generators = display_dimensions.collect do |dimension|
-      FriendlyColumnSQLGenerator.new(dimension, @churn_db)
+      DetailFriendlyDimensionSQLGenerator.new(dimension, @churn_db)
     end
     
 		sql = <<-EOS
@@ -30,9 +31,10 @@ with detail as
 EOS
 		
 		sql << "\n, " + friendly_generators.collect{ |g| g.wherearetheynow_select_clause }.join("\n, ")
+# dbeswick: find out why these fields were not coalesced with new<column> as the others were in the
+# original sql.
 #	, d16.displaytext AS currentcompany
 #	, d4.displaytext AS currentbranch
-#	, coalesce(d8.displaytext, c.newnuwelectorate::varchar(50)) as currentelectorate
 #	, d6.displaytext AS currentindustry
 	
 		sql << <<-EOS
@@ -79,15 +81,14 @@ EOS
 		sql << "\n, " + friendly_generators.collect{ |g| g.final_select_clause }.join("\n, ")
 
 		sql << <<-EOS
+-- dbeswick: find out why these dimensions were not coalesced with new<column> as the others were in the 
+-- original sql.
 --	, d15.displaytext AS oldcompany
 --	, d16.displaytext AS newcompany
---	, n.currentcompany
 --	, d3.displaytext AS oldbranch
 --	, d4.displaytext AS newbranch
---	, n.currentbranch
 --	, d5.displaytext AS oldindustry
 --	, d6.displaytext AS newindustry
---	, n.currentindustry
 	, m.contactdetail::text
 	, m.followupnotes::text
 	, m.paymenttypeid::text
@@ -126,69 +127,5 @@ EOS
 
     puts sql
     sql
-  end
-
-protected
-	class FriendlyColumnSQLGenerator
-    def initialize(dimension, churn_db)
-      @dimension = dimension
-      @db = churn_db
-    end
-
-    def table_alias
-      "dim_#{@dimension.index}"
-    end
-
-    # should be in Dimension instead?
-    def old_column_name
-      'old' + @dimension.column_base_name
-    end
-
-    # should be in Dimension instead?
-    def new_column_name
-      'new' + @dimension.column_base_name
-    end
-
-    def wherearetheynow_select_output_column
-      'current' + @dimension.column_base_name
-    end
-
-    def wherearetheynow_select_clause
-      "coalesce(#{@db.db.quote_db(table_alias())}.displaytext, c.#{@db.db.quote_db(new_column_name())}::varchar(50)) as #{@db.db.quote_db(wherearetheynow_select_output_column())}"
-    end
-
-    def wherearetheynow_join_displaytext_clause
-   		"LEFT JOIN displaytext #{@db.db.quote_db(table_alias())} ON #{@db.db.quote_db(table_alias())}.attribute::text = #{@db.db.quote(@dimension.column_base_name)}::text AND c.#{@db.db.quote_db(new_column_name())}::character varying(20)::text = #{@db.db.quote_db(table_alias())}.id::text"
-    end
-
-    def final_select_clause
-      <<-EOS
-	coalesce(#{@db.db.quote_db('old' + table_alias())}.displaytext, c.#{@db.db.quote_db(old_column_name())}::varchar(50)) as #{@db.db.quote_db(old_column_name())}
-	, coalesce(#{@db.db.quote_db('new' + table_alias())}.displaytext, c.#{@db.db.quote_db(new_column_name())}::varchar(50)) as #{@db.db.quote_db(new_column_name())}
-	, n.#{@db.db.quote_db(wherearetheynow_select_output_column())}
-EOS
-    end
-
-    def final_join_displaytext_clause
-      <<-EOS
-		LEFT JOIN displaytext #{@db.db.quote_db('old' + table_alias())} ON #{@db.db.quote_db('old' + table_alias())}.attribute::text = #{@db.db.quote(@dimension.column_base_name)}::text AND c.#{@db.db.quote_db(old_column_name())}::character varying(20)::text = #{@db.db.quote_db('old' + table_alias())}.id::text
-		LEFT JOIN displaytext #{@db.db.quote_db('new' + table_alias())} ON #{@db.db.quote_db('new' + table_alias())}.attribute::text = #{@db.db.quote(@dimension.column_base_name)}::text AND c.#{@db.db.quote_db(new_column_name())}::character varying(20)::text = #{@db.db.quote_db('new' + table_alias())}.id::text
-EOS
-    end
-
-    def groupby_displaytext_clause
-      <<-EOS
-		#{@db.db.quote_db('old' + table_alias())}.displaytext
-		, #{@db.db.quote_db('new' + table_alias())}.displaytext
-EOS
-    end
-
-    def groupby_value_clause
-      <<-EOS
-		c.#{@db.db.quote_db(old_column_name())}
-	, c.#{@db.db.quote_db(new_column_name())}
-	, n.#{@db.db.quote_db(wherearetheynow_select_output_column())}
-EOS
-    end
   end
 end
