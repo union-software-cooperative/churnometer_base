@@ -25,7 +25,7 @@ class QueryDetailStatic < QueryDetailBase
       else
         modified_filter = QueryFilterTerms.new
 
-        site_query = QuerySitesAtDate.new(@churn_db, @header1, @site_date, filter_terms())
+        site_query = QuerySitesAtDate.new(@churn_db, @site_date, filter_terms())
         site_results = site_query.execute
 
         if site_results.num_tuples == 0

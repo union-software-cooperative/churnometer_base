@@ -63,8 +63,12 @@ protected
   # Returns filter terms modified as appropriate given the supplied site constraint.
   # site_constraint should be empty, 'start' or 'end'.
   # start_date, end_date are the start and end date under consideration for the current query.
-  # header1 is the groupby term for the current query.
-  def modified_filter_for_site_constraint(filter_terms, site_constraint, start_date, end_date, header1)
+  def modified_filter_for_site_constraint(
+     filter_terms, 
+     site_constraint, 
+     start_date, 
+     end_date)
+
     if site_constraint.empty?
       filter_terms
     else
@@ -81,7 +85,7 @@ protected
         end
       
       # override the filter to be sites as at the start or end
-      site_query = QuerySitesAtDate.new(@churn_db, header1, dte, filter_terms())
+      site_query = QuerySitesAtDate.new(@churn_db, dte, filter_terms())
       site_results = site_query.execute
 
       if site_results.num_tuples == 0

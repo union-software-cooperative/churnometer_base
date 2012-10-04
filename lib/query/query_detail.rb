@@ -1,8 +1,8 @@
 require './lib/query/query_detail_base'
 
 class QueryDetail < QueryDetailBase
-  def initialize(churn_db, header1, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
-    super(churn_db, header1, filter_column, filter_param_hash)
+  def initialize(churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
+    super(churn_db, groupby_dimension, filter_column, filter_param_hash)
     @start_date = start_date
     @end_date = end_date
     @with_trans = with_trans
@@ -60,16 +60,20 @@ class QueryDetail < QueryDetailBase
   def query_string
     db = @churn_db.db
 
-    filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date, @header1)
+    header1 = @groupby_dimension.column_base_name
+
+    filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date)
 
     non_status_filter = filter.exclude('status', 'statusstaffid')
     user_selections_filter = filter.include('status', 'statusstaffid')
 
     # Used in the 'trans' block. The statusstaffid filter term should map to the 'staffid' column there.
-    trans_statusstaffid_filter = QueryFilterTerms.new
-    statusstaffid_remapped_term = filter['statusstaffid'].clone
-    statusstaffid_remapped_term.db_column_override = 'staffid'
-    trans_statusstaffid_filter.set_term(statusstaffid_remapped_term)
+    trans_statusstaffid_filter = FilterTerms.new
+    if !filter['statusstaffid'].nil?
+      statusstaffid_remapped_term = filter['statusstaffid'].clone
+      statusstaffid_remapped_term.db_column_override = 'staffid'
+      trans_statusstaffid_filter.set_term(statusstaffid_remapped_term)
+    end
 
     with_trans = @with_trans && non_transaction_filter_column?(@filter_column) == false
 
@@ -108,7 +112,7 @@ sql = <<-EOS
 			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection 
 			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 ) -- both sides (if in user selection) if one side is paying and there was a paying change 
  			or u1.changeid in (select changeid from userselections u where a1pgain <> 0 or a1ploss <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
- 			or u1.#{db.quote_db(@header1 + 'delta')} <> 0 -- unless the changes that cancel out but are transfers between grouped items
+ 			or u1.#{db.quote_db(header1 + 'delta')} <> 0 -- unless the changes that cancel out but are transfers between grouped items
  	)
 	, trans as
 	(
@@ -116,10 +120,10 @@ sql = <<-EOS
 EOS
 
 sql <<
-	if @header1 == 'statusstaffid'
+	if header1 == 'statusstaffid'
     "			case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end row_header1"
 	else
-		"			case when coalesce(u1.#{@header1}::varchar(200),'') = '' then 'unassigned' else u1.#{@header1}::varchar(200) end row_header1"
+		"			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1"
 	end
 
 sql << <<-EOS
@@ -144,10 +148,10 @@ sql << <<-EOS
 EOS
 
 sql <<
-	if @header1 == 'statusstaffid' 
+	if header1 == 'statusstaffid' 
     "		case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end"
 	else
-		"		case when coalesce(u1.#{db.quote_db(@header1)}::varchar(200),'') = '' then 'unassigned' else u1.#{db.quote_db(@header1)}::varchar(200) end"
+		"		case when coalesce(u1.#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else u1.#{db.quote_db(header1)}::varchar(200) end"
 	end
 
 sql << <<-EOS
@@ -160,7 +164,7 @@ sql << <<-EOS
 		select 
 			c.memberid
 			, c.changeid::bigint	
-			, case when coalesce(#{db.quote_db(@header1)}::varchar(50),'') = '' then 'unassigned' else #{db.quote_db(@header1)}::varchar(50) end row_header
+			, case when coalesce(#{db.quote_db(header1)}::varchar(50),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(50) end row_header
 			, a1pgain::bigint a1p_real_gain
 			, case when _changeid is null then a1pgain else 0 end::bigint a1p_unchanged_gain
 			, case when coalesce(_status, '') = '' then a1pgain else 0 end::bigint a1p_newjoin
@@ -333,7 +337,7 @@ sql << <<-EOS
 		, c.unposted
 	from
 		withtrans c
-		left join displaytext d1 on d1.attribute = #{db.quote(@header1)} and d1.id = c.row_header
+		left join displaytext d1 on d1.attribute = #{db.quote(header1)} and d1.id = c.row_header
 EOS
 
   sql << where_clause_for_filter_column(@filter_column)
