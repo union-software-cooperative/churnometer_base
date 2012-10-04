@@ -4,8 +4,8 @@ class ChurnRequestOverride < ChurnRequest
   # Override ChurnDB dates
   def query_defaults
     super.rmerge({
-      'startDate' => '2012-01-01',
-      'endDate'   => '2012-02-08',
+      'startDate' => '2011-08-14',
+      'endDate'   => '2012-10-04',
       'interval'  => 'none'
     })
   end
@@ -92,7 +92,7 @@ describe "Tables" do
     click_link "Summary"
 
     within 'table#table-summary tbody tr:nth-child(1)' do
-      click_link "230"
+      click_link "63"
     end
     
     page.should have_content("Start Date") 
@@ -103,11 +103,11 @@ describe "Tables" do
   end
   
   it "Displays transfer warning" do
-    visit "/?f[branchid]=NV&group_by=lead&f[lead]=bjacobi&group_by=org"
+    visit "/?group_by=org&startDate=14 August 2011&endDate= 4 October 2012&interval=none&f!0[branchid]=b2&f[lead]=l2"
     
     within '#filters' do
-      page.should have_content "Branch: Victorian Branch"
-      page.should have_content "Lead Organiser: Belinda Jacobi"
+      page.should have_content "Branch: Warehousing"
+      page.should have_content "Lead Organiser: Djura Elango"
     end
     
     within('#filter') do
@@ -121,8 +121,8 @@ describe "Tables" do
     end
     
     click_link "Transfers"
-    within('table#transferDates tbody tr:nth-child(8)') do
-      row_has "12 November 2011", %w{[before 4978 754 after]}
+    within('table#transferDates tbody tr:nth-child(4)') do
+      row_has "6 December 2011", %w{[before 13 4 after]}
     end
     
     click_link "sites as assigned at the end of the period"
@@ -137,12 +137,7 @@ describe "Tables" do
     
     click_link "Paying"
     within 'table#table-paying tfoot' do
-# Something has happened because results have changed
-# My only hope is that I wrote this test before 4pm on the 22 March  
-# The next test failed too, but only the paying at end values changed    
-#      row_has "", %w{9508 1459 -1367 92 -39 9653}
-      row_has "", %w{9513 1459 -1373 93 -39 9653}
-
+      row_has "", %w{148 32 -19 1 -1 161}
     end
     
     within '#filters' do
@@ -152,16 +147,14 @@ describe "Tables" do
     
     click_link "Paying"
     within 'table#table-paying tfoot' do
-#      row_has "", %w{4333 628 -701 15 -25 4250}
-      row_has "", %w{4333 629 -701 15 -25 4251}
-
+      row_has "", %w{191 27 -19 0 -1 198}
     end
     
     # Can drill down to members held by organiser the start but not at the end
     within 'table#table-paying tbody tr:nth-child(1) td:nth-child(7)' do
       # beware if any of the first 7 rows change their name, the list will be 
       # reordered and subsequent tests will fail
-      click_link "10"
+      click_link "2"
     end
     
     within '#filters' do
@@ -169,23 +162,23 @@ describe "Tables" do
     end
     
     click_link "Member Summary"
-    within 'table#table-membersummary tbody tr:nth-child(9)' do
-      row_has "1st Fleet Pty Ltd", "6 February 2012", "Bogve, Mirko (NV520348)", %w{ Paying Paying Paying 1st 1st 1st	}
+    within 'table#table-membersummary tbody tr:nth-child(2)' do
+      row_has "Abigail's Store", "27 January 2012", "McIvor, Maja (m18146)", %w{ Paying Paying Paying Abigail's Abigail's Abigail's }
     end
   end
   
-  it "blah blah" do
-    visit "/?column=&startDate=14+August+2011&endDate=22+March+2012&group_by=companyid&interval=none&f%5Bbranchid%5D=NV&f%5Blead%5D=bjacobi&site_constraint=start&lock%5Bcompanyid%5D="
+  it "can show paying members at start date" do
+    visit "/?group_by=companyid&startDate=14%20August%202011&endDate=22%20March%202012&interval=none&f!0[branchid]=b2&f!0[lead]=l2&site_constraint=start"
     
     
     click_link "Paying"
-    within 'table#table-paying tbody tr:nth-child(1)  td:nth-child(7)' do
-      click_link "10"
+    within 'table#table-paying tbody tr:nth-child(1)  td:nth-child(2)' do
+      click_link "2"
     end
     
     click_link "Member Summary"
-    within 'table#table-membersummary tbody tr:nth-child(9)' do
-      row_has "1st Fleet Pty Ltd", "6 February 2012", "Bogve, Mirko (NV520348)", %w{ Paying Paying Paying 1st 1st 1st	}
+    within 'table#table-membersummary tbody tr:nth-child(2)' do
+      row_has "Abigail's Store", "7 August 2011", "McIvor, Maja (m18146)","", "Paying", "Paying","", "Abigail's Store", "Abigail's Store"
     end
   end
   
@@ -193,89 +186,89 @@ describe "Tables" do
   def check_home_summary 
     click_link "Summary"
     within 'table#table-summary tbody tr:nth-child(1)' do
-      row_has "General Branch", %w{230 23 10147 302 -437 -135 10012 -39 9114 633364.37}
+      row_has "Construction", %w{55 -8 103 63 -46 17 120 -28 152 50380.59}
     end
-    within 'table#table-summary tbody tr:nth-child(3)' do
-      row_has "Victorian Branch", %w{320 -69 22259 361 -413 -52 22207 -219 16665 959220.00}
+    within 'table#table-summary tbody tr:nth-child(2)' do
+      row_has "Warehousing", %w{77 -6 215 90 -48 42 257 -21 287 124292.80}
     end
     
     click_link "Paying" 
     within 'table#table-paying tbody tr:nth-child(1)' do
-      row_has "General Branch", %w{10147 302 -437 0 0 10012}
+      row_has "Construction", %w{103 63 -46 0 0 120}
     end
-    within 'table#table-paying tbody tr:nth-child(3)' do
-      row_has "Victorian Branch", %w{22259 361 -413 0 0 22207}
+    within 'table#table-paying tbody tr:nth-child(2)' do
+      row_has "Warehousing", %w{215 90 -48 0 0 257}
     end
   end
   
   def drill_down_into_branch
-    click_link "Victorian Branch"
+    click_link "Warehousing"
     within '#filters' do
-      page.should have_content "Branch: Victorian Branch"
+      page.should have_content "Branch: Warehousing"
     end
     
     click_link "Summary"
-    within 'table#table-summary tbody tr:nth-child(1)' do
-      row_has "Belinda Jacobi", %w{173 -5 10107 178 -187 -9 9962 -90 7245 401622.41}
-    end
     within 'table#table-summary tbody tr:nth-child(2)' do
-      row_has "Chris Kalomiris", %W{0 0 3 0 0 0 3 0 2 81.20}
+      row_has "Djura Elango", %w{53 -5 135 62 -31 31 140 -11 240 70204.88}
+    end
+    within 'table#table-summary tbody tr:nth-child(3)' do
+      row_has "Gabriela Gear", %W{17 0 43 20 -13 7 107 -8 126 43188.87}
     end
     
     click_link "Paying" 
-    within 'table#table-paying tbody tr:nth-child(1)' do
-      row_has "Belinda Jacobi", %w{10107 178 -187 4 -140 9962}
-    end
     within 'table#table-paying tbody tr:nth-child(2)' do
-      row_has "Chris Kalomiris", %w{3 0 0 0 0 3}
+      row_has "Djura Elango", %w{135 62 -31 97 -123 140}
+    end
+    within 'table#table-paying tbody tr:nth-child(3)' do
+      row_has "Gabriela Gear", %w{43 20 -13 116 -59 107}
     end
   end
   
   def drill_down_into_lead_organiser
-    click_link "Belinda Jacobi"
+    click_link "Djura Elango"
     within '#filters' do
-      page.should have_content "Branch: Victorian Branch"
-      page.should have_content "Lead Organiser: Belinda Jacobi"
+      page.should have_content "Branch: Warehousing"
+      page.should have_content "Lead Organiser: Djura Elango"
     end
     
     click_link "Summary"
     within 'table#table-summary tbody tr:nth-child(1)' do
-      row_has "Adam Auld", %w{15 -1 1505 20 -27 -7 1498 -21 1171 57244.15}      
+      row_has "Alexandrus Anzaldi", %w{1 0 10 2 -1 1 12 -1 16 6458.68}      
     end
     within 'table#table-summary tbody tr:nth-child(2)' do
-      row_has "Belinda Jacobi", %w{8 -3 1166 78 -27 51 1215 -8 1063 54743.63}
+      row_has "Deepika Dume", %w{2 0 10 8 -5 3 34 -1 42 15208.01}
     end
     
     click_link "Paying" 
     within 'table#table-paying tbody tr:nth-child(1)' do
-      row_has "Adam Auld", %w{1505 20 -27 0 0 1498}
+      row_has "Alexandrus Anzaldi", %w{10 2 -1 8 -7 12}      
     end
-    within 'table#table-paying tbody tr:nth-child(6)' do
-      row_has "Gayle Burmeister", %w{613 13 -15 4 -7 608}
+    within 'table#table-paying tbody tr:nth-child(2)' do
+      row_has "Deepika Dume", %w{10 8 -5 34 -13 34}
     end
   end
   
   def drill_down_into_organiser
-    click_link "Gayle Burmeister" 
+    click_link "Laurie Magdoza" 
     within '#filters' do
-      page.should have_content "Branch: Victorian Branch"
-      page.should have_content "Lead Organiser: Belinda Jacobi"
-      page.should have_content "Organiser: Gayle Burmeister"
+      page.should have_content "Branch: Warehousing"
+      page.should have_content "Lead Organiser: Djura Elango"
+      page.should have_content "Organiser: Laurie Magdoza"
     end
     click_link "Summary"
-    within 'table#table-summary tbody tr:nth-child(1)' do
-      row_has "3D Geoshapes Australia Pty Ltd", %w{0 0 1 0 0 0 1 0 1 40.60}
+    within 'table#table-summary tbody tr:nth-child(8)' do
+      row_has "Garner's Store", %w{5 -1 3 4 -1 3 0 0 6 1075.30}
     end
-    within 'table#table-summary tbody tr:nth-child(15)' do
-      row_has "Charles Parsons (Vic) P/L", %w{7 0 2 4 0 4 0 0 6 196.23}
+    within 'table#table-summary tbody tr:nth-child(16)' do
+      row_has "Lincoln's Store", %w{2 0 6 1 0 1 0 0 7 1074.10}
     end
     
     click_link "Paying" 
-    within 'table#table-paying tbody tr:nth-child(1)' do
-      row_has "3D Geoshapes Australia Pty Ltd", %w{1 0 0 0 0 1}
+    within 'table#table-paying tbody tr:nth-child(8)' do
+      row_has "Garner's Store", %w{3 4 -1 0 -6 0}
     end
-    within 'table#table-paying tbody tr:nth-child(15)' do
-      row_has "Charles Parsons (Vic) P/L", %w{2 4 0 0 -6 0}
+    within 'table#table-paying tbody tr:nth-child(16)' do
+      row_has "Lincoln's Store", %w{6 1 0 0 -7 0}
     end
   end
  
