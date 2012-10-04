@@ -10,4 +10,6 @@ database:
   dbname: 
   user: 
   password:
-  facttable: 
+  facttable:
+demo: false
+use_new_query_generation_method: true 
