@@ -5,9 +5,10 @@ class ChurnPresenter_Form
   include ChurnPresenter_Helpers
   include Settings
 
-  def initialize(request, group_names)
+  def initialize(app, request, group_dimensions)
+    @app = app
     @request = request
-    @group_names = group_names
+    @group_dimensions = group_dimensions
   end
   
   def [](index)
@@ -25,11 +26,13 @@ class ChurnPresenter_Form
         f1.each do |column_name, ids|
           Array(ids).each do |id|
             if (filter_value(id) != '')
+              dimension = @group_dimensions.dimension_for_id(column_name)
+
               i = (Struct.new(:name, :group, :id, :display, :type)).new
               i[:name] = column_name
-              i[:group] = @group_names[column_name]
+              i[:group] = dimension.name
               i[:id] = filter_value(id)
-              i[:display] = @request.db.get_display_text(column_name, filter_value(id))
+              i[:display] = @request.db.get_display_text(dimension, filter_value(id))
               i[:type] = (id[0] == '-' ? "disable" : ( id[0] == '!' ? "invert" : "apply" ))
               @filters << i
             end
@@ -48,15 +51,15 @@ class ChurnPresenter_Form
   def output_group_selector(selected_group_id, control_name, control_id='')
     output = "<select name='#{control_name}' id='#{control_id}'>"
 
-    @group_names.each do |column_name, name|
+    @group_dimensions.each do |dimension|
       attributes = 
-        if column_name == selected_group_id
+        if dimension.id == selected_group_id
           "selected='selected'"
         else
           ""
         end
       
-      output << "<option value='#{h column_name}' #{attributes}>#{h name}</option>"
+      output << "<option value='#{h dimension.id}' #{attributes}>#{h dimension.name}</option>"
     end
 
     output << "</select>"

@@ -16,8 +16,8 @@ class ChurnometerApp
   end
 
   # The first iteration of Churnometer retrieved its results by calling SQL functions.
-  # Set 'use_new_query_generation_method: true' in config.yaml to use the new method that produces the same
-  # output, but builds the query string in the Ruby domain rather than SQL.
+  # Set 'use_new_query_generation_method: true' in config.yaml to use the new method that produces the 
+  # same output, but builds the query string in the Ruby domain rather than SQL.
   def use_new_query_generation_method?
     config_value('use_new_query_generation_method') == true
   end
@@ -53,6 +53,26 @@ class ChurnometerApp
       end
   end
 
+  # The dimensions that should be displayed to the user in the filter form's 'groupby' dropdown.
+  def groupby_display_dimensions(is_leader, is_admin)
+    roles = []
+
+    if is_leader
+      roles << 'leader'
+    end
+    
+    if is_admin
+      roles << 'admin'
+    end
+
+    final_dimensions = custom_dimensions().select do |dimension|
+      dimension.roles_can_access?(roles)
+    end
+
+    Dimensions.new(final_dimensions)
+  end
+
+  # The dimension that expresses work site or company information.
   def work_site_dimension
     dimensions().dimension_for_id_mandatory(config_value('work_site_dimension_id'))
   end
@@ -61,6 +81,18 @@ class ChurnometerApp
     config_hash().keys
   end
 
+  # This method is public mostly for the use of legacy code that uses the old settings method.
+  #
+  # When creating new config data, please create an accessor for that data that calls config_value and
+  # returns appropriate data, rather than asking users of the data to call config_value themselves.
+  #
+  # i.e.: 
+  #
+  # churnometer_app.work_site_dimension
+  #
+  # instead of
+  #
+  # churnometer_app.dimensions[churnometer_app.config_value('work_site_dimension')]
   def config_value(config_key)
     config_hash().each_value do |hash|
       value = hash[config_key]

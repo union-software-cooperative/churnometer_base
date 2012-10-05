@@ -4,8 +4,11 @@ class Dimensions
   class MissingDimensionException < Exception
   end
 
-  def initialize
+  # dimensions: Optional dimension instances with which to initialize the Dimensions object.
+  def initialize(dimensions = [])
     @id_to_dimension = {}
+
+    dimensions.each{ |dimension| add(dimension) }
   end
 
   def initialize_copy(rhs)
@@ -83,6 +86,7 @@ end
 # A customisable dimension that is set up by users in the config file.
 class DimensionUser < Dimension
   attr_reader :name
+  attr_reader :allowed_roles
 
   # The index of the dimension as given in the user config file.
   attr_reader :index
@@ -97,10 +101,16 @@ class DimensionUser < Dimension
   def from_config_hash(config_hash)
     @id = config_hash['id'].downcase
     @name = config_hash['name']
+    @allowed_roles = config_hash['roles'] || ['any']
   end
 
   # The 'base name' of the column that stores data for the dimension in the memberfact tables.
   def column_base_name
     "col#{@index}"
+  end
+
+  def roles_can_access?(role_names)
+    @allowed_roles.include?('any') ||
+      (!@allowed_roles.include?('none') && role_names.any?{ |s| @allowed_roles.include?(s) })
   end
 end

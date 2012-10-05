@@ -1,4 +1,5 @@
 use_new_query_generation_method: true
+work_site_dimension_id: companyid
 dimensions:
 	0:
 	    id: branchid
@@ -31,10 +32,12 @@ dimensions:
         id: del
         name: Delegate Training
 		drilldown_target: companyid
+		roles: none
 	8: 
         id: hsr
         name: HSR Training
 		drilldown_target: companyid
+		roles: none
 	9: 
         id: gender
         name: Gender
@@ -54,7 +57,7 @@ dimensions:
         id: statusstaffid
         name: Data Entry
 		drilldown_target: companyid
-		role_restriction: leader
+		roles: leader
 	14: 
         id: supportstaffid
         name: Support Staff
@@ -67,7 +70,7 @@ dimensions:
         id: hostemployerid
         name: Owner
 		drilldown_target: companyid
-		role_restriction: admin
+		roles: admin
 	17: 
         id: employmenttypeid
         name: Employment Type
