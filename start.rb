@@ -64,7 +64,7 @@ class Churnobyl < Sinatra::Base
     cache_control :public, :max_age => 28800
     protected!
     
-    presenter = ChurnPresenter.new cr
+    presenter = ChurnPresenter.new(@app, cr)
 
     erb :index, :locals => { :model => presenter }
   end

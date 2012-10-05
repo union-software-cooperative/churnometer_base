@@ -6,8 +6,9 @@ class ChurnPresenter_Graph
   include Settings
   include ChurnPresenter_Helpers
   
-  def initialize(request)
+  def initialize(app, request)
     @request = request
+    @app = app
   end
     
   def series_count

@@ -6,8 +6,9 @@ class ChurnPresenter_Target
   include ChurnPresenter_Helpers
   include Settings
   
-  def initialize(request)
+  def initialize(app, request)
     @request=request
+    @app=app
   end
   
   def weeks

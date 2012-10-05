@@ -305,13 +305,14 @@ class ChurnDB
      SQL
   end
   
-  def get_display_text(column, id)
+  def get_display_text(dimension, id)
+    raise "A Dimension instance must be supplied." if !dimension.kind_of?(Dimension)
     t = "error!"
     
     if id == "unassigned" 
       t = "unassigned"
     else
-      val = ex(get_display_text_sql(column,id))
+      val = ex(get_display_text_sql(dimension.column_base_name, id))
       
       if val.count != 0 
         t = val[0]['displaytext']

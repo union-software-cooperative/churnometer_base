@@ -34,38 +34,6 @@ module Settings
     }
   end
 
-  def group_names(is_leader, is_admin)
-    group_by = {
-      "branchid"      => "Branch",
-      "lead"          => "Lead Organiser",
-      "org"           => "Organiser",
-      "areaid"        => "Area",
-      "companyid"     => "Work Site",
-      "employerid"    => "Employer",
-      "industryid"    => "Industry",
-      #"del"           => "Delegate Training",
-      #"hsr"           => "HSR Training",
-      "nuwelectorate" => "Electorate",
-      "state"         => "State",
-      "paymenttypeid" => "Payment Type",
-      "employmenttypeid" => "Employment Type",
-      "feegroupid"    => "Fee Group",
-      "supportstaffid"       => "Support Staff"
-    }
-    
-    if is_leader
-      group_by = group_by.merge({"statusstaffid" => "Data Entry"})
-    end
-    
-    if is_admin
-      group_by = group_by.merge({
-        "hostemployerid"  => "Owner"  
-      })
-    end
-    
-    group_by
-  end
-
   # The default class used to execute summary queries.
   def summary_query_class
     :QuerySummary
@@ -351,11 +319,12 @@ module Settings
      end
      
      def col_names 
-       group_names = group_names(@request.auth.leader?, @request.auth.admin?)
+       # dbeswick: temporary until Settings is refactored away.
+       raise "Class '#{self.class}' must provide the churnometer app instance in @app because it mixes in the Settings module." if @app.nil?
 
        hash = {
-         'row_header1'     => group_names[(@request.params['group_by'] || 'branchid')].downcase,
-         'row_header'     => group_names[(@request.params['group_by'] || 'branchid')].downcase,
+         'row_header1'     => (@app.dimensions[@request.params['group_by']] || @app.dimensions['branchid']).name.downcase,
+         'row_header'     => (@app.dimensions[@request.params['group_by']] || @app.dimensions['branchid']).name.downcase,
          'a1p_real_gain'   => 'total cards in',
          'a1p_to_other'    => 'cards failed',
          'paying_start_count' => 'paying at start date',

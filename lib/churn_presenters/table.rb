@@ -6,12 +6,13 @@ class ChurnPresenter_Tables
   include Enumerable
   include Settings
   
-  def initialize(request)
+  def initialize(app, request)
+    @app = app
     @request = request
     
     @tables = Array.new
     (@request.type == :summary ? summary_tables : member_tables).each do | name, columns |
-      @tables << (ChurnPresenter_Table.new request, name, columns)
+      @tables << (ChurnPresenter_Table.new app, request, name, columns)
     end
   end
   
@@ -36,7 +37,8 @@ class ChurnPresenter_Table
   include Settings
   include ChurnPresenter_Helpers
   
-  def initialize(request, name, columns)
+  def initialize(app, request, name, columns)
+    @app = app
     @id = name.sub(' ', '').downcase
     @name = name
     @columns = columns.reject{ |c| !request.data[0].include?(c) } #include only columns in both data and column array

@@ -95,7 +95,7 @@ protected
         modified_filter.append(work_site_dimension, 'none', false)
       else
         site_results.each do |record| 
-          modified_filter.append(work_site_dimension, record['companyid'], false)
+          modified_filter.append(work_site_dimension, record[work_site_dimension.column_base_name], false)
         end
       end
 

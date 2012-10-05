@@ -15,17 +15,24 @@ class ChurnPresenter
   include Settings
   include ChurnPresenter_Helpers
   
-  def initialize(request)
+  def initialize(app, request)
+    @app = app
     @request = request
     
     @warnings = @request.warnings
-    @transfers = ChurnPresenter_Transfers.new request
+    @transfers = ChurnPresenter_Transfers.new app, request
     @diags = ChurnPresenter_Diags.new request, @transfers.getmath_transfers?
-    @form = ChurnPresenter_Form.new(request, request_group_names())
-    @target = ChurnPresenter_Target.new request if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary && !@request.data_entry_view?
-    @graph = ChurnPresenter_Graph.new request
+
+    @form = ChurnPresenter_Form.new(
+      app,
+			request,
+      request_group_dimensions()
+    )
+
+    @target = ChurnPresenter_Target.new(app, request) if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary && !@request.data_entry_view?
+    @graph = ChurnPresenter_Graph.new(app, request)
     @graph = nil unless (@graph.line? || @graph.waterfall?)
-    @tables = ChurnPresenter_Tables.new request if has_data?
+    @tables = ChurnPresenter_Tables.new(app, request) if has_data?
     @tables ||= {}
     
     if !has_data?
@@ -50,10 +57,23 @@ class ChurnPresenter
   end
 
   # Properties
+  
+  # Dimensions applicable to the request.
+  def request_group_dimensions
+    @request_group_dimensions ||=
+      @app.groupby_display_dimensions(@request.auth.leader?, @request.auth.admin?)
+  end
 
-  # An array of group names applicable to the current request.
+  # Mappings from user dimension column names to descriptions
   def request_group_names
-    @group_names ||= group_names(@request.auth.leader?, @request.auth.admin?)
+    if @request_group_names.nil?
+      @request_group_names = {}
+      request_group_dimensions().each do |dimension|
+        @request_group_names[dimension.id] = dimension.name
+      end
+    end
+    
+    @request_group_names
   end
 
   def has_data?

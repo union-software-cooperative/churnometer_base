@@ -3,7 +3,7 @@ require './lib/query/detail_friendly_dimension_sql_generator'
 
 class QueryDetailStaticFriendly < QueryDetailStatic
   def initialize(churn_app, churn_db, groupby_dimension, filter_column, member_date, site_date, filter_terms)
-    super(churn_db, groupby_dimension, filter_column, member_date, site_date, filter_terms)
+    super(churn_app, churn_db, groupby_dimension, filter_column, member_date, site_date, filter_terms)
 
     @app = churn_app
   end
