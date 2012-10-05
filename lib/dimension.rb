@@ -1,6 +1,9 @@
 class Dimensions
   include Enumerable
 
+  class MissingDimensionException < Exception
+  end
+
   def initialize
     @id_to_dimension = {}
   end
@@ -44,6 +47,17 @@ class Dimensions
   end
 
   alias_method :[], :dimension_for_id
+
+  # As for dimension_for_id, but raises an exception if the dimension isn't present.
+  def dimension_for_id_mandatory(id)
+    result = dimension_for_id(id)
+
+    if result.nil?
+      raise MissingDimensionException, "Dimension with id '#{id}' is missing (dimension is undefined.)"
+    end
+
+    result
+  end
 
   # Iterates through each Dimension instance held by the object.
   def each(&block)

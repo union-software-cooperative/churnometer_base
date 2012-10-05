@@ -2,9 +2,10 @@ require './lib/query/query_memberfact'
 
 # A query of Churnometer data that makes use of filtering by dimension.
 class QueryFilter < QueryMemberfact
-  def initialize(db, filter_terms)
+  def initialize(churnometer_app, db, filter_terms)
     super(db)
     @filter_terms = filter_terms
+    @app = churnometer_app
   end
 
 protected
@@ -72,7 +73,7 @@ protected
     if site_constraint.empty?
       filter_terms
     else
-      modified_filter = QueryFilterTerms.new
+      modified_filter = FilterTerms.new
 
       # return the results for sites found at either the end of the beginning of this selection
       # this is a way of ruling out the effect of transfers, to determine what the targets should be
@@ -85,14 +86,16 @@ protected
         end
       
       # override the filter to be sites as at the start or end
-      site_query = QuerySitesAtDate.new(@churn_db, dte, filter_terms())
+      work_site_dimension = @app.work_site_dimension
+
+      site_query = QuerySitesAtDate.new(@app, @churn_db, dte, filter_terms())
       site_results = site_query.execute
 
       if site_results.num_tuples == 0
-        modified_filter.append('companyid', 'none', false)
+        modified_filter.append(work_site_dimension, 'none', false)
       else
         site_results.each do |record| 
-          modified_filter.append('companyid', record['companyid'], false)
+          modified_filter.append(work_site_dimension, record['companyid'], false)
         end
       end
 
@@ -116,6 +119,7 @@ class FilterTerm
 
   def initialize(dimension)
     @dimension = dimension
+    raise "A Dimension instance must be supplied." if !@dimension.kind_of?(Dimension)
     @values = []
     @exclude_values = []
   end

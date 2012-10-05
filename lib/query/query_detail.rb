@@ -1,8 +1,8 @@
 require './lib/query/query_detail_base'
 
 class QueryDetail < QueryDetailBase
-  def initialize(churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
-    super(churn_db, groupby_dimension, filter_column, filter_param_hash)
+  def initialize(app, churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
+    super(app, churn_db, groupby_dimension, filter_column, filter_param_hash)
     @start_date = start_date
     @end_date = end_date
     @with_trans = with_trans
@@ -120,7 +120,7 @@ sql = <<-EOS
 EOS
 
 sql <<
-	if header == 'statusstaffid'
+	if @groupby_dimension.id == 'statusstaffid'
     "			case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end row_header1"
 	else
 		"			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1"

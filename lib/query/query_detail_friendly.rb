@@ -3,7 +3,7 @@ require './lib/query/detail_friendly_dimension_sql_generator'
 
 class QueryDetailFriendly < QueryDetail
   def initialize(churn_app, churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
-    super(churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
+    super
 
     @app = churn_app
   end
@@ -125,7 +125,6 @@ EOS
 		sql << "\n\t, " + friendly_generators.collect{ |g| g.groupby_displaytext_clause }.join("\n\t, ")
 		sql << "\n\t, " + friendly_generators.collect{ |g| g.groupby_value_clause }.join("\n\t, ")
 
-    puts sql
     sql
   end
 end

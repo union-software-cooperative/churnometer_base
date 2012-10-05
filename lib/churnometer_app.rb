@@ -53,6 +53,10 @@ class ChurnometerApp
       end
   end
 
+  def work_site_dimension
+    dimensions().dimension_for_id_mandatory(config_value('work_site_dimension_id'))
+  end
+
   def config_filenames
     config_hash().keys
   end
