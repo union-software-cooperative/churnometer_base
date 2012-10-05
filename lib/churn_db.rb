@@ -96,7 +96,7 @@ class ChurnDB
       groupby_dimension = @app.dimensions[header1]
       raise "Invalid groupby dimension '#{groupby_dimension}'." if groupby_dimension.nil?
 
-      @sql = query_class.new(self, groupby_dimension, start_date, end_date, transactions, site_constraint, filter_terms).query_string
+      @sql = query_class.new(@app, self, groupby_dimension, start_date, end_date, transactions, site_constraint, filter_terms).query_string
     else
       <<-SQL
         select * 
@@ -126,7 +126,7 @@ class ChurnDB
       groupby_dimension = @app.dimensions[header1]
       raise "Invalid groupby dimension '#{header1}'." if groupby_dimension.nil?
 
-      @sql = QuerySummaryRunning.new(self, groupby_dimension, interval, start_date, end_date, transactions, site_constraint, filter_terms).query_string
+      @sql = QuerySummaryRunning.new(@app, self, groupby_dimension, interval, start_date, end_date, transactions, site_constraint, filter_terms).query_string
     else
       <<-SQL
         select * 
@@ -249,7 +249,9 @@ class ChurnDB
     sql << if @app.use_new_query_generation_method?()
       raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
-      detail_friendly_sql = QueryDetailFriendly.new(self, 'status', start_date, end_date, false, site_constraint, '', filter_terms).query_string 
+      groupby_dimension = @app.dimensions.dimension_for_id_mandatory('status')
+
+      detail_friendly_sql = QueryDetailFriendly.new(@app, self, groupby_dimension, start_date, end_date, false, site_constraint, '', filter_terms).query_string 
       "(#{detail_friendly_sql}) as detail_friendly"
     else
       <<-SQL
@@ -412,6 +414,13 @@ class ChurnDBDiskCache < ChurnDB
        end
 
        result = Marshal::load(data)
+       
+     end
+
+     # dbeswick: add a 'num_tuples' method to the cache results, so code that relies on the
+     # pgruby interface will continue to work.
+     def result.num_tuples
+       length()
      end
 
      result

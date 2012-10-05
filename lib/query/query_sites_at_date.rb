@@ -1,11 +1,24 @@
 require './lib/query/query_filter'
 
+#--
+# dbeswick: This class derives from QueryFilter, but QueryFilter also instantiates this class.
+# This indicates that inheritance is inappropriate and the filtering functionality should be in its own
+# class, with the functionality being provided through composition.
+#++
+# A query that returns the work sites passing the given filter that exist at the given date.
 class QuerySitesAtDate < QueryFilter
-  def initialize(churn_db, date, filter_terms)
-    super(churn_db, '')
+  # work_site_dimension_id: The id of the dimension that holds work site date.
+  #
+  #--
+  # dbeswick: Since this functionality is integral to Churnometer, the work site/'companyid' dimension
+  # shouldn't be a user dimension. It should be an inbuilt dimension similar to 'status'.
+  #++
+  def initialize(app, churn_db, date, filter_terms)
+    super(app, churn_db, '')
     @source = churn_db.fact_table
     @date = date
     @filter_terms = filter_terms
+    @work_site_dimension = app.work_site_dimension
   end
 
   def query_string
@@ -38,7 +51,7 @@ class QuerySitesAtDate < QueryFilter
 			and changeid in (select changeid from last_change)
 			#{sql_for_filter_terms(@filter_terms, true)}
  	)
-	select distinct companyid from selections;
+	select distinct #{@work_site_dimension.column_base_name} from selections;
 
 EOS
 

@@ -5,8 +5,8 @@ class QuerySummary < QueryFilter
   # groupby_dimension: A Dimension instance by which results will be grouped.
   # filter_terms: A FilterTerms instance.
   # groupby_dimension: A Dimension instance.
-  def initialize(churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_terms)
-    super(churn_db, filter_terms)
+  def initialize(app, churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_terms)
+    super(app, churn_db, filter_terms)
     @groupby_dimension = groupby_dimension
     @start_date = start_date
     @end_date = end_date
@@ -276,10 +276,6 @@ sql << <<-EOS
 		withtrans c
 		left join displaytext d1 on d1.attribute = '#{header1}' and d1.id = c.row_header1
 EOS
-
-if header1 == 'employerid'
-	   sql << "left join employer e on c.row_header1 = e.companyid"
-end
 
 sql << <<-EOS
 	where

@@ -7,8 +7,8 @@ require './lib/query/query_filter'
 # The filter view initiates a running total query via the 'Running total' control.
 class QuerySummaryRunning < QueryFilter
   # groupby_dimension: An instance of DimensionUser.
-  def initialize(churn_db, groupby_dimension, interval, start_date, end_date, with_trans, site_constraint, filter_terms)
-    super(churn_db, filter_terms)
+  def initialize(app, churn_db, groupby_dimension, interval, start_date, end_date, with_trans, site_constraint, filter_terms)
+    super(app, churn_db, filter_terms)
 
     if interval.empty?
       raise "Interval must be supplied. Valid values are 'week', 'month', 'quarter', 'year'."
@@ -437,10 +437,6 @@ sql << <<-EOS
 		running_start_counts c
 		left join displaytext d1 on d1.attribute = #{db.quote(header1)} and d1.id = c.row_header1
 EOS
-
-if @groupby_dimension.id == 'employerid'
-	sql << "left join employer e on c.row_header1 = e.companyid\n"
-end
 
 sql << <<-EOS
 	where

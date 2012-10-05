@@ -2,9 +2,10 @@ require './lib/query/query_detail_base'
 
 class QueryDetailStatic < QueryDetailBase
   # site_date may be nil.
+  # app: The ChurnometerApp instance.
   # groupby_dimension: A DimensionUser instance.
-  def initialize(churn_db, groupby_dimension, filter_column, member_date, site_date, filter_terms)
-    super(churn_db, groupby_dimension, filter_column, filter_terms)
+  def initialize(app, churn_db, groupby_dimension, filter_column, member_date, site_date, filter_terms)
+    super(app, churn_db, groupby_dimension, filter_column, filter_terms)
     @site_date = site_date
     @member_date = member_date
   end
@@ -26,7 +27,7 @@ class QueryDetailStatic < QueryDetailBase
       if @site_date.nil?
         filter_terms()
       else
-        modified_filter = QueryFilterTerms.new
+        modified_filter = FilterTerms.new
 
         site_query = QuerySitesAtDate.new(@churn_db, @site_date, filter_terms())
         site_results = site_query.execute
