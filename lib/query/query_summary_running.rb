@@ -415,23 +415,6 @@ sql << <<-EOS
 		, c.annualizedavgcontribution annualisedavgcontribution
 EOS
 
-# dbeswick: tbd: refactor this out as per QuerySummary
-sql << if @groupby_dimension.id == 'employerid'
-<<-EOS
-		, e.lateness::text
-		, e.payrollcontactdetail::text
-		, e.paidto::date
-		, e.paymenttype::text
-EOS
-		else
-<<-EOS
-		, ''::text lateness
-		, ''::text payrollcontactdetail
-		, null::date paidto
-		, ''::text paymenttype
-EOS
-		end
-
 sql << <<-EOS
 	from 
 		running_start_counts c
