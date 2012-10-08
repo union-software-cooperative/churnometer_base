@@ -17,6 +17,7 @@ require 'ir_b'
 Dir["./lib/*.rb"].each { |f| require f }
 Dir["./lib/services/*.rb"].each { |f| require f }
 Dir["./lib/query/*.rb"].each { |f| require f }
+Dir["./lib/import/*.rb"].each { |f| require f }
 Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
@@ -113,13 +114,11 @@ class Churnobyl < Sinatra::Base
 
   # Handle GET-request (Show the upload form)
   get "/upload" do
-    logger.info "here"
     erb :upload 
   end      
     
   # Handle POST-request (Receive and save the uploaded file)
   post "/upload" do
-    logger.info "post" 
     @flash = ""
     
     if params['myfile'].nil?
@@ -152,5 +151,66 @@ class Churnobyl < Sinatra::Base
     end
 
     erb :upload
+  end
+  
+  get "/import" do
+    importer = ImportPresenter.new
+    
+    if params['action'] == "reset"
+      importer.reset
+    end 
+    
+    @import_status = importer.status
+      
+    if params['action'] == "diags"
+      @import_status = importer.diags
+    end 
+    
+    erb :import
+  end
+  
+  post "/import" do
+    @flash = ""
+    
+    importer = ImportPresenter.new
+    
+    if params['myfile'].nil?
+      @flash="No file uploaded"
+      return erb :import
+    end
+    
+    file = params['myfile'][:tempfile] 
+    filename = params['myfile'][:filename]
+   
+    begin
+      full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
+      
+      File.open(full_filename, "w") do |f|
+        f.write(file.read)
+      end
+      
+      if filename == "members.txt" then
+        importer.member_import(full_filename)
+      end
+      
+      if filename == "displaytext.txt" then
+        importer.displaytext_import(full_filename)
+      end
+      
+      if filename == "transactions.txt" then
+        importer.transaction_import(full_filename)
+      end
+      
+    rescue StandardError => err
+      @flash = "File upload failed: " + err.message
+    end
+    
+    if @flash == "" 
+      @flash = "#{filename} was successfully uploaded"
+    end
+    
+    @import_status = importer.status
+ 
+    erb :import
   end
 end
