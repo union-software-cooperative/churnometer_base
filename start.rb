@@ -74,7 +74,7 @@ class Churnobyl < Sinatra::Base
   get '/export_table' do
     protected!
     
-    presenter = ChurnPresenter.new cr
+    presenter = ChurnPresenter.new(@churn_app, cr)
     table = presenter.tables[params['table']] if !params['table'].nil?
     
     if !table.nil?
@@ -88,7 +88,7 @@ class Churnobyl < Sinatra::Base
   get '/export_all' do
     protected!
     
-    presenter = ChurnPresenter.new cr
+    presenter = ChurnPresenter.new(@churn_app, cr)
     path = presenter.to_excel
     send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end

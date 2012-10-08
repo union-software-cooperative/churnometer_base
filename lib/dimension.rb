@@ -1,10 +1,12 @@
+# An Enumerable collection of data dimensions, in the form of Dimension instances.
+# Access the main collection of dimensions via the ChurnometerApp instance.
 class Dimensions
   include Enumerable
 
   class MissingDimensionException < Exception
   end
 
-  # dimensions: Optional dimension instances with which to initialize the Dimensions object.
+  # dimensions: Optional Dimension instances with which to initialize the Dimensions object.
   def initialize(dimensions = [])
     @id_to_dimension = {}
 
@@ -54,7 +56,10 @@ class Dimensions
   # Accepts a dimension id optionally in the form of 'old<id>', 'new<id>' or 'current<id>'.
   # Returns a DimensionDelta instance if a delta prefix is given in the id.
   # Otherwise a regular Dimension instance is returned.
-  # tbd: maybe find a less opaque way to refer to dimension deltas, rather than using this naming 
+  # Returns nil if no Dimension of the given base id is found.
+  #
+  # tbd: these ids originate from configuration data. 
+  # Maybe find a more explicit way to refer to dimension deltas instead of using this naming 
   # convention.
   def dimension_for_id_with_delta(id)
     m = /(old|new|current)?(.+)/.match(id)
@@ -170,6 +175,10 @@ class DimensionDelta < DimensionBase
 
   def name
     "#{@delta_prefix.capitalize} #{@dimension.name}"
+  end
+
+  def id
+    "#{@delta_prefix}#{@dimension.id}"
   end
 end
 
