@@ -41,16 +41,23 @@ class ChurnPresenter_Table
     @app = app
     @id = name.sub(' ', '').downcase
     @name = name
+    @request = request
+    @type = request.type
+    @data = request.data
 
-    #include only columns in both data and column array
-    @column_headers = []
+    @column_id_to_header = {}
     @columns = []
 
     columns.each do |c|
       # If the entry in the 'columns' array is an id of one of the dimensions, then get the database's
-      # for that dimension. Otherwise, the column may be one that's expected to be returned from the
-      # query that produced the data, i.e. query_detail returns a column called 'row_header'.
+      # column name for that dimension. 
       #
+      # Otherwise, the column may be one that's expected to be returned from the query that produced 
+      # the data, i.e. query_detail returns a column called 'row_header'.
+      # 
+      # If neither condition is true or the resulting column name isn't present in the data being used
+      # to present the table, then don't include the column in the table display.
+      
       # dimension_for_id_with_delta is used to retrieve the master dimensions from query columns that 
       # express deltas, i.e. returning delta info for the 'status' dimension from 'oldstatus', 
       # 'newstatus', etc.
@@ -67,21 +74,27 @@ class ChurnPresenter_Table
         @columns << data_column_name
 
         if dimension_for_column_id.nil?
-          @column_headers << c
+          # col_names is from Settings mixin
+          @column_id_to_header[data_column_name] = col_names[c] || c
         else
-          # dbeswick: downcasing is done to keep consistency with previous behaviour
-          @column_headers << dimension_for_column_id.name.downcase
+          settings_entry = col_names[dimension_for_column_id.id]
+
+          # dbeswick: downcasing of dimension name is done to keep consistency with previous behaviour
+          # use the entry in the Settings mixin's 'col_names' hash if avaiable, otherwise use the
+          # dimension's name.
+          @column_id_to_header[data_column_name] =
+            if settings_entry.nil? || settings_entry.empty?
+              dimension_for_column_id.name.downcase
+            else
+              settings_entry
+            end
         end
       end
     end
-
-    @type = request.type
-    @request = request
-    @data = request.data
   end
   
   def header
-    @column_headers
+    @column_id_to_header.values
   end
   
   def footer
@@ -101,7 +114,7 @@ class ChurnPresenter_Table
   end
   
   def display_header(column_name)
-    content = col_names[column_name] || column_name
+    content = @column_id_to_header[column_name] || column_name
     
     if bold_col?(column_name)
       "<strong>#{content}</strong>"
@@ -188,7 +201,7 @@ class ChurnPresenter_Table
 
      # Add header
      @columns.each_with_index do |c, x|
-       sheet[0, x] = (col_names[c] || c)
+       sheet[0, x] = (@column_id_to_header[c] || c)
      end
 
      # Add data

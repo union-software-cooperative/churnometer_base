@@ -287,8 +287,8 @@ module Settings
               'paymenttype',
               'paymenttypeid',
               'contactdetail',
-              @request.params['column'] == 'rule59_unchanged_gain' ? 'oldcompany' : 'newcompany',
-              @request.params['column'] == 'rule59_unchanged_gain' ? 'oldemployer' : 'newemployer',
+              @request.params['column'] == 'rule59_unchanged_gain' ? 'oldcompanyid' : 'newcompanyid',
+              @request.params['column'] == 'rule59_unchanged_gain' ? 'oldemployerid' : 'newemployerid',
               @request.params['column'] == 'rule59_unchanged_gain' ? '' : 'payrollcontactdetail',
               @request.params['column'] == 'rule59_unchanged_gain' ? '' : 'lateness',
               @request.params['column'] == 'rule59_unchanged_gain' ? 'oldorg' : 'neworg' 
@@ -372,9 +372,9 @@ module Settings
          'newcompany' => 'current site',
          'rule59_unchanged_gain' => 'became rule59 not followed up',
          'paidto' => 'current paid to date',
-         'oldcompany' => 'old site',
+         'oldcompanyid' => 'old site',
          'oldorg' => 'old organiser',
-         'oldemployer' => 'old employer',
+         'oldemployerid' => 'old employer',
          'neworg' => "new organiser"
          }
      end
