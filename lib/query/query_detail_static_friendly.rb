@@ -65,7 +65,8 @@ EOS
 
 		sql << "\n, " + friendly_generators.collect{ |g| g.final_select_clause }.join("\n, ")
 
-    sql << <<-EOS
+=begin
+
 -- dbeswick: find out why these dimensions were not coalesced with new<column> as the others were in the 
 -- original sql.
 --	, d15.displaytext AS oldcompany
@@ -74,7 +75,10 @@ EOS
 --	, d4.displaytext AS newbranch
 --	, d5.displaytext AS oldindustry
 --	, d6.displaytext AS newindustry
-	
+
+=end
+
+    sql << <<-EOS
    FROM detail d
    JOIN memberfact c ON d.changeid = c.changeid
    LEFT JOIN wherearetheynow n on c.memberid = n.memberid
@@ -84,6 +88,13 @@ EOS
 EOS
 
 		sql << "\n" + friendly_generators.collect{ |g| g.final_join_displaytext_clause }.join("\n")
+
+    # order by the detail query's groupby dimension column (row header), then the member name and id.
+    sql << <<-EOS
+	 order by 
+ 		row_header
+ 		, ((d17.displaytext || ' ('::text) || c.memberid::text) || ')'::text
+		EOS
 
     sql
   end

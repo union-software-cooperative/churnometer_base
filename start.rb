@@ -33,7 +33,9 @@ class Churnobyl < Sinatra::Base
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
     @start_time = Time.new
-    @app = ChurnometerApp.new
+
+    # note: @app is an instance variable already in use by Sinatra, so @churn_app is used here.
+    @churn_app = ChurnometerApp.new 
   end  
   
   after '/' do
@@ -51,7 +53,7 @@ class Churnobyl < Sinatra::Base
   end
   
   def cr
-    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, @app, ChurnDBDiskCache.new(@app))
+    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, @churn_app, ChurnDBDiskCache.new(@churn_app))
     @sql = @cr.sql # This is set for error message
     @cr
   end
@@ -64,7 +66,7 @@ class Churnobyl < Sinatra::Base
     cache_control :public, :max_age => 28800
     protected!
     
-    presenter = ChurnPresenter.new(@app, cr)
+    presenter = ChurnPresenter.new(@churn_app, cr)
 
     erb :index, :locals => { :model => presenter }
   end
