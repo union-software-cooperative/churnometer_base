@@ -27,6 +27,15 @@ class ImportPresenter
     db.ex("select updatedisplaytext()");
   end
   
+  def diags
+    <<-SQL
+      #{dbm.transactionsource_sql};
+      #{dbm.transactionsourceprev_sql};
+      #{dbm.transactionfact_sql};
+      #{dbm.inserttransactionfact_sql};
+    SQL
+  end
+  
   def status
 		mcnt = membersource_count
 		dcnt = displaytextsource_count

@@ -59,25 +59,6 @@ class DatabaseManager
     db.ex(rebuild_displaytextsource_sql)
   end
   
-  def rebuild_transactionsource_sql
-    sql = <<-SQL
-      drop table if exists transactionsource;
-      
-      create table transactionsource
-      (
-        id varchar(255) not null
-        , creationdate timestamp not null
-        , memberid varchar(255) not null
-        , userid varchar(255) not null
-        , amount numeric not null
-      );
-    SQL
-  end
-  
-  def rebuild_transactionsource
-    db.ex(rebuild_transactionsource_sql)
-  end
-  
    def membersource_sql
     sql = <<-SQL
       create table membersource 
@@ -395,6 +376,136 @@ class DatabaseManager
         memberfact
     SQL
   end
+  
+  def transactionfact_sql
+    <<-SQL
+      create table transactionfact
+      (
+        id varchar(255) not null
+        , creationdate timestamp not null
+        , memberid varchar(255) not null
+        , userid varchar(255) not null
+        , amount money not null
+        , changeid bigint not null
+      )
+    SQL
+  end
+  
+  def transactionfact
+    db.ex(transactionfact_sql)
+  end
+  
+  def transactionsource_sql
+    sql = <<-SQL
+      create table transactionsource
+      (
+        id varchar(255) not null
+        , creationdate timestamp not null
+        , memberid varchar(255) not null
+        , userid varchar(255) not null
+        , amount money not null
+      );
+    SQL
+  end
+  
+  def rebuild_transactionsource_sql
+    sql = <<-SQL
+      drop table if exists transactionsource;
+      
+      #{transactionsource_sql}
+    SQL
+  end
+  
+  def rebuild_transactionsource
+    db.ex(rebuild_transactionsource_sql)
+  end
+  
+   def transactionsourceprev_sql
+    transactionsource_sql.sub("transactionsource", "transactionsourceprev")
+  end
+  
+  def transactionsourceprev
+    db.ex(transactionsourceprev_sql)
+  end
+  
+  def inserttransactionfact_sql
+    <<-SQL
+      CREATE OR REPLACE FUNCTION inserttransactionfact() RETURNS void 
+	    AS $BODY$begin
+        
+        -- don't run the import if nothing has been imported for comparison
+        if 0 = (select count(*) from transactionsource) then 
+          return;
+        end if;  
+        
+        insert into 
+          transactionfact (
+              id
+              , creationdate
+              , memberid
+              , userid 
+              , amount
+              , changeid
+            )
+            
+        -- insert any transactions that have appeared since last comparison
+        select 
+          t.id
+          , current_timestamp 
+          , t.memberid
+          , t.userid
+          , t.amount
+          , (
+            -- assign dimensions of latest change to the transaction
+            select 
+              max(changeid) changeid 
+            from 
+              memberfact m 
+            where 
+              m.memberid = t.memberid
+          ) changeid
+        from 
+          transactionSource t 
+        where 
+          not id in (select id from transactionSourcePrev)
+          
+        union all
+        
+        -- insert negations for any transactions that have been deleted since last comparison
+        select 
+          t.id
+          , current_timestamp
+          , t.memberid
+          , t.userid
+          , 0::money-t.amount
+          , (
+            -- assign dimensions of deleted transaction to the negated transaction
+            select 
+              changeid
+            from
+              transactionfact
+            where
+              transactionfact.id = t.id
+          ) changeid
+        from 
+          transactionSourcePrev t 
+        where 
+          not id in (select id from transactionSource)  
+        ;
+        
+        -- finalise import, so running this again won't do anything
+        delete from transactionSourcePrev;
+        insert into transactionSourcePrev select * from transactionSource;
+        delete from transactionSource;
+        
+        end;$BODY$
+          LANGUAGE plpgsql
+          COST 100
+          CALLED ON NULL INPUT
+          SECURITY INVOKER
+          VOLATILE;
+      SQL
+    end
   
   
 end
