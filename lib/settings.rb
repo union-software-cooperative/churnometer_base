@@ -39,10 +39,9 @@ module Settings
     :QuerySummary
   end
 
-  # Classes that should be used to handle queries for specific groups.
+  # Classes that should be used to handle summary queries for specific groups.
   def summary_query_class_groupby_overrides
     {
-      "employerid" => :QuerySummaryGroupByEmployer
     }    
   end
 
@@ -167,23 +166,6 @@ module Settings
           ]
       }
 
-      flhash_option = { 
-         'Remittance' => 
-           [
-           #'employer',
-           #'employerid',
-           'row_header1',
-           'period_header',
-           'a1p_end_count',
-           'paying_end_count',
-           'paymenttype',
-           'paymenttypeid',
-           'paidto',
-           'lateness',
-           'payollcontactdetail',
-           ]
-      }
-      
       data_entry_override = {
           'Summary' =>
           [
@@ -232,10 +214,6 @@ module Settings
       if @request.auth.leader?
         hash = hash.merge(fhash_option);
         hash['Follow up'] = staff_summary_override;
-      end
-      
-      if @request.params['group_by'] == 'employerid'
-       hash = flhash_option.merge(hash)
       end
       
       if @request.data_entry_view?
