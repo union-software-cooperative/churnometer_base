@@ -254,6 +254,9 @@ class FilterTerms
       values = Array(values)
       
       values.each do |value|
+        # Skip empty strings.
+        next if value = ''
+
         # If value is a string, then parse it to interpret any modifiers in the value.
         # Otherwise, just use the value. This conserves type information that arrives from the parameter
         # hash.
@@ -261,6 +264,8 @@ class FilterTerms
 
         if value.kind_of?(String)
           value_parse = /^([-!]?)(.+)/.match(value)
+
+          raise "Error parsing query string value: #{value}" if value_parse.nil?
           
           value_modifier = value_parse[1]
           
