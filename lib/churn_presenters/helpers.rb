@@ -39,51 +39,14 @@ module ChurnPresenter_Helpers
   
   # common drill downs
   
-  def can_detail_cell?(column_name, value)
-    (
-      filter_columns.include? column_name
-    ) && (value.to_i != 0 && value.to_i.abs < MaxMemberList)
-  end
+  def drill_down_header(row, churnometer_app)
+    groupby_column_id = @request.groupby_column_id
 
-  def can_export_cell?(column_name, value)
-    (
-      filter_columns.include? column_name
-    ) && (value.to_i != 0)
-  end
-  
-  def drill_down_header(row)
     {
-      "#{Filter}[#{@request.params['group_by'] || 'branchid'}]" => row['row_header1_id'], 
-      "group_by" => next_group_by[@request.params['group_by']]
+      "#{Filter}[#{groupby_column_id}]" => row['row_header1_id'], 
+      "group_by" => next_group_by[groupby_column_id]
     }
   end   
-  
-  def drill_down_interval(row)
-    drill_down_header(row)
-      .merge!(
-        {
-          'startDate' => row['period_start'], 
-          'endDate' => row['period_end']
-        }
-      )
-  end
-  
-  def drill_down_cell(row, column_name)
-    (@request.params['interval'] == 'none' ? drill_down_header(row) : drill_down_interval(row))
-      .merge!( 
-        { 
-          'column' => column_name,
-          "group_by" => @request.params['group_by'] # this prevents the change to the group by option
-        } 
-      )
-  end
-  
-  def drill_down_footer(column_name)
-    { 
-      'column' => column_name
-    } 
-  end
-  
   
   def build_url(query_hashes)
     #TODO refactor out params if possible, or put this function somewhere better, with params maybe

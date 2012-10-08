@@ -1,5 +1,6 @@
 use_new_query_generation_method: true
 work_site_dimension_id: companyid
+default_groupby_dimension_id: branchid
 dimensions:
 	0:
 	    id: branchid

@@ -123,14 +123,24 @@ class ChurnRequest
       end
   end
 
+  def groupby_column_id
+    params['group_by'] || @app.groupby_default_dimension.id.downcase
+  end
+
+  def groupby_column_name
+    param_dimension = @app.dimensions[params['group_by']] 
+
+    if param_dimension
+      param_dimension.name
+    else
+      @app.groupby_default_dimension.name.downcase
+    end
+  end
+
   def get_transfers
     db.get_transfers(@start_date, @end_date, @site_constraint, @xml, @query_filterterms)
   end
   
-  def data_entry_view?
-    @header1 == 'statusstaffid' || @params[Filter].reject { |k,v| v.empty? }.has_key?('statusstaffid')
-  end
-
   private
 
   def validate_params(params)
@@ -164,7 +174,7 @@ class ChurnRequest
     startdb = Date.parse((db.getdimstart(params['group_by']))[0]['getdimstart'])+1
     if startdb > startDate
       startDate = startdb
-      warning += 'WARNING: Adjusted start date to when we first started tracking ' + (params['group_by'] || 'branchid') + ' (you had selected ' + params['startDate'] + ')<br/>'
+      warning += 'WARNING: Adjusted start date to when we first started tracking ' + groupby_column_id() + ' (you had selected ' + params['startDate'] + ')<br/>'
     end
 
     # make sure endDate isn't in the future or before startDate

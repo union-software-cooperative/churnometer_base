@@ -12,8 +12,6 @@ class ChurnPresenter_Transfers
   end
   
   def exists?
-    return false if @request.data_entry_view?
-      
     # count the transfers, including both in and out
     start_date = Date.parse(@request.params['startDate'])
     end_date = Date.parse(@request.params['endDate'])

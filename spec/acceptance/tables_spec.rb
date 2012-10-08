@@ -179,7 +179,7 @@ describe "Tables" do
     end
     
     click_link "Member Summary"
-    within 'table#table-membersummary tbody tr:nth-child(2)' do
+    within 'table#table-membersummary tbody tr:nth-child(1)' do
       row_has "Abigail's Store", "7 August 2011", "McIvor, Maja (m18146)","", "Paying", "Paying","", "Abigail's Store", "Abigail's Store"
     end
   end

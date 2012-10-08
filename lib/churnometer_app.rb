@@ -53,6 +53,10 @@ class ChurnometerApp
       end
   end
 
+  def groupby_default_dimension
+    dimensions().dimension_for_id_mandatory(config_value('default_groupby_dimension_id'))
+  end
+
   # The dimensions that should be displayed to the user in the filter form's 'groupby' dropdown.
   def groupby_display_dimensions(is_leader, is_admin)
     roles = []

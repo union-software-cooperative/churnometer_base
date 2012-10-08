@@ -289,9 +289,12 @@ class ChurnDB
   end
 
   def getdimstart_sql(group_by)
-    # TODO refactor default group_by branchid
+    if group_by.nil?
+      group_by = @app.groupby_default_dimension.id
+    end
+
     <<-SQL
-      select getdimstart('#{(group_by || 'branchid')}') 
+      select getdimstart('#{group_by}') 
     SQL
   end
   

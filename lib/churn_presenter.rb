@@ -29,7 +29,7 @@ class ChurnPresenter
       request_group_dimensions()
     )
 
-    @target = ChurnPresenter_Target.new(app, request) if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary && !@request.data_entry_view?
+    @target = ChurnPresenter_Target.new(app, request) if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary
     @graph = ChurnPresenter_Graph.new(app, request)
     @graph = nil unless (@graph.line? || @graph.waterfall?)
     @tables = ChurnPresenter_Tables.new(app, request) if has_data?
@@ -43,9 +43,6 @@ class ChurnPresenter
       @warnings += 'WARNING:  There are transfers during this period that may influence the results.  See the transfer tab below. <br />'
     end
     
-    if @request.data_entry_view?
-      @warnings += 'WARNING:  When exploring data entry only stats about database changes are shown (this view is only available to leadership).'
-    end
     # if @request.cache_hit
     #       @warnings += "WARNING: This data has been loaded from cache <br/>"
     #     end

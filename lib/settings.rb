@@ -13,6 +13,11 @@ MaxMemberList = 500
 EarliestStartDate = Date.new(2011,8,14)
 
 module Settings
+  # Return the ChurnometerApp instance
+  def app
+    @app
+  end
+
   def query_defaults
     if auth().staff?
       start_date = (Time.now-(60*24*3600)).strftime("1 %B %Y")
@@ -23,11 +28,11 @@ module Settings
     end
     
     defaults = {
-      'group_by' => (auth.staff? ? 'supportstaffid' : 'branchid'),
+      'group_by' => app().groupby_default_dimension.id,
       'startDate' => start_date,
       'endDate' => end_date,
       'column' => '',
-      'interval' => (auth.staff? ? 'month' : 'none'),
+      'interval' => 'none',
       Filter => {
         'status' => [1, 14, 11] # todo - get rid of this because exceptions are required for it when displaying filters
       }
@@ -77,8 +82,6 @@ module Settings
       'hsr'           => 'companyid',
       'industryid'	  => 'companyid',
       'companyid'     => 'companyid',
-      'statusstaffid' => 'companyid',
-      'supportstaffid' => 'org',
       'paymenttypeid' => 'paymenttypeid',
       'employmenttypeid' => 'companyid',
       'hostemployerid' => 'companyid',
@@ -166,27 +169,6 @@ module Settings
           ]
       }
 
-      data_entry_override = {
-          'Summary' =>
-          [
-          'row_header', 
-          'row_header1', 
-          'period_header',
-          'a1p_real_gain',
-          'a1p_unchanged_gain',
-          'a1p_to_other',
-          'a1p_to_paying',
-          'stopped_real_gain',
-          'stopped_unchanged_gain',
-          'stopped_to_other',
-          'stopped_to_paying',
-          'rule59_unchanged_gain',
-          'transactions',
-          'posted',
-          'unposted'
-          ]
-      }
-
       staff_summary_override = [
         'row_header',
         'row_header1',
@@ -216,12 +198,6 @@ module Settings
         hash['Follow up'] = staff_summary_override;
       end
       
-      if @request.data_entry_view?
-       # None of the other tabs make sense when grouping by statusstaffid
-       # Especially start and end counts, which don't add up correctly anyway (how could they?)
-       hash = data_entry_override
-      end
-
       hash
     end
 
@@ -300,9 +276,11 @@ module Settings
        # dbeswick: temporary until Settings is refactored away.
        raise "Class '#{self.class}' must provide the churnometer app instance in @app because it mixes in the Settings module." if @app.nil?
 
+       row_header_col_name = @request.groupby_column_name.downcase
+
        hash = {
-         'row_header1'     => (@app.dimensions[@request.params['group_by']] || @app.dimensions['branchid']).name.downcase,
-         'row_header'     => (@app.dimensions[@request.params['group_by']] || @app.dimensions['branchid']).name.downcase,
+         'row_header1'     => row_header_col_name,
+         'row_header'     => row_header_col_name,
          'a1p_real_gain'   => 'total cards in',
          'a1p_to_other'    => 'cards failed',
          'paying_start_count' => 'paying at start date',
