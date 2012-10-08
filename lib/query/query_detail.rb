@@ -64,16 +64,8 @@ class QueryDetail < QueryDetailBase
 
     filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date)
 
-    non_status_filter = filter.exclude('status', 'statusstaffid')
-    user_selections_filter = filter.include('status', 'statusstaffid')
-
-    # Used in the 'trans' block. The statusstaffid filter term should map to the 'staffid' column there.
-    trans_statusstaffid_filter = FilterTerms.new
-    if !filter['statusstaffid'].nil?
-      statusstaffid_remapped_term = filter['statusstaffid'].clone
-      statusstaffid_remapped_term.db_column_override = 'staffid'
-      trans_statusstaffid_filter.set_term(statusstaffid_remapped_term)
-    end
+    non_status_filter = filter.exclude('status')
+    user_selections_filter = filter.include('status')
 
     with_trans = @with_trans && non_transaction_filter_column?(@filter_column) == false
 
@@ -117,16 +109,7 @@ sql = <<-EOS
 	, trans as
 	(
 		select 
-EOS
-
-sql <<
-	if @groupby_dimension.id == 'statusstaffid'
-    "			case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end row_header1"
-	else
-		"			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1"
-	end
-
-sql << <<-EOS
+			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1
 		, t.memberid
 		, t.changeid
 		, sum(case when amount::numeric > 0.0 then amount::numeric else 0.0 end) posted
@@ -140,21 +123,8 @@ sql << <<-EOS
 	where
 		t.creationdate > #{db.sql_date(@start_date)}
 		and t.creationdate <= #{db.sql_date(end_date)}
-		-- statusstaffid is special.  Rather than members and their transactions being assigned to an organising area
-		-- statusstaffid is about who actually changed a status or who actually posted the transaction.
-		-- for this reason, we filter status staff on staffid field in transactionfact.  
-		#{sql_for_filter_terms(trans_statusstaffid_filter, true)}
 	group by 
-EOS
-
-sql <<
-	if @groupby_dimension.id == 'statusstaffid' 
-    "		case when coalesce(t.staffid::varchar(200),'') = '' then 'unassigned' else t.staffid::varchar(200) end"
-	else
-		"		case when coalesce(u1.#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else u1.#{db.quote_db(header1)}::varchar(200) end"
-	end
-
-sql << <<-EOS
+		case when coalesce(u1.#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else u1.#{db.quote_db(header1)}::varchar(200) end
 		, t.changeid
 		, t.memberid
 )

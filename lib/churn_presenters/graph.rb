@@ -16,12 +16,12 @@ class ChurnPresenter_Graph
   end
 
   def line?
-    !@request.auth.staff? && series_count <= 30 && @request.params['group_by'] != 'statusstaffid' && @request.type == :summary && @request.params['interval'] != 'none'
+    !@request.auth.staff? && series_count <= 30 && @request.type == :summary && @request.params['interval'] != 'none'
   end
 
   def waterfall?
     cnt =  @request.data.reject{ |row | row["paying_real_gain"] == '0' && row["paying_real_loss"] == '0' }.count
-    !@request.auth.staff? && cnt > 0  && cnt <= 30 && @request.params['group_by'] != 'statusstaffid' && @request.type == :summary && @request.params['interval'] == 'none'
+    !@request.auth.staff? && cnt > 0  && cnt <= 30 && @request.type == :summary && @request.params['interval'] == 'none'
   end
   
   def waterfallItems
@@ -31,7 +31,7 @@ class ChurnPresenter_Graph
       i[:name] = row['row_header1']
       i[:gain] = row['paying_real_gain']
       i[:loss] = row['paying_real_loss']
-      i[:link] = build_url(drill_down_header(row))
+      i[:link] = build_url(drill_down_header(row, @app))
       a << i
     end
     a
@@ -60,9 +60,19 @@ class ChurnPresenter_Graph
         if intersection.nil? 
           series[row[0]] << "{ y: null }"
         else
-          # assemble point data - url used when user clicks to drill down
-          # TODO figure out how to fix this horrible mess
-          drilldown_url = build_url({ "startDate" => intersection['period_start'], "endDate" => intersection['period_end'], "interval" => 'none', "#{Filter}[#{@request.params['group_by'] || 'branchid' }]" => "#{intersection['row_header1_id']}", "group_by" => "#{next_group_by[@request.params['group_by']]}" })
+          groupby_column_id = @request.groupby_column_id
+
+          # construct the url to be used when user clicks to drill down
+          url_parameters = { 
+            "startDate" => intersection['period_start'], 
+            "endDate" => intersection['period_end'], 
+            "interval" => 'none', 
+            "#{Filter}[#{groupby_column_id}]" => "#{intersection['row_header1_id']}", 
+						"group_by" => "#{next_group_by[groupby_column_id]}" 
+          }
+
+          drilldown_url = build_url(url_parameters)
+
           series[row[0]] << "{ y: #{intersection['running_paying_net'] }, id: '#{drilldown_url}' }"
         end
       end

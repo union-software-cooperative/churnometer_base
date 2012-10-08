@@ -140,7 +140,7 @@ class ChurnPresenter_Table
 	  end
     
     if column_name == 'row_header1'
-      content = "<a href=\"#{build_url(drill_down_header(row)) }\">#{row['row_header1']}</a>"
+      content = "<a href=\"#{build_url(drill_down_header(row, @app)) }\">#{row['row_header1']}</a>"
     elsif column_name == 'period_header'
       content = "<a href=\"#{build_url(drill_down_interval(row))}\">#{value}</a>"
     elsif can_detail_cell? column_name, value
@@ -222,6 +222,44 @@ class ChurnPresenter_Table
    end
 
   private
+  
+  def drill_down_footer(column_name)
+    { 
+      'column' => column_name
+    } 
+  end
+
+  def drill_down_interval(row)
+    drill_down_header(row, @app)
+      .merge!(
+        {
+          'startDate' => row['period_start'], 
+          'endDate' => row['period_end']
+        }
+      )
+  end
+  
+  def drill_down_cell(row, column_name)
+    (@request.params['interval'] == 'none' ? drill_down_header(row, @app) : drill_down_interval(row))
+      .merge!( 
+        { 
+          'column' => column_name,
+          "group_by" => @request.params['group_by'] # this prevents the change to the group by option
+        } 
+      )
+  end
+  
+  def can_detail_cell?(column_name, value)
+    (
+      filter_columns.include? column_name
+    ) && (value.to_i != 0 && value.to_i.abs < MaxMemberList)
+  end
+
+  def can_export_cell?(column_name, value)
+    (
+      filter_columns.include? column_name
+    ) && (value.to_i != 0)
+  end
   
   def safe_add(a, b)
     if (a =~ /\./) || (b =~ /\./ )

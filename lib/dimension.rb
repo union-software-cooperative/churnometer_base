@@ -180,6 +180,10 @@ class DimensionDelta < DimensionBase
   def id
     "#{@delta_prefix}#{@dimension.id}"
   end
+
+  def describe
+    "#{super} for parent column: #{@dimension.describe}"
+  end
 end
 
 # A customisable dimension that is set up by users in the config file.

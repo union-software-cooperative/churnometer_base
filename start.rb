@@ -35,7 +35,6 @@ class Churnobyl < Sinatra::Base
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
     @start_time = Time.new
-    @churn_app = settings.churn_app
   end  
   
   after '/' do
@@ -51,9 +50,13 @@ class Churnobyl < Sinatra::Base
     
     logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
   end
-  
+
+  def app
+    @churn_app ||= settings.churn_app
+  end
+
   def cr
-    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, @churn_app, ChurnDBDiskCache.new(@churn_app))
+    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, app(), ChurnDBDiskCache.new(app()))
     @sql = @cr.sql # This is set for error message
     @cr
   end
@@ -66,7 +69,7 @@ class Churnobyl < Sinatra::Base
     cache_control :public, :max_age => 28800
     protected!
     
-    presenter = ChurnPresenter.new(@churn_app, cr)
+    presenter = ChurnPresenter.new(app(), cr)
 
     erb :index, :locals => { :model => presenter }
   end
@@ -74,7 +77,7 @@ class Churnobyl < Sinatra::Base
   get '/export_table' do
     protected!
     
-    presenter = ChurnPresenter.new(@churn_app, cr)
+    presenter = ChurnPresenter.new(app(), cr)
     table = presenter.tables[params['table']] if !params['table'].nil?
     
     if !table.nil?
@@ -88,7 +91,7 @@ class Churnobyl < Sinatra::Base
   get '/export_all' do
     protected!
     
-    presenter = ChurnPresenter.new(@churn_app, cr)
+    presenter = ChurnPresenter.new(app(), cr)
     path = presenter.to_excel
     send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
