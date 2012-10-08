@@ -27,17 +27,19 @@ class QueryDetailStatic < QueryDetailBase
       if @site_date.nil?
         filter_terms()
       else
+        work_site_dimension = @app.work_site_dimension
+
         modified_filter = FilterTerms.new
 
         site_query = QuerySitesAtDate.new(@app, @churn_db, @site_date, filter_terms())
         site_results = site_query.execute
 
         if site_results.num_tuples == 0
-          modified_filter.append('companyid', 'none', false)
+          modified_filter.append(work_site_dimension, 'none', false)
         else
           site_results.each do |record| 
-          	modified_filter.append('companyid', record['companyid'], false)
-        	end
+          	modified_filter.append(work_site_dimension, record[work_site_dimension.column_base_name], false)
+          end
         end
 
         # dbeswick: note: unlike other queries, detail_static doesn't keep the 'status' values in the

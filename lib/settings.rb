@@ -258,9 +258,9 @@ module Settings
            'oldstatus',
            'newstatus',
            'currentstatus',
-           'oldcompany',
-           'newcompany',
-           'currentcompany'
+           'oldcompanyid',
+           'newcompanyid',
+           'currentcompanyid'
            ], 
          'Organiser' => [
             'row_header',

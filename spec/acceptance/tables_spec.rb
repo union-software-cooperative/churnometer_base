@@ -161,8 +161,10 @@ describe "Tables" do
       page.should have_content "Members: paying at end date"
     end
     
+    # dbeswick: failure of this record to be at index 1 can indicate a failure in the orderby clause in
+    # the detail_static_friendly query.
     click_link "Member Summary"
-    within 'table#table-membersummary tbody tr:nth-child(2)' do
+    within 'table#table-membersummary tbody tr:nth-child(1)' do
       row_has "Abigail's Store", "27 January 2012", "McIvor, Maja (m18146)", %w{ Paying Paying Paying Abigail's Abigail's Abigail's }
     end
   end
