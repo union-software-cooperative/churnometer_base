@@ -255,7 +255,7 @@ class FilterTerms
       
       values.each do |value|
         # Skip empty strings.
-        next if value = ''
+        next if value == ''
 
         # If value is a string, then parse it to interpret any modifiers in the value.
         # Otherwise, just use the value. This conserves type information that arrives from the parameter
