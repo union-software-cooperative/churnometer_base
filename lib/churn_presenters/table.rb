@@ -51,8 +51,9 @@ class ChurnPresenter_Table
       # for that dimension. Otherwise, the column may be one that's expected to be returned from the
       # query that produced the data, i.e. query_detail returns a column called 'row_header'.
       #
-      # dimension_for_id_with_delta is used to retrieve the master dimensions from ids such as 
-      # 'oldstatus', 'newstatus', etc.
+      # dimension_for_id_with_delta is used to retrieve the master dimensions from query columns that 
+      # express deltas, i.e. returning delta info for the 'status' dimension from 'oldstatus', 
+      # 'newstatus', etc.
       dimension_for_column_id = @app.dimensions.dimension_for_id_with_delta(c)
 
       data_column_name = 

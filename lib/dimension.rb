@@ -95,16 +95,19 @@ class Dimensions
 end
 
 # Base class for metadata about database dimensions.
+# A dimension is a set of data that can be used in query filters and to group query results.
 class DimensionBase
   # The 'base name' of the column that stores data for the dimension in the memberfact tables.
   def column_base_name
     raise 'abstract'
   end
 
+  # The human-readable name of the dimension.
   def name
     raise 'abstract'
   end
 
+  # Describes the dimension instance for debugging purposes.
   def describe
     "#{self.class.name}: column: #{column_base_name()}"
   end
@@ -114,7 +117,9 @@ class DimensionBase
   end
 end
 
-# Information about a set of data that can be used in query filters and to group query results.
+# Metadata about in-built dimensions, and base class for user dimension definitions.
+# Can be used to retrieve the database column that encodes the dimension, and also those columns that
+# encode delta information about the dimension.
 class Dimension < DimensionBase
   attr_reader :id
 
@@ -134,7 +139,6 @@ class Dimension < DimensionBase
     @delta_new = DimensionDelta.new(self, 'new')
   end
 
-  # The 'base name' of the column that stores data for the dimension in the memberfact tables.
   def column_base_name
     id()
   end
@@ -148,8 +152,8 @@ class Dimension < DimensionBase
   end
 end
 
-# Defines a 'virtual' dimension representing a query result column that expresses deltas in dimensions,
-# such as oldstatus, newstatus, etc.
+# Defines a dimension representing delta changes in a given dimension's data.
+# An example is oldstatus, newstatus as delta dimension for the status dimension.
 class DimensionDelta < DimensionBase
   # dimension: The master Dimension instance indicating the database dimension that this instance is a
   #		delta of.
@@ -183,14 +187,14 @@ class DimensionUser < Dimension
     @index = index
   end
 
-  # config_hash: mappings from index numbers to hashes defining Dimension columns in the format defined by the Churnometer configuration scheme.
+  # config_hash: mappings from index numbers to hashes defining Dimension columns. 
+  # The hash format is defined by the Churnometer configuration file scheme.
   def from_config_hash(config_hash)
     @id = config_hash['id'].downcase
     @name = config_hash['name']
     @allowed_roles = config_hash['roles'] || ['any']
   end
 
-  # The 'base name' of the column that stores data for the dimension in the memberfact tables.
   def column_base_name
     "col#{@index}"
   end
