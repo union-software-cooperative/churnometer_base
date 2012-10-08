@@ -23,6 +23,8 @@ class Churnobyl < Sinatra::Base
       
   configure :production, :development do
     enable :logging
+
+    set :churn_app, ChurnometerApp.new 
   end
   
   helpers do
@@ -33,9 +35,7 @@ class Churnobyl < Sinatra::Base
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
     @start_time = Time.new
-
-    # note: @app is an instance variable already in use by Sinatra, so @churn_app is used here.
-    @churn_app = ChurnometerApp.new 
+    @churn_app = settings.churn_app
   end  
   
   after '/' do
