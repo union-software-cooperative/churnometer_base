@@ -1,0 +1,18 @@
+<% if !@flash.nil? %>
+    <div class="flash">
+      <%= @flash %>
+    </div>
+<% end %>
+
+<h2>freeChange Data Importer</h2>
+<% if !@import_status.nil? %>
+  <div>
+    <%= @import_status %>
+  </div>
+<% end %>
+
+<form method="post" enctype="multipart/form-data">
+	<input type="file" name="myfile">
+	<br>
+	<input type="submit" value="Upload">
+</form>
