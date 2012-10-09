@@ -4,10 +4,18 @@
     </div>
 <% end %>
 
-<h2>freeChange Data Importer</h2>
+<h2>Churnometer Data Importer</h2>
 
 <% if @model.importing? %>
+  
   <%= @model.import_status %>
+  
+  <script>
+    $(document).ready(function() {
+      setTimeout("location.reload()", 10000);
+    });
+  </script>
+
 <% else %>
   <%= @model.staging_status %>
   <form method="post" enctype="multipart/form-data">
