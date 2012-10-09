@@ -42,7 +42,6 @@ class QueryDetail < QueryDetailBase
 
       'stopped_real_gain' => 'where c.stopped_real_gain<>0',
       'stopped_unchanged_gain' => 'where c.stopped_unchanged_gain<>0',
-      'rule59_unchanged_gain' => 'where c.rule59_unchanged_gain<>0',
       'stopped_real_loss' => 'where c.stopped_real_loss<>0',
       'stopped_to_paying' => 'where c.stopped_to_paying<>0',
       'stopped_to_other' => 'where c.stopped_to_other<>0',
@@ -155,7 +154,6 @@ sql = <<-EOS
 			, payingloss::bigint paying_real_loss
 			, (payinggain+payingloss)::bigint paying_real_net
 			, stoppedgain::bigint stopped_real_gain
-			, case when _changeid is null and coalesce(_status,'') = '3' then loss /* only want to count changes too status 3 which will be losses */else 0 end::bigint rule59_unchanged_gain
 			, case when _changeid is null then stoppedgain else 0 end::bigint stopped_unchanged_gain
 			, stoppedloss::bigint stopped_real_loss
 			, case when coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end::bigint stopped_to_paying
@@ -211,7 +209,6 @@ sql = <<-EOS
 		, c.paying_other_loss
 		, c.stopped_real_gain
 		, c.stopped_unchanged_gain
-		, c.rule59_unchanged_gain
 		, c.stopped_real_loss
 		, c.stopped_to_paying
 		, c.stopped_to_other
@@ -262,7 +259,6 @@ if with_trans
 		, 0::bigint paying_other_loss
 		, 0::bigint stopped_real_gain
 		, 0::bigint stopped_unchanged_gain
-		, 0::bigint rule59_unchanged_gain
 		, 0::bigint stopped_real_loss
 		, 0::bigint stopped_to_paying
 		, 0::bigint stopped_to_other
@@ -302,7 +298,6 @@ sql << <<-EOS
 		, c.paying_other_loss
 		, c.stopped_real_gain
 		, c.stopped_unchanged_gain
-		, c.rule59_unchanged_gain
 		, c.stopped_real_loss
 		, c.stopped_to_paying
 		, c.stopped_to_other

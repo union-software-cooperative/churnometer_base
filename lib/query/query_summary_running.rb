@@ -40,7 +40,7 @@ class QuerySummaryRunning < QueryFilter
     stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
 
     sql = <<-EOS
-	-- running summary query
+	-- 'running summary' query
 	with daterange as
 	(
 		select '2011-08-08'::date + s.t as dates from generate_series(0, ((#{db.sql_date(end_date)}::date)- ('2011-08-08'::date))::int,1) as s(t)
@@ -109,9 +109,7 @@ class QuerySummaryRunning < QueryFilter
 			case when coalesce(#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(200) end row_header1
 			, date_trunc(#{db.quote(@header2)}, case when changedate <= #{db.sql_date(@start_date)} then #{db.sql_date(@start_date)} else changedate end)::date as period_header
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then a1pgain else 0 end) a1p_gain
-			
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and _changeid is null then a1pgain else 0 end) a1p_unchanged_gain
-			
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status, '') = '' then a1pgain else 0 end) a1p_newjoin
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status, '') <>'' then a1pgain else 0 end) a1p_rejoin			
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then a1ploss else 0 end) a1p_loss
@@ -122,7 +120,6 @@ class QuerySummaryRunning < QueryFilter
 			
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then stoppedgain else 0 end) stopped_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and _changeid is null and coalesce(_status,'') = '3' then loss /* only want to count changes too status 3 which will be losses */ else 0 end) rule59_unchanged_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then stoppedloss else 0 end) stopped_loss
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end) stopped_to_paying
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end) stopped_to_other			
@@ -214,7 +211,6 @@ sql << <<-EOS
 
 			, 0 stopped_gain
 			, 0 stopped_unchanged_gain
-			, 0 rule59_unchanged_gain
 			, 0 stopped_loss
 			, 0 stopped_to_paying
 			, 0 stopped_to_other
@@ -310,7 +306,6 @@ sql << <<-EOS
 			, c.running_stopped_end_count - c.stopped_gain - c.stopped_loss - c.stopped_other_gain - c.stopped_other_loss as stopped_start_count
 			, c.stopped_gain
 			, c.stopped_unchanged_gain
-			, c.rule59_unchanged_gain
 			, c.stopped_loss
 			, c.stopped_to_paying
 			, c.stopped_to_other
@@ -367,7 +362,6 @@ sql << <<-EOS
 		, c.stopped_start_count::bigint
 		, c.stopped_gain stopped_real_gain
 		, c.stopped_unchanged_gain
-		, c.rule59_unchanged_gain
 		, c.stopped_loss stopped_real_loss
 		, c.stopped_to_paying
 		, c.stopped_to_other

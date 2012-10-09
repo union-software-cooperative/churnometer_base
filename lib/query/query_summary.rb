@@ -112,7 +112,6 @@ sql = <<-EOS
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = #{stoppedpay_db} then otherloss else 0 end) stopped_other_loss
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db}) then othergain else 0 end) other_other_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db}) then otherloss else 0 end) other_other_loss
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and _changeid is null and coalesce(_status,'') = '3' then loss else 0 end) rule59_unchanged_gain
 			, sum(case when status = #{a1p_db} then net else 0 end) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
 			, sum(case when status = #{paying_db} then net else 0 end) as paying_end_count
 			, sum(case when status = #{stoppedpay_db} then net else 0 end) as stopped_end_count
@@ -195,7 +194,6 @@ sql << <<-EOS
 			, 0 paying_loss
 			, 0 stopped_gain
 			, 0 stopped_unchanged_gain
-			, 0 rule59_unchanged_gain
 			, 0 stopped_loss
 			, 0 stopped_to_paying
 			, 0 stopped_to_other
@@ -299,7 +297,7 @@ protected
 		, c.stopped_start_count::int
 		, c.stopped_gain::int as stopped_real_gain
 		, c.stopped_unchanged_gain::int
-		, c.rule59_unchanged_gain::int
+
 		, c.stopped_loss::int as stopped_real_loss
 		, c.stopped_to_paying::int
 		, c.stopped_to_other::int
