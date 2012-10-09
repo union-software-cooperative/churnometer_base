@@ -11,35 +11,49 @@ class DatabaseManager
     @dimensions ||= Dimensions.new # Stub of David's dimension class
   end
 
-  def migratecols_sql()
+  def rebuild_sql()
     sql = <<-SQL
       drop function if exists insertmemberfact();
+      drop function if exists inserttransactionfact();
+      drop function if exists updatedisplaytext();
+      
       drop view if exists memberchangefromlastchange;
       drop view if exists lastchange;
       drop view if exists memberfacthelperquery;
 
-      drop table if exists membersourceprev_migration;
       drop table if exists memberfact_migration;
+      drop table if exists transactionfact_migration;
+      drop table if exists displaytext_migration;
+      drop table if exists memberfacthelper_migration;
       
-	    alter table membersourceprev rename to membersourceprev_migration;
-      alter table memberfact rename to memberfact_migration;
+	    alter table memberfact rename to memberfact_migration;
+      alter table transactionfact rename to transactionfact_migration;
+      alter table displaytext rename to displaytext_migration;
+      alter table memberfacthelper rename to memberfacthelper_migration;
      
-      drop table if exists membersource;
-      
       #{rebuild_displaytextsource_sql};
       #{rebuild_transactionsource_sql};
+      #{rebuild_transactionsourceprev_sql};
       #{rebuild_membersource_sql};
       #{rebuild_membersourceprev_sql};
+      
       #{memberfact_sql};
+      #{transactionfact_sql};
+      #{displaytext_sql};
+      
       #{lastchange_sql};
       #{memberchangefromlastchange_sql};
       #{memberfacthelperquery_sql};
+      #{memberfacthelper_sql}
+      
+      #{updatedisplaytext_sql};
       #{insertmemberfact_sql};
+      #{inserttransactionfact_sql};
     SQL
   end
   
-  def migratecols()
-    db.ex(migratecols_sql)
+  def rebuild()
+    db.ex(rebuild_sql)
   end
   
   def rebuild_displaytextsource_sql
@@ -52,6 +66,7 @@ class DatabaseManager
         , id varchar(255) null
         , displaytext varchar(255) null
       );
+          
     SQL
   end
   
@@ -59,7 +74,31 @@ class DatabaseManager
     db.ex(rebuild_displaytextsource_sql)
   end
   
-   def membersource_sql
+  def displaytext_sql
+    sql = <<-SQL
+      create table displaytext
+      (
+        attribute varchar(255) not null
+        , id varchar(255) null
+        , displaytext varchar(255) null
+      );
+      
+      DROP INDEX "displaytext_attribute_idx";
+	    DROP INDEX "displaytext_id_idx";
+      DROP INDEX "displaytext_attribute_id_idx";
+
+      CREATE INDEX "displaytext_attribute_idx" ON "displaytext" USING btree(attribute ASC NULLS LAST);
+      CREATE INDEX "displaytext_id_idx" ON "displaytext" USING btree(id ASC NULLS LAST);
+      CREATE INDEX "displaytext_attribute_id_idx" ON "displaytext" USING btree(attribute ASC, id ASC NULLS LAST);
+    
+    SQL
+  end
+  
+  def displaytext
+    db.ex(displaytext_sql)
+  end
+  
+  def membersource_sql
     sql = <<-SQL
       create table membersource 
       (
@@ -73,6 +112,7 @@ class DatabaseManager
     
     sql << <<-SQL
       )
+      
     SQL
   end
   
@@ -93,14 +133,17 @@ class DatabaseManager
   end
   
   def rebuild_membersourceprev_sql
-    rebuild_membersource_sql.sub('membersource', 'membersourceprev')
+    sql = rebuild_membersource_sql.gsub('membersource', 'membersourceprev')
+    sql << <<-SQL
+      ; CREATE INDEX "membersourceprev_memberid_idx" ON "membersourceprev" USING btree(memberid ASC NULLS LAST);
+    SQL
   end
   
   def rebuild_membersourceprev
     db.ex(rebuild_membersourceprev_sql)
   end
 
-  def memberfact
+  def memberfact_sql
     sql = <<-SQL
       create table memberfact
       (
@@ -111,17 +154,23 @@ class DatabaseManager
         , newstatus varchar(255) null
     SQL
 
-    dimensions.each { | i | sql << <<-REPEAT }
+    dimensions.each { | d | sql << <<-REPEAT }
         , old#{d.column_base_name} varchar(255) null
         , new#{d.column_base_name} varchar(255) null
     REPEAT
 
     sql << <<-SQL
-      )
+      );
+      
+      DROP INDEX "memberfact_changeid_idx";
+      DROP INDEX "memberfact_memberid_idx";
+      
+      CREATE INDEX "memberfact_changeid_idx" ON "memberfact" USING btree(changeid ASC NULLS LAST);
+      CREATE INDEX "memberfact_memberid_idx" ON "memberfact" USING btree(memberid ASC NULLS LAST);
     SQL
   end
 
-  def lastchange
+  def lastchange_sql
     sql = <<-SQL
       create view lastchange as
         select
@@ -132,7 +181,7 @@ class DatabaseManager
     SQL
 
     dimensions.each { |d| sql << <<-REPEAT }
-          , new#{d.column_base_name} as col#{d.column_base_name}
+          , new#{d.column_base_name} as #{d.column_base_name}
     REPEAT
 
     sql << <<-SQL
@@ -151,7 +200,7 @@ class DatabaseManager
     SQL
   end
 
-  def memberchangefromlastchange
+  def memberchangefromlastchange_sql
 
     sql = <<-SQL
       -- find changes, adds and deletions in latest data
@@ -243,7 +292,7 @@ class DatabaseManager
     SQL
   end
 
-  def insertmemberfact
+  def insertmemberfact_sql
 
     sql = <<-SQL
       CREATE OR REPLACE FUNCTION insertmemberfact() RETURNS void 
@@ -283,46 +332,102 @@ class DatabaseManager
     sql << <<-SQL
         from
           memberchangefromlastchange;
+          
+        -- update memberfacthelper with new facts (helper is designed for fast aggregration)
+        insert into memberfacthelper
+        select 
+          * 
+        from 
+          memberfacthelperquery h
+        where 
+          -- only insert facts we haven't already inserted
+          changeid not in (select changeid from memberfacthelper)
+          and #{memberfacthelper_subset_sql};
+    
+        -- as new status changes happen, next status changes need to be updated
+        update
+          memberfacthelper
+        set
+          duration = h.duration
+          , _changeid = h._changeid
+          , _changedate = h._changedate
+        from
+          memberfacthelperquery h
+        where
+          memberfacthelper.changeid = h.changeid
+          and memberfacthelper.net = h.net
+          and (
+            coalesce(memberfacthelper.duration,0) <> coalesce(h.duration,0)
+            or coalesce(memberfacthelper._changeid,0) <> coalesce(h._changeid,0)
+            or coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900') 
+          );
+
+        -- finalise import, so running this again won't do anything
+        delete from memberSourcePrev;
+        insert into memberSourcePrev select * from memberSource;
+        delete from memberSource;
 
       end$BODY$
-      LANGUAGE plpgsql
-	    COST 100
-	    CALLED ON NULL INPUT
-	    SECURITY INVOKER
-	    VOLATILE;
+        LANGUAGE plpgsql
+        COST 100
+        CALLED ON NULL INPUT
+        SECURITY INVOKER
+        VOLATILE;
     SQL
   end
 
-  def memberfacthelperquery
+  def memberfacthelperquery_sql
 
     sql = <<-SQL
-      create view memberfacthelperquery as
-        select
-          changeid
-          , changedate
-          , memberid      
-          , -1 as net
-          , 0 as gain
-          , 1 as loss
-          , coalesce(oldstatus, '') as status
-          , coalesce(newstatus, '') as _status
-          , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
-              then -1 else 0 end as statusdelta
-          , 0 as a1pgain
-          , case when coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
-              then -1 else 0 end as a1ploss
-          , 0 as payinggain
-          , case when coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
-            then -1 else 0 end as payingloss
-          , 0 as stoppedgain
-          , case when coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
-              then -1 else 0 end as stoppedloss
-          , 0 as othergain
-          , case when 
-              NOT coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
-              AND NOT coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
-              AND NOT coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
-              then -1 else 0 end as otherloss
+      create or replace view memberfacthelperquery as
+      with mfnextstatuschange as
+      (
+        -- find the next status change for each statuschange
+        select 
+          lead(changeid)  over (partition by memberid order by changeid) nextstatuschangeid
+          , mf.*
+        from 
+          memberfact mf
+        where 
+          coalesce(mf.oldstatus,'') <> coalesce(mf.newstatus,'')
+      )
+      , nextchange as (
+        select 
+          c.changeid
+          , n.changeid nextchangeid
+          , n.changedate nextchangedate
+          , n.newstatus nextstatus
+          , (coalesce(n.changedate::date, current_date) - c.changedate::date)::int nextduration
+        from 
+          mfnextstatuschange c
+        left join memberfact n on c.nextstatuschangeid = n.changeid
+      )
+      select
+        memberfact.changeid
+        , changedate
+        , memberid      
+        , -1 as net
+        , 0 as gain
+        , 1 as loss
+        , coalesce(oldstatus, '') as status
+        , coalesce(newstatus, '') as _status
+        , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
+            then -1 else 0 end as statusdelta
+        , 0 as a1pgain
+        , case when coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
+            then -1 else 0 end as a1ploss
+        , 0 as payinggain
+        , case when coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
+          then -1 else 0 end as payingloss
+        , 0 as stoppedgain
+        , case when coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
+            then -1 else 0 end as stoppedloss
+        , 0 as othergain
+        , case when 
+            NOT coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
+            AND NOT coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
+            AND NOT coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
+            then -1 else 0 end as otherloss
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
@@ -332,37 +437,41 @@ class DatabaseManager
     REPEAT
 
     sql << <<-SQL
-        from 
-          memberfact
+        , nextchangeid _changeid
+        , nextchangedate _changedate
+        , nextduration duration
+      from 
+        memberfact
+        inner join nextchange on memberfact.changeid = nextchange.changeid
 
-        UNION ALL
+      UNION ALL
 
-        select
-          changeid
-          , changedate
-          , memberid
-          , 1 as net
-          , 1 as gain
-          , 0 as loss
-          , coalesce(newstatus, '') as status
-          , coalesce(oldstatus, '') as _status
-          , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
-              then 1 else 0 end as statusdelta
-          , case when coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
-              then 1 else 0 end as a1pgain
-          , 0 as a1ploss
-          , case when coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
-            then 1 else 0 end as payinggain
-          , 0 as payingloss
-          , case when coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
-              then 1 else 0 end as stoppedgain
-          , 0 as stoppedloss
-          , case when 
-              NOT coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
-              AND NOT coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
-              AND NOT coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
-              then 1 else 0 end as othergain
-          , 0 as otherloss
+      select
+        memberfact.changeid
+        , changedate
+        , memberid
+        , 1 as net
+        , 1 as gain
+        , 0 as loss
+        , coalesce(newstatus, '') as status
+        , coalesce(oldstatus, '') as _status
+        , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
+            then 1 else 0 end as statusdelta
+        , case when coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
+            then 1 else 0 end as a1pgain
+        , 0 as a1ploss
+        , case when coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
+          then 1 else 0 end as payinggain
+        , 0 as payingloss
+        , case when coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
+            then 1 else 0 end as stoppedgain
+        , 0 as stoppedloss
+        , case when 
+            NOT coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
+            AND NOT coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
+            AND NOT coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
+            then 1 else 0 end as othergain
+        , 0 as otherloss
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
@@ -372,9 +481,74 @@ class DatabaseManager
     REPEAT
 
     sql << <<-SQL
-      from
+        , nextchangeid _changeid
+        , nextchangedate _changedate
+        , nextduration duration
+      from 
         memberfact
+        inner join nextchange on memberfact.changeid = nextchange.changeid
     SQL
+  end
+  
+  def memberfacthelper_subset_sql
+    <<-SQL
+      (
+		    -- only include people who've been an interesting status
+        exists (
+          select
+            1
+          from 
+            memberfact mf
+          where
+            mf.memberid = h.memberid
+            and (
+              oldstatus = 'paying'
+              or oldstatus = 'stopped'
+              or oldstatus = 'a1p'
+              or newstatus = 'paying'
+              or newstatus = 'stopped'
+              or newstatus = 'a1p'
+            )
+        )
+        -- or have paid something since tracking begun
+        or exists (
+          select
+            1
+          from
+            transactionfact tf
+          where
+            tf.memberid = h.memberid
+        )
+      )
+    SQL
+  end
+  
+  def memberfacthelper_sql
+    sql = <<-SQL
+      drop table if exists memberfacthelper;
+      create table memberfacthelper as 
+      select 
+        * 
+      from 
+        memberfacthelperquery h
+      where 
+        #{memberfacthelper_subset_sql};
+        
+    DROP INDEX "memberfacthelper_changeid_idx";
+    DROP INDEX "memberfacthelper_memberid_idx";
+    DROP INDEX "memberfacthelper_changedate_idx";
+    
+    CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
+    CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);
+    CREATE INDEX "memberfacthelper_changedate_idx" ON "memberfacthelper" USING btree(changedate ASC NULLS LAST);
+    SQL
+    
+    dimensions.each { |d| sql << <<-REPEAT }
+      DROP INDEX "memberfacthelper_#{d.column_base_name}_idx" ;
+      CREATE INDEX "memberfacthelper_#{d.column_base_name}_idx" ON "memberfacthelper" USING btree(#{d.column_base_name} ASC NULLS LAST);
+    REPEAT
+    
+    sql
   end
   
   def transactionfact_sql
@@ -387,8 +561,14 @@ class DatabaseManager
         , userid varchar(255) not null
         , amount money not null
         , changeid bigint not null
-      )
+      );
+      
+      DROP INDEX "transactionfact_memberid_idx";
+      DROP INDEX "transactionfact_changeid_idx";
+      CREATE INDEX "transactionfact_memberid_idx" ON "transactionfact" USING btree(memberid ASC NULLS LAST);
+      CREATE INDEX "transactionfact_changeid_idx" ON "transactionfact" USING btree(changeid ASC NULLS LAST);
     SQL
+    
   end
   
   def transactionfact
@@ -421,10 +601,18 @@ class DatabaseManager
   end
   
    def transactionsourceprev_sql
-    transactionsource_sql.sub("transactionsource", "transactionsourceprev")
+    transactionsource_sql.gsub("transactionsource", "transactionsourceprev")
   end
   
   def transactionsourceprev
+    db.ex(transactionsourceprev_sql)
+  end
+  
+  def rebuild_transactionsourceprev_sql
+    rebuild_transactionsource_sql.gsub("transactionsource", "transactionsourceprev")
+  end
+  
+  def rebuild_transactionsourceprev
     db.ex(transactionsourceprev_sql)
   end
   
@@ -498,14 +686,59 @@ class DatabaseManager
         insert into transactionSourcePrev select * from transactionSource;
         delete from transactionSource;
         
-        end;$BODY$
-          LANGUAGE plpgsql
-          COST 100
-          CALLED ON NULL INPUT
-          SECURITY INVOKER
-          VOLATILE;
-      SQL
-    end
+      end;$BODY$
+        LANGUAGE plpgsql
+        COST 100
+        CALLED ON NULL INPUT
+        SECURITY INVOKER
+        VOLATILE;
+    SQL
+  end
   
+  def updatedisplaytext_sql
+    sql = <<-SQL
+      CREATE OR REPLACE FUNCTION public.updatedisplaytext() RETURNS void 
+        AS $BODY$
+      begin
+        -- don't run the import if nothing is ready for comparison
+        if 0 = (select count(*) from displaytextsource) then 
+          return;
+        end if;
+        
+        
+        update 
+          displaytext 
+        set
+          displaytext = d2.displaytext
+        from
+         displaytextsource d2  
+        where
+          displaytext.id = d2.id 
+          and displaytext.attribute = d2.attribute
+          and displaytext.displaytext <> d2.displaytext
+        ;
+        
+        insert into displaytext
+        select
+          *
+        from
+         displaytextsource d
+        where
+          not exists (select 1 from displaytext where attribute = d.attribute and id=d.id);
+        
+        -- delete to make way for next import
+        delete from displaytextsource;
+      end 
+      $BODY$
+        LANGUAGE plpgsql
+        COST 100
+        CALLED ON NULL INPUT
+        SECURITY INVOKER
+        VOLATILE;
+    SQL
+  end
   
+  def insertdisplaytext
+    db.ex(insertdisplaytext_sql)
+  end
 end
