@@ -109,6 +109,9 @@ end
 # Base class for metadata about database dimensions.
 # A dimension is a set of data that can be used in query filters and to group query results.
 class DimensionBase
+  # A Dimension instance.
+  attr_reader :drilldown_target_dimension
+
   # The 'base name' of the column that stores data for the dimension in the memberfact tables.
   def column_base_name
     raise 'abstract'
@@ -180,6 +183,10 @@ class DimensionDelta < DimensionBase
     "#{@delta_prefix}#{@dimension.column_base_name}"
   end
 
+  def drilldown_target_dimension
+    @dimension.drilldown_target_dimension
+  end
+
   def name
     "#{@delta_prefix.capitalize} #{@dimension.name}"
   end
@@ -197,7 +204,6 @@ end
 class DimensionUser < Dimension
   attr_reader :name
   attr_reader :allowed_roles
-  attr_reader :drilldown_target_dimension
 
   # The index of the dimension as given in the user config file.
   attr_reader :index
