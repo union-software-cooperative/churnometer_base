@@ -5,14 +5,35 @@
 <% end %>
 
 <h2>freeChange Data Importer</h2>
-<% if !@import_status.nil? %>
-  <div>
-    <%= @import_status %>
-  </div>
+
+<% if @model.importing? %>
+  <%= @model.import_status %>
+<% else %>
+  <%= @model.staging_status %>
+  <form method="post" enctype="multipart/form-data">
+    <input type="file" name="myfile">
+    <br>
+    <input type="submit" value="Upload">
+  </form>
+  
+  <form method="post">
+    <input type="submit" name="action" value="reset">
+  </form>
+  
+  <form method="post">
+    <input type="submit" name="action" value="rebuild">
+  </form>
+  
+  <form method="post">
+    <input type="submit" name="action" value="diags">
+  </form>
+  
+  <% if @model.import_ready? %>
+    <form method="post">
+      <input type="text" name="import_date" value="<%=Time.now%>">
+      <input type="submit" name="action" value="import">
+    </form>
+  <% end %>
 <% end %>
 
-<form method="post" enctype="multipart/form-data">
-	<input type="file" name="myfile">
-	<br>
-	<input type="submit" value="Upload">
-</form>
+

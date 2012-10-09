@@ -23,10 +23,18 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 class Churnobyl < Sinatra::Base
   include Authorization
   logger = Logger.new('log/churnometer.log')
-      
+     
+  configure :development do
+    set :session_secret, "something" # I don't understand what this does but it lets my flash work
+    enable :sessions
+  end 
+  
   configure :production, :development do
     enable :logging
   end
+  
+  $importer = Importer.new
+  $importer.run
   
   helpers do
     include Rack::Utils
@@ -102,16 +110,77 @@ class Churnobyl < Sinatra::Base
     send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
   
-  get '/scss/:name.css' do |name|
-    scss name.to_sym, :style => :expanded
+  get "/import" do
+    @flash = session[:flash]
+    session[:flash] = nil
+    
+    @model = ImportPresenter.new
+    erb :import
   end
-
-  ServiceRequestHandlerAutocomplete.new(self)
-
-  run! if app_file == $0
-
-
-
+  
+  post "/import" do
+    session[:flash] = nil
+    @model = ImportPresenter.new
+    
+    if params['action'] == "reset"
+      @model.reset
+      session[:flash] = "Successfully emptied staging tables"
+      redirect '/import'
+    end 
+    
+    if params['action'] == "import"
+      @model.go(Time.parse(params['import_date']))
+      redirect '/import'
+    end
+    
+    if params['action'] == "rebuild"
+      @model.rebuild
+      redirect '/import'
+    end 
+    
+    if params['action'] == "diags"
+      response.write @model.diags
+      return
+    end 
+    
+    if params['myfile'].nil?
+      session[:flash]="No file uploaded"
+      redirect '/import'
+    end
+    
+    file = params['myfile'][:tempfile] 
+    filename = params['myfile'][:filename]
+    
+    begin
+      full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
+      
+      File.open(full_filename, "w") do |f|
+        f.write(file.read)
+      end
+      
+      if filename.start_with?("members.txt") then
+        @model.member_import(full_filename)
+      end
+      
+      if filename.start_with?("displaytext.txt") then
+        @model.displaytext_import(full_filename)
+      end
+      
+      if filename.start_with?("transactions.txt") then
+        @model.transaction_import(full_filename)
+      end
+      
+    rescue StandardError => err
+      session[:flash] = "File upload failed: " + err.message
+    end
+    
+    if session[:flash].nil?
+      session[:flash] = "#{filename} was successfully uploaded"
+    end
+    
+    redirect '/import'
+  end
+  
   # Handle GET-request (Show the upload form)
   get "/upload" do
     erb :upload 
@@ -153,64 +222,12 @@ class Churnobyl < Sinatra::Base
     erb :upload
   end
   
-  get "/import" do
-    importer = ImportPresenter.new
-    
-    if params['action'] == "reset"
-      importer.reset
-    end 
-    
-    @import_status = importer.status
-      
-    if params['action'] == "diags"
-      @import_status = importer.diags
-    end 
-    
-    erb :import
+  get '/scss/:name.css' do |name|
+    scss name.to_sym, :style => :expanded
   end
+
+  ServiceRequestHandlerAutocomplete.new(self)
+
+  run! if app_file == $0
   
-  post "/import" do
-    @flash = ""
-    
-    importer = ImportPresenter.new
-    
-    if params['myfile'].nil?
-      @flash="No file uploaded"
-      return erb :import
-    end
-    
-    file = params['myfile'][:tempfile] 
-    filename = params['myfile'][:filename]
-   
-    begin
-      full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
-      
-      File.open(full_filename, "w") do |f|
-        f.write(file.read)
-      end
-      
-      if filename == "members.txt" then
-        importer.member_import(full_filename)
-      end
-      
-      if filename == "displaytext.txt" then
-        importer.displaytext_import(full_filename)
-      end
-      
-      if filename == "transactions.txt" then
-        importer.transaction_import(full_filename)
-      end
-      
-    rescue StandardError => err
-      @flash = "File upload failed: " + err.message
-    end
-    
-    if @flash == "" 
-      @flash = "#{filename} was successfully uploaded"
-    end
-    
-    @import_status = importer.status
- 
-    erb :import
-  end
 end
