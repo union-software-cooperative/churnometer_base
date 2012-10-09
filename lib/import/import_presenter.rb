@@ -110,17 +110,20 @@ class ImportPresenter
 
   
   def import_history
+    
+    # merge member import history and transaction import history
     tab = {}
-    member_imports.each do |row| 
+    member_import_history.each do |row| 
       tab[row['creationdate']] = {}
       tab[row['creationdate']]['members'] = row['cnt']
     end
     
-    transaction_imports.each do |row| 
+    transaction_import_history.each do |row| 
       tab[row['creationdate']] ||= {}
       tab[row['creationdate']]['transactions'] = row['cnt']
     end
     
+    # render table of history
     html = <<-HTML
       <table>
         <tr>
@@ -169,12 +172,12 @@ class ImportPresenter
   	data[0]['cnt']
   end
   
-  def transaction_imports
-    data = db.ex("select creationdate, count(*) cnt from transactionfact group by creationdate")
+  def transaction_import_history
+    data = db.ex("select creationdate, count(*) cnt from transactionfact group by creationdate order by creationdate")
   end
   
-  def member_imports
-    data = db.ex("select changedate as creationdate, count(*) cnt from memberfact group by changedate")
+  def member_import_history
+    data = db.ex("select changedate as creationdate, count(*) cnt from memberfact group by changedate order by changedate")
   end
   
   def console_ex(cmd)
