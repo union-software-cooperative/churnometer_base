@@ -200,6 +200,7 @@ class Churnobyl < Sinatra::Base
    
     begin
       File.open('uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H:%M:%S"), "w") do |f|
+        # Remarked out because encryption had time out issues
         #    Open3.popen3("gpg --no-permission-warning --trust-model always --yes -e -r 'freeChangde'") { |i,o,e,t| 
         #   i.puts(file.read) 
         #   i.close_write

@@ -39,7 +39,6 @@ class ImportPresenter
   
   def importing?
     $importer.state == :running
-    #(db.ex("select importing from importing"))[0]['importing'] == '1'
   end
   
   def load_staging_counts
@@ -195,11 +194,17 @@ class ImportPresenter
     result
   end
   
+  # The following import functionality could arguably go into the db manager
+  # Except the db manager is more about configuring the database
+  # An this is more about importing.  It could go into database_importer but 
+  # That is about executing the import in the background.
+  
   def member_import(file)
     dbm.empty_membersource
     console_ex(member_import_command(file))
     db.ex("VACUUM membersource;")
     db.ex("ANALYSE membersource;")
+    console_ex("mv \"#{file}\" \"#{file}.imported\"")
   end
 
   def displaytext_import(file)
@@ -207,7 +212,7 @@ class ImportPresenter
     console_ex(displaytext_import_command(file))
     db.ex("VACUUM displaytextsource;")
     db.ex("ANALYSE displaytextsource;")
-    
+    console_ex("mv \"#{file}\" \"#{file}.imported\"")
   end
   
   def transaction_import(file)
@@ -215,6 +220,7 @@ class ImportPresenter
     console_ex(transaction_import_command(file))
     db.ex("VACUUM transactionsource;")
     db.ex("ANALYSE transactionsource;")
+    console_ex("mv \"#{file}\" \"#{file}.imported\"")
   end
   
   def member_import_command(file)
