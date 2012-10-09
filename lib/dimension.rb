@@ -18,11 +18,18 @@ class Dimensions
   end
 
   # config_hash: mappings from index numbers to hashes defining Dimension columns in the format defined by the Churnometer configuration scheme.
-  def from_config_hash(config_hash)
+  # inbuilt_dimensions: Dimensions defined by the app outside of the config file.
+  def from_config_hash(config_hash, inbuilt_dimensions)
     config_hash.each do |index, config_hash_entry|
       dimension = DimensionUser.new(index)
       dimension.from_config_hash(config_hash_entry)
       add(dimension)
+    end
+
+    all_dimensions = self + inbuilt_dimensions
+
+    each() do |user_dimension|
+      user_dimension._post_load_from_config_hash(all_dimensions)
     end
   end
 
@@ -102,6 +109,9 @@ end
 # Base class for metadata about database dimensions.
 # A dimension is a set of data that can be used in query filters and to group query results.
 class DimensionBase
+  # A Dimension instance.
+  attr_reader :drilldown_target_dimension
+
   # The 'base name' of the column that stores data for the dimension in the memberfact tables.
   def column_base_name
     raise 'abstract'
@@ -173,6 +183,10 @@ class DimensionDelta < DimensionBase
     "#{@delta_prefix}#{@dimension.column_base_name}"
   end
 
+  def drilldown_target_dimension
+    @dimension.drilldown_target_dimension
+  end
+
   def name
     "#{@delta_prefix.capitalize} #{@dimension.name}"
   end
@@ -206,6 +220,15 @@ class DimensionUser < Dimension
     @id = config_hash['id'].downcase
     @name = config_hash['name']
     @allowed_roles = config_hash['roles'] || ['any']
+    @drilldown_target_dimension = config_hash['drilldown_target']
+  end
+
+  # Intended for the use of the Dimensions class only, to be called after load_from_config_hash.
+  # all_dimensions: the Dimensions instance containing all the inbuilt and user Dimension instances.
+  def _post_load_from_config_hash(all_dimensions)
+    if !@drilldown_target_dimension.nil?
+      @drilldown_target_dimension = all_dimensions.dimension_for_id_mandatory(@drilldown_target_dimension)
+    end
   end
 
   def column_base_name

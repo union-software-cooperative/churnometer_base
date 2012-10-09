@@ -68,7 +68,7 @@ class ChurnPresenter_Graph
             "endDate" => intersection['period_end'], 
             "interval" => 'none', 
             "#{Filter}[#{groupby_column_id}]" => "#{intersection['row_header1_id']}", 
-						"group_by" => "#{next_group_by[groupby_column_id]}" 
+						"group_by" => @request.groupby_dimension.drilldown_target_dimension.id
           }
 
           drilldown_url = build_url(url_parameters)
