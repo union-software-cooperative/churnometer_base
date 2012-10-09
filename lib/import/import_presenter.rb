@@ -86,7 +86,7 @@ class ImportPresenter
   	  <h3>
   	    Prior imports
   	  </h3>
-  	  #{imports}
+  	  #{import_history}
   		<ul>
   			<li>
   				#{mcnt_msg}
@@ -109,7 +109,7 @@ class ImportPresenter
   
 
   
-  def imports
+  def import_history
     tab = {}
     member_imports.each do |row| 
       tab[row['creationdate']] = {}
