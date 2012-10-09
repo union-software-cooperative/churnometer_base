@@ -1,5 +1,7 @@
 require './lib/query/query_detail_base'
 
+# The detail query is used when 'drilling down' into non-groupby cells in the table display, accessed
+# from the main interface's summary tab.
 class QueryDetail < QueryDetailBase
   def initialize(app, churn_db, groupby_dimension, start_date, end_date, with_trans, site_constraint, filter_column, filter_param_hash)
     super(app, churn_db, groupby_dimension, filter_column, filter_param_hash)
@@ -71,7 +73,12 @@ class QueryDetail < QueryDetailBase
 
     end_date = @end_date + 1
 
+    paying_db = db.quote(@app.member_paying_status_code)
+    a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
+    stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
+
 sql = <<-EOS	
+	-- detail query
 	with nonstatusselections as
 	(
 		-- finds all changes matching user criteria
@@ -140,10 +147,10 @@ sql = <<-EOS
 			, case when coalesce(_status, '') = '' then a1pgain else 0 end::bigint a1p_newjoin
 			, case when coalesce(_status, '') <> '' then a1pgain else 0 end::bigint a1p_rejoin
 			, a1ploss::bigint a1p_real_loss
-			, case when coalesce(_status, '') = '1' then a1ploss else 0 end::bigint a1p_to_paying
-			, case when coalesce(_status, '') <> '1' then a1ploss else 0 end::bigint a1p_to_other
-			, case when coalesce(status, '') = '14' then othergain else 0 end::bigint a1p_other_gain
-			, case when coalesce(status, '') = '14' then otherloss else 0 end::bigint a1p_other_loss
+			, case when coalesce(_status, '') = #{paying_db} then a1ploss else 0 end::bigint a1p_to_paying
+			, case when coalesce(_status, '') <> #{paying_db} then a1ploss else 0 end::bigint a1p_to_other
+			, case when coalesce(status, '') = #{a1p_db} then othergain else 0 end::bigint a1p_other_gain
+			, case when coalesce(status, '') = #{a1p_db} then otherloss else 0 end::bigint a1p_other_loss
 			, payinggain::bigint paying_real_gain
 			, payingloss::bigint paying_real_loss
 			, (payinggain+payingloss)::bigint paying_real_net
@@ -151,15 +158,15 @@ sql = <<-EOS
 			, case when _changeid is null and coalesce(_status,'') = '3' then loss /* only want to count changes too status 3 which will be losses */else 0 end::bigint rule59_unchanged_gain
 			, case when _changeid is null then stoppedgain else 0 end::bigint stopped_unchanged_gain
 			, stoppedloss::bigint stopped_real_loss
-			, case when coalesce(_status,'') = '1' then stoppedloss else 0 end::bigint stopped_to_paying
-			, case when coalesce(_status,'') <> '1' then stoppedloss else 0 end::bigint stopped_to_other			
+			, case when coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end::bigint stopped_to_paying
+			, case when coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end::bigint stopped_to_other			
 			
-			, case when coalesce(status, '') = '1' then othergain else 0 end::bigint paying_other_gain
-			, case when coalesce(status, '') = '1' then otherloss else 0 end::bigint paying_other_loss
-			, case when coalesce(status, '') = '11' then othergain else 0 end::bigint stopped_other_gain
-			, case when coalesce(status, '') = '11' then otherloss else 0 end::bigint stopped_other_loss
-			, case when not (status = '1' or status = '14') then othergain else 0 end::bigint other_other_gain
-			, case when not (status = '1' or status = '14') then otherloss else 0 end::bigint other_other_loss
+			, case when coalesce(status, '') = #{paying_db} then othergain else 0 end::bigint paying_other_gain
+			, case when coalesce(status, '') = #{paying_db} then otherloss else 0 end::bigint paying_other_loss
+			, case when coalesce(status, '') = #{stoppedpay_db} then othergain else 0 end::bigint stopped_other_gain
+			, case when coalesce(status, '') = #{stoppedpay_db} then otherloss else 0 end::bigint stopped_other_loss
+			, case when not (status = #{paying_db} or status = #{a1p_db}) then othergain else 0 end::bigint other_other_gain
+			, case when not (status = #{paying_db} or status = #{a1p_db}) then otherloss else 0 end::bigint other_other_loss
 			, net::bigint
 		from  
 			nonegations c
