@@ -168,32 +168,8 @@ module Settings
           ]
       }
 
-      staff_summary_override = [
-        'row_header',
-        'row_header1',
-        'period_header',
-        'a1p_unchanged_gain',
-        'stopped_unchanged_gain',
-        'paying_end_count',
-        'a1p_end_count',
-        'stopped_end_count'
-      ]
-    
-      if @request.auth.staff?   
-        hash['Summary'] = staff_summary_override
-      end
-      
-      if @request.auth.admin?
-        hash['Follow up'] = staff_summary_override;
-      end 
-      
       if @request.auth.staff? or @request.auth.leader?
-        hash = hash.merge(shash_option);
-      end
-      
-      if @request.auth.leader?
-        hash = hash.merge(fhash_option);
-        hash['Follow up'] = staff_summary_override;
+        hash = hash.merge(shash_option)
       end
       
       hash
@@ -226,25 +202,7 @@ module Settings
             'oldlead',
             'newlead',
             'currentlead'
-            ], 
-            'Follow up' => [
-              'row_header',
-              'row_header1',
-              'row_header2',
-              'changedate',
-              'memberid',
-              'member',
-              'currentstatus',
-              'followupnotes',
-              'paymenttype',
-              'paymenttypeid',
-              'contactdetail',
-              'newcompanyid',
-              'newemployerid',
-              'payrollcontactdetail',
-              'lateness',
-              'neworg' 
-              ]
+            ] 
        }
 
        fhash = {
@@ -262,11 +220,6 @@ module Settings
            hash = hash.merge(fhash);
          end
          
-         if @request.auth.staff?
-           # only tab staff need for follow up is the follow up tab
-           hash = hash.reject { |k,v| k!='Follow up'}
-         end
-
          hash
      end
      
