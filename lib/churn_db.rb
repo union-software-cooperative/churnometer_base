@@ -12,13 +12,25 @@ class Db
       :password =>  Config['database']['password']
     )
   end
-  
+
+  def process_query_result(query_result)
+    # dbeswick: add a 'length' method to the sql results, so code that relies on the array returned
+    # from the sql disk cache will continue to work.
+    if !query_result.respond_to?(:length)
+      def query_result.length
+        num_tuples()
+      end
+    end
+
+    query_result
+   end
+
   def ex(sql)
-    @conn.exec(sql)
+    process_query_result(@conn.exec(sql))
   end
 
   def async_ex(sql)
-    @conn.async_exec(sql)
+    process_query_result(@conn.async_exec(sql))
   end
 
   # Quotes the string as appropriate for insertion into an SQL query string.
@@ -423,6 +435,8 @@ class ChurnDBDiskCache < ChurnDB
 
      # dbeswick: add a 'num_tuples' method to the cache results, so code that relies on the
      # pgruby interface will continue to work.
+     # tbd: forbid the use of num_tuples, and instead always use length. pgruby result classes should
+     # provide a 'length' reader.
      def result.num_tuples
        length()
      end

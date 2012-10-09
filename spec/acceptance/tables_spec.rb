@@ -43,7 +43,10 @@ class Churnobyl
   end
 end
 
-
+# Requests on a local machine can take a long time.
+Capybara.configure do |config|
+  config.default_wait_time = 60
+end
 
 describe "Tables" do
   it "Has the expected data" do

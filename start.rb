@@ -56,13 +56,21 @@ class Churnobyl < Sinatra::Base
   end
 
   def cr
-    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, app(), ChurnDBDiskCache.new(app()))
+    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, app(), churn_db_class().new(app()))
     @sql = @cr.sql # This is set for error message
     @cr
   end
 
   def churn_request_class
     ChurnRequest
+  end
+
+  def churn_db_class
+    if app().use_database_cache?
+      ChurnDBDiskCache
+    else
+      ChurnDB
+    end
   end
 
   get '/' do

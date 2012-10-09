@@ -50,7 +50,12 @@ class QueryDetailStatic < QueryDetailBase
 
     db = @churn_db.db
 
+    paying_db = db.quote(@app.member_paying_status_code)
+    a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
+    stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
+
 sql = <<-EOS	
+	-- static detail query
 	with lastchange as
 	(
 		-- finds all changes matching user criteria
@@ -82,10 +87,10 @@ sql = <<-EOS
 			c.memberid
 			, c.changeid::bigint	
 			, case when coalesce(#{db.quote_db(header1)}::varchar(50),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(50) end row_header
-			, case when coalesce(status, '') = '1' then 1 else 0 end::bigint paying
-			, case when coalesce(status, '') = '14' then 1 else 0 end::bigint a1p
-			, case when coalesce(status, '') = '11' then 1 else 0 end::bigint stopped
-			, case when not (coalesce(status, '') = '1' or coalesce(status, '') = '14') then 1 else 0 end::bigint other
+			, case when coalesce(status, '') = #{paying_db} then 1 else 0 end::bigint paying
+			, case when coalesce(status, '') = #{a1p_db} then 1 else 0 end::bigint a1p
+			, case when coalesce(status, '') = #{stoppedpay_db} then 1 else 0 end::bigint stopped
+			, case when not (coalesce(status, '') = #{paying_db} or coalesce(status, '') = #{a1p_db}) then 1 else 0 end::bigint other
 		from 
 			userselections c			
 	)

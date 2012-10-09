@@ -35,7 +35,12 @@ class QuerySummaryRunning < QueryFilter
 
     end_date = @end_date + 1
 
+    paying_db = db.quote(@app.member_paying_status_code)
+    a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
+    stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
+
     sql = <<-EOS
+	-- running summary query
 	with daterange as
 	(
 		select '2011-08-08'::date + s.t as dates from generate_series(0, ((#{db.sql_date(end_date)}::date)- ('2011-08-08'::date))::int,1) as s(t)
@@ -110,8 +115,8 @@ class QuerySummaryRunning < QueryFilter
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status, '') = '' then a1pgain else 0 end) a1p_newjoin
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status, '') <>'' then a1pgain else 0 end) a1p_rejoin			
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then a1ploss else 0 end) a1p_loss
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') = '1' then a1ploss else 0 end) a1p_to_paying
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') <> '1' then a1ploss else 0 end) a1p_to_other			
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then a1ploss else 0 end) a1p_to_paying
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then a1ploss else 0 end) a1p_to_other			
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then payinggain else 0 end) paying_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then payingloss else 0 end) paying_loss
 			
@@ -119,19 +124,19 @@ class QuerySummaryRunning < QueryFilter
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and _changeid is null and coalesce(_status,'') = '3' then loss /* only want to count changes too status 3 which will be losses */ else 0 end) rule59_unchanged_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then stoppedloss else 0 end) stopped_loss
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') = '1' then stoppedloss else 0 end) stopped_to_paying
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') <> '1' then stoppedloss else 0 end) stopped_to_other			
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end) stopped_to_paying
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end) stopped_to_other			
 		
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = '14' then othergain else 0 end) a1p_other_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = '14' then otherloss else 0 end) a1p_other_loss
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = '1' then othergain else 0 end) paying_other_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = '1' then otherloss else 0 end) paying_other_loss
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = #{a1p_db} then othergain else 0 end) a1p_other_gain
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = #{a1p_db} then otherloss else 0 end) a1p_other_loss
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = #{paying_db} then othergain else 0 end) paying_other_gain
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = #{paying_db} then otherloss else 0 end) paying_other_loss
 
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = '11' then othergain else 0 end) stopped_other_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = '11' then otherloss else 0 end) stopped_other_loss			
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = #{stoppedpay_db} then othergain else 0 end) stopped_other_gain
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and status = #{stoppedpay_db} then otherloss else 0 end) stopped_other_loss			
 
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and not (status = '1' or status = '14') then othergain else 0 end) other_other_gain
-			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and not (status = '1' or status = '14') then otherloss else 0 end) other_other_loss
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and not (status = #{paying_db} or status = #{a1p_db}) then othergain else 0 end) other_other_gain
+			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and not (status = #{paying_db} or status = #{a1p_db}) then otherloss else 0 end) other_other_loss
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then othergain else 0 end) other_gain
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then otherloss else 0 end) other_loss
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
@@ -144,10 +149,10 @@ class QuerySummaryRunning < QueryFilter
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then othergain+otherloss else 0 end) other_net
 			, sum(case when changedate > #{db.sql_date(@start_date)} and changedate <= #{db.sql_date(end_date)} then coalesce(c.net,0) else 0 end) net
 			, sum(net) as end_count
-			, sum(case when status = '14' then net else 0 end) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
-			, sum(case when status = '1' then net else 0 end) as paying_end_count
+			, sum(case when status = #{a1p_db} then net else 0 end) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
+			, sum(case when status = #{paying_db} then net else 0 end) as paying_end_count
 			
-			, sum(case when status = '11' then net else 0 end) as stopped_end_count
+			, sum(case when status = #{stoppedpay_db} then net else 0 end) as stopped_end_count
 			
 		from 
 			nonegations c 

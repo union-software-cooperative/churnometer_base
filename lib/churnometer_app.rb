@@ -22,6 +22,10 @@ class ChurnometerApp
     config_value('use_new_query_generation_method') == true
   end
 
+  def use_database_cache?
+    config_value('use_database_cache') == true
+  end
+
   # All available data dimensions.
   def dimensions
     @dimensions ||= custom_dimensions() + builtin_dimensions()
@@ -74,6 +78,18 @@ class ChurnometerApp
     end
 
     Dimensions.new(final_dimensions)
+  end
+
+  def member_paying_status_code
+    config_value('member_paying_status_code')
+  end
+
+  def member_awaiting_first_payment_status_code
+    config_value('member_awaiting_first_payment_status_code')
+  end
+
+  def member_stopped_paying_status_code
+    config_value('member_stopped_paying_status_code')
   end
 
   # The dimension that expresses work site or company information.
