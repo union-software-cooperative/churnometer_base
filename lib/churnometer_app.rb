@@ -11,11 +11,17 @@ class ChurnometerApp
   # 'status'.
   attr_reader :builtin_dimensions
 
-  class MissingConfigDataException < RuntimeError
+  class ConfigDataException < RuntimeError
     def initialize(message, churnometer_app)
       full_message = "#{message} in config file(s) #{churnometer_app.config_filenames.join(', ')}"
       super(full_message)
     end
+  end
+
+  class BadConfigDataFormatException < ConfigDataException
+  end
+
+  class MissingConfigDataException < ConfigDataException
   end
 
   def initialize
@@ -28,6 +34,7 @@ class ChurnometerApp
 
     make_builtin_dimensions()
     make_custom_dimensions()
+    make_drilldown_order()
   end
 
   # The first iteration of Churnometer retrieved its results by calling SQL functions.
@@ -71,6 +78,12 @@ class ChurnometerApp
     end
 
     Dimensions.new(final_dimensions)
+  end
+
+  # Returns the dimension that should be the drilldown target of the given dimension. 
+  # Returns the supplied dimension if no drilldown target is defined for it.
+  def next_drilldown_dimension(dimension)
+    @drilldown_order[dimension] || dimension
   end
 
   def member_paying_status_code
@@ -177,6 +190,24 @@ protected
     dimensions.from_config_hash(config_value('dimensions'), @builtin_dimensions)
 
     @custom_dimensions = dimensions
+  end
+
+  def make_drilldown_order
+    @drilldown_order = {}
+
+    hash = config_value('drilldown_order')
+
+    raise BadConfigDataFormatException.new("'drilldown_order' must be a hash (type is '#{hash.class}')", self) if !hash.kind_of?(Hash)
+
+    hash.each do |k, v|
+      begin
+        src_dim = dimensions()[k]
+        dst_dim = dimensions()[v]
+        @drilldown_order[src_dim] = dst_dim
+      rescue MissingDimensionException => e
+        raise BadConfigDataFormatException.new("drilldown_order: #{e}", self)
+      end
+    end
   end
 end
 

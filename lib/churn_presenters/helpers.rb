@@ -44,7 +44,7 @@ module ChurnPresenter_Helpers
 
     {
       "#{Filter}[#{groupby_column_id}]" => row['row_header1_id'], 
-      "group_by" => @request.groupby_dimension.drilldown_target_dimension.id
+      "group_by" => @app.next_drilldown_dimension(@request.groupby_dimension).id
     }
   end   
   
