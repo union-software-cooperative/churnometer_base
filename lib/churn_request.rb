@@ -64,7 +64,7 @@ class ChurnRequest
     else
       raise "Cannot load data - unknown query type (#{@type.to_s})"
     end
-    
+
     @data = db.ex(@sql)
     @cache_hit = db.cache_hit
   end
