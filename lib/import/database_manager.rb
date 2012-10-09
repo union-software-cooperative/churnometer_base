@@ -13,9 +13,13 @@ class DatabaseManager
 
   def rebuild_sql()
     sql = <<-SQL
+      drop table if exists importing;
+      select 0 as importing into importing;
+   
       drop function if exists insertmemberfact();
       drop function if exists inserttransactionfact();
       drop function if exists updatedisplaytext();
+      drop function if exists updatememberfacthelper();
       
       drop view if exists memberchangefromlastchange;
       drop view if exists lastchange;
@@ -47,13 +51,40 @@ class DatabaseManager
       #{memberfacthelper_sql}
       
       #{updatedisplaytext_sql};
+      #{updatememberfacthelper_sql};
       #{insertmemberfact_sql};
-      #{inserttransactionfact_sql};
+      #{inserttransactionfact_sql};      
     SQL
   end
   
   def rebuild()
     db.ex(rebuild_sql)
+    
+    # ANALYSE and VACUUM have to be run as separate database calls
+    str = <<-SQL
+      ANALYSE memberfact;
+      ANALYSE memberfact;
+      ANALYSE memberfacthelper;
+      ANALYSE transactionfact;
+      ANALYSE displaytext;
+      ANALYSE membersource;
+      ANALYSE membersourceprev;
+      ANALYSE transactionsource;
+      ANALYSE transactionsourceprev;
+      ANALYSE displaytextsource;
+      
+      VACUUM memberfact;
+      VACUUM memberfacthelper;
+      VACUUM transactionfact;
+      VACUUM displaytext;
+      VACUUM membersource;
+      VACUUM membersourceprev;
+      VACUUM transactionsource;
+      VACUUM transactionsourceprev;
+      VACUUM displaytextsource;
+    SQL
+    
+    str.split("\n").each { |cmd| db.ex(cmd) }
   end
   
   def rebuild_displaytextsource_sql
@@ -164,9 +195,13 @@ class DatabaseManager
       
       DROP INDEX "memberfact_changeid_idx";
       DROP INDEX "memberfact_memberid_idx";
+      DROP INDEX "memberfact_oldstatus_idx";
+      DROP INDEX "memberfact_newstatus_idx";
       
       CREATE INDEX "memberfact_changeid_idx" ON "memberfact" USING btree(changeid ASC NULLS LAST);
       CREATE INDEX "memberfact_memberid_idx" ON "memberfact" USING btree(memberid ASC NULLS LAST);
+      CREATE INDEX "memberfact_oldstatus_idx" ON "memberfact" USING btree(oldstatus ASC NULLS LAST);
+      CREATE INDEX "memberfact_newstatus_idx" ON "memberfact" USING btree(newstatus ASC NULLS LAST);
     SQL
   end
 
@@ -295,7 +330,7 @@ class DatabaseManager
   def insertmemberfact_sql
 
     sql = <<-SQL
-      CREATE OR REPLACE FUNCTION insertmemberfact() RETURNS void 
+      CREATE OR REPLACE FUNCTION insertmemberfact(import_date timestamp) RETURNS void 
 	    AS $BODY$begin
 
         -- don't run the import if nothing is ready for comparison
@@ -318,7 +353,7 @@ class DatabaseManager
     sql << <<-SQL
         )
         select
-          changedate
+          import_date
           , memberid
           , oldstatus
           , newstatus
@@ -332,7 +367,25 @@ class DatabaseManager
     sql << <<-SQL
         from
           memberchangefromlastchange;
-          
+
+        -- finalise import, so running this again won't do anything
+        delete from memberSourcePrev;
+        insert into memberSourcePrev select * from memberSource;
+        delete from memberSource;
+
+      end$BODY$
+        LANGUAGE plpgsql
+        COST 100
+        CALLED ON NULL INPUT
+        SECURITY INVOKER
+        VOLATILE;
+    SQL
+  end
+
+  def updatememberfacthelper_sql
+    <<-SQL 
+    CREATE OR REPLACE FUNCTION updatememberfacthelper() RETURNS void 
+      AS $BODY$begin
         -- update memberfacthelper with new facts (helper is designed for fast aggregration)
         insert into memberfacthelper
         select 
@@ -342,7 +395,34 @@ class DatabaseManager
         where 
           -- only insert facts we haven't already inserted
           changeid not in (select changeid from memberfacthelper)
-          and #{memberfacthelper_subset_sql};
+          and       (
+		    -- only include people who've been an interesting status
+        exists (
+          select
+            1
+          from 
+            memberfact mf
+          where
+            mf.memberid = h.memberid
+            and (
+              oldstatus = 'paying'
+              or oldstatus = 'stopped'
+              or oldstatus = 'a1p'
+              or newstatus = 'paying'
+              or newstatus = 'stopped'
+              or newstatus = 'a1p'
+            )
+        )
+        -- or have paid something since tracking begun
+        or exists (
+          select
+            1
+          from
+            transactionfact tf
+          where
+            tf.memberid = h.memberid
+        )
+      );
     
         -- as new status changes happen, next status changes need to be updated
         update
@@ -362,11 +442,6 @@ class DatabaseManager
             or coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900') 
           );
 
-        -- finalise import, so running this again won't do anything
-        delete from memberSourcePrev;
-        insert into memberSourcePrev select * from memberSource;
-        delete from memberSource;
-
       end$BODY$
         LANGUAGE plpgsql
         COST 100
@@ -375,6 +450,7 @@ class DatabaseManager
         VOLATILE;
     SQL
   end
+
 
   def memberfacthelperquery_sql
 
@@ -618,7 +694,7 @@ class DatabaseManager
   
   def inserttransactionfact_sql
     <<-SQL
-      CREATE OR REPLACE FUNCTION inserttransactionfact() RETURNS void 
+      CREATE OR REPLACE FUNCTION inserttransactionfact(import_date timestamp) RETURNS void 
 	    AS $BODY$begin
         
         -- don't run the import if nothing has been imported for comparison
@@ -639,7 +715,7 @@ class DatabaseManager
         -- insert any transactions that have appeared since last comparison
         select 
           t.id
-          , current_timestamp 
+          , import_date 
           , t.memberid
           , t.userid
           , t.amount
@@ -662,7 +738,7 @@ class DatabaseManager
         -- insert negations for any transactions that have been deleted since last comparison
         select 
           t.id
-          , current_timestamp
+          , import_date
           , t.memberid
           , t.userid
           , 0::money-t.amount
