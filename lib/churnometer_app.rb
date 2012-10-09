@@ -1,7 +1,15 @@
 require './lib/dimension'
 
 class ChurnometerApp
+  # A Dimensions instance containing both custom and inbuilt dimensions.
   attr_reader :dimensions
+
+  # Dimensions that are defined by users in the config file.
+  attr_reader :custom_dimensions
+
+  # Dimensions that are hardcoded in the app and are necessary for the program's functioning, such as
+  # 'status'.
+  attr_reader :builtin_dimensions
 
   class MissingConfigDataException < RuntimeError
     def initialize(message, churnometer_app)
@@ -12,7 +20,14 @@ class ChurnometerApp
 
   def initialize
     # dbeswick: temporary, to ease migration to ChurnobylApp class.
+
+    # prevent warning about redefining the constant 'Config'.
+    # The ruby interpreter defines 'Config', but its use is deprecated.
+    Object.module_eval { remove_const(:Config) }
     Object.const_set(:Config, config_hash().values.inject({}, :merge) )
+
+    make_builtin_dimensions()
+    make_custom_dimensions()
   end
 
   # The first iteration of Churnometer retrieved its results by calling SQL functions.
@@ -22,39 +37,17 @@ class ChurnometerApp
     config_value('use_new_query_generation_method') == true
   end
 
+  def summary_query_class
+    config_value('summary_query_class') || 'QuerySummary'
+  end
+
   def use_database_cache?
-    config_value('use_database_cache') == true
+    config_value('use_database_cache') != false
   end
 
   # All available data dimensions.
   def dimensions
     @dimensions ||= custom_dimensions() + builtin_dimensions()
-  end
-
-  # Dimensions for Churnometer's internal use.
-  def builtin_dimensions
-    @builtin_dimensions ||=
-      begin
-        dimensions = Dimensions.new
-        dimensions.add(Dimension.new('status'))
-        dimensions
-      end
-  end
-
-  # Dimensions that are defined by users in the config file.
-  def custom_dimensions
-    @custom_dimensions ||= 
-      begin
-        dimensions = Dimensions.new
-
-        if !config_has_value?('dimensions')
-          raise MissingConfigDataException.new("No 'dimensions' category was found", self)
-        end
-
-        dimensions.from_config_hash(config_value('dimensions'))
-
-        dimensions
-      end
   end
 
   def groupby_default_dimension
@@ -161,6 +154,29 @@ protected
 
         config
       end
+  end
+
+  def make_builtin_dimensions
+    @builtin_dimensions =
+      begin
+        dimensions = Dimensions.new
+        dimensions.add(Dimension.new('status'))
+        dimensions
+      end
+  end
+
+  def make_custom_dimensions
+    raise "Builtin dimensions must have been created first." if @builtin_dimensions.nil?
+
+    dimensions = Dimensions.new
+
+    if !config_has_value?('dimensions')
+      raise MissingConfigDataException.new("No 'dimensions' category was found", self)
+    end
+
+    dimensions.from_config_hash(config_value('dimensions'), @builtin_dimensions)
+
+    @custom_dimensions = dimensions
   end
 end
 

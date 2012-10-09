@@ -17,10 +17,10 @@ class ChurnRequest
   include Settings
   
   def db
-    @db ||= ChurnDB.new
+    @db
   end
   
-  def initialize(url, query_string, auth, params, app, churndb = nil)
+  def initialize(url, query_string, auth, params, app, churndb)
     # interpret request
     @app = app
     @url = url
@@ -123,18 +123,27 @@ class ChurnRequest
       end
   end
 
+  # Returns a Dimension instance.
+  def groupby_dimension
+    if params['group_by'].nil? || params['group_by'].empty?
+      @app.groupby_default_dimension
+    else
+      param_dimension = @app.dimensions[params['group_by']] 
+
+      if param_dimension
+        param_dimension
+      else
+        raise "No such groupby dimension '#{params['group_by']}'"
+      end
+    end
+  end
+
   def groupby_column_id
-    params['group_by'] || @app.groupby_default_dimension.id.downcase
+    groupby_dimension().id.downcase
   end
 
   def groupby_column_name
-    param_dimension = @app.dimensions[params['group_by']] 
-
-    if param_dimension
-      param_dimension.name
-    else
-      @app.groupby_default_dimension.name.downcase
-    end
+    groupby_dimension().name.downcase
   end
 
   def get_transfers

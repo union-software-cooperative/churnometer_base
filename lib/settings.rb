@@ -40,10 +40,6 @@ module Settings
   end
 
   # The default class used to execute summary queries.
-  def summary_query_class
-    :QuerySummary
-  end
-
   # Classes that should be used to handle summary queries for specific groups.
   def summary_query_class_groupby_overrides
     {
@@ -55,7 +51,7 @@ module Settings
       if summary_query_class_groupby_overrides().has_key?(group_column_name)
         summary_query_class_groupby_overrides()[group_column_name]
       else
-        summary_query_class()
+        app().summary_query_class
       end
         
     query_class = eval(query_class_symbol.to_s)
@@ -67,26 +63,6 @@ module Settings
       ["week", "Weekly"],
       ["month", "Monthly"],
     ]
-  end
-  
-  def next_group_by
-    hash = {
-      'branchid'      => 'lead',
-      'lead'          => 'org',
-      'org'           => 'companyid',
-      'state'         => 'areaid',
-      'areaid'        => 'companyid',
-      'feegroupid'    => 'companyid',
-      'nuwelectorate' => 'org',
-      'del'           => 'companyid',
-      'hsr'           => 'companyid',
-      'industryid'	  => 'companyid',
-      'companyid'     => 'companyid',
-      'paymenttypeid' => 'paymenttypeid',
-      'employmenttypeid' => 'companyid',
-      'hostemployerid' => 'companyid',
-      'employerid'  => 'companyid'
-    }
   end
   
   def summary_tables

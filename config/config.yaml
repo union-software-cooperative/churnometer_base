@@ -4,7 +4,6 @@ default_groupby_dimension_id: branchid
 member_paying_status_code: 1
 member_awaiting_first_payment_status_code: 14
 member_stopped_paying_status_code: 11
-use_database_cache: false
 dimensions:
 	0:
 	    id: branchid
@@ -17,7 +16,7 @@ dimensions:
 	2: 
         id: lead
         name: Lead Organiser
-		drilldown_target: companyid
+		drilldown_target: org
 	3: 
         id: org
         name: Organiser
@@ -53,7 +52,7 @@ dimensions:
 	11: 
         id: state
         name: State
-		drilldown_target: area
+		drilldown_target: areaid
 	12: 
         id: nuwelectorate
         name: Electorate
@@ -83,4 +82,4 @@ dimensions:
 	18: 
         id: paymenttypeid
         name: Payment Type
-		drilldown_target: companyid
+		drilldown_target: paymenttypeid
