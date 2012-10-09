@@ -28,12 +28,11 @@ class ImportPresenter
   end
   
   def diags
-    <<-SQL
-      #{dbm.transactionsource_sql};
-      #{dbm.transactionsourceprev_sql};
-      #{dbm.transactionfact_sql};
-      #{dbm.inserttransactionfact_sql};
-    SQL
+    <<-HTML
+      <pre>
+        #{dbm.rebuild_sql};
+      </pre>
+    HTML
   end
   
   def status
