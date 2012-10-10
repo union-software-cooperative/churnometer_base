@@ -1,7 +1,12 @@
+require './lib/churnometer_app'
+
 # Base class for services that provide autocomplete data to clients.
+# churn_db: ChurnDB instance.
+# churnometer_app: The ChurnometerApp instance.
 class ServiceAutocomplete
-  def initialize(db, param_hash)
-    @db = db
+  def initialize(churn_db, churnometer_app, param_hash)
+    @app = churnometer_app
+    @db = churn_db
   end
 
   def present_db_result(db_result)

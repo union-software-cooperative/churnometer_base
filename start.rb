@@ -55,8 +55,12 @@ class Churnobyl < Sinatra::Base
     @churn_app ||= settings.churn_app
   end
 
+  def churn_db
+    @churn_db ||= churn_db_class().new(app())
+  end
+
   def cr
-    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, app(), churn_db_class().new(app()))
+    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, app(), churn_db())
     @sql = @cr.sql # This is set for error message
     @cr
   end
