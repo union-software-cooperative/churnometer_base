@@ -89,9 +89,9 @@ EOS
 --	, d4.displaytext AS newbranch
 --	, d5.displaytext AS oldindustry
 --	, d6.displaytext AS newindustry
-	, m.contactdetail::text
-	, m.followupnotes::text
-	, m.paymenttypeid::text
+	--, m.contactdetail::text
+	--, m.followupnotes::text
+	--, m.paymenttypeid::text
 	
    FROM detail d
    JOIN memberfact c ON d.changeid = c.changeid
@@ -115,10 +115,9 @@ group by
 	, ((d17.displaytext || ' ('::text) || c.memberid::text) || ')'::text
 	, d17.displaytext
 	, c.memberid
-	, m.contactdetail
-	, m.contactdetail
-	, m.followupnotes
-	, m.paymenttypeid
+	--, m.contactdetail
+	--, m.followupnotes
+	--, m.paymenttypeid
 	, n.currentstatus
 EOS
 
