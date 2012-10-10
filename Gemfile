@@ -12,7 +12,7 @@ gem 'addressable'
 gem 'pony'
 gem 'thin'
 gem 'nokogiri'
-gem 'rack-auth-kerberos'
+#gem 'rack-auth-kerberos'
 
 group :development, :test do
   # For debugging
