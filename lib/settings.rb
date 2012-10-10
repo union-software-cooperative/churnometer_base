@@ -12,7 +12,7 @@ MaxMemberList = 500
 
 EarliestStartDate = Date.new(2011,8,14)
 
-Config = YAML.load(File.read("./config/config.yaml"))
+Config = YAML.load(File.read("./config/config_site.yaml"))
 
 module Settings
 
