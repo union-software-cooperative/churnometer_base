@@ -70,7 +70,7 @@ class Dimensions
   # convention.
   def dimension_for_id_with_delta(id)
     m = /(old|new|current)?(.+)/.match(id)
-
+    
     delta_part = m[1]
     id_part = m[2]
 
