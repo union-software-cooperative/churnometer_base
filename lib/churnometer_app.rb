@@ -196,6 +196,7 @@ protected
     @drilldown_order = {}
 
     hash = config_value('drilldown_order')
+    return if hash.nil?
 
     raise BadConfigDataFormatException.new("'drilldown_order' must be a hash (type is '#{hash.class}')", self) if !hash.kind_of?(Hash)
 

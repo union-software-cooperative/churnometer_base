@@ -180,7 +180,14 @@ class ChurnRequest
     end
 
     # make sure startDate isn't before data began
-    startdb = Date.parse((db.getdimstart(params['group_by']))[0]['getdimstart'])+1
+    dim_start_id = @app.dimensions[params['group_by']].column_base_name
+    dim_start_result = db.getdimstart(dim_start_id);
+    
+    if dim_start_result.nil? || dim_start_result[0]['getdimstart'].nil?
+      raise "Couldn't find an entry in the 'dimstart' table for the groupby dimension '#{params['group_by']}' (column is '#{dim_start_id}')"
+    end
+
+    startdb = Date.parse(dim_start_result[0]['getdimstart'])+1
     if startdb > startDate
       startDate = startdb
       warning += 'WARNING: Adjusted start date to when we first started tracking ' + groupby_column_id() + ' (you had selected ' + params['startDate'] + ')<br/>'
