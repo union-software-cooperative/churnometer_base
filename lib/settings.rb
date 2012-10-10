@@ -34,7 +34,11 @@ module Settings
       'column' => '',
       'interval' => 'none',
       Filter => {
-        'status' => [1, 14, 11] # todo - get rid of this because exceptions are required for it when displaying filters
+        'status' => [
+           app().member_paying_status_code,
+           app().member_awaiting_first_payment_status_code,
+           app().member_stopped_paying_status_code
+        ] # todo - get rid of this because exceptions are required for it when displaying filters
       }
     }
   end

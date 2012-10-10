@@ -1,86 +1,79 @@
 use_new_query_generation_method: true
-work_site_dimension_id: companyid
-default_groupby_dimension_id: branchid
-member_paying_status_code: 1
-member_awaiting_first_payment_status_code: 14
-member_stopped_paying_status_code: 11
+work_site_dimension_id: department
+default_groupby_dimension_id: region
+member_paying_status_code: paying
+member_awaiting_first_payment_status_code: a1p
+member_stopped_paying_status_code: stopped
 dimensions:
-	0:
-	    id: branchid
-		name: Branch
-	1: 
-        id: industryid
-        name: Industry
-	2: 
+    0:
         id: lead
-        name: Lead Organiser
-	3: 
+        name: lead
+    1:
         id: org
-        name: Organiser
-	4: 
-        id: areaid
-        name: Area
-	5: 
-        id: companyid
-        name: Work Site
-	6: 
-        id: agreementexpiry
-        name: Agreement Expiry
-	7: 
-        id: del
-        name: Delegate Training
-		roles: none
-	8: 
-        id: hsr
-        name: HSR Training
-		roles: none
-	9: 
+        name: org
+    2:
+        id: region
+        name: region
+    3:
+        id: division
+        name: division
+    4:
+        id: section
+        name: section
+    5:
+        id: department
+        name: department
+    6:
+        id: floor
+        name: floor
+    7:
+        id: location
+        name: location
+    8:
+        id: employer
+        name: employer
+    9:
+        id: industry
+        name: industry
+    10:
+        id: pay method
+        name: pay method
+    11:
+        id: charge_scale
+        name: charge_scale
+    12:
+        id: age_group
+        name: age_group
+    13:
         id: gender
-        name: Gender
-	10: 
-        id: feegroupid
-        name: Fee Group
-	11: 
-        id: state
-        name: State
-	12: 
-        id: nuwelectorate
-        name: Electorate
-	13: 
-        id: statusstaffid
-        name: Data Entry
-		roles: leader
-	14: 
-        id: supportstaffid
-        name: Support Staff
-	15: 
-        id: employerid
-        name: Employer
-	16: 
-        id: hostemployerid
-        name: Owner
-		roles: admin
-	17: 
-        id: employmenttypeid
-        name: Employment Type
-	18: 
-        id: paymenttypeid
-        name: Payment Type
-drilldown_order:
-	branchid: lead
-	industryid: companyid
-	lead: org
-	org: companyid
-	areaid: companyid
-	companyid: companyid
-	del: companyid
-    hsr: companyid
-	feegroupid: companyid
-	state: areaid
-	nuwelectorate: org
-	statusstaffid: companyid
-	supportstaffid: org
-	employerid: companyid
-	hostemployerid: companyid
-	employmenttypeid: companyid
-	paymenttypeid: paymenttypeid
+        name: gender
+    14:
+        id: supporter type
+        name: supporter type
+    15:
+        id: union role
+        name: union role
+    16:
+        id: signal8
+        name: signal8
+    17:
+        id: arrears cycle
+        name: arrears cycle
+# drilldown_order:
+# 	branchid: lead
+# 	industryid: companyid
+# 	lead: org
+# 	org: companyid
+# 	areaid: companyid
+# 	companyid: companyid
+# 	del: companyid
+#     hsr: companyid
+# 	feegroupid: companyid
+# 	state: areaid
+# 	nuwelectorate: org
+# 	statusstaffid: companyid
+# 	supportstaffid: org
+# 	employerid: companyid
+# 	hostemployerid: companyid
+# 	employmenttypeid: companyid
+# 	paymenttypeid: paymenttypeid

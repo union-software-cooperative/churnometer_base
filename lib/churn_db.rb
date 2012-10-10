@@ -4,6 +4,8 @@ require 'pg'
 
 class Db
   def initialize
+    raise "No 'database' config option is defined in the config file." if Config['database'].nil?
+
     @conn = PGconn.open(
       :host =>      Config['database']['host'],
       :port =>      Config['database']['port'],
