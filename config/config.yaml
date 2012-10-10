@@ -59,21 +59,8 @@ dimensions:
     17:
         id: arrears cycle
         name: Arrears Cycle
-# drilldown_order:
-# 	branchid: lead
-# 	industryid: companyid
-# 	lead: org
-# 	org: companyid
-# 	areaid: companyid
-# 	companyid: companyid
-# 	del: companyid
-#     hsr: companyid
-# 	feegroupid: companyid
-# 	state: areaid
-# 	nuwelectorate: org
-# 	statusstaffid: companyid
-# 	supportstaffid: org
-# 	employerid: companyid
-# 	hostemployerid: companyid
-# 	employmenttypeid: companyid
-# 	paymenttypeid: paymenttypeid
+drilldown_order:
+	region: industry
+	industry: department
+	department: section
+	section: division
