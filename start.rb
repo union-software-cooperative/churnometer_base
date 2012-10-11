@@ -129,13 +129,13 @@ class Churnobyl < Sinatra::Base
     @flash = session[:flash]
     session[:flash] = nil
     
-    @model = ImportPresenter.new
+    @model = ImportPresenter.new(app())
     erb :import
   end
   
   post "/import" do
     session[:flash] = nil
-    @model = ImportPresenter.new
+    @model = ImportPresenter.new(app())
     
     if params['action'] == "reset"
       @model.reset
