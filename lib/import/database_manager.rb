@@ -11,6 +11,37 @@ class DatabaseManager
     @dimensions ||= Dimensions.new # Stub of David's dimension class
   end
 
+  def temp_fix
+    sql = <<-SQL
+      update 
+        memberfact 
+      set
+        oldstatus = lower(trim(oldstatus))
+        , newstatus = lower(trim(newstatus))
+    SQL
+    
+    dimensions.each { |d| sql << <<-SQL }
+      , old#{d.column_base_name} = lower(trim(old#{d.column_base_name}))
+      , new#{d.column_base_name} = lower(trim(new#{d.column_base_name}))
+    SQL
+    
+    sql << <<-SQL
+    ;
+      update 
+        memberfacthelper
+      set
+        , status = lower(trim(status))
+    SQL
+    
+    dimensions.each { |d| sql << <<-SQL }
+      , #{d.column_base_name} = lower(trim(#{d.column_base_name}))
+    SQL
+    
+    sql << "; update displaytext set id = lower(trim(id))"
+    
+    sql
+  end
+
   def rebuild_sql()
     sql = <<-SQL
       drop table if exists importing;
@@ -22,6 +53,7 @@ class DatabaseManager
       drop function if exists updatememberfacthelper();
       
       drop view if exists memberchangefromlastchange;
+      drop view if exists memberchangefrommembersourceprev;
       drop view if exists lastchange;
       drop view if exists memberfacthelperquery;
 
@@ -47,6 +79,7 @@ class DatabaseManager
       
       #{lastchange_sql};
       #{memberchangefromlastchange_sql};
+      #{memberchangefrommembersourceprev_sql};
       #{memberfacthelperquery_sql};
       #{memberfacthelper_sql}
       
@@ -150,8 +183,8 @@ class DatabaseManager
   def rebuild_membersource_sql
     sql = <<-SQL
       drop table if exists membersource;
-    
-      #{membersource_sql}
+      #{membersource_sql};
+      CREATE INDEX "membersource_memberid_idx" ON "membersource" USING btree(memberid ASC NULLS LAST);
     SQL
   end
   
@@ -165,9 +198,6 @@ class DatabaseManager
   
   def rebuild_membersourceprev_sql
     sql = rebuild_membersource_sql.gsub('membersource', 'membersourceprev')
-    sql << <<-SQL
-      ; CREATE INDEX "membersourceprev_memberid_idx" ON "membersourceprev" USING btree(memberid ASC NULLS LAST);
-    SQL
   end
   
   def rebuild_membersourceprev
@@ -239,18 +269,18 @@ class DatabaseManager
 
     sql = <<-SQL
       -- find changes, adds and deletions in latest data
-      create view memberchangefromlastchange as 
+      create or replace view memberchangefromlastchange as 
       -- find members who've changed in latest data
       select
         now() as changedate
         , old.memberid
-        , old.status as oldstatus
-        , new.status as newstatus
+        , trim(lower(old.status)) as oldstatus
+        , trim(lower(new.status)) as newstatus
     SQL
     
     dimensions.each { |d| sql << <<-REPEAT }
-        , old.#{d.column_base_name} as old#{d.column_base_name}
-        , new.#{d.column_base_name} as new#{d.column_base_name}
+        , trim(lower(old.#{d.column_base_name})) as old#{d.column_base_name}
+        , trim(lower(new.#{d.column_base_name})) as new#{d.column_base_name}
     REPEAT
 
     sql << <<-SQL
@@ -258,11 +288,11 @@ class DatabaseManager
         lastchange old
         inner join membersource new on old.memberid = new.memberid
       where
-        1=0 -- so I don't have to stript the following OR
+        trim(lower(coalesce(old.status, ''))) <> trim(lower(coalesce(new.status, '')))
     SQL
 
     dimensions.each { |d| sql << <<-REPEAT }
-        OR coalesce(old.#{d.column_base_name}, '') <> coalesce(new.#{d.column_base_name}) 
+        OR trim(lower(coalesce(old.#{d.column_base_name}, ''))) <> trim(lower(coalesce(new.#{d.column_base_name}, '')))
     REPEAT
     
     sql << <<-SQL
@@ -271,12 +301,12 @@ class DatabaseManager
       select
         now() as changedate
         , old.memberid
-        , old.status as oldstatus
+        , trim(lower(old.status)) as oldstatus
         , null as newstatus
     SQL
 
     dimensions.each { |d| sql << <<-REPEAT }
-        , old.#{d.column_base_name} as old#{d.column_base_name}
+        , trim(lower(old.#{d.column_base_name})) as old#{d.column_base_name}
         , null as new#{d.column_base_name}
     REPEAT
 
@@ -291,6 +321,9 @@ class DatabaseManager
             membersource
         )
         AND not (
+          -- if all values for the member's last change are null
+          --, then the member has already been inserted as missing 
+          -- and doesn't need to be inserted again
           old.status is null
     SQL
 
@@ -306,12 +339,12 @@ class DatabaseManager
         now() as changedate
         , new.memberid
         , null as oldstatus
-        , new.status as newstatus
+        , trim(lower(new.status)) as newstatus
     SQL
 
     dimensions.each { |d| sql << <<-REPEAT }
         , null as old#{d.column_base_name}
-        , new.#{d.column_base_name} as new#{d.column_base_name}
+        , trim(lower(new.#{d.column_base_name})) as new#{d.column_base_name}
     REPEAT
 
     sql << <<-SQL
@@ -325,6 +358,10 @@ class DatabaseManager
             lastchange
         )
     SQL
+  end
+  
+  def memberchangefrommembersourceprev_sql
+    memberchangefromlastchange_sql.gsub('lastchange', 'membersourceprev')
   end
 
   def insertmemberfact_sql
