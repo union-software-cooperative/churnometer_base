@@ -1,0 +1,66 @@
+use_new_query_generation_method: true
+work_site_dimension_id: department
+default_groupby_dimension_id: region
+member_paying_status_code: paying
+member_awaiting_first_payment_status_code: a1p
+member_stopped_paying_status_code: stopped
+dimensions:
+    0:
+        id: lead
+        name: Lead
+    1:
+        id: org
+        name: Organiser
+    2:
+        id: region
+        name: Region
+    3:
+        id: division
+        name: Division
+    4:
+        id: section
+        name: Section
+    5:
+        id: department
+        name: Department
+    6:
+        id: floor
+        name: Floor
+    7:
+        id: location
+        name: Location
+    8:
+        id: employer
+        name: Employer
+    9:
+        id: industry
+        name: Industry
+    10:
+        id: pay method
+        name: Pay Method
+    11:
+        id: charge_scale
+        name: Charge Scale
+    12:
+        id: age_group
+        name: Age Group
+    13:
+        id: gender
+        name: Gender
+    14:
+        id: supporter type
+        name: Supporter Type
+    15:
+        id: union role
+        name: Union Role
+    16:
+        id: signal8
+        name: Signal 8
+    17:
+        id: arrears cycle
+        name: Arrears Cycle
+drilldown_order:
+	region: industry
+	industry: department
+	department: section
+	section: division

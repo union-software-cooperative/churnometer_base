@@ -1,0 +1,15 @@
+---
+chdir: /home/administrator/staging/churnometer
+environment: production
+address: 0.0.0.0
+port: 4000
+timeout: 300
+log: /home/administrator/staging/churnometer/log/thin.log
+pid: /var/run/thin.pid
+rackup: /home/administrator/staging/churnometer/config.ru
+max_conns: 1024
+max_persistent_conns: 512
+require: []
+wait: 30
+servers: 2
+daemonize: true

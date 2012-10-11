@@ -1,0 +1,53 @@
+upstream churnometer_staging {
+        server 0.0.0.0:4000;
+}
+
+
+server {
+        listen 80;
+        server_name churnometer_staging
+        ssl on;
+        ssl_certificate /etc/nginx/ssl/server.crt;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+
+
+        access_log /home/administrator/staging/churnometer/log/nginx.log;
+        root /home/administrator/staging/churnometer/;
+        error_log /home/administrator/staging/churnometer/log/error.log;
+
+        location / {
+                proxy_intercept_errors on;
+                proxy_pass http://churnometer_staging/;
+                proxy_set_header Host $http_host;
+                proxy_set_header X-Forwarded-For $remote_addr;
+        }
+
+	location /upload {
+		rewrite ^ https://$host$request_uri;
+	}
+}
+
+
+
+server {
+        listen 443 ssl;
+        server_name churnometer_staging
+        ssl on;
+        ssl_certificate /etc/nginx/ssl/server.crt;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+
+
+        access_log /home/administrator/staging/churnometer/log/nginx.log;
+        root /home/administrator/staging/churnometer/;
+        error_log /home/administrator/staging/churnometer/log/error.log;
+
+        location / {
+                proxy_intercept_errors on;
+                proxy_pass http://churnometer_staging/;
+                proxy_set_header Host $http_host;
+                proxy_set_header X-Forwarded-For $remote_addr;
+        }
+}
+
+
+
