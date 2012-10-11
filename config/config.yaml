@@ -7,73 +7,60 @@ member_stopped_paying_status_code: stopped
 dimensions:
     0:
         id: lead
-        name: lead
+        name: Lead
     1:
         id: org
-        name: org
+        name: Organiser
     2:
         id: region
-        name: region
+        name: Region
     3:
         id: division
-        name: division
+        name: Division
     4:
         id: section
-        name: section
+        name: Section
     5:
         id: department
-        name: department
+        name: Department
     6:
         id: floor
-        name: floor
+        name: Floor
     7:
         id: location
-        name: location
+        name: Location
     8:
         id: employer
-        name: employer
+        name: Employer
     9:
         id: industry
-        name: industry
+        name: Industry
     10:
         id: pay method
-        name: pay method
+        name: Pay Method
     11:
         id: charge_scale
-        name: charge_scale
+        name: Charge Scale
     12:
         id: age_group
-        name: age_group
+        name: Age Group
     13:
         id: gender
-        name: gender
+        name: Gender
     14:
         id: supporter type
-        name: supporter type
+        name: Supporter Type
     15:
         id: union role
-        name: union role
+        name: Union Role
     16:
         id: signal8
-        name: signal8
+        name: Signal 8
     17:
         id: arrears cycle
-        name: arrears cycle
-# drilldown_order:
-# 	branchid: lead
-# 	industryid: companyid
-# 	lead: org
-# 	org: companyid
-# 	areaid: companyid
-# 	companyid: companyid
-# 	del: companyid
-#     hsr: companyid
-# 	feegroupid: companyid
-# 	state: areaid
-# 	nuwelectorate: org
-# 	statusstaffid: companyid
-# 	supportstaffid: org
-# 	employerid: companyid
-# 	hostemployerid: companyid
-# 	employmenttypeid: companyid
-# 	paymenttypeid: paymenttypeid
+        name: Arrears Cycle
+drilldown_order:
+	region: industry
+	industry: department
+	department: section
+	section: division

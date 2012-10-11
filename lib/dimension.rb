@@ -69,6 +69,8 @@ class Dimensions
   # Maybe find a more explicit way to refer to dimension deltas instead of using this naming 
   # convention.
   def dimension_for_id_with_delta(id)
+    return nil if id.empty?
+
     m = /(old|new|current)?(.+)/.match(id)
     
     delta_part = m[1]
