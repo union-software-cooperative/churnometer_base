@@ -59,8 +59,19 @@ dimensions:
     17:
         id: arrears cycle
         name: Arrears Cycle
+    18:
+        id: emptype
+        name: Employment Type
+    19:
+        id: growth
+        name: Growth
 drilldown_order:
-	region: industry
-	industry: department
-	department: section
-	section: division
+  lead: org
+  org: employer
+  employer: region
+  region: department
+  department: location
+  location: floor
+  industry: region
+  pay method: charge_scale
+  charge_scale: pay method

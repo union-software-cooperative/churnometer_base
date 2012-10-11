@@ -1,11 +1,11 @@
 # Stubbed out David's Dimensions class in preparation for
 # integrating with his code and replacing this
 
-class Dimension
+class Dimension2
   attr_accessor :column_base_name
 end
 
-class Dimensions
+class Dimensions2
   include Enumerable
   
   attr_accessor :dimension_count
