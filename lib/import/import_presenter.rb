@@ -2,17 +2,22 @@ require './lib/churn_db'
 require 'open3.rb'
 
 class ImportPresenter
+  
+  def initialize(app)
+    @dbm = DatabaseManager.new(app)
+    @dimensions = app.custom_dimensions
+  end
 
   def db 
     @db ||= Db.new
   end
   
   def dimensions
-    @dimensions ||= Dimensions.new # Dimensions is stubbed out, expecting integration with David's column generalisation code
+    @dimensions
   end
   
   def dbm
-    @dbm ||= DatabaseManager.new
+    @dbm
   end
   
   def reset
@@ -32,8 +37,7 @@ class ImportPresenter
   def diags
     <<-HTML
       <pre>
-        #{dbm.memberchangefromlastchange_sql};
-        #{dbm.memberchangefrommembersourceprev_sql};
+        #{member_import_command("asdf")};
       </pre>
     HTML
   end

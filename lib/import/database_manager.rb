@@ -7,8 +7,12 @@ class DatabaseManager
     @db ||= Db.new
   end
 
+  def initialize(app)
+    @dimensions = app.custom_dimensions
+  end
+
   def dimensions
-    @dimensions ||= Dimensions.new # Stub of David's dimension class
+    @dimensions 
   end
 
   def temp_fix
