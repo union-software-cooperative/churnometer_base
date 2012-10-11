@@ -49,6 +49,8 @@ class ChurnPresenter_Table
     @columns = []
 
     columns.each do |c|
+      next if c.empty?
+
       # If the entry in the 'columns' array is an id of one of the dimensions, then get the database's
       # column name for that dimension. 
       #

@@ -1,8 +1,11 @@
-require './lib/services/autocomplete'
+require './lib/services/service_autocomplete'
 
 # Classes of autocomplete services that query the "displaytext" table
+# HTTP request parameters:
+# attribute: the id of a dimension.
+# term: The search term. Displaytext containing the term will be returned.
 class ServiceAutocompleteDisplaytext < ServiceAutocomplete
-  def initialize(db, param_hash)
+  def initialize(churn_db, churnometer_app, param_hash)
     super
 
     attribute = param_hash['attribute']
@@ -11,7 +14,9 @@ class ServiceAutocompleteDisplaytext < ServiceAutocomplete
     raise "No attribute supplied." if attribute.nil?
     raise "No search parameter supplied." if search.nil?
 
-    @query = sql_text(db, attribute, search)
+    dimension = churnometer_app.dimensions.dimension_for_id_mandatory(attribute)
+
+    @query = sql_text(churn_db, dimension.column_base_name, search)
   end
 
 protected
