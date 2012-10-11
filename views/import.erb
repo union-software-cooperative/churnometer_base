@@ -1,0 +1,47 @@
+<% if !@flash.nil? %>
+    <div class="flash">
+      <%= @flash %>
+    </div>
+<% end %>
+
+<h2>Churnometer Data Importer</h2>
+
+<% if @model.importing? %>
+  
+  <%= @model.import_status %>
+  
+  <script>
+    $(document).ready(function() {
+      setTimeout("location.reload()", 10000);
+    });
+  </script>
+
+<% else %>
+  <%= @model.staging_status %>
+  <form method="post" enctype="multipart/form-data">
+    <input type="file" name="myfile">
+    <br>
+    <input type="submit" value="Upload">
+  </form>
+  
+  <form method="post">
+    <input type="submit" name="action" value="reset">
+  </form>
+  
+  <form method="post">
+    <input type="submit" name="action" value="rebuild">
+  </form>
+  
+  <form method="post">
+    <input type="submit" name="action" value="diags">
+  </form>
+  
+  <% if @model.import_ready? %>
+    <form method="post">
+      <input type="text" name="import_date" value="<%=Time.now%>">
+      <input type="submit" name="action" value="import">
+    </form>
+  <% end %>
+<% end %>
+
+
