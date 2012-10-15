@@ -95,6 +95,7 @@ function source_config
   echo "*"
   echo "***********************************************************************"
   
+  sudo -u $CHURN_USER /etc/init.d/thin stop # stop thin before tmp/pids are deleted (in case of reinstall)
   sudo rm -Rf $WWW_PATH
   sudo mkdir $WWW_PATH
   sudo chown $CHURN_USER $WWW_PATH
