@@ -7,6 +7,7 @@ upstream churnometer {
 server {
         listen 80 default;
         server_name churnometer; 
+	client_max_body_size 100M;
 
         root REPLACEME_WWW_PATH/;
         access_log REPLACEME_WWW_PATH/log/nginx.log;
@@ -31,6 +32,7 @@ server {
 #server {
 #        listen 443 default ssl;
 #        server_name churnometer
+#	client_max_body_size 100M;
 #        
 #	ssl on;
 #        ssl_certificate /etc/nginx/ssl/server.crt;
