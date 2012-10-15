@@ -111,6 +111,7 @@ function db_import
     fi
   fi
 
+  sudo -u postgres psql -c "create user churnuser with password '${CHURN_PASS}'"
   sudo -u postgres psql -c "create user ${CHURN_USER} with password '${CHURN_PASS}'"
   sudo -u postgres psql -c "drop database churnometer"
   sudo -u postgres psql -c "create database churnometer"
