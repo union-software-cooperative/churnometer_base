@@ -55,10 +55,10 @@ dimensions:
         name: Union Role
     16:
         id: signal8
-        name: Signal 8
+        name: Stopped Paying - Follow up
     17:
         id: arrears cycle
-        name: Arrears Cycle
+        name: Stopped Paying - Cycle
     18:
         id: emptype
         name: Employment Type
@@ -71,7 +71,7 @@ drilldown_order:
   employer: region
   region: department
   department: location
-  location: floor
+  location: section
   industry: region
   pay method: charge_scale
   charge_scale: pay method
