@@ -1,0 +1,379 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="1187">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 9.0px 0.0px; font: 13.0px 'Helvetica Neue'; color: #393a38}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px 'Helvetica Neue'; color: #393a38}
+    p.p3 {margin: 0.0px 0.0px 9.0px 0.0px; font: 10.0px 'Helvetica Neue Light'}
+    p.p4 {margin: 0.0px 0.0px 9.0px 0.0px; font: 10.0px 'Helvetica Neue Light'; min-height: 12.0px}
+    p.p5 {margin: 0.0px 0.0px 9.0px 0.0px; font: 11.0px 'Helvetica Neue'; color: #393a38; min-height: 13.0px}
+    p.p6 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px 'Helvetica Neue'; color: #393a38}
+    p.p7 {margin: 0.0px 0.0px 9.0px 0.0px; font: 10.0px 'Helvetica Neue'}
+    p.p8 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+    p.p9 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Helvetica}
+    p.p10 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p11 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Courier New'}
+    p.p12 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Courier New'; min-height: 14.0px}
+    p.p13 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Courier New'; color: #4787ff}
+    p.p14 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Courier; color: #3f639e; background-color: #f5f2f0}
+    p.p15 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px Courier; color: #d75959; background-color: #f5f2f0}
+    p.p16 {margin: 0.0px 0.0px 0.0px 0.0px; font: 14.0px Helvetica; min-height: 17.0px}
+    span.s1 {letter-spacing: 0.0px}
+    span.s2 {font: 10.0px 'Helvetica Neue Light'; text-decoration: underline ; letter-spacing: 0.0px; color: #021eaa}
+    span.s3 {text-decoration: underline ; letter-spacing: 0.0px; color: #021eaa}
+    span.s4 {font: 12.0px 'Courier New'}
+    span.s5 {font: 12.0px Arial}
+    span.s6 {color: #000000}
+    span.s7 {text-decoration: underline}
+    span.s8 {text-shadow: 0.0px 1.0px 0.0px #000000}
+    span.s9 {color: #5eb14a; text-shadow: 0.0px 1.0px 0.0px #000000}
+    span.s10 {color: #3f639e; text-shadow: 0.0px 1.0px 0.0px #000000}
+  </style>
+</head>
+<body>
+<p class="p1"><span class="s1"><b>This install file is a mash up of all sorts of documentation. <span class="Apple-converted-space"> </span></b></span></p>
+<p class="p1"><span class="s1"><b>TODO make a nice plain text version (if not HTML)</b></span></p>
+<p class="p1"><span class="s1"><b>Deploying churnometer step by step</b></span></p>
+<p class="p2"><span class="s1"><b>Installing Ubuntu via VMware</b></span></p>
+<p class="p3"><span class="s1">Installed ubuntu server 11.10 server following the setup prompts</span></p>
+<p class="p3"><span class="s1">single 40GB partition</span></p>
+<p class="p3"><span class="s1">only selected to preinstall openssh</span></p>
+<p class="p3"><span class="s1">username: administrator</span></p>
+<p class="p3"><span class="s1">password: current admin pass (25 march 2012)</span></p>
+<p class="p3"><span class="s1">needed to reset password (via recovery console), because of multiple key press problem using VMware console</span></p>
+<p class="p3"><span class="s1">adjusted typematic rate in vmware machine config, to avoid network latency causing multiple key press problem</span></p>
+<p class="p3"><span class="s1">#vmware snapshot here</span></p>
+<p class="p4"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><b>Installing and configuring PostgreSQL</b></span></p>
+<p class="p3"><span class="s1">#at nuwvicweb4 console;</span></p>
+<p class="p3"><span class="s1">sudo apt-get update</span></p>
+<p class="p3"><span class="s1">sudo apt-get install postgresql</span></p>
+<p class="p3"><span class="s1">#added route so I can get to the server from openvpn</span></p>
+<p class="p3"><span class="s1">route add -net 192.168.100.0/24 gw 192.168.0.15</span></p>
+<p class="p3"><span class="s1">#allow remote connections to postgres</span></p>
+<p class="p3"><span class="s1">sudo vim /etc/postgresql/9.1/main/pg_hba.conf</span></p>
+<p class="p3"><span class="s1">#add the following line to the file</span></p>
+<p class="p3"><span class="s1">hostssl all all 192.168.0.0/16 md5</span></p>
+<p class="p4"><span class="s1"></span><br></p>
+<p class="p3"><span class="s1">#from my mac;</span></p>
+<p class="p3"><span class="s1">#copied postgres conf file from aws</span></p>
+<p class="p3"><span class="s1">scp -i ~/freeChange/aws/fcapkeypair.pem ubuntu@aws:/etc/postgresql/9.1/main/postgresql.conf .</span></p>
+<p class="p3"><span class="s1">#copy to nuwvicweb3</span></p>
+<p class="p3"><span class="s1">scp postgresql.conf administrator@churnobyl:/home/administrator/</span></p>
+<p class="p4"><span class="s1"></span><br></p>
+<p class="p3"><span class="s1">#at nuwvicweb4 console</span></p>
+<p class="p3"><span class="s1">cp /etc/postgresql/9.1/main/postgresql.conf /home/administrator/postgresql.conf.bak</span></p>
+<p class="p3"><span class="s1">cp /home/administrator/postgresql.conf /etc/postgresql/9.1/main/postgresql.conf</span></p>
+<p class="p3"><span class="s1">#fix shmmax (512MB rounded up to 640MB) and shmall (640MB / 64 = pages)</span></p>
+<p class="p3"><span class="s1">#http://www.postgresql.org/docs/8.2/static/kernel-resources.html</span></p>
+<p class="p3"><span class="s1">sudo sysctl -w kernel.shmmax=671088640</span></p>
+<p class="p3"><span class="s1">sudo sysctl -w kernel.shmall=10485760</span></p>
+<p class="p3"><span class="s1">#fix for next restart</span></p>
+<p class="p3"><span class="s1">sudo echo kernel.shmmax=671088640 | sudo tee -a /etc/sysctl.conf</span></p>
+<p class="p3"><span class="s1">sudo echo kernel.shmall=10485760 | sudo tee -a /etc/sysctl.conf</span></p>
+<p class="p3"><span class="s1">#restart postgres</span></p>
+<p class="p3"><span class="s1">sudo /etc/init.d/postgresql restart</span></p>
+<p class="p3"><span class="s1">#postgres ubuntu primer - https://help.ubuntu.com/community/PostgreSQL</span></p>
+<p class="p4"><span class="s1"></span><br></p>
+<p class="p3"><span class="s1">#login using peer (linux) auth on postgres user</span></p>
+<p class="p3"><span class="s1">sudo -u postgres psql</span></p>
+<p class="p3"><span class="s1">#create user (once logged on to postgres)</span></p>
+<p class="p3"><span class="s1">create user churnuser with password ‘put pass here’</span></p>
+<p class="p5"><span class="s1"><b></b></span><br></p>
+<p class="p2"><span class="s1"><b>Backup and restore data</b></span></p>
+<p class="p3"><span class="s1">#at nuwvicweb4 console</span></p>
+<p class="p3"><span class="s1">#backup churnobyl database on aws to local machine</span></p>
+<p class="p3"><span class="s1">pg_dump —host 122.248.235.218 -U churnuser churnobyl &gt; churnobyl_280211.bak</span></p>
+<p class="p3"><span class="s1"># OR backup locally at nuwvicweb4 console</span></p>
+<p class="p3"><span class="s1">sudo -u postgres pg_dump pg_dump churnobyl &gt; churnobyldb.bak</span></p>
+<p class="p3"><span class="s1">#restore backup</span></p>
+<p class="p3"><span class="s1">sudo -u postgres psql churnobyl &lt; churnobyl_280211.bak</span></p>
+<p class="p3"><span class="s1">#vmware snapshot here</span></p>
+<p class="p4"><span class="s1"></span><br></p>
+<p class="p2"><span class="s1"><b>Installing Ruby and Sinatra and SendMail</b></span></p>
+<p class="p3"><span class="s1">#build rvm because ubuntu package is out of date - rvm is for managing multiple versions of ruby on the one machine.<span class="Apple-converted-space">  </span>Probably more hassle than good but it is considered good practice.</span></p>
+<p class="p3"><span class="s1">sudo apt-get install build-essential git-core curl</span></p>
+<p class="p3"><span class="s1">#download rvm from wayneeseguin</span></p>
+<p class="p3"><span class="s1">bash -s stable &lt; &lt;(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)</span></p>
+<p class="p3"><span class="s1">#add rvm to path</span></p>
+<p class="p3"><span class="s1">echo ‘[[ -s “$HOME/.rvm/scripts/rvm” ]] &amp;&amp; source “$HOME/.rvm/scripts/rvm”’ &gt;&gt; ~/.bashrc</span></p>
+<p class="p3"><span class="s1">#restart session so you get new path</span></p>
+<p class="p3"><span class="s1">#find out what else rvm needs installed</span></p>
+<p class="p3"><span class="s1">rvm requirements</span></p>
+<p class="p3"><span class="s1">sudo /usr/bin/apt-get install build-essential openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-0 libsqlite3-dev sqlite3 libxml2-dev libxslt-dev autoconf libc6-dev ncurses-dev automake libtool bison subversion</span></p>
+<p class="p3"><span class="s1">#I’d like to use ree but I need to run ruby 1.9 for ordered hashes</span></p>
+<p class="p3"><span class="s1">rvm install 1.9.3</span></p>
+<p class="p3"><span class="s1">#vmware snapshot here</span></p>
+<p class="p3"><span class="s1">rvm —default use 1.9.3</span></p>
+<p class="p3"><span class="s1">#I will need a 1.9.3 version of bundler later so I did this now for some reason</span></p>
+<p class="p3"><span class="s1">gem install bundler</span></p>
+<p class="p3"><span class="s1"># The mailer gem pony requires sendmail</span></p>
+<p class="p3"><span class="s1">sudo apt-get install sendmail</span></p>
+<p class="p2"><span class="s1"><b>Installing git and downloading the code</b></span></p>
+<p class="p3"><span class="s1">#create key for GitHub. It will be found in ~/administrator/.ssh/id_rsa.pub</span></p>
+<p class="p3"><span class="s1">ssh-keygen -t rsa -b 4096</span></p>
+<p class="p3"><span class="s1">#copy contents of ~/.ssh/id_rsa.pub to <a href="https://github.com/account/ssh"><span class="s2">https://github.com/account/ssh</span></a></span></p>
+<p class="p3"><span class="s1">sudo aptitude install git</span></p>
+<p class="p3"><span class="s1">#download churnometer source</span></p>
+<p class="p3"><span class="s1">cd ~/</span></p>
+<p class="p3"><span class="s1">mkdir churnometer</span></p>
+<p class="p3"><span class="s1">git clone <a href="mailto:git@github.com"><span class="s2">git@github.com</span></a>:lukerohde/churnometer.git ~/churnometer/</span></p>
+<p class="p3"><span class="s1">#the source will now be found in ~/churnometer if you started in ~/</span></p>
+<p class="p3"><span class="s1">#switch branch to most recent branch - in this case master</span></p>
+<p class="p3"><span class="s1">cd churnometer</span></p>
+<p class="p3"><span class="s1">git fetch</span></p>
+<p class="p3"><span class="s1">git reset --hard origin/master</span></p>
+<p class="p3"><span class="s1">#for your own development do the following instead</span></p>
+<p class="p3"><span class="s1">#git checkout origin/master</span></p>
+<p class="p3"><span class="s1">#git checkout -b master<span class="Apple-converted-space"> </span></span></p>
+<p class="p3"><span class="s1">#download gems (ruby libraries required by churnometer)</span></p>
+<p class="p3"><span class="s1">bundle install</span></p>
+<p class="p3"><span class="s1">#this failed on pg gem</span></p>
+<p class="p3"><span class="s1">sudo aptitude install libpq-dev</span></p>
+<p class="p3"><span class="s1">#take 2</span></p>
+<p class="p3"><span class="s1">bundle install</span></p>
+<p class="p2"><span class="s1"><b>Configure churnobyl</b></span></p>
+<p class="p3"><span class="s1">cp config/config.example.yaml config/config.yaml</span></p>
+<p class="p3"><span class="s1">#edit config.yaml</span></p>
+<p class="p3"><span class="s1">vim ~/churnometer/config/config.yaml</span></p>
+<p class="p3"><span class="s1">#setup static ip</span></p>
+<p class="p3"><span class="s1">sudo vim /etc/network/interfaces</span></p>
+<p class="p3"><span class="s1">#paste this text over the default setup</span></p>
+<p class="p3"><span class="s1">###Start of file ###</span></p>
+<p class="p3"><span class="s1">#This file describes the network interfaces available on your system</span></p>
+<p class="p3"><span class="s1">#and how to activate them. For more information, see interfaces(5).</span></p>
+<p class="p3"><span class="s1">#The loopback network interface</span></p>
+<p class="p3"><span class="s1">auto lo</span></p>
+<p class="p3"><span class="s1">iface lo inet loopback</span></p>
+<p class="p3"><span class="s1">#The primary network interface</span></p>
+<p class="p3"><span class="s1">auto eth0</span></p>
+<p class="p3"><span class="s1">iface eth0 inet static</span></p>
+<p class="p3"><span class="s1">address 192.168.0.56</span></p>
+<p class="p3"><span class="s1">netmask 255.255.255.0</span></p>
+<p class="p3"><span class="s1">network 192.168.0.0</span></p>
+<p class="p3"><span class="s1">broadcast 192.168.0.255</span></p>
+<p class="p3"><span class="s1">gateway 192.168.0.254</span></p>
+<p class="p3"><span class="s1">up route add -net 192.168.100.0/24 gw 192.168.0.15</span></p>
+<p class="p3"><span class="s1">###END OF FILE ###</span></p>
+<p class="p3"><span class="s1">#save it and restart networking</span></p>
+<p class="p3"><span class="s1">/etc/init.d/networking restart</span></p>
+<p class="p3"><span class="s1">#log on again via ssh</span></p>
+<p class="p2"><span class="s1"><b>Configure web server</b></span></p>
+<p class="p3"><span class="s1">#install thin – here I’m heading into uncharted territory but I don’t want apache and passenger anymore</span></p>
+<p class="p3"><span class="s1">gem install thin</span></p>
+<p class="p3"><span class="s1">#daemonize thin (so it starts at startup) - it was a nightmare</span></p>
+<p class="p3"><span class="s1">rvmsudo thin install</span></p>
+<p class="p3"><span class="s1">#this might be out of order, it was suggested by one of the surrounding commands (replace sudo with rvmsudo)</span></p>
+<p class="p3"><span class="s1">rvmsudo update-rc.d -f thin defaults</span></p>
+<p class="p3"><span class="s1">rvmsudo thin config -C /etc/thin/churnometer.yml -c /home/administrator/churnometer/ —servers 3 -e production</span></p>
+<p class="p3"><span class="s1">#edit the file</span></p>
+<p class="p3"><span class="s1">sudo vim /etc/thin/churnometer.yml</span></p>
+<p class="p3"><span class="s1">###start of file</span></p>
+<p class="p3"><span class="s1">chdir: /home/administrator/churnometer</span></p>
+<p class="p3"><span class="s1">environment: production</span></p>
+<p class="p3"><span class="s1">address: 0.0.0.0</span></p>
+<p class="p3"><span class="s1">port: 3000</span></p>
+<p class="p3"><span class="s1">timeout: 300</span></p>
+<p class="p3"><span class="s1">log: /home/administrator/churnometer/log/thin.log</span></p>
+<p class="p3"><span class="s1">pid: /var/run/thin.pid</span></p>
+<p class="p3"><span class="s1">rackup: /home/administrator/churnometer/config.ru</span></p>
+<p class="p3"><span class="s1">max_conns: 1024</span></p>
+<p class="p3"><span class="s1">max_persistent_conns: 512</span></p>
+<p class="p3"><span class="s1">require: []</span></p>
+<p class="p3"><span class="s1">wait: 30</span></p>
+<p class="p3"><span class="s1">servers: 1</span></p>
+<p class="p3"><span class="s1">daemonize: true</span></p>
+<p class="p3"><span class="s1">###end of file</span></p>
+<p class="p3"><span class="s1">#create an rvm environment setting wrapper for thin</span></p>
+<p class="p3"><span class="s1">rvm wrapper 1.9.3 bootup thin</span></p>
+<p class="p3"><span class="s1">#now change the daemon to point to the new wrapper</span></p>
+<p class="p3"><span class="s1">sudo vim /etc/init.d/thin</span></p>
+<p class="p3"><span class="s1">#set daemon in the init.d file to …</span></p>
+<p class="p3"><span class="s1">DAEMON=/home/administrator/.rvm/bin/bootup_thin</span></p>
+<p class="p3"><span class="s1">#run it</span></p>
+<p class="p3"><span class="s1">sudo /etc/init.d/thin start</span></p>
+<p class="p3"><span class="s1">#check it</span></p>
+<p class="p3"><span class="s1">curl 0.0.0.0:3000</span></p>
+<p class="p3"><span class="s1">#it didn’t work</span></p>
+<p class="p3"><span class="s1">#check log </span></p>
+<p class="p3"><span class="s1">cat /home/administrator/churnobyl/log/thin.3000.log</span></p>
+<p class="p3"><span class="s1">#I had problems with config.ru</span></p>
+<p class="p3"><span class="s1">#I narrowed it down by following the commands run in those scripts, then running rackup directly</span></p>
+<p class="p3"><span class="s1">rackup</span></p>
+<p class="p3"><span class="s1">#simplified config.ru to</span></p>
+<p class="p3"><span class="s1">###start of file</span></p>
+<p class="p3"><span class="s1">require ‘./start’</span></p>
+<p class="p3"><span class="s1">run Churnobyl</span></p>
+<p class="p3"><span class="s1">###end of file</span></p>
+<p class="p3"><span class="s1"># The next time I installed this I was getting<span class="Apple-converted-space"> </span></span></p>
+<p class="p3"><span class="s1">#/home/ubuntu/.rvm/gems/ruby-1.9.3-p0/gems/thin-1.4.1/lib/thin/backends/tcp_server.rb:16:in `connect': cannot load such file -- thin/connection (LoadError)</span></p>
+<p class="p3"><span class="s1"># I added gem ‘thin’ to Gemfile</span></p>
+<p class="p3"><span class="s1">#config nginx</span></p>
+<p class="p3"><span class="s1">sudo apt-get install nginx</span></p>
+<p class="p3"><span class="s1">sudo vim /etc/nginx/sites-available/churnobyl</span></p>
+<p class="p3"><span class="s1">###start of file</span></p>
+<p class="p3"><span class="s1">upstream churnobyl {</span></p>
+<p class="p3"><span class="s1">server 0.0.0.0:3000;</span></p>
+<p class="p3"><span class="s1">}</span></p>
+<p class="p3"><span class="s1">server {</span></p>
+<p class="p3"><span class="s1">listen 80;</span></p>
+<p class="p3"><span class="s1">server_name 192.168.0.56 churnobyl churnobyl.nuw.org.au;</span></p>
+<p class="p3"><span class="s1">access_log /home/administrator/churnobyl/log/nginx.log;</span></p>
+<p class="p3"><span class="s1">root /home/administrator/churnobyl/;</span></p>
+<p class="p3"><span class="s1">error_log /home/administrator/churnobyl/log/error.log;</span></p>
+<p class="p3"><span class="s1">location / { proxy_pass http://churnobyl; }</span></p>
+<p class="p3"><span class="s1">}</span></p>
+<p class="p3"><span class="s1">###end of file</span></p>
+<p class="p3"><span class="s1">#enable site</span></p>
+<p class="p3"><span class="s1">sudo ln -s /etc/nginx/sites-available/churnobyl /etc/nginx/sites-enabled/churnobyl</span></p>
+<p class="p3"><span class="s1">#check it</span></p>
+<p class="p3"><span class="s1">curl 127.0.0.1:80</span></p>
+<p class="p3"><span class="s1">#eureka</span></p>
+<p class="p2"><span class="s1"><b>Configure export script on NUWVICSQL1</b></span></p>
+<p class="p3"><span class="s1">#Setup data load from nuwvicsql1</span></p>
+<p class="p3"><span class="s1">#install vc++ redistributable 2008 sp1 (2005 doesn’t work)</span></p>
+<p class="p3"><span class="s1">#on nuwvicsql1</span></p>
+<p class="p3"><span class="s1">#created e:\sql datastore\churnobyl_export</span></p>
+<p class="p3"><span class="s1">#download binary postgres tools</span></p>
+<p class="p3"><span class="s1">#extract the bin directory</span></p>
+<p class="p3"><span class="s1">#created sendupdate.bat</span></p>
+<p class="p3"><span class="s1">#created sendupdate_withlogging.bat</span></p>
+<p class="p3"><span class="s1">#scheduled sendupdate_withlogging.bat</span></p>
+<p class="p6"><span class="s1"><b>Backup and Restore</b></span></p>
+<p class="p3"><span class="s1">The script sendupdate.bat finishes by taking a backup of the database, source code and key configuration files, in \\nuwvicsql1\e$\sql datastore\churnobyl_export\backup.</span></p>
+<p class="p2"><span class="s1"><b>PostgreSQL<span class="Apple-converted-space"> </span></b></span></p>
+<p class="p3"><span class="s1">PostgreSQL has very simplistic and effective backup.<span class="Apple-converted-space">  </span>pg_dump exports everything as script with everything required to reconstruct the database from scratch.<span class="Apple-converted-space">  </span>You simply run this script with psql which executes it line by line to rebuild the database.<span class="Apple-converted-space">  </span>This method was successfully used to migrate the database from amazon ec2 to a freshly deployed in house server. <span class="Apple-converted-space"> </span></span></p>
+<p class="p7"><span class="s1"><b>Example syntax</b></span></p>
+<p class="p3"><span class="s1">#backup to text (from remote unix machine)</span></p>
+<p class="p3"><span class="s1">pg_dump —host churnometer -U churnuser churnometer &gt; churnometer.bak</span></p>
+<p class="p3"><span class="s1">#backup to text locally (on Linux)</span></p>
+<p class="p3"><span class="s1">sudo -u postgres pg_dump churnometer &gt; /home/administrator/churnometer.bak<span class="Apple-converted-space"> </span></span></p>
+<p class="p3"><span class="s1">#restore backup (on Linux) - NB you may need to create the database you want to restore to first (see staging section for example of creating a database)</span></p>
+<p class="p3"><span class="s1">sudo -u postgres psql churnometer &lt; /home/administrator/churnometer.bak</span></p>
+<p class="p2"><span class="s1"><b>Source code</b></span></p>
+<p class="p3"><span class="s1">The source code lives on github and is downloaded to /home/administrator/churnometer on the server.<span class="Apple-converted-space">  </span>But to ensure it ends up on tape, the code on the server and key configuration files are copied to \\nuwvicsql1\e$\sql datastore\churnobyl_export\backup.<span class="Apple-converted-space"> </span></span></p>
+<p class="p3"><span class="s1">Winscp is used to copy the source and config from the ubuntu server.</span></p>
+<p class="p3"><span class="s1">A script called winscp_backup.txt copies the source code, nginx's config, thin's config and PostgreSQL's config to the backup directory.</span></p>
+<p class="p3"><span class="s1">WARNING: this script contains the admin password for nuwvicweb4</span></p>
+<p class="p6"><span class="s1"><b>Staging web server and database</b></span></p>
+<p class="p3"><span class="s3"><a href="http://churnometer:4001">http://churnometer:4001</a></span><span class="s1"><span class="Apple-converted-space">  </span>is the address of the staging web server.<span class="Apple-converted-space">  </span>The code is located in /home/administrator/churnometer_staging.<span class="Apple-converted-space">  </span>This is a good place to test deploying code too.<span class="Apple-converted-space">  </span>At this time the production database is called churnobyl and the staging database is called churnometer.<span class="Apple-converted-space">  </span>This will hopefully be fixed in a subsequent release. <span class="Apple-converted-space">   </span></span></p>
+<p class="p3"><span class="s1">To update the staging database, either follow the backup and restore procedure above or at the psql console;</span></p>
+<p class="p3"><span class="s1">sudo -u postgres psql<span class="Apple-converted-space"> </span></span></p>
+<p class="p3"><span class="s1">type;</span></p>
+<p class="p3"><span class="s1">create database [new database name] with template [production database];</span></p>
+<p class="p3"><span class="s1">This command will only work if no one is connected to the database.<span class="Apple-converted-space">  </span>Connections to the database can easily be dropped by restarting postgres <span class="Apple-converted-space">  </span>- sudo /etc/init.d/postgresql restart</span></p>
+<p class="p3"><span class="s1">If you change the database name, remember to update the /home/administrator/churnometer_staging/config/config.yml file.<span class="Apple-converted-space">  </span>Then restart thin - sudo /etc/init.d/thin restart</span></p>
+<p class="p8"><b></b><br></p>
+<p class="p9"><b>Setting up staging and merging a repository</b></p>
+<p class="p8"><b></b><br></p>
+<p class="p10"><b>Preliminaries</b></p>
+<p class="p8"><b></b><br></p>
+<p class="p10"><b>Note that the staging thin server is now pointing to ~/staging/churnometer</b></p>
+<p class="p8"><b></b><br></p>
+<p class="p10">I edited /etc/thin/churnometer_staging.yaml and moved the staging server to ~/staging/churnometer because I was concerned about harming even the working staging environment. If there were problems, I could just switch the paths back.</p>
+<p class="p8"><br></p>
+<p class="p10">The following command (long-winded due to rvm) can be used to reload the staging server only, and leave production running:</p>
+<p class="p8"><br></p>
+<p class="p11">sudo /home/administrator/.rvm/bin/ruby /home/administrator/.rvm/gems/ruby-1.9.3-p125/gems/thin-1.3.1/bin/thin restart -C /etc/thin/churnometer_staging.yml</p>
+<p class="p8"><br></p>
+<p class="p10">I placed this command in ~/staging/churnometer/restart-thin</p>
+<p class="p8"><br></p>
+<p class="p8"><br></p>
+<p class="p9"><b>Setup steps</b></p>
+<p class="p8"><b></b><br></p>
+<p class="p10"><b>1. Clone origin/master repository for use as staging code</b></p>
+<p class="p10">Using a git repository for the staging area allows flexibility in testing future changes, and potentially allows selectively merging changes into staging for testing. Bad changes can be rolled back more easily. The contents of a "staging" repository could be pulled into a "production" repository once the changes have been verified as stable and working.<span class="Apple-converted-space"> </span></p>
+<p class="p8"><br></p>
+<p class="p10">Execute the commands in this section in the ~/staging directory</p>
+<p class="p8"><br></p>
+<p class="p11">git clone git@github.com:lukerohde/churnometer</p>
+<p class="p8"><br></p>
+<p class="p8"><br></p>
+<p class="p10"><b>2. Copy/create config.yaml file</b></p>
+<p class="p8"><br></p>
+<p class="p10">In this case I did the following:</p>
+<p class="p12"><br></p>
+<p class="p11">cd churnometer</p>
+<p class="p11">cp ~/churnometer_staging/config/config.yaml config/</p>
+<p class="p8"><br></p>
+<p class="p8"><br></p>
+<p class="p9"><b>Testing/merging steps</b></p>
+<p class="p8"><br></p>
+<p class="p10">Execute this step's commands in ~/staging/churnometer</p>
+<p class="p8"><br></p>
+<p class="p10"><b>Option 1: pull changes from remote repository</b></p>
+<p class="p10">A simple way to test additions is to pull them into the staging repository.</p>
+<p class="p8"><br></p>
+<p class="p10">A git pull is a "fetch" followed by an automatic "merge" of the fetched source. The command "git pull" by itself would pull from the origin that the repository was cloned from, which is "<span class="s4">git@github.com:lukerohde/churnometer</span>".<span class="Apple-converted-space"> </span></p>
+<p class="p8"><br></p>
+<p class="p10">Instead of doing this, I specify the pull source and pull from my github development repository.</p>
+<p class="p8"><br></p>
+<p class="p11">git pull git@github.com:dlbeswick/churnometer</p>
+<p class="p8"><br></p>
+<p class="p10">My development repository is then merged into staging's working tree. After restarting the web server, the changes are available in staging.</p>
+<p class="p8"><br></p>
+<p class="p10">The command <span class="s4">git reflog</span><span class="s5"> shows</span> that the pull has occurred:</p>
+<p class="p8"><br></p>
+<p class="p11">~/staging/churnometer$ git reflog</p>
+<p class="p12"><br></p>
+<p class="p11">d9fac45 HEAD@{0}: pull git@github.com:dlbeswick/churnometer: Fast-forward</p>
+<p class="p13"><span class="s6">d924192 HEAD@{1}: clone: from ssh://<a href="http://git@github.com/lukerohde/churnometer.git"><span class="s7">git@github.com/lukerohde/churnometer.git</span></a></span></p>
+<p class="p12"><br></p>
+<p class="p10">To undo the pull, consult the reflog and hard reset to the revision id before the pull operation.</p>
+<p class="p8"><br></p>
+<p class="p11">~/staging/churnometer$ git reset --hard d924192</p>
+<p class="p11">HEAD is now at d924192 fixed isues with redundant change removal in anonymisedb</p>
+<p class="p8"><br></p>
+<p class="p10">Every pull sets "ORIG_HEAD" to the revision before the pull, so this also works and is simpler:</p>
+<p class="p8"><br></p>
+<p class="p11">~/staging/churnometer$ git reset --hard ORIG_HEAD</p>
+<p class="p11">HEAD is now at d924192 fixed isues with redundant change removal in anonymisedb</p>
+<p class="p8"><br></p>
+<p class="p10"><b>Option 2: branch then pull changes from remote repository</b></p>
+<p class="p10">Branches may provide more flexibility when testing lots of different changes, or complicated merges of selected changes. It might just be easier to use in general by making it easy to switch between changes or quickly undo pulls.</p>
+<p class="p8"><br></p>
+<p class="p11">~/staging/churnometer$ git branch testing-david</p>
+<p class="p11">~/staging/churnometer$ git branch</p>
+<p class="p11">* master</p>
+<p class="p11">  testing-david</p>
+<p class="p8"><br></p>
+<p class="p11">~/staging/churnometer$ git checkout testing-david</p>
+<p class="p11">Switched to branch 'testing-david'</p>
+<p class="p8"><br></p>
+<p class="p10">Now proceed as for option 1.</p>
+<p class="p8"><br></p>
+<p class="p10">Switch between branches using "<span class="s4">git checkout &lt;branch&gt;</span>". After executing this command and restarting the web server, the branch is active.</p>
+<p class="p8"><br></p>
+<p class="p10">The branch can be deleted when no longer needed.</p>
+<p class="p8"><br></p>
+<p class="p11">~/staging/churnometer$ git branch -d testing-david<span class="Apple-converted-space"> </span></p>
+<p class="p11">error: The branch 'testing-david' is not fully merged.</p>
+<p class="p11">If you are sure you want to delete it, run 'git branch -D testing-david'.</p>
+<p class="p8"><br></p>
+<p class="p10">The error happens because the changes in the "dlbeswick" repository haven't yet been merged into the head of the current branch, "master". The master branch contains the contents of "origin" (github.com:lukerohde/churnometer), which hasn't yet pulled my changes. In this situation it's known that the additional commits are safe and sound in github.com:dlbeswick, so the -D option is fine to use.</p>
+<p class="p8"><br></p>
+<p class="p11">~/staging/churnometer$ git branch -D testing-david<span class="Apple-converted-space"> </span></p>
+<p class="p11">Deleted branch testing-david (was d9fac45).</p>
+<p class="p12"><br></p>
+<p class="p11">~/staging/churnometer$ git branch</p>
+<p class="p11">* master</p>
+<p class="p12"><br></p>
+<p class="p12"><br></p>
+<p class="p9"><b>Setting up postgres on mac</b></p>
+<p class="p10">http://coderwall.com/p/xezzaa</p>
+<p class="p10">http://www.macports.org/install.php</p>
+<p class="p8"><br></p>
+<p class="p10">$ sudo port -v selfupdate</p>
+<p class="p10">$ sudo port -v install postgresql92-server</p>
+<p class="p8"><br></p>
+<p class="p14"><span class="s8">$ sudo </span><span class="s9"><b>mkdir</b></span><span class="s8"> -p /opt/</span><span class="s9"><b>local</b></span><span class="s8">/var/db/postgresql92/defaultdb</span></p>
+<p class="p14"><span class="s8">$ sudo </span><span class="s9"><b>chown</b></span><span class="s8"> postgres:postgres /opt/</span><span class="s9"><b>local</b></span><span class="s8">/var/db/postgresql92/defaultdb</span></p>
+<p class="p15"><span class="s10">$ sudo su postgres -c </span><span class="s8">'/opt/local/lib/postgresql92/bin/initdb -D /opt/local/var/db/postgresql92/defaultdb'</span></p>
+<p class="p16"><b></b><br></p>
+</body>
+</html>
