@@ -94,6 +94,11 @@ class Churnobyl < Sinatra::Base
     end
   end
 
+  get '/self' do
+    sleep 10
+    h self.to_s
+  end
+
   get '/' do
     cache_control :public, :max_age => 28800
     protected!

@@ -148,7 +148,7 @@ input.selections {
 }
 
 body {
-	background-color: #C60C30;
+	background-color: #353535;
 }
 
 h1, h2, h3, h4 {
@@ -156,7 +156,7 @@ h1, h2, h3, h4 {
 }
 
 h1 a {
-	color: #ffd;
+	color: #DDD;
 	text-decoration:none;
 	:hover {
 		color: #ffd !important;
@@ -165,7 +165,7 @@ h1 a {
 }
 
 .ui-widget-header {
-	background:#DFDF00;
+	background:#00AFA2;
 	border:#ffe;
 }
 
@@ -233,13 +233,13 @@ pre {
 }
 
 .flash {
-  background-color: #DFDF00;
+  background-color: #00AFA2;
   border-bottom: 1px solid grey;
   padding: 7px 0;
   text-align: center;
   font-weight: bold;
-  color: #C60C30
-}
+  color: #FFED71
+  }
 
 .bold_col {
 	color:red !important;
