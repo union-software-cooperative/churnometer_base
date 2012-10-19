@@ -5,3 +5,5 @@ log
 doc
 config/config_site.yaml
 uploads
+.sass_cache
+.sass_cache/*
