@@ -1,0 +1,100 @@
+#!/bin/bash
+
+RESOURCE_URL="http://churnometer.freechange.com.au/asu/"
+#DB_FILE="./churnometer.bak"
+DB_REPO="git@github.com:lukerohde/churnometer_data.git"
+REPO="git@github.com:dlbeswick/churnometer.git"
+PRODUCTION_BRANCH="lrohde-generalise2"
+
+PG_PATH="/etc/postgresql/9.1/main/"
+CHURN_USER="churnometer"
+CHURN_PASS="mypassword"
+WWW_PATH="/opt/churnometer"
+
+function install
+{
+  sudo apt-get update
+  sudo apt-get -y install ruby1.9.1
+  sudo apt-get -y install postgresql libpq-dev
+  sudo apt-get -y install git
+  sudo apt-get -y install ruby1.9.1-dev
+  sudo apt-get -y install build-essential
+  sudo apt-get -y install sendmail
+  sudo apt-get -y install libxml2-dev libxslt-dev
+}
+
+function db_config 
+{
+  mv "${PG_PATH}postgresql.conf" "${PG_PATH}postgresql.conf.bak"
+  curl -L "${RESOURCE_URL}postgresql.conf" > "${PG_PATH}postgresql.conf"
+
+  #http://www.postgresql.org/docs/8.2/static/kernel-resources.html
+  sudo sysctl -w kernel.shmmax=671088640
+  sudo sysctl -w kernel.shmall=10485760
+  sudo echo kernel.shmmax=671088640 | tee -a /etc/sysctl.conf
+  sudo echo kernel.shmall=10485760 | tee -a /etc/sysctl.conf
+
+  /etc/init.d/postgresql restart
+}
+
+function churn_user
+{
+  sudo useradd -d /home/$CHURN_USER -m $CHURN_USER -p $CHURN_PASS  
+  sudo -u $CHURN_USER ssh-keygen -t rsa -b 4096 -f /home/$CHURN_USER/.ssh/id_rsa -N ""
+  echo Copy this key to https://github.com/account/ssh and make sure your are a collaborator on $REPO
+  sudo -u $CHURN_USER cat /home/$CHURN_USER/.ssh/id_rsa.pub
+  echo Press any key once done
+  read
+}
+
+
+function source_config
+{
+
+  sudo rm -Rf $WWW_PATH
+  sudo mkdir $WWW_PATH
+  sudo chown $CHURN_USER $WWW_PATH
+ 
+  sudo -u $CHURN_USER rm /home/$CHURN_USER/www
+  sudo -u $CHURN_USER ln -s $WWW_PATH /home/$CHURN_USER/www
+  
+  cd $WWW_PATH
+  sudo -u $CHURN_USER git clone $REPO $WWW_PATH
+  sudo -u $CHURN_USER git checkout $PRODUCTION_BRANCH
+
+  sudo -u $CHURN_USER cp config/config_site.yaml.example config/config_site.yaml
+  sudo -u $CHURN_USER vim config/config_site.yaml
+}
+
+
+function db_import
+{
+  if [[ ! ${DB_FILE} ]] ; then 
+    DB_FILE="/home/$CHURN_USER/churnometer_temp/sql/churnometer_regression_general.sql"    
+    if [[ ! -f ${DB_FILE} ]] ; then 
+      sudo -u $CHURN_USER git clone $DB_REPO /home/$CHURN_USER/churnometer_temp/
+    fi
+  fi
+
+  sudo -u postgres psql -c "create user ${CHURN_USER} with password '${CHURN_PASS}'"
+  sudo -u postgres psql -c "drop database churnometer"
+  sudo -u postgres psql -c "create database churnometer"
+  sudo -u postgres psql churnometer < $DB_FILE
+  sudo -u postgres psql -c "grant churnuser to churnometer"
+}
+
+function ruby_config
+{
+  cd $WWW_PATH
+  sudo gem install bundler
+  sudo bundle install
+  sudo -u $CHURN_USER ruby start.rb
+}
+
+
+#install
+#churn_user
+#db_config
+#source_config
+db_import
+ruby_config
