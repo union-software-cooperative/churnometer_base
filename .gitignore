@@ -3,3 +3,5 @@ config.yaml
 TODOS.txt
 log
 doc
+config/config_site.yaml
+uploads
