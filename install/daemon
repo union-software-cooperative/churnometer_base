@@ -1,30 +1,14 @@
 #!/bin/bash
 #
-# init.d script for single or multiple ruby installations. Expects at least one .conf 
-# file in /etc/ruby
+# init.d script for single churnometer installations.
 #
-# Modified by jay@gooby.org http://github.com/jaygooby
+# Modified from a script by jay@gooby.org http://github.com/jaygooby
 # based on http://gist.github.com/308216 by http://github.com/mguterl
 #
-## A sample /etc/ruby/my_app.conf
-## 
-## RAILS_ENV=production
-CHURNOMETER_ROOT=/opt/churnometer
+CHURNOMETER_ROOT=REPLACEME_WWW_PATH
+CHURNUSER=REPLACEME_CHURN_USER
 #
-# This configures a ruby master for your app at /var/apps/www/my_app/current running in
-# production mode. It will read config/ruby.rb for further set up. 
-#
-# You should ensure different ports or sockets are set in each config/ruby.rb if
-# you are running more than one master concurrently.
-#
-# If you call this script without any config parameters, it will attempt to run the
-# init command for all your ruby configurations listed in /etc/ruby/*.conf
-#
-# /etc/init.d/ruby start # starts all rubys
-#
-# If you specify a particular config, it will only operate on that one
-#
-# /etc/init.d/ruby start /etc/ruby/my_app.conf
+# /etc/init.d/churnometer start
 
 set -e
 
@@ -43,7 +27,7 @@ cmd () {
       sig 0 && echo >&2 "Already running" && exit 0
       echo "Starting"
       $CMD &
-      sudo -u churnometer bash -c "echo $! > $CHURNOMETER_ROOT/tmp/churnometer.pid"
+      sudo -u $CHURNUSER bash -c "echo $! > $CHURNOMETER_ROOT/tmp/churnometer.pid"
       ;;  
     stop)
       sig QUIT && echo "Stopping" && exit 0
@@ -72,10 +56,10 @@ setup () {
   export PID=$CHURNOMETER_ROOT/tmp/churnometer.pid
   export OLD_PID="$PID.oldbin"
   if [[ ! -d $CHURNOMETER_ROOT/tmp ]] ; then 
-    sudo -u churnometer mkdir $CHURNOMETER_ROOT/tmp
+    sudo -u $CHURNUSER mkdir $CHURNOMETER_ROOT/tmp
   fi
 
-  CMD="sudo privbind -u churnometer thin start --threaded -p 80"
+  CMD="sudo privbind -u $CHURNUSER thin start --threaded -p 80"
 }
 
 start_stop () {
