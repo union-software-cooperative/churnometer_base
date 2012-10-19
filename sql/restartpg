@@ -1,0 +1,1 @@
+sudo su postgres -c 'pg_ctl -D /opt/local/var/db/postgresql92/defaultdb/ -m fast restart'
