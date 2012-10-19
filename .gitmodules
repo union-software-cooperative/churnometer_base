@@ -1,0 +1,3 @@
+[submodule "churnometer_data"]
+	path = churnometer_data
+	url = git://github.com/lukerohde/churnometer_data.git
