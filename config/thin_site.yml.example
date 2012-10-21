@@ -1,15 +1,16 @@
 ---
-chdir: /home/administrator/staging/churnometer
+chdir: REPLACEME_WWW_PATH
 environment: production
 address: 0.0.0.0
-port: 4000
+port: 3000
 timeout: 300
-log: /home/administrator/staging/churnometer/log/thin.log
-pid: /var/run/thin.pid
-rackup: /home/administrator/staging/churnometer/config.ru
+log: REPLACEME_WWW_PATH/log/thin.log
+pid: REPLACEME_WWW_PATH/tmp/thin.pid
+rackup: REPLACEME_WWW_PATH/config.ru
 max_conns: 1024
 max_persistent_conns: 512
 require: []
 wait: 30
-servers: 2
 daemonize: true
+servers: 3
+threaded: true
