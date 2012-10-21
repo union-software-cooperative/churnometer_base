@@ -1,9 +1,9 @@
-tmp
+tmp/*
 config.yaml
 TODOS.txt
 log
 doc
 config/config_site.yaml
-uploads
+uploads/*
 .sass_cache
 .sass_cache/*

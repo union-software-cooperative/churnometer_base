@@ -108,10 +108,11 @@ function source_config
 
   sudo -u $CHURN_USER cp config/config_site.yaml.example config/config_site.yaml
   
-  sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" $WWW_PATH/config/config_site.yaml.example \
-  | sed "s|REPLACEME_CHURN_PASS|$CHURN_PASS|g" > ~/config_site.yaml.tmp
+  sudo -u $CHURN_USER bash -c " \
+  sed \"s|REPLACEME_CHURN_USER|$CHURN_USER|g\" $WWW_PATH/config/config_site.yaml.example \
+  | sed \"s|REPLACEME_CHURN_PASS|$CHURN_PASS|g\" > $WWW_PATH/config/config_site.yaml"
 
-  sudo -u $CHURN_USER mv ~/config_site.yaml.tmp $WWW_PATH/config/config_site.yaml  
+  #sudo mv ~/config_site.yaml.tmp $WWW_PATH/config/config_site.yaml  
   sudo -u $CHURN_USER vim config/config_site.yaml
 
   sudo git config --system user.email "$USER@$HOSTNAME"
