@@ -1,12 +1,11 @@
 #!/bin/bash
 
-RESOURCE_URL="http://churnometer.freechange.com.au/asu/"
 DB_FILE="$2"
 DB_REPO="git@github.com:lukerohde/churnometer_data.git"
 REPO="git@github.com:dlbeswick/churnometer.git"
 PRODUCTION_BRANCH="lrohde-generalise2"
 
-PG_PATH="/etc/postgresql/9.1/main/"
+PG_PATH="/etc/postgresql/9.1/main"
 CHURN_USER="churnometer"
 CHURN_PASS="mypassword"
 WWW_PATH="/opt/churnometer"
@@ -29,27 +28,7 @@ function install
   sudo apt-get -y install build-essential
   sudo apt-get -y install sendmail
   sudo apt-get -y install libxml2-dev libxslt-dev
-  sudo apt-get -y install privbind # for running thin on port 80 as churnometer user
-}
-
-function db_config 
-{
-  echo "***********************************************************************"
-  echo "* CONFIGURING POSTGRESQL DATABASE"
-  echo "*"
-  echo "*"
-  echo "***********************************************************************"
-
-  sudo bash -c "mv ${PG_PATH}postgresql.conf ${PG_PATH}postgresql.conf.bak"
-  sudo bash -c "curl -L ${RESOURCE_URL}postgresql.conf > ${PG_PATH}postgresql.conf"
-
-  #http://www.postgresql.org/docs/8.2/static/kernel-resources.html
-  sudo sysctl -w kernel.shmmax=671088640
-  sudo sysctl -w kernel.shmall=10485760
-  sudo bash -c "echo kernel.shmmax=671088640 | tee -a /etc/sysctl.conf"
-  sudo bash -c "echo kernel.shmall=10485760 | tee -a /etc/sysctl.conf"
-
-  sudo /etc/init.d/postgresql restart
+  sudo apt-get -y install nginx 
 }
 
 function churn_user
@@ -61,13 +40,16 @@ function churn_user
   echo "***********************************************************************"
   
   sudo useradd -d /home/$CHURN_USER -m $CHURN_USER -p $CHURN_PASS  
+  sudo usermod -s /bin/bash $CHURN_USER # set up bash shell
+
   sudo -u $CHURN_USER ssh-keygen -t rsa -b 4096 -f /home/$CHURN_USER/.ssh/id_rsa -N ""
   echo Copy this key to https://github.com/account/ssh and make sure your are a collaborator on $REPO
   sudo -u $CHURN_USER cat /home/$CHURN_USER/.ssh/id_rsa.pub
   echo Press any key once done
   read
-  git config --global user.email "$USER@$HOSTNAME"
-  git config --global user.name "$USER"
+  
+  sudo git config --system user.email "$USER@$HOSTNAME"
+  sudo git config --system user.name "$USER"
 }
 
 
@@ -95,6 +77,27 @@ function source_config
   sudo -u $CHURN_USER vim config/config_site.yaml
 }
 
+function db_config 
+{
+  echo "***********************************************************************"
+  echo "* CONFIGURING POSTGRESQL DATABASE"
+  echo "*"
+  echo "*"
+  echo "***********************************************************************"
+
+  sudo bash -c "mv ${PG_PATH}/postgresql.conf ${PG_PATH}/postgresql.conf.bak"
+  sudo bash -c "cp ${WWW_PATH}/config/postgresql.conf.91example ${PG_PATH}/postgresql.conf"
+  sudo bash -c "echo -e '\n #Churnometer user for application access'  >> ${PG_PATH}/pg_hba.conf"
+  sudo bash -c "echo -e 'local\tall\t\tchurnometer\t\t\t\tpeer' >> ${PG_PATH}/pg_hba.conf"
+  
+#http://www.postgresql.org/docs/8.2/static/kernel-resources.html
+  sudo sysctl -w kernel.shmmax=671088640
+  sudo sysctl -w kernel.shmall=10485760
+  sudo bash -c "echo kernel.shmmax=671088640 | tee -a /etc/sysctl.conf"
+  sudo bash -c "echo kernel.shmall=10485760 | tee -a /etc/sysctl.conf"
+
+  sudo /etc/init.d/postgresql restart
+}
 
 function db_import
 {
@@ -141,15 +144,35 @@ function daemonise
   echo "*"
   echo "***********************************************************************"
   
-  sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" $WWW_PATH/install/daemon \
-  | sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" > ~/daemon.tmp  
+  #sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" $WWW_PATH/install/daemon \
+  #| sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" > ~/daemon.tmp  
 
-  sudo mv ~/daemon.tmp /etc/init.d/churnometer
-  sudo chmod 755 /etc/init.d/churnometer
+  #sudo mv ~/daemon.tmp /etc/init.d/churnometer
+  #sudo chmod 755 /etc/init.d/churnometer
 
-  sudo update-rc.d -f churnometer remove
-  sudo update-rc.d churnometer defaults
-  sudo /etc/init.d/churnometer restart
+  #sudo update-rc.d -f churnometer remove
+  #sudo update-rc.d churnometer defaults
+  #sudo /etc/init.d/churnometer restart
+
+  sudo thin install
+  sudo update-rc.d -f thin defaults
+  
+  sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
+    $WWW_PATH/config/thin_site.yml.example \
+    > ~/thin.yml.tmp
+
+  sudo mv ~/thin.yml.tmp /etc/thin/churnometer_production.yml
+  
+  sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
+    $WWW_PATH/config/nginx_site.conf.example \
+    > ~/nginx.conf.tmp  
+  
+  sudo mv ~/nginx.conf.tmp /etc/nginx/sites-available/churnometer_production.conf
+  sudo ln -s /etc/nginx/sites-available/churnometer_production.conf \
+    /etc/nginx/sites-enabled/churnometer_production.conf
+ 
+  sudo -u $CHURN_USER /etc/init.d/thin restart
+  sudo /etc/init.d/nginx restart
 }
 
 case $1 in 
@@ -159,11 +182,11 @@ case $1 in
   just-user)
     churn_user
   ;;
-  just-dbconfig)
-    db_config
-  ;;
   just-source)
     source_config
+  ;;
+  just-dbconfig)
+    db_config
   ;;
   just-data)
     db_import
@@ -177,14 +200,14 @@ case $1 in
   install)
     install
     churn_user
-    db_config
     source_config
+    db_config
     db_import
     ruby_config
     daemonise
   ;;
   *)
-    echo >&2 "Usage: $0 <install|just-software|just-user|just-dbconfig|just-source|just-data|just-gems|just-daemonise>"
+    echo >&2 "Usage: $0 <install|just-software|just-user|just-source|just-dbconfig|just-data|just-gems|just-daemonise>"
     exit 1
     ;;
 esac
