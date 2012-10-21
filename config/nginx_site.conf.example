@@ -1,53 +1,52 @@
-upstream churnometer_staging {
-        server 0.0.0.0:4000;
+upstream churnometer {
+        server 0.0.0.0:3000;
+	server 0.0.0.0:3001;
+	server 0.0.0.0:3002;
 }
-
 
 server {
-        listen 80;
-        server_name churnometer_staging
-        ssl on;
-        ssl_certificate /etc/nginx/ssl/server.crt;
-        ssl_certificate_key /etc/nginx/ssl/server.key;
+        listen 80 default;
+        server_name churnometer; 
 
-
-        access_log /home/administrator/staging/churnometer/log/nginx.log;
-        root /home/administrator/staging/churnometer/;
-        error_log /home/administrator/staging/churnometer/log/error.log;
+        root REPLACEME_WWW_PATH/;
+        access_log REPLACEME_WWW_PATH/log/nginx.log;
+        error_log REPLACEME_WWW_PATH/log/nginx_error.log;
 
         location / {
-                proxy_intercept_errors on;
-                proxy_pass http://churnometer_staging/;
+                proxy_pass http://churnometer/;
                 proxy_set_header Host $http_host;
                 proxy_set_header X-Forwarded-For $remote_addr;
-        }
-
-	location /upload {
-		rewrite ^ https://$host$request_uri;
-	}
-}
-
-
-
-server {
-        listen 443 ssl;
-        server_name churnometer_staging
-        ssl on;
-        ssl_certificate /etc/nginx/ssl/server.crt;
-        ssl_certificate_key /etc/nginx/ssl/server.key;
-
-
-        access_log /home/administrator/staging/churnometer/log/nginx.log;
-        root /home/administrator/staging/churnometer/;
-        error_log /home/administrator/staging/churnometer/log/error.log;
-
-        location / {
                 proxy_intercept_errors on;
-                proxy_pass http://churnometer_staging/;
-                proxy_set_header Host $http_host;
-                proxy_set_header X-Forwarded-For $remote_addr;
         }
+
+# This is for SSL redirect in case you want SSL on data uplaod
+#	location /upload {
+#		rewrite ^ https://$host$request_uri;
+#	}
 }
+
+# This is for ssl version of churnometer but needs certificate
+# See http://www.cyberciti.biz/faq/howto-linux-unix-setup-nginx-ssl-proxy/
+#
+#server {
+#        listen 443 default ssl;
+#        server_name churnometer
+#        
+#	ssl on;
+#        ssl_certificate /etc/nginx/ssl/server.crt;
+#        ssl_certificate_key /etc/nginx/ssl/server.key;
+#
+#        root REPLACEME_WWW_PATH/;
+#        access_log REPLACEME_WWW_PATH/log/nginx.log;
+#        error_log REPLACEME_WWW_PATH/log/error.log;
+#
+#        location / {
+#                proxy_pass http://churnometer/;
+#                proxy_set_header Host $http_host;
+#                proxy_set_header X-Forwarded-For $remote_addr;
+#                proxy_intercept_errors on;
+#        }
+#}
 
 
 
