@@ -8,8 +8,8 @@ database:
   host: localhost
   port: 5432
   dbname: churnometer
-  user: churnometer
-  password: mypassword
+  user: REPLACEME_CHURN_USER
+  password: REPLACEME_CHURN_PASS
   facttable: memberfacthelper
 demo: false
 use_new_query_generation_method: true 
