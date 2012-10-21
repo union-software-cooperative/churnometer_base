@@ -1,3 +1,4 @@
+require './lib/settings'
 require './lib/churn_db'
 require 'open3.rb'
 
@@ -229,7 +230,7 @@ class ImportPresenter
   end
   
   def member_import_command(file)
-  	cmd = "psql -h localhost churnometer -c \"\\copy membersource (memberid, status" 
+  	cmd = "psql churnometer -c \"\\copy membersource (memberid, status" 
     
     dimensions.each do |d|
     	cmd << ", #{d.column_base_name}" 
@@ -239,14 +240,14 @@ class ImportPresenter
   end
   
   def displaytext_import_command(file)
-  	cmd = "psql -h localhost churnometer -c \""
+  	cmd = "psql churnometer -c \""
   	cmd << "\\copy displaytextsource (attribute, id, displaytext) " 
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
   end
   
   def transaction_import_command(file)
-  	cmd = "psql -h localhost churnometer -c \""
+  	cmd = "psql churnometer -c \""
   	cmd << "\\copy transactionsource (id, creationdate, memberid, userid, amount) " 
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
