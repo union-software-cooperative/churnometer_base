@@ -95,7 +95,8 @@ function db_config
   sudo sysctl -w kernel.shmall=10485760
   sudo bash -c "echo kernel.shmmax=671088640 | tee -a /etc/sysctl.conf"
   sudo bash -c "echo kernel.shmall=10485760 | tee -a /etc/sysctl.conf"
-
+ 
+  export PGDATESTYLE="european" #I'm not sure I want to keep this but it interprets dates as dd/mm/yyyy
   sudo /etc/init.d/postgresql restart
 }
 
