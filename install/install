@@ -1,9 +1,9 @@
 #!/bin/bash
 
 DB_FILE="$2"
-DB_REPO="git@github.com:lukerohde/churnometer_data.git"
 REPO="git@github.com:dlbeswick/churnometer.git"
 PRODUCTION_BRANCH="lrohde-generalise2"
+DB_REPO="git@github.com:lukerohde/churnometer_data.git"
 
 PG_PATH="/etc/postgresql/9.1/main"
 CHURN_USER="churnometer"
@@ -11,6 +11,42 @@ CHURN_PASS="mypassword"
 WWW_PATH="/opt/churnometer"
 
 pwdir=$(pwd)
+
+function confirm_config
+{
+  while [[ "$CONFIRMED" != "Y" && "$CONFIRMED" != "y" ]] ; do  
+    echo "***********************************************************************"
+    echo "* CONFIRM CONFIG"
+    echo "*"
+    echo "*"
+    echo "***********************************************************************"
+    echo "Database and application user: $CHURN_USER"
+    echo "Database and application user's password: $CHURN_PASS"
+    echo "Installation directory for application source: $WWW_PATH"
+    echo "Directory of Postgres 9.1 configuration (will be overwritten!!!): $PG_PATH"
+    echo "Source download repository: $REPO"
+    echo "Branch in source download repository: $PRODUCTION_BRANCH"
+    if [[ ! ${DB_FILE} ]] ; then 
+      echo "You haven't specified a database backup file that exists.  Demo data download repository: $DB_REPO"
+    else 
+      echo "DB backup file to restore from: $DB_FILE"
+    fi
+
+    read -e -i "Y" -p "Is this configuration correct [Y/N]? " CONFIRMED
+  
+    if  [[ $CONFIRMED != "Y" && $CONFIRMED != "y" ]] ; then 
+      read -e -i "$CHURN_USER" -p "Please enter a username for the database and webservice: " CHURN_USER
+      read -e -i "$CHURN_PASS" -p "Please enter a password for user $CHURN_USER: " CHURN_PASS
+      read -e -i "$WWW_PATH" -p "Please enter a path to install the application: " WWW_PATH
+      read -e -i "$PG_PATH" -p "Please confirm the path to your postgres configuration (only tested with 9.1 and will overwrite!): " PG_PATH
+      read -e -i "$REPO" -p "Please confirm the repository from which you to download the source: " REPO
+      read -e -i "$PRODUCTION_BRANCH" -p "Please confirm the branch of $REPO: " PRODUCTION_BRANCH
+      if [[ ! ${DB_FILE} ]] ; then 
+        read -e -i "$DB_REPO" -p "Please confirm the repository from which to download the demo data: " DB_REPO
+      fi
+    fi
+  done
+}
 
 function install
 {
@@ -102,13 +138,13 @@ function db_config
 
 function db_import
 {
-  if [[ ! ${DB_FILE} ]] ; then 
   echo "***********************************************************************"
   echo "* IMPORTING DATA"
   echo "*"
   echo "*"
   echo "***********************************************************************"
   
+  if [[ ! ${DB_FILE} ]] ; then 
     DB_FILE="/home/$CHURN_USER/churnometer_temp/sql/churnometer_regression_general.sql"    
     if [[ ! -f ${DB_FILE} ]] ; then 
       sudo -u $CHURN_USER git clone $DB_REPO /home/$CHURN_USER/churnometer_temp/
@@ -178,27 +214,35 @@ function daemonise
 
 case $1 in 
   just-software)
+    confirm_config
     install
   ;;
   just-user)
+    confirm_config
     churn_user
   ;;
   just-source)
+    confirm_config
     source_config
   ;;
   just-dbconfig)
+    confirm_config
     db_config
   ;;
   just-data)
+    confirm_config
     db_import
   ;;
   just-gems)
+    confirm_config
     ruby_config
   ;;
   just-daemonise)
+    confirm_config
     daemonise
   ;;
   install)
+    confirm_config
     install
     churn_user
     source_config
@@ -208,7 +252,7 @@ case $1 in
     daemonise
   ;;
   *)
-    echo >&2 "Usage: $0 <install|just-software|just-user|just-source|just-dbconfig|just-data|just-gems|just-daemonise>"
+    echo >&2 "Usage: $0 < install | just-software | just-user | just-source | just-dbconfig | just-data | just-gems | just-daemonise > [db backup file]"
     exit 1
     ;;
 esac
