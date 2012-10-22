@@ -49,8 +49,8 @@ class ImportPresenter
   
   def load_staging_counts
     @mcnt ||= membersource_count
-		@dcnt ||= displaytextsource_count
-		@tcnt ||= transactionsource_count
+    @dcnt ||= displaytextsource_count
+    @tcnt ||= transactionsource_count
   end
   
   def import_ready?
@@ -79,37 +79,44 @@ class ImportPresenter
     HTML
   end
   
-  def staging_status
-    
-		load_staging_counts
+  def importer_status
+	load_staging_counts
 		
   	mcnt_msg = (@mcnt == "0" ? "No member data staged - expecting members.txt to be upload" : @mcnt.to_s + " rows of member data staged for import")
   	dcnt_msg = (@dcnt == "0" ? "No displaytext data staged - expecting displaytext.txt to be upload" : @dcnt.to_s + " rows of displaytext data staged for import")
   	tcnt_msg = (@tcnt == "0" ? "No transaction data staged - expecting transactions.txt to be upload" : @tcnt.to_s + " rows of transaction data staged for import")
+
+	<<-HTML
+		<ul>
+                        <li>
+                                #{mcnt_msg}
+                        </li>
+                        <li>
+                                #{dcnt_msg}
+                        </li>
+                        <li>
+                                #{tcnt_msg}
+                        </li>
+                        <li>
+                          Background Importer State: #{$importer.state}
+                        </li>
+                        <li>
+                          Importer Progress: #{$importer.progress}
+                        </li>
+                </ul>
+  	HTML
+  end
+
+  def staging_status
+    
   	
   	<<-HTML
   	  <h3>
   	    Prior imports
   	  </h3>
   	  #{import_history}
-  		<ul>
-  			<li>
-  				#{mcnt_msg}
-  			</li>
-  			<li>
-  				#{dcnt_msg}
-  			</li>
-  			<li>
-  				#{tcnt_msg}
-  			</li>
-  			<li>
-  			  Background Importer State: #{$importer.state}
-  			</li>
-  			<li>
-  			  Importer Progress: #{$importer.progress}
-  			</li>
-  		</ul>
-		HTML
+          #{importer_status}
+        HTML
   end
   
 
@@ -230,7 +237,7 @@ class ImportPresenter
   end
   
   def member_import_command(file)
-  	cmd = "psql churnometer -c \"\\copy membersource (memberid, status" 
+    cmd = "psql churnometer -c \"\\copy membersource (memberid, status" 
     
     dimensions.each do |d|
     	cmd << ", #{d.column_base_name}" 
