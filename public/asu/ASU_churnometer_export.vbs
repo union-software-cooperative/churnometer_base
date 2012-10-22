@@ -30,15 +30,28 @@
 '******************************************************************************
 '* SECTION: Configuration
 '******************************************************************************
-silent = false ' if silent = true then don't pop up messages
-dbfile = "\\nuwvic112\workarea\asu\asu.mdb" ' This is where your MSAccess database lives
-data_path = "\\nuwvic112\workarea\asu" ' This is where you put this script and SQL files
-url = "https://churnometer_staging/upload" ' This is where you want the data uploaded
-mailserver = "mail.nuw.org.au"
-logfilename = data_path & "\" & "churn_export.log" ' This is where you want the log file to save
+' Churnometer
+silent = true 'if silent = true then don't pop up messages
+data_path = "C:\Users\lucas.rohde\Desktop\churn_export"    ' This is where you put this script and SQL files
+url = "http://user:@churnometer:3000/import"    ' This is where you want the data uploaded
+logfilename = data_path & "\"    & "churn_export.log"    ' This is where you want the log file to save
 curl_path = data_path ' This is where curl.exe is
-
-
+debugging = false
+' Database
+dbusername = "sa"
+dbpassword = ""
+' MS Access specific
+dbfile = ""    ' "M:\membership.mdb"' This is where your MSAccess database lives (leave blank for MSSQL)
+dbprovider = "Microsoft.ACE.OLEDB.12.0"    '"Microsoft.Jet.OLEDB.4.0"
+' MS SQL specific
+dbserver = "TSUSQL2008"
+dbname = "membership"
+dbconnectionstring = "DRIVER=SQL Server;SERVER="    & dbserver & ";DATABASE="    & dbname & ";UID=sa;PWD="    & dbpassword & ";APP=churnometer_export;"
+' Mail
+mailserver = "mail.nuw.org.au"
+mailto = "lrohde@nuw.org.au"
+mailcc = ""
+mailfrom = "churnometer@nuw.org.au"
 
 
 '******************************************************************************
@@ -58,7 +71,7 @@ private function error_handler(msg)
 	errno = err.number
 	errmsg = err.description
 	if errno <> 0 then 
-		msg = msg & vbcrlf & "  Error: " & errmsg & vbcrlf & "  Error No: " & errno
+		msg = msg & vbcrlf & "     Error: "    & errmsg & vbcrlf & "     Error No: "    & errno
 		if not silent then msgbox msg
 		logfile.writeline msg
 		error_handler = true
@@ -78,15 +91,15 @@ end function
 '*  Failure: ""
 '******************************************************************************
 private function read_file(file)
-	on error resume next
+	if not debugging then on error resume next
 	read_file = ""
 
 	set fs = file.OpenAsTextStream(1, false)
-	if error_handler("failed to open " & file.name) then exit function  
+	if error_handler("           failed to open "    & file.name) then exit function  
 	
 	while not fs.AtEndOfStream 
 		read_file = read_file + fs.ReadLine + vbcrlf
-		if error_handler("failed to read " & file.name) then read_file = "": exit function  
+		if error_handler("           failed to read "    & file.name) then read_file = "": exit function  
 	wend
 	
 	fs.close
@@ -105,13 +118,13 @@ end function
 '*  Failure: nothing
 '******************************************************************************
 private function get_recordset(cnn, SQL)
-	On error resume next
+	if not debugging then on error resume next
 	set get_recordset = nothing ' so an error can be detected upon return
 	
 	set rs = CreateObject("ADODB.recordset")
 	rs.CursorType = adOpenDynamic
 	rs.open SQL, cnn
-	if error_handler("-- failed to execute query " & vbcrlf & SQL) then exit function  
+	if error_handler("           failed to execute query "    & vbcrlf & SQL) then exit function  
 	set get_recordset = rs
 end function
 
@@ -127,13 +140,13 @@ end function
 '*  Failure:  false
 '******************************************************************************
 private function write_data(rs, filename)
-	on error resume next
+	if not debugging then on error resume next
 	
 	write_data = false
 
 	' open file to write to
 	set f = fso.createtextfile(filename, true)
-	if error_handler("-- failed to write data to " & filename) then exit function  
+	if error_handler("           failed to write data to "    & filename) then exit function  
 	
 	' output header to file
 	header = ""
@@ -142,7 +155,7 @@ private function write_data(rs, filename)
 		header = header & rs.fields(i).name
 	next
 	f.writeline header
-	if error_handler("-- failed to write data to " & filename) then exit function  
+	if error_handler("           failed to write data to "    & filename) then exit function  
 	
 	' output each row to file
 	dim row
@@ -151,11 +164,17 @@ private function write_data(rs, filename)
 		' build text row from fields
 		for i = 0 to rs.fields.count-1
 			if i <> 0 then row = row & chr(9)
-			row = row & rs.fields(i) 
+			'row = row & rs.fields(i).name & ":"
+			On error resume next
+			row = row & rs.fields(i).value
+			if err.number <> 0 then 
+				row = row & rs.fields(i).name & "#error"
+			end if
+			On error goto 0
 		next
 		' output row to file
 		f.writeline row
-		if error_handler("-- failed to write data to " & filename) then exit function  
+		if error_handler("           failed to write data to "    & filename) then exit function  
 	
 		rs.movenext
 	wend
@@ -163,6 +182,30 @@ private function write_data(rs, filename)
 	f.close
 	write_data = true
 end function
+
+
+'******************************************************************************
+'* FUNCTION: read_curl_log
+'* Authors:  lrohde 22-10-2012
+'* Purpose:  Reads curl log file
+'* Inputs: 
+'*  curl_log: path to curl's log files
+'* Returns: 
+'*  Success: text of file
+'*  Failure: ""
+'******************************************************************************
+private function read_curl_log(curl_log)
+	' Open curl's log file
+	read_curl_log = ""
+	if not debugging then on error resume next
+	Set file = fso.OpenTextFile(curl_log, 1)
+	if error_handler("           could not open curl's log "    & curl_log) then exit function  
+	read_curl_log = file.ReadAll
+	if error_handler("           could not read curl's log "    & curl_log) then exit function  
+	file.Close
+	on error goto 0
+end function
+
 
 '******************************************************************************
 '* FUNCTION: upload
@@ -177,7 +220,7 @@ end function
 '*  Failure: false, output from curl's log will be in main log file
 '******************************************************************************
 private function upload(url, path, filename) ' if it fails, returns path to log file, if it succeeds returns ""
-	on error resume next
+	if not debugging then on error resume next
 	upload = false
 	
 	curl_log = path & "\curl.log"
@@ -186,40 +229,102 @@ private function upload(url, path, filename) ' if it fails, returns path to log 
 	' NB --insecure allows for the certificate to be self signed with an odd name
 	' But data will still be encrypted
 	Set WshShell = WScript.CreateObject("WScript.Shell")
-	WshShell.Run "cmd /c " & curl_path & "\curl.exe --insecure -X POST --form myfile=@""" & path & "\" & filename & """ " & url & " > " & curl_log & " 2>&1", 0, true
-	if error_handler("-- failed to execute curl to upload " & filename) then exit function  
+	WshShell.Run "cmd /c "    & curl_path & "\curl.exe --insecure -X POST --form myfile=@"""    & path & "\"    & filename & """    --form scripted=true "    & url & "    > "    & curl_log & "    2>&1", 0, true
+	if error_handler("           failed to execute curl to upload "    & filename) then exit function  
 		
 	' Open curl's log file
-	text = ""
-	on error resume next
-	Set file = fso.OpenTextFile(curl_log, 1)
-	if error_handler("-- could not open curl's log " & curl_log) then exit function  
-	text = file.ReadAll
-	if error_handler("-- could not read curl's log " & curl_log) then exit function  
-	file.Close
-	on error goto 0
+	text = read_curl_log(curl_log)
 	
 	' Check the log for success/failure
 	if instr(text, "was successfully uploaded") > 0 then 
-		if not silent then msgbox filename & " was successfully uploaded"
-		logfile.writeline "-- Successfully uploaded " & data_filename
+		if not silent then msgbox filename & "    was successfully uploaded"
+		logfile.writeline "           Successfully uploaded "    & data_filename
 		upload = true
 	else
-		if not silent then msgbox filename & " failed to upload" 
+		if not silent then msgbox filename & "    failed to upload"    
 		
-		logfile.writeline "-- Failed to upload " & data_filename
+		logfile.writeline "           Failed to upload "    & data_filename
 		logfile.write text ' write curl's log to main log file
 	end if
 end function
+
+
+'******************************************************************************
+'* FUNCTION: import
+'* Authors:  lrohde 20-09-2012
+'* Purpose:  checks if churnometer is ready to import and if so, starts import
+'* Inputs: 
+'*  url:  full upload path 
+'*  path: data directory containing curl's log
+'* Returns: 
+'*  Success: true
+'*  Failure: false, output from curl's log will be in main log file
+'******************************************************************************
+private function import(url, path) ' if it fails, returns path to log file, if it succeeds returns ""
+	if not debugging then on error resume next
+	import = false
+	
+	curl_log = path & "\curl.log"
+	
+	' Call CURL from the command line
+	' NB --insecure allows for the certificate to be self signed with an odd name
+	' But data will still be encrypted
+	Set WshShell = WScript.CreateObject("WScript.Shell")
+	WshShell.Run "cmd /c "    & curl_path & "\curl.exe --insecure -X GET --form scripted=true "    & url & "    > "    & curl_log & "    2>&1", 0, true
+	if error_handler("           failed to execute curl to upload "    & filename) then exit function  
+		
+	' Open curl's log file
+	text = read_curl_log(curl_log)
+	
+	' Check the log for successful prior uploads
+	if instr(text, "ready to import") > 0 then 
+		if not silent then msgbox filename & "    data is staged and ready for import"
+		logfile.writeline "    Data is staged and ready for import"
+			
+		WshShell.Run "cmd /c "    & curl_path & "\curl.exe --insecure -X POST --form action=import --form scripted=true --form import_date="""    & now() & """    "    & url & "    > "    & curl_log & "    2>&1", 0, true
+		if error_handler("           failed to execute curl to upload "    & filename) then exit function  
+		
+		text = read_curl_log(curl_log)
+	
+		if instr(text, "Successfully commenced import of staged data") > 0 then 
+			logfile.writeline "           Successfully commenced import of staged data"
+
+			do
+				logfile.writeline "           Importing..."
+				Wscript.sleep 5000
+ 
+				WshShell.Run "cmd /c "    & curl_path & "\curl.exe --insecure -X GET --form scripted=true "    & url & "    > "    & curl_log & "    2>&1", 0, true
+				if error_handler("           failed to execute curl to upload "    & filename) then exit function  
+				text = read_curl_log(curl_log)
+				
+			loop until instr(text, "Importing...") = 0 
+			
+			if instr(text, "Importer Progress: Import successfully finished") > 0 then 
+				logfile.writeline "           Import Succeeded"
+				Import = true
+			end if
+		end if
+	end if
+
+	if import = false then 
+		if not silent then msgbox "Import failed" & text
+		logfile.writeline "           Import failed "
+		logfile.write text ' write curl's log to main log file
+	end if	
+end function
+	
+'******************************************************************************
+
 	
 '******************************************************************************
 '* FUNCTION: wrap_up
 '* Authors:  lrohde 20-09-2012
 '* Purpose:  close objects and email log file
 '* Inputs: None
+'*  Result: True/False indicating import success or failure
 '* Returns: None
 '******************************************************************************
-private sub wrap_up
+private sub wrap_up(result)
 	logfile.close
 	 
 	' Read log from file
@@ -233,9 +338,13 @@ private sub wrap_up
 	'objMessage.From = "churnometer@theservicesunion.com.au"
 	'objMessage.To = "Cary.Pollock@theservicesunion.com.au"
 	'objMessage.CC = "lukerohde@gmail.com"
-	objMessage.Subject = "Churnometer Export"
-	objMessage.From = "churnometer@nuw.org.au"
-	objMessage.To = "lrohde@nuw.org.au"
+	
+	if result = true then objMessage.Subject = "Churnometer Import Success"
+	if result = false then objMessage.Subject = "CHURNOMETER IMPORT FAILURE!"
+
+	objMessage.From = mailfrom
+	objMessage.To = mailto
+	objMessage.CC = mailcc
 	objMessage.Configuration.Fields.Item("http://schemas.microsoft.com/cdo/configuration/sendusing")=2
 	objMessage.Configuration.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpserver")=mailserver
 	objMessage.Configuration.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport")=25 
@@ -257,43 +366,51 @@ end sub
 ' Create log file
 set fso = CreateObject("Scripting.FileSystemObject")
 set logfile = fso.createtextfile(logfilename, true)
+logfile.writeline "Starting Import "    & Now()
 
 ' Suppress errors so they can be handled and logged
-on error resume next
+if not debugging then on error resume next
 
 ' Connect to database
 set cnn = CreateObject("ADODB.connection")
-cnn.Provider = "Microsoft.Jet.OLEDB.4.0"
-cnn.open dbfile
-if error_handler("failed to connect to the database " & dbfile) then call wrap_up: Wscript.Quit
+
+if dbfile & ""    = ""    then 
+	' Connect to MSSQL
+	cnn.open dbconnectionstring
+else
+	cnn.Provider = dbprovider
+	'cnn.Properties("Jet OLEDB:Database Password") = dbpassword
+	cnn.open dbfile, dbusername, dbpassword
+end if	
+if error_handler("failed to connect to the database "    & dbfile) then call wrap_up: Wscript.Quit
 
 ' Find files to enumerate (looking for files with .sql extensions)
 set folder = fso.GetFolder(data_path)
 set files = folder.files
-if error_handler("Invalid data path: " & data_path) then call wrap_up: Wscript.Quit
+if error_handler("Invalid data path: "    & data_path) then call wrap_up: Wscript.Quit
 
 ' Set up regular expression for matching file names that have .sql extentions
 set r = new regexp
-r.Pattern = ".+\.sql$" ' matches anything ending in .sql
+r.Pattern = ".+\.sql$"    ' matches anything ending in .sql
 r.IgnoreCase = true
 
 ' Iterate through each file
 for each file in files
 	if r.test(file.name) then 	
-		logfile.writeline "- Processing " & file.name
+		logfile.writeline "    Processing "    & file.name
 		' Read SQL from file
 		SQL = read_file(file)
-		if SQL <> "" then 
+		if SQL <> ""    then 
 			' Execute SQL against database
 			set rs = get_recordset(cnn, SQL)
 			if not rs is nothing then 
-				logfile.writeline "-- Executed query in " & file.name
+				logfile.writeline "           Executed query in "    & file.name
 				data_filename = replace(file.name, ".sql", ".txt")
 			
 				' Write SQL result to text file
-				write_result = write_data (rs, data_path & "\" & data_filename)
+				write_result = write_data (rs, data_path & "\"    & data_filename)
 				if write_result then 
-					logfile.writeline "-- Wrote data to " & data_filename
+					logfile.writeline "           Wrote data to "    & data_filename
 					
 					' upload text file to website
 					upload_result = upload(url, data_path,  data_filename)
@@ -304,11 +421,15 @@ for each file in files
 			end if ' successful data load
 		end if ' successful SQL file read
 	else
-		logfile.writeline "- Skipping " & file.name
+		if debugging then logfile.writeline "    Skipping "    & file.name
 	end if
 next
 
+' Check if server is ready for import, and if it is, start import
+result = import(url, data_path)
+logfile.writeline "Import Finished "    & Now()
 
 On Error Goto 0 ' raise errors normally now because logging won't work during wrap-up
-call wrap_up
+call wrap_up(result)
 if not silent then msgbox("Done")
+
