@@ -1,47 +1,59 @@
-
-
-
-select 
+select
 	members.memberid
-	, employers.organiser2 as lead
-	, employers.organiser as org
-	, employers.region
-	, members.division
-	, members.[section]
-	, members.department
-	, members.floor
-	, members.location
-	, employers.employerid as employer
-	, employers.division as  industry
-	, members.paymethod as pay_method
-	, chargescale & "" as charge_scale
-	, iif(date() - iif(members.dateofbirth is null,#1-1-1900#, members.dateofbirth ) / 365 < 35, 'under35', 'over35') as age_group
-	, members.sex as gender
-	, members.employer2 as supporter_type
-	, members.unionrole as union_role
-	, members.signal8 as signal8
-	, members.mainlanguage as arrears_cycle
-	, iif(trim(exitcode & "") <> ""
-		, trim(exitcode & "")
-		, iif(iif(signal8 is null, 0, signal8) > 0 
-			, 'stopped' 
-			, iif(payers.memberid is null
-				, 'a1p'
-				, 'paying'
-			)
-		)
-	) as status
+	, case when rtrim(ltrim(coalesce(exitcode, ''))) <> ''
+	then lower(rtrim(ltrim(coalesce(exitcode, ''))))
+	else 
+		case when 
+			coalesce(members.signal8, 0) > 0 --OR payers.timecreated < DATEADD(y,-42,getdate())
+		then 'stopped' 
+		else 
+			case when payers.memberid is null /* not ever paid */ OR payers.timecreated < members.DateCreated /* or last paid before they were reinstated */
+			/* don't count people who are resigned, then reinstated immediately as a1p - they are probably dd people making their last payment */
+			then case when datediff(d,dateexited,DateCreated) <= 21 then 'paying' else 'a1p' end
+			else 'paying'
+			end
+		end
+	end as status
+	, lower(rtrim(ltrim(employers.organiser2 ))) as col0 --lead
+	, lower(rtrim(ltrim(employers.organiser))) as col1 --org
+	, lower(rtrim(ltrim(employers.region))) as col2 --region
+	, lower(rtrim(ltrim(members.division))) as col3 --division 
+	, lower(rtrim(ltrim(members.[section]))) as col4 --section
+	, lower(rtrim(ltrim(members.department))) as col5 --department
+	, lower(rtrim(ltrim(members.floor))) as col6 --floor
+	, lower(rtrim(ltrim(members.location))) as col7 --location
+	, lower(rtrim(ltrim(employers.employerid))) as col8 --employer
+	, lower(rtrim(ltrim(employers.division))) as col9 --industry
+	, lower(rtrim(ltrim(members.paymethod))) as col10 --pay_method
+	, lower(rtrim(ltrim(coalesce(case when chargescale like 'E%' then substring(chargescale,2,len(chargescale)-1) else chargescale end,'')))) as col11 -- charge_scale
+	, lower(rtrim(ltrim(case when not members.dateofbirth  IS null then 
+	  case when 
+		datediff(yy
+			, coalesce( members.dateofbirth,'1-1-1900')
+			, getdate()
+		) < 35
+	  then 'under35'
+	  else 'over35'
+	  end else '' end))) as col12 --age_group
+	, lower(rtrim(ltrim(members.sex))) as col13 --gender
+	, lower(rtrim(ltrim(members.FileNo))) as col14 --support_type (advocate, detractor, promoter)
+	, lower(rtrim(ltrim(members.unionrole))) as col15 --union_role
+	, lower(rtrim(ltrim(members.signal8))) as col16 --signal8
+	, lower(rtrim(ltrim(members.mainlanguage))) as col17 --arrears_cycle
+	, lower(rtrim(ltrim(members.EWBNo))) as col18 -- fulltime, partTime, casual
+	, lower(rtrim(ltrim(case when members.KitIssued = -1 then 'growth' else 'dev' end))) as col19 -- 0/-1 (growth, development)
 from
-	(
-		members
-		left join employers on members.employer = employers.employerid
-	)
+	members
+	left join employers on members.employer = employers.employerid
 	left join (
-		select distinct 
+		select --distinct 
 			memberid
+			, MAX(timecreated) timecreated
 		from	
-			receipts
+			receiptheader
 		where
 			receiptAmount > 0
+		group by 
+			memberid
 	) as payers on members.memberid = payers.memberid
-	
+

@@ -36,6 +36,7 @@ class Importer
           rescue StandardError => err
             @progress += ". An error occurred - " + err.message
             @state = :broken
+	    @db = nil # if a connection is lost or terminated during import, this will force a new connection next time
           end
         end
         sleep 1
@@ -63,7 +64,7 @@ class Importer
     db.async_ex("select inserttransactionfact('#{@import_date}')")
     db.async_ex("vacuum transactionfact")
     db.async_ex("analyse transactionfact")
-    
+
     @progress = "Step 3. Updating displaytext"
     db.async_ex("select updatedisplaytext()")
     db.async_ex("vacuum displaytext")
@@ -73,10 +74,9 @@ class Importer
     db.async_ex("select updatememberfacthelper()")
     db.async_ex("vacuum memberfacthelper")
     db.async_ex("analyse memberfacthelper")
-    
+
     db.async_ex("update importing set importing = 0")
     end_time = Time.now
-    
     
     @progress = "Import successfully finished at #{end_time} and took #{(end_time - start_time)/60} minutes."
   end 

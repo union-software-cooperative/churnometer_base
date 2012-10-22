@@ -21,7 +21,7 @@ class Churnobyl < Sinatra::Base
   include Authorization
   logger = Logger.new('log/churnometer.log')
      
-  configure :development do
+  configure :production, :development  do
     set :session_secret, "something" # I don't understand what this does but it lets my flash work
     enable :sessions
   end 
@@ -135,7 +135,16 @@ class Churnobyl < Sinatra::Base
     session[:flash] = nil
     
     @model = ImportPresenter.new(app())
-    erb :import
+    if params['scripted'] == 'true'
+      if @model.importing?
+        return response.write @model.import_status
+      else 
+	state = ( @model.import_ready? ? "ready to import" : "data not staged" )
+        return response.write state + @model.importer_status
+      end
+    else
+      erb :import
+    end 
   end
   
   post "/import" do
@@ -149,8 +158,24 @@ class Churnobyl < Sinatra::Base
     end 
     
     if params['action'] == "import"
-      @model.go(Time.parse(params['import_date']))
-      redirect '/import'
+      if @model.import_ready? 
+        @model.go(Time.parse(params['import_date']))
+        session[:flash] = "Successfully commenced import of staged data"
+      
+        if params['scripted'] == 'true'
+          return response.write session[:flash]
+        else
+          redirect '/import'
+        end
+      else
+        session[:flash] = "Data not staged for import"
+
+        if params['scripted'] == 'true'
+          return response.write session[:flash]
+        else
+          redirect '/import'
+        end
+      end
     end
     
     if params['action'] == "rebuild"
@@ -198,7 +223,11 @@ class Churnobyl < Sinatra::Base
       session[:flash] = "#{filename} was successfully uploaded"
     end
     
-    redirect '/import'
+    if params['scripted']=='true'
+      response.write session[:flash] # so CURL doesn't have to redirect to get
+    else
+      redirect '/import'
+    end
   end
   
   get '/scss/:name.css' do |name|
