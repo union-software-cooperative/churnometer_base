@@ -7,10 +7,11 @@ class ImportPresenter
   def initialize(app)
     @dbm = DatabaseManager.new(app)
     @dimensions = app.custom_dimensions
+    @db = Db.new(app)
   end
 
   def db 
-    @db ||= Db.new
+    @db
   end
   
   def dimensions

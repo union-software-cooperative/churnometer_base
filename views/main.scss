@@ -166,11 +166,13 @@ h1 a {
 	color: #ffd;
 	text-decoration:none;
 	padding-left: 18px;
-	:hover {
-		color: #ffd;
-		text-decoration:underline !important;
-	}
+	
 }
+
+h1 a:hover {
+		color: #00AFA2 !important;
+		#text-decoration:underline !important;
+	}
 
 .ui-state-default {
   border-left-color: #00AFA2 !important;
@@ -196,6 +198,7 @@ h1 a {
   border-top-color: $tab-active-bg !important;
   border-right-color: $tab-active-bg !important;
   background: $tab-active-bg !important;
+  color: $tab-active-fg !important;
   a {
     color: $tab-active-fg !important;
   }  

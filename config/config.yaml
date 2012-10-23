@@ -71,7 +71,7 @@ dimensions:
         name: Employment Type
     19:
         id: union
-        name: ASU Overview
+        name: ASU
 drilldown_order:
   union: lead
   lead: org
