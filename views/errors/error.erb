@@ -3,26 +3,26 @@
     <h1>There was an error</h1>
     <section class="errors">
       <label>Error</label>
-      <p class="error"><%= @error.message %></p>
+      <p class="error"><%= h @error.message %></p>
+
+      <label>Stacktrace</label>
+      <p class="info">
+        <%= (h @error.backtrace.join($/)).gsub($/, "<br />") %>
+      </p>
 
       <label>URL</label>
       <p class="info">
-        <%= request.url %>
+        <%= h request.url %>
       </p>
 
       <label>Params</label>
       <p class="info">
-        <%= params.inspect %>
+        <%= h params.inspect %>
       </p>
 
       <label>SQL</label>
       <p class="info">
-        <%=h @sql %>
-      </p>
-
-      <label>Stacktrace</label>
-      <p class="info">
-        <%= @error.backtrace.join("<br />") %>
+        <%= h @sql %>
       </p>
     </section>
   </div>

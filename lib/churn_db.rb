@@ -3,15 +3,20 @@ require 'time'
 require 'pg'
 
 class Db
-  def initialize
-    raise "No 'database' config option is defined in the config file." if Config['database'].nil?
+  def initialize(churn_app)
+    element = churn_app.config.get_mandatory('database')
+    element.ensure_hashkey('host')
+    element.ensure_hashkey('port')
+    element.ensure_hashkey('dbname')
+    element.ensure_hashkey('user')
+    element.ensure_hashkey('password')
 
     @conn = PGconn.open(
-      :host =>      Config['database']['host'],
-      :port =>      Config['database']['port'],
-      :dbname =>    Config['database']['dbname'],
-      :user =>      Config['database']['user'],
-      :password =>  Config['database']['password']
+      :host =>      element['host'].value,
+      :port =>      element['port'].value,
+      :dbname =>    element['dbname'].value,
+      :user =>      element['user'].value,
+      :password =>  element['password'].value
     )
   end
 
@@ -80,7 +85,7 @@ class ChurnDB
   end
   
   def db
-    @db ||= Db.new
+    @db ||= Db.new(@app)
   end
   
   def ex(sql)
@@ -93,12 +98,8 @@ class ChurnDB
     db.async_ex(sql)
   end  
 
-  def database_config_key
-    'database'
-  end
-
   def fact_table
-    Config[database_config_key()]['facttable']
+    @fact_table ||= @app.config.get_mandatory('database')['facttable'].value
   end
 
   def summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml, filter_terms)

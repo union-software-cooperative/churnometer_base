@@ -37,7 +37,7 @@ class ChurnRequest
     @export_type = @params['export'].to_s
     @start_date = Date.parse(@params['startDate'])
     @end_date = Date.parse(@params['endDate'])
-    @transactions = auth.leader?
+    @transactions = auth.role.allow_transactions?
     @site_constraint = @params['site_constraint'].to_s
     @xml = self.class.filter_xml parsed_params()[Filter], locks(@params['lock'])
       
@@ -172,7 +172,7 @@ class ChurnRequest
     end
 
     if startDate.nil?
-      startDate = EarliestStartDate
+      startDate = app.application_start_date
     end
 
     if endDate.nil?
@@ -181,8 +181,8 @@ class ChurnRequest
 
     # make sure startDate isn't before data began
     dim_start_id = @app.dimensions[params['group_by']].column_base_name
-    dim_start_result = db.getdimstart(dim_start_id);
-    
+    dim_start_result = db.getdimstart(dim_start_id)
+
     if dim_start_result.nil? || dim_start_result[0]['getdimstart'].nil?
       raise "Couldn't find an entry in the 'dimstart' table for the groupby dimension '#{params['group_by']}' (column is '#{dim_start_id}')"
     end

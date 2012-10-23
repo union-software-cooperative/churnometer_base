@@ -1,11 +1,16 @@
 module Authorization
-  
+  # Returns the class that will be instantiated to handle the authorisation functionality. The class
+  # must follow Authorize's interface.
+  def auth_class
+    Authorize
+  end
+
   def auth
-    @auth ||=  Authorize.new Rack::Auth::Basic::Request.new(request.env)
+    @auth ||= auth_class().new(app(), Rack::Auth::Basic::Request.new(request.env))
   end
   
   def protected!
-    unless auth.leader? || auth.user? || auth.lead? || auth.staff? || auth.admin?
+    unless auth.authenticated?
       response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
       throw(:halt, [401, "Not authorized\n"])
     end
@@ -16,33 +21,29 @@ end
 
 class Authorize
   attr_accessor :auth
-  
-  def admin? 
-    @admin ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['admin', 'letmein']
-    @leader = @admin
-  end
-  
-  def leader? 
-    if Config['demo']
-      @leader ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['demo', 'demo']
-    else
-      @leader ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['leadership', 'fallout']
-    end
-  end
-  
-  def lead?
-    @lead ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['lead', 'growth']
-  end
-  
-  def staff?
-    @staff ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['staff', 'followup']
-  end
-  
-  def user?
-    @user ||= auth.provided? && auth.basic? && auth.credentials && auth.credentials == ['user', '']
-  end
-  
-  def initialize(auth)
+  attr_reader :role
+
+  def initialize(churn_app, auth)
+    @app = churn_app
     @auth = auth
+
+    @role = 
+      if @auth.provided?
+        @app.roles[@auth.credentials.first]
+      else
+        nil
+      end
+
+    @role ||= @app.unauthenticated_role
+
+    @authenticated = 
+      auth.provided? && 
+      auth.basic? && 
+      auth.credentials && 
+      @role.password_authenticates?(@auth.credentials.last)
+  end
+
+  def authenticated?
+    @authenticated == true
   end
 end
