@@ -1,0 +1,243 @@
+database:
+    host: localhost
+    port: 5432
+    dbname: churnometer_regression_general
+    user: churnuser
+    password: fcchurnpass
+    facttable: memberfacthelper5
+use_database_cache: false
+use_new_query_generation_method: true
+work_site_dimension_id: companyid
+default_groupby_dimension_id: branchid
+member_paying_status_code: 1
+member_awaiting_first_payment_status_code: 14
+member_stopped_paying_status_code: 11
+dimensions:
+	0:
+	    id: branchid
+		name: Branch
+	1: 
+        id: industryid
+        name: Industry
+	2: 
+        id: lead
+        name: Lead Organiser
+	3: 
+        id: org
+        name: Organiser
+	4: 
+        id: areaid
+        name: Area
+	5: 
+        id: companyid
+        name: Work Site
+	6: 
+        id: agreementexpiry
+        name: Agreement Expiry
+	7: 
+        id: del
+        name: Delegate Training
+		roles: none
+	8: 
+        id: hsr
+        name: HSR Training
+		roles: none
+	9: 
+        id: gender
+        name: Gender
+	10: 
+        id: feegroupid
+        name: Fee Group
+	11: 
+        id: state
+        name: State
+	12: 
+        id: nuwelectorate
+        name: Electorate
+	13: 
+        id: statusstaffid
+        name: Data Entry
+		roles: leadership
+	14: 
+        id: supportstaffid
+        name: Support Staff
+	15: 
+        id: employerid
+        name: Employer
+	16: 
+        id: hostemployerid
+        name: Owner
+		roles: admin
+	17: 
+        id: employmenttypeid
+        name: Employment Type
+	18: 
+        id: paymenttypeid
+        name: Payment Type
+drilldown_order:
+	branchid: lead
+	industryid: companyid
+	lead: org
+	org: companyid
+	areaid: companyid
+	companyid: companyid
+	del: companyid
+    hsr: companyid
+	feegroupid: companyid
+	state: areaid
+	nuwelectorate: org
+	statusstaffid: companyid
+	supportstaffid: org
+	employerid: companyid
+	hostemployerid: companyid
+	employmenttypeid: companyid
+	paymenttypeid: paymenttypeid
+summary_data_tables:
+    summary:
+        display_name: Summary
+        query_columns:
+            - row_header
+            - row_header1
+            - period_header
+            - a1p_real_gain
+            - a1p_to_other
+            - paying_start_count
+            - paying_real_gain
+            - paying_real_loss
+            - paying_real_net
+            - running_paying_net
+            - paying_end_count
+            - stopped_to_other
+    summary_leader:
+        display_name: Summary
+        query_columns:
+            - row_header
+            - row_header1
+            - period_header
+            - a1p_real_gain
+            - a1p_to_other
+            - paying_start_count
+            - paying_real_gain
+            - paying_real_loss
+            - paying_real_net
+            - running_paying_net
+            - paying_end_count
+            - stopped_to_other
+            - contributors
+            - income_net
+    paying:
+        display_name: Paying
+        query_columns:
+            - row_header
+            - row_header1
+            - period_header
+            - paying_start_count
+            - paying_real_gain
+            - paying_real_loss
+            - paying_other_gain
+            - paying_other_loss
+            - paying_end_count
+            - paying_net
+    a1p:
+        display_name: A1p
+        query_columns:
+            - row_header
+            - row_header1
+            - period_header
+            - a1p_start_count
+            - a1p_newjoin
+            - a1p_rejoin
+            - a1p_real_gain
+            - a1p_unchanged_gain
+            - a1p_to_other
+            - a1p_to_paying
+            - a1p_other_gain
+            - a1p_other_loss
+            - a1p_end_count
+	        - a1p_net
+    stopped:
+        display_name: Stopped
+        query_columns:
+	        - row_header 
+	        - row_header1 
+	        - period_header
+	        - stopped_start_count
+	        - stopped_real_gain
+	        - stopped_unchanged_gain
+	        - stopped_to_other
+	        - stopped_to_paying
+	        - stopped_other_gain
+	        - stopped_other_loss
+	        - stopped_end_count
+detail_data_tables:
+    member_summary:
+        display_name: Member Summary
+        query_columns:
+            - row_header
+            - row_header1
+            - row_header2
+            - changedate
+            - member
+            - oldstatus
+            - newstatus
+            - currentstatus
+            - oldcompanyid
+            - newcompanyid
+            - currentcompanyid
+    organiser:
+        display_name: Organiser
+        query_columns:
+            - row_header
+            - row_header1
+            - row_header2
+            - changedate
+            - member
+            - oldorg
+            - neworg
+            - currentorg
+            - oldlead
+            - newlead
+            - currentlead
+    financial:
+        display_name: Financial
+        query_columns:
+            - row_header
+            - row_header1
+            - row_header2
+            - member
+            - posted
+            - unposted
+roles:
+    admin:
+        password: letmein
+    leadership:
+        password: fallout
+        show_transactions: true
+        show_target_calculation: true
+        summary_data_tables:
+            - summary_leader
+            - paying
+            - a1p
+            - stopped
+        detail_data_tables:
+            - member_summary
+            - organiser
+            - financial
+	lead:
+        password: growth
+        show_target_calculation: true
+        summary_data_tables:
+            - summary
+            - paying
+            - a1p
+        detail_data_tables:
+            - member_summary
+            - organiser
+    user:
+        summary_data_tables:
+            - summary
+            - paying
+            - a1p
+        detail_data_tables:
+            - member_summary
+            - organiser

@@ -9,3 +9,5 @@ Capybara.server_boot_timeout = 50
 Capybara.save_and_open_page_path = './tmp/capybara/'
 
 include Capybara::DSL
+
+$regression_config_str = File.read(File.join(File.dirname(__FILE__), '/../config/config_regression.yaml'))

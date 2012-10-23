@@ -64,7 +64,7 @@ sql = <<-EOS
 		from 
 			memberfact
 		where
-			changedate <= #{db.sql_date(@member_date)} -- we need to count every value since Churnobyls start to determine start_count.  But everything after enddate can be ignored.
+			changedate < #{db.sql_date(@member_date)} -- we need to count every value since Churnobyls start to determine start_count.  But everything after enddate can be ignored.
 		group by 
 			memberid
 			

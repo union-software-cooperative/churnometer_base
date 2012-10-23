@@ -335,9 +335,7 @@ table a td th {
 }
 
 
-h1, h2, h3, h4 {
-    color: black;
-}
+
 
 .form td {
     color:black !important;
@@ -399,5 +397,12 @@ pre {
 
 .form input[type="text"], .form select {
     font-size: 8pt;
+}
+
+h1, h2, h3, h4 {
+    color: black !important;
+    a {
+      color: black !important;
+    }
 }
 

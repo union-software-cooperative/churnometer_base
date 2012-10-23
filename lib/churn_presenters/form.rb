@@ -51,7 +51,7 @@ class ChurnPresenter_Form
   def output_group_selector(selected_group_id, control_name, control_id='')
     output = "<select name='#{control_name}' id='#{control_id}'>"
 
-    @group_dimensions.each do |dimension|
+    @group_dimensions.sort_by { | d | d.name }.each do |dimension|
       attributes = 
         if dimension.id == selected_group_id
           "selected='selected'"
