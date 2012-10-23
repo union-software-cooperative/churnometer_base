@@ -2,8 +2,8 @@ require File.expand_path(File.dirname(__FILE__) + "/acceptance_helper")
 
 
 class AuthorizeOverride < Authorize
-  def leader?
-    true
+  def role
+    app().roles.get_mandatory('leader')
   end
 end
 

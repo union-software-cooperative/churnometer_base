@@ -11,8 +11,16 @@ class ChurnPresenter_Tables
     @request = request
     
     @tables = Array.new
-    (@request.type == :summary ? summary_tables : member_tables).each do | name, columns |
-      @tables << (ChurnPresenter_Table.new app, request, name, columns)
+
+    user_data_tables =
+      if @request.type == :summary
+        @request.auth.role.summary_data_tables
+      else
+        @request.auth.role.detail_data_tables
+      end
+
+    user_data_tables.each do |user_data_table|
+      @tables << ChurnPresenter_Table.new(app, request, user_data_table.display_name, user_data_table.column_names)
     end
   end
   
@@ -64,14 +72,14 @@ class ChurnPresenter_Table
       # express deltas, i.e. returning delta info for the 'status' dimension from 'oldstatus', 
       # 'newstatus', etc.
       dimension_for_column_id = @app.dimensions.dimension_for_id_with_delta(c)
-
+      
       data_column_name = 
         if !dimension_for_column_id.nil?
           dimension_for_column_id.column_base_name
         else
           c
         end
-
+      
       if request.data[0].include?(data_column_name)
         @columns << data_column_name
 
@@ -96,7 +104,7 @@ class ChurnPresenter_Table
   end
   
   def header
-    @column_id_to_header.values
+    @column_id_to_header
   end
   
   def footer

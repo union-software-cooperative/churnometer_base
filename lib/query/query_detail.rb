@@ -86,7 +86,7 @@ sql = <<-EOS
 		from 
 			#{@source}
 		where
-			changedate <= #{db.sql_date(end_date)} -- we need to count every value since Churnobyls start to determine start_count.  But everything after enddate can be ignored.
+			changedate < #{db.sql_date(end_date)} -- we need to count every value since Churnobyls start to determine start_count.  But everything after enddate can be ignored.
 			#{sql_for_filter_terms(non_status_filter, true)}
 	)
 	, userselections as 
@@ -96,7 +96,7 @@ sql = <<-EOS
 		from
 			nonstatusselections
 		where
-			changedate > #{db.sql_date(@start_date)} -- we are not calculating start_counts, so we dont need anything before this date
+			changedate >= #{db.sql_date(@start_date)} -- we are not calculating start_counts, so we dont need anything before this date
 			#{sql_for_filter_terms(user_selections_filter, true)}
 	)
 	, nonegations as
@@ -127,8 +127,8 @@ sql = <<-EOS
 			u1.net = 1 /* state at time of transaction, -1 would be the members prior state */
 			and u1.changeid = t.changeid
 	where
-		t.creationdate > #{db.sql_date(@start_date)}
-		and t.creationdate <= #{db.sql_date(end_date)}
+		t.creationdate >= #{db.sql_date(@start_date)}
+		and t.creationdate < #{db.sql_date(end_date)}
 	group by 
 		case when coalesce(u1.#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else u1.#{db.quote_db(header1)}::varchar(200) end
 		, t.changeid

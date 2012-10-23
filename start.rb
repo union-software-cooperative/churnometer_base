@@ -19,57 +19,10 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
   include Authorization
-  logger = Logger.new('log/churnometer.log')
-     
-  configure :production, :development  do
-    set :session_secret, "something" # I don't understand what this does but it lets my flash work
-    enable :sessions
-  end 
-  
-  configure :production, :development do
-    enable :logging
 
-    set :churn_app, ChurnometerApp.new 
-  end
-  
-  $importer = Importer.new
-  $importer.run
-  
-  helpers do
-    include Rack::Utils
-    alias_method :h, :escape_html
-  end
-  
-  before do
-    #cache_control :public, :must_revalidate, :max_age => 60
-    @start_time = Time.new
-  end  
-  
-  after '/' do
-    log
-  end
-  
-  after '/upload/' do
-    log
-  end
-
-  def log
-
-    #cache_control :public, :must_revalidate, :max_age => 60
-    if Config['demo']
-      Pony.mail({
-                :to   => Config['email_errors']['to'],
-                :from => Config['email_errors']['from'],
-                :subject => "[Demo] #{request.env['HTTP_X_FORWARDED_FOR']}",
-                :body => erb(:'demo_email', layout: false)
-              })
-    end
-    
-    logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
-  end
-
+  # Returns a ChurnometerApp instance.
   def app
-    @churn_app ||= settings.churn_app
+    @churn_app ||= self.class.server_lifetime_churnometer_app
   end
 
   def churn_db
@@ -94,15 +47,117 @@ class Churnobyl < Sinatra::Base
     end
   end
 
-  get '/self' do
-    sleep 10
-    h self.to_s
+  def reload_config_on_every_request?
+    false
+  end
+
+  def allow_http_caching?
+    true
+  end
+
+  # Returns the single ChurnometerApp instance used throughout the app's execution, across requests.
+  def self.server_lifetime_churnometer_app
+    # The instance is created lazily, so several threads may attempt to create it at the same time if
+    # several requests arrive after the server is first started. The mutex ensures only one app will
+    # be created.
+    settings.churn_app_mutex.synchronize do
+      @server_lifetime_churnometer_app ||= ChurnometerApp.new(settings.environment, churnometer_app_config_io(), churnometer_app_config_io_desc())
+    end
+  end
+
+  # Return the IO object that config data is loaded from, or 'nil' to use the regular config file
+  # locations.
+  def self.churnometer_app_config_io
+    nil
+  end
+
+  def self.churnometer_app_config_io_desc
+    nil
+  end
+
+  set :raise_errors, false
+  set :show_exceptions, false
+
+  logger = Logger.new('log/churnometer.log')
+     
+  configure :production, :development  do
+  end 
+  
+  configure :production, :development do
+    set :session_secret, "something" # I don't understand what this does but it lets my flash work
+    enable :sessions
+    
+    enable :logging
+    set :churn_app_mutex, Mutex.new
+  end
+  
+  not_found do
+    erb :'errors/not_found'
+  end
+  
+  $importer = Importer.new
+  $importer.run
+  
+  error do
+    @error = env['sinatra.error']
+
+    if app().nil? || app().email_on_error?
+      Pony.mail({
+                  :to   => app().config['email_errors'].value['to'].value,
+                  :from => app().config['email_errors'].value['from'].value,
+                  :subject => "[Error] #{@error.message}",
+                  :body => erb(:'errors/error_email', layout: false)
+                })
+    end
+    
+    erb :'errors/error'
+  end
+
+  helpers do
+    include Rack::Utils
+    alias_method :h, :escape_html
+  end
+  
+  before do
+    #cache_control :public, :must_revalidate, :max_age => 60
+    @start_time = Time.new
+
+  end  
+  
+  after '/' do
+    log
+  end
+  
+  after '/upload/' do
+    log
+  end
+
+  def log
+
+    #cache_control :public, :must_revalidate, :max_age => 60
+    if app().config['demo']
+      Pony.mail({
+                :to   => Config['email_errors']['to'],
+                :from => Config['email_errors']['from'],
+                :subject => "[Demo] #{request.env['HTTP_X_FORWARDED_FOR']}",
+                :body => erb(:'demo_email', layout: false)
+              })
+    end
+    
+    logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
   end
 
   get '/' do
-    cache_control :public, :max_age => 28800
+    if reload_config_on_every_request?
+      app().reload_config(self.class.churnometer_app_config_io(), self.class.churnometer_app_config_io_desc())
+    end
+
+    if allow_http_caching?
+      cache_control :public, :max_age => 28800
+    end
+
     protected!
-    
+
     presenter = ChurnPresenter.new(app(), cr)
 
     erb :index, :locals => { :model => presenter }

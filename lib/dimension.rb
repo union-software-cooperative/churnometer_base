@@ -1,3 +1,5 @@
+require './lib/config'
+
 # An Enumerable collection of data dimensions, in the form of Dimension instances.
 # Access the main collection of dimensions via the ChurnometerApp instance.
 class Dimensions
@@ -19,10 +21,13 @@ class Dimensions
 
   # config_hash: mappings from index numbers to hashes defining Dimension columns in the format defined by the Churnometer configuration scheme.
   # inbuilt_dimensions: Dimensions defined by the app outside of the config file.
-  def from_config_hash(config_hash, inbuilt_dimensions)
-    config_hash.each do |index, config_hash_entry|
+  # app_roles: The AppRoles instance describing all available roles.
+  def from_config_element(config_element, inbuilt_dimensions, app_roles)
+    config_element.ensure_kindof(Hash)
+
+    config_element.value.each do |index, config_hash_element|
       dimension = DimensionUser.new(index)
-      dimension.from_config_hash(config_hash_entry)
+      dimension.from_config_element(config_hash_element, app_roles)
       add(dimension)
     end
 
@@ -215,10 +220,42 @@ class DimensionUser < Dimension
 
   # config_hash: mappings from index numbers to hashes defining Dimension columns. 
   # The hash format is defined by the Churnometer configuration file scheme.
-  def from_config_hash(config_hash)
-    @id = config_hash['id'].downcase
-    @name = config_hash['name']
-    @allowed_roles = config_hash['roles'] || ['any']
+  # app_roles: The AppRoles instance describing all available roles.
+  def from_config_element(config_element, app_roles)
+    config_element.ensure_kindof(Hash)
+    config_element.ensure_hashkey('id')
+    config_element.ensure_hashkey('name')
+
+    @id = config_element['id'].value.downcase
+    @name = config_element['name'].value
+
+    # 'role' element should be 'none', 'all', or an array of role ids.
+    @allowed_roles = 
+      if config_element['roles'].nil? || config_element['roles'].value == 'all'
+        # If no config element or the element value is 'all', then allow all roles.
+        app_roles.dup
+      else
+        if config_element['roles'].value == 'none'
+          []
+        else
+          config_element['roles'].ensure_kindof(Array, String)
+          
+          elements = 
+            if config_element['roles'].value.kind_of?(String)
+              [config_element['roles']]
+            else
+              config_element['roles'].value
+            end
+            
+          elements.collect do |element|
+          	role = app_roles[element.value]
+
+          	raise BadConfigDataFormatException.new(element, "Role doesn't exist.") if role.nil?
+
+          	role
+        	end
+        end
+      end
   end
 
   # Intended for the use of the Dimensions class only, to be called after load_from_config_hash.
@@ -229,8 +266,9 @@ class DimensionUser < Dimension
     "col#{@index}"
   end
 
-  def roles_can_access?(role_names)
-    @allowed_roles.include?('any') ||
-      (!@allowed_roles.include?('none') && role_names.any?{ |s| @allowed_roles.include?(s) })
+  # roles: An array of Role instances.
+  def roles_can_access?(roles)
+    result = roles.any?{ |role| @allowed_roles.include?(role) }
+    result
   end
 end

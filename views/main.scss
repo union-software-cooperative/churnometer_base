@@ -1,5 +1,12 @@
 $line: 18px;
 
+$tab-active-bg: #353535;
+$tab-active-fg: ivory;
+
+$tab-inactive-bg: ivory;
+$tab-inactive-fg: #00AFA2;
+
+
 #nav {
   margin-top: $line;
   margin-bottom: $line;
@@ -156,12 +163,43 @@ h1, h2, h3, h4 {
 }
 
 h1 a {
-	color: #DDD;
+	color: #ffd;
 	text-decoration:none;
+	padding-left: 18px;
 	:hover {
-		color: #ffd !important;
+		color: #ffd;
 		text-decoration:underline !important;
 	}
+}
+
+.ui-state-default {
+  border-left-color: #00AFA2 !important;
+  border-top-color: #00AFA2 !important;
+  border-right-color: #00AFA2 !important;
+  border-top-width: 1px !important;
+  border-left-width: 1px !important;
+  border-right-width: 1px !important;
+	background:$tab-inactive-bg !important;
+	a {
+    color: $tab-inactive-fg !important;
+  }
+}  
+
+.ui-state-hover {
+  border-left-color: $tab-inactive-bg !important;
+  border-top-color: $tab-inactive-bg !important;
+  border-right-color: $tab-inactive-bg !important;
+}
+
+.ui-state-active {
+  border-left-color: $tab-active-bg !important;
+  border-top-color: $tab-active-bg !important;
+  border-right-color: $tab-active-bg !important;
+  background: $tab-active-bg !important;
+  a {
+    color: $tab-active-fg !important;
+  }  
+  
 }
 
 .ui-widget-header {
@@ -170,24 +208,22 @@ h1 a {
 }
 
 .ui-widget-content {
-	border: #333 !important;
-	background: #707070;
+	background: $tab-active-bg;
 	color: #ffe;
 	
 	tbody tr:nth-child(odd) td, tbody tr.even td{
 		background: #ffe;
 	}
+	
+	a {
+	  color: #ffe;	
+  }
 }
 
-.ui-state-default {
-	background:ivory !important;
+.ui-tabs  {
+  border-color: #707070;
 }
-.ui-widget-content a {
-	color: #ffe;
-	
 
-	
-}
 
 table a {
 	color: #333 !important ;
@@ -246,4 +282,6 @@ pre {
 	a {
 		color: red !important;
 	}
+	
+
 }

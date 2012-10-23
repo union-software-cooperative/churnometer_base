@@ -93,7 +93,7 @@
 				// Labels
 				var displayLabel = "";
 				if (config.showlabels) {
-					displayLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i]   + "&nbsp;&nbsp;&nbsp;<strong>" + valueArray[i] +" </strong> </span>"
+					displayLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";white-space: nowrap;\">" + labelArray[i]   + "&nbsp;&nbsp;&nbsp;<strong>" + valueArray[i] +" </strong> </span>"
 					//displayLabel = "<span style=\"display: block; width: 100%; position: absolute; opacity:1; bottom: 0; text-align: center;  background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i] + "</span>"
 				}
 				

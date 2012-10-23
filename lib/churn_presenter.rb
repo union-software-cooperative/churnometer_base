@@ -29,7 +29,7 @@ class ChurnPresenter
       request_group_dimensions()
     )
 
-    @target = ChurnPresenter_Target.new(app, request) if (@request.auth.leader? || @request.auth.lead?) && request.type == :summary
+    @target = ChurnPresenter_Target.new(app, request) if @request.auth.role.allow_target_calculation_display? && request.type == :summary
     @graph = ChurnPresenter_Graph.new(app, request)
     @graph = nil unless (@graph.line? || @graph.waterfall?)
     @tables = ChurnPresenter_Tables.new(app, request) if has_data?
@@ -58,7 +58,7 @@ class ChurnPresenter
   # Dimensions applicable to the request.
   def request_group_dimensions
     @request_group_dimensions ||=
-      @app.groupby_display_dimensions(@request.auth.leader?, @request.auth.admin?)
+      @app.groupby_display_dimensions(@request.auth.role)
   end
 
   # Mappings from user dimension column names to descriptions

@@ -11,41 +11,111 @@ class ChurnRequestOverride < ChurnRequest
   end
 end
 
-
 class AuthorizeOverride < Authorize
-  def leader?
-    true
+  attr_accessor :role_override
+
+  def role
+#    p @app.roles[Churnobyl.role_override]
+    @app.roles[Churnobyl.role_override] || @app.roles.get_mandatory('leadership')
   end
 end
 
 class Churnobyl
-  # Override authentication includes
-  def leader?
-    true
+  def self.churnometer_app_config_io
+    StringIO.new(config_text_override() || $regression_config_str)
   end
-  
-  def protected!
-  end
-end
 
-class Churnobyl
+  def self.churnometer_app_config_io_desc
+    if @config_text
+      'with_config override text'
+    else
+      'regression_config.yaml'
+    end
+  end
 
   # Override authentication
   def protected!
   end
-  
-  def auth
-    @auth ||=  AuthorizeOverride.new Rack::Auth::Basic::Request.new(request.env)
+
+  # Some output that relies on the config being reloaded won't change correctly unless caching is
+  # disabled.
+  def allow_http_caching?
+    false
+  end
+
+  def auth_class
+    AuthorizeOverride
   end
 
   def churn_request_class
     ChurnRequestOverride
+  end
+
+  def reload_config_on_every_request?
+    true
+  end
+
+  def self.config_text_override
+    @config_text 
+  end
+
+  def self.role_override
+    @role_override
+  end
+
+  # 'role' is a role id.
+  def self.with_role(role, &block)
+    @role_override = role
+    yield
+    @role_override = nil
+  end
+
+  def self.with_config(text, &block)
+    @config_text = text
+
+    # An app is instantiated only so the block can read config settings. The instance is not the same
+    # instance that Capybara will be using.
+    reference_app = 
+      ChurnometerApp.new(:development, StringIO.new(@config_text), churnometer_app_config_io_desc())
+
+    yield reference_app
+
+    @config_text = nil
   end
 end
 
 # Requests on a local machine can take a long time.
 Capybara.configure do |config|
   config.default_wait_time = 60
+end
+
+shared_examples "roles" do |_class|
+  it "is empty when first created" do
+    collection_class.new.should be_empty
+  end
+end
+
+describe 'App under role configuration' do
+  it 'should display the growth target when enabled for role' do
+    Churnobyl.with_role('leadership') do
+      visit "/"
+
+      page.has_css?('#card_target')
+    end
+  end
+
+  it 'should omit the growth target when disabled for role' do
+    Churnobyl.with_role('leadership') do
+      no_target_config = 
+        $regression_config_str.gsub(/show_target_calculation:.+/, 'show_target_calculation: false')
+      
+      Churnobyl.with_config(no_target_config) do |reference_app|
+        visit '/'
+        
+        page.has_no_css?('#card_target')
+      end
+    end
+  end
 end
 
 describe "Tables" do
