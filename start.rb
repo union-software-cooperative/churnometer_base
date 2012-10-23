@@ -121,7 +121,6 @@ class Churnobyl < Sinatra::Base
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
     @start_time = Time.new
-
   end  
   
   after '/' do
@@ -159,7 +158,8 @@ class Churnobyl < Sinatra::Base
     protected!
 
     presenter = ChurnPresenter.new(app(), cr)
-
+    
+    presenter.warnings += "Your web browser, Internet Explorer, is not HTML5 compliant and will not function correctly" if request.env['HTTP_USER_AGENT'].downcase.index('msie')
     erb :index, :locals => { :model => presenter }
   end
 
@@ -194,7 +194,7 @@ class Churnobyl < Sinatra::Base
       if @model.importing?
         return response.write @model.import_status
       else 
-	state = ( @model.import_ready? ? "ready to import" : "data not staged" )
+	      state = ( @model.import_ready? ? "ready to import" : "data not staged" )
         return response.write state + @model.importer_status
       end
     else
