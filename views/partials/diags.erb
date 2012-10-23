@@ -1,5 +1,15 @@
  <a class="printer screen_only" href="javascript:print_diagnostics('diags');"><img src="images/printer32.png" title="print diagnostics" alt="print diagnostics"/></a>
  <h2 class="print_only">Diagnostics</h2>
+ 
+ 
+<h3>PROJECT STATUS</h3>
+ Report bugs and suggest improvements
+ <ul>
+   <li>
+       <a href="https://freechange.basecamphq.com/projects/10073642-asu-qld-churnometer/todo_lists">login: asuqld pass: asuASUasu</a>
+   </li>
+  </ul>
+  
  <h3 class="screen_only">Data</h3>
  <ul>
 <!-- TODO fix export for entire sheet -->
@@ -7,7 +17,9 @@
 <li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'detail'}) %>" class="button">Export All Member Details</a></li>
 <li><%= model.rows %> rows </li>
  </ul>
+ 
 
+  
  <h3>LOGGED ON AS</h3>
  <pre><%= h model.role.id %></pre>
 
@@ -27,24 +39,12 @@
  <h3>Transfers</h3>
  Warning threshold = <pre><%= model.transfer_math %></pre>
 
- <h3>PROJECT DETAIL</h3>
- login: nuw
- pass: nuwnuw
- <ul>
-   <li>
-       <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/todo_lists/18435429">Report Bugs</a>
-   </li>
-   <li>
-       <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/writeboards">Docs</a>
-   </li>
-   <li>
-       <a href="https://freechange.basecamphq.com/projects/7839357-churnobyl/files">Files</a>
-   </li>
-  </ul>
+<!--
  <h3>MONITORING</h3>
  login: administrator
  <br/>
  <a href="http://<%=request.host %>:2812">monit</a>
+-->
 
 <script type="text/javascript">
 	function print_diagnostics(index)
