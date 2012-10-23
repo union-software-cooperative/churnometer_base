@@ -36,7 +36,7 @@ class ChurnPresenter
     @tables ||= {}
     
     if !has_data?
-      @warnings += 'WARNING:  No data found'
+      @warnings += 'WARNING:  No data found <br/>'
     end
     
     if transfers.exists?
@@ -49,8 +49,7 @@ class ChurnPresenter
     #     
     #     if ChurnDBDiskCache.cache_status != ""
     #       @warnings += "WARNING: #{ChurnDBDiskCache.cache_status} <br/>"
-    #     end
-      
+    #     end  
   end
 
   # Properties
