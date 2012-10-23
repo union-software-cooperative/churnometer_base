@@ -34,7 +34,7 @@ class QuerySitesAtDate < QueryFilter
 		from
 			#{db.quote_db(@source)}
 		where
-			changedate <= #{db.sql_date(@date)}
+			changedate < #{db.sql_date(@date)}
 		group by 
 			memberid
 	)

@@ -19,9 +19,7 @@ class ChurnPresenter_Diags
     @transfer_math = transfer_math
     @request = request
     @cache_status = ChurnDBDiskCache.cache_status
-    @role = "staff" if request.auth.staff?
-    @role = "lead" if request.auth.lead?
-    @role = "leader" if request.auth.leader?
+    @role = request.auth.role
     @rows = request.data.length if !request.data.nil?
     @rows ||= 0
     @filter = request.parsed_params()[Filter]

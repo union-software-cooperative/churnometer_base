@@ -134,3 +134,14 @@ change_columns.each do |col|
 
   shell("psql #{dst_db_params} -c \"update #{displaytext_table} set attribute = '#{new_col_name}' where attribute = '#{col}';\"")
 end
+
+puts "dimstart"
+puts colname_to_newname
+
+change_columns.each do |col|
+  index = colname_to_index[col]
+
+  new_col_name = "col#{index}"
+
+  shell("psql #{dst_db_params} -c \"update dimstart set dimension = '#{new_col_name}' where dimension = '#{col}';\"")
+end
