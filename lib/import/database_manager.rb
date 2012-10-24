@@ -4,11 +4,12 @@ require 'open3.rb'
 class DatabaseManager
   
   def db 
-    @db ||= Db.new
+    @db
   end
 
   def initialize(app)
     @dimensions = app.custom_dimensions
+    @db = Db.new(app)
   end
 
   def dimensions
