@@ -7,12 +7,13 @@ class Importer
   attr_accessor :import_date
   
   def db 
-    @db ||= Db.new
+    @db ||= Db.new(app)
   end
 
-  def initialize
+  def initialize(app)
     @state = :stopped
     @progress = ""
+    @app = app
   end
   
   def import(import_date)
