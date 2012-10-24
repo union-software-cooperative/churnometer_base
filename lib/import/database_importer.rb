@@ -7,7 +7,7 @@ class Importer
   attr_accessor :import_date
   
   def db 
-    @db ||= Db.new(app)
+    @db ||= Db.new(@app)
   end
 
   def initialize(app)
