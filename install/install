@@ -1,8 +1,8 @@
 #!/bin/bash
 
 DB_FILE="$2"
-REPO="git@github.com:dlbeswick/churnometer.git"
-PRODUCTION_BRANCH="lrohde-generalise2"
+REPO="git@github.com:lukerohde/churnometer_asu.git"
+PRODUCTION_BRANCH="master"
 DB_REPO="git@github.com:lukerohde/churnometer_data.git"
 
 PG_PATH="/etc/postgresql/9.1/main"
