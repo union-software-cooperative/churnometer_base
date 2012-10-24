@@ -95,7 +95,7 @@ class Churnobyl < Sinatra::Base
     erb :'errors/not_found'
   end
   
-  $importer = Importer.new
+  $importer = Importer.new(server_lifetime_churnometer_app)
   $importer.run
   
   error do
