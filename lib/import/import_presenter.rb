@@ -4,10 +4,10 @@ require 'open3.rb'
 
 class ImportPresenter
   
-  def initialize(app)
+  def initialize(app, db)
     @dbm = DatabaseManager.new(app)
     @dimensions = app.custom_dimensions
-    @db = Db.new(app)
+    @db = db
   end
 
   def db 

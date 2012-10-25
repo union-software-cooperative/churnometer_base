@@ -19,7 +19,11 @@ class ChurnRequest
   def db
     @db
   end
-  
+ 
+  def close_db
+    @db.close_db()
+  end
+ 
   def initialize(url, query_string, auth, params, app, churndb)
     # interpret request
     @app = app
