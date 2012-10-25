@@ -36,7 +36,7 @@ data_path = "C:\Users\lucas.rohde\Desktop\churn_export"    ' This is where you p
 url = "http://user:@churnometer:3000/import"    ' This is where you want the data uploaded
 logfilename = data_path & "\"    & "churn_export.log"    ' This is where you want the log file to save
 curl_path = data_path ' This is where curl.exe is
-debugging = true
+debugging = false
 ' Database
 dbusername = "sa"
 dbpassword = "TsuK@1tech"
