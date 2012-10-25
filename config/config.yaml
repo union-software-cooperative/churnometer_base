@@ -1,84 +1,90 @@
 application_start_date: 2012-10-3
 use_new_query_generation_method: true
-work_site_dimension_id: department
-default_groupby_dimension_id: union
-member_paying_status_code: paying
-member_awaiting_first_payment_status_code: a1p
-member_stopped_paying_status_code: stopped
+work_site_dimension_id: companyid
+default_groupby_dimension_id: branchid
+member_paying_status_code: 1
+member_awaiting_first_payment_status_code: 14
+member_stopped_paying_status_code: 11
 dimensions:
-    0:
+	0:
+	    id: branchid
+		name: Branch
+	1: 
+        id: industryid
+        name: Industry
+	2: 
         id: lead
-        name: Lead
-    1:
+        name: Lead Organiser
+	3: 
         id: org
         name: Organiser
-    2:
-        id: region
-        name: Region
-    3:
-        id: division
-        name: Division
-    4:
-        id: section
-        name: Section
-    5:
-        id: department
-        name: Department
-    6:
-        id: floor
-        name: Floor
-    7:
-        id: location
-        name: Location
-    8:
-        id: employer
-        name: Employer
-    9:
-        id: industry
-        name: Industry
-    10:
-        id: pay method
-        name: Pay Method
-    11:
-        id: charge_scale
-        name: Charge Scale
-    12:
-        id: age_group
-        name: Age Group
-    13:
+	4: 
+        id: areaid
+        name: Area
+	5: 
+        id: companyid
+        name: Work Site
+	6: 
+        id: agreementexpiry
+        name: Agreement Expiry
+	7: 
+        id: del
+        name: Delegate Training
+		roles: none
+	8: 
+        id: hsr
+        name: HSR Training
+		roles: none
+	9: 
         id: gender
         name: Gender
-    14:
-        id: supporter type
-        name: Supporter Type
-    15:
-        id: union role
-        name: Union Role
-    16:
-        id: signal8
-        name: Stopped Paying - Follow up
-        roles:
-          - staff
-          - lead
-    17:
-        id: arrears cycle
-        name: Stopped Paying - Cycle
-        roles:
-          - staff
-          - lead
-    18:
-        id: emptype
+	10: 
+        id: feegroupid
+        name: Fee Group
+	11: 
+        id: state
+        name: State
+	12: 
+        id: nuwelectorate
+        name: Electorate
+	13: 
+        id: statusstaffid
+        name: Data Entry
+		roles: leadership
+	14: 
+        id: supportstaffid
+        name: Support Staff
+	15: 
+        id: employerid
+        name: Employer
+	16: 
+        id: hostemployerid
+        name: Owner
+		roles: admin
+	17: 
+        id: employmenttypeid
         name: Employment Type
-    19:
-        id: union
-        name: ASU
+	18: 
+        id: paymenttypeid
+        name: Payment Type
 drilldown_order:
-  union: lead
-  lead: org
-  org: employer
-  employer: location
-  location: department 
-  department: section
+	branchid: lead
+	industryid: companyid
+	lead: org
+	org: companyid
+	areaid: companyid
+	companyid: companyid
+	del: companyid
+    hsr: companyid
+	feegroupid: companyid
+	state: areaid
+	nuwelectorate: org
+	statusstaffid: companyid
+	supportstaffid: org
+	employerid: companyid
+	hostemployerid: companyid
+	employmenttypeid: companyid
+	paymenttypeid: paymenttypeid
 summary_data_tables:
     summary:
         display_name: Summary
