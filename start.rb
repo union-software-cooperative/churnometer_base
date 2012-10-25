@@ -10,6 +10,7 @@ require 'money'
 require "addressable/uri"
 require 'pony'
 require 'ir_b'
+require 'monitor' # used for managing potentially recursive mutexes on Class singletons
 
 Dir["./lib/*.rb"].each { |f| require f }
 Dir["./lib/services/*.rb"].each { |f| require f }
@@ -88,15 +89,22 @@ class Churnobyl < Sinatra::Base
     enable :sessions
     
     enable :logging
-    set :churn_app_mutex, Mutex.new
+    set :churn_app_mutex, Monitor.new
   end
   
   not_found do
     erb :'errors/not_found'
   end
   
-  $importer = Importer.new(server_lifetime_churnometer_app)
-  $importer.run
+  def self.importer()
+    if @importer == nil
+      settings.churn_app_mutex.synchronize do 
+        @importer = Importer.new(server_lifetime_churnometer_app)
+      end
+      @importer.run
+      end
+      @importer
+  end
   
   error do
     @error = env['sinatra.error']
@@ -189,7 +197,7 @@ class Churnobyl < Sinatra::Base
     @flash = session[:flash]
     session[:flash] = nil
     
-    @model = ImportPresenter.new(app())
+    @model = ImportPresenter.new(app(), self.class.importer)
     if params['scripted'] == 'true'
       if @model.importing?
         return response.write @model.import_status
@@ -204,7 +212,7 @@ class Churnobyl < Sinatra::Base
   
   post "/import" do
     session[:flash] = nil
-    @model = ImportPresenter.new(app())
+    @model = ImportPresenter.new(app(), self.class.importer)
     
     if params['action'] == "reset"
       @model.reset
