@@ -10,6 +10,7 @@ require 'money'
 require "addressable/uri"
 require 'pony'
 require 'ir_b'
+require 'monitor' # used for managing potentially recursive mutexes on Class singletons
 
 Dir["./lib/*.rb"].each { |f| require f }
 Dir["./lib/services/*.rb"].each { |f| require f }
@@ -20,6 +21,19 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 class Churnobyl < Sinatra::Base
   include Authorization
 
+  set :raise_errors, false
+  set :show_exceptions, false
+
+  logger = Logger.new('log/churnometer.log')
+     
+  configure :production, :development do
+    set :session_secret, "something" # I don't understand what this does but it lets my flash work
+    enable :sessions
+    
+    enable :logging
+    set :churn_app_mutex, Monitor.new
+  end
+  
   # Returns a ChurnometerApp instance.
   def app
     @churn_app ||= self.class.server_lifetime_churnometer_app
@@ -75,28 +89,20 @@ class Churnobyl < Sinatra::Base
     nil
   end
 
-  set :raise_errors, false
-  set :show_exceptions, false
-
-  logger = Logger.new('log/churnometer.log')
-     
-  configure :production, :development  do
-  end 
-  
-  configure :production, :development do
-    set :session_secret, "something" # I don't understand what this does but it lets my flash work
-    enable :sessions
-    
-    enable :logging
-    set :churn_app_mutex, Mutex.new
+  def self.importer()
+    if @importer == nil
+      settings.churn_app_mutex.synchronize do 
+        @importer = Importer.new(server_lifetime_churnometer_app)
+      end
+      @importer.run
+      end
+      @importer
   end
   
   not_found do
     erb :'errors/not_found'
   end
   
-  $importer = Importer.new(server_lifetime_churnometer_app)
-  $importer.run
   
   error do
     begin
@@ -131,10 +137,6 @@ class Churnobyl < Sinatra::Base
     cr.close_db() 
   end
   
-  after '/upload/' do
-    log
-  end
-
   after '/import' do
     log
     churn_db.close_db()
@@ -198,7 +200,7 @@ class Churnobyl < Sinatra::Base
     @flash = session[:flash]
     session[:flash] = nil
     
-    @model = ImportPresenter.new(app(), churn_db())
+    @model = ImportPresenter.new(app(), self.class.importer, churn_db())
     if params['scripted'] == 'true'
       if @model.importing?
         return response.write @model.import_status
@@ -213,7 +215,7 @@ class Churnobyl < Sinatra::Base
   
   post "/import" do
     session[:flash] = nil
-    @model = ImportPresenter.new(app(), churn_db())
+    @model = ImportPresenter.new(app(), self.class.importer, churn_db())
     
     if params['action'] == "reset"
       @model.reset
