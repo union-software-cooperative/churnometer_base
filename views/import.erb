@@ -28,12 +28,18 @@
     <input type="submit" name="action" value="reset">
   </form>
   
+  <!-- This is exception all dangerous (rewrites database without confirmation)
   <form method="post">
     <input type="submit" name="action" value="rebuild">
   </form>
+  -->
   
   <form method="post">
     <input type="submit" name="action" value="diags">
+  </form>
+  
+  <form method="post">
+    <input type="submit" name="action" value="empty_cache">
   </form>
   
   <% if @model.import_ready? %>

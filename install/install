@@ -116,6 +116,7 @@ function source_config
   sudo -u $CHURN_USER vim config/config_site.yaml
   sudo -u $CHURN_USER mkdir $WWW_PATH/uploads
   sudo -u $CHURN_USER mkdir $WWW_PATH/tmp
+  sudo -u $CHURN_USER mkdir $WWW_PATH/log
 
   sudo git config --system user.email "$USER@$HOSTNAME"
   sudo git config --system user.name "$USER"
