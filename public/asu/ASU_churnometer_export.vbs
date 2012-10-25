@@ -36,10 +36,10 @@ data_path = "C:\Users\lucas.rohde\Desktop\churn_export"    ' This is where you p
 url = "http://user:@churnometer:3000/import"    ' This is where you want the data uploaded
 logfilename = data_path & "\"    & "churn_export.log"    ' This is where you want the log file to save
 curl_path = data_path ' This is where curl.exe is
-debugging = false
+debugging = true
 ' Database
 dbusername = "sa"
-dbpassword = ""
+dbpassword = "TsuK@1tech"
 ' MS Access specific
 dbfile = ""    ' "M:\membership.mdb"' This is where your MSAccess database lives (leave blank for MSSQL)
 dbprovider = "Microsoft.ACE.OLEDB.12.0"    '"Microsoft.Jet.OLEDB.4.0"
@@ -282,7 +282,7 @@ private function import(url, path) ' if it fails, returns path to log file, if i
 		logfile.writeline "    Data is staged and ready for import"
 			
 		WshShell.Run "cmd /c "    & curl_path & "\curl.exe --insecure -X POST --form action=import --form scripted=true --form import_date="""    & now() & """    "    & url & "    > "    & curl_log & "    2>&1", 0, true
-		if error_handler("           failed to execute curl to upload "    & filename) then exit function  
+		if error_handler("           failed to execute curl to start import") then exit function  
 		
 		text = read_curl_log(curl_log)
 	
@@ -294,7 +294,7 @@ private function import(url, path) ' if it fails, returns path to log file, if i
 				Wscript.sleep 5000
  
 				WshShell.Run "cmd /c "    & curl_path & "\curl.exe --insecure -X GET --form scripted=true "    & url & "    > "    & curl_log & "    2>&1", 0, true
-				if error_handler("           failed to execute curl to upload "    & filename) then exit function  
+				if error_handler("           failed to execute curl to check import status") then exit function  
 				text = read_curl_log(curl_log)
 				
 			loop until instr(text, "Importing...") = 0 
@@ -309,6 +309,43 @@ private function import(url, path) ' if it fails, returns path to log file, if i
 	if import = false then 
 		if not silent then msgbox "Import failed" & text
 		logfile.writeline "           Import failed "
+		logfile.write text ' write curl's log to main log file
+	end if	
+end function
+	
+'******************************************************************************
+
+'******************************************************************************
+'* FUNCTION: empty_cache
+'* Authors:  lrohde 20-09-2012
+'* Purpose:  empties cached data because it'll be different after import
+'* Inputs: 
+'*  url:  full upload path 
+'*  path: data directory containing curl's log
+'* Returns: 
+'*  Success: true
+'*  Failure: false, output from curl's log will be in main log file
+'******************************************************************************
+private function empty_cache(url, path) ' if it fails, returns path to log file, if it succeeds returns ""
+	if not debugging then on error resume next
+	empty_cache = false
+	
+	curl_log = path & "\curl.log"
+	
+	Set WshShell = WScript.CreateObject("WScript.Shell")
+	WshShell.Run "cmd /c "    & curl_path & "\curl.exe --insecure -X POST --form action=empty_cache --form scripted=true "    & url & "    > "    & curl_log & "    2>&1", 0, true
+	if error_handler("           failed to execute curl to empty cache") then exit function  
+		
+	text = read_curl_log(curl_log)
+	
+	if instr(text, "Successfully emptied cache") > 0 then 
+		logfile.writeline "           Successfully emptied cache"
+		empty_cache = true
+	end if
+
+	if empty_cache = false then 
+		if not silent then msgbox "Failed to empty cache " & text
+		logfile.writeline "           Failed to empty cache"
 		logfile.write text ' write curl's log to main log file
 	end if	
 end function
@@ -427,6 +464,9 @@ next
 
 ' Check if server is ready for import, and if it is, start import
 result = import(url, data_path)
+if result then 
+	result = empty_cache(url, data_path)
+end if
 logfile.writeline "Import Finished "    & Now()
 
 On Error Goto 0 ' raise errors normally now because logging won't work during wrap-up
