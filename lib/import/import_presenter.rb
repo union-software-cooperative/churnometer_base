@@ -4,10 +4,11 @@ require 'open3.rb'
 
 class ImportPresenter
   
-  def initialize(app)
+  def initialize(app, importer)
     @dbm = DatabaseManager.new(app)
     @dimensions = app.custom_dimensions
     @db = Db.new(app)
+    @importer = importer
   end
 
   def db 
@@ -33,7 +34,7 @@ class ImportPresenter
   end
   
   def go(import_date)
-    $importer.import(import_date)
+    @importer.import(import_date)
   end
   
   def diags
@@ -45,7 +46,7 @@ class ImportPresenter
   end
   
   def importing?
-    $importer.state == :running
+    @importer.state == :running
   end
   
   def load_staging_counts
@@ -71,10 +72,10 @@ class ImportPresenter
       </h3>
       <ul>
         <li>
-          Importer State: #{$importer.state}
+          Importer State: #{@importer.state}
         </li>
         <li>
-          Progress: #{$importer.progress}
+          Progress: #{@importer.progress}
         </li>
       </ul>
     HTML
@@ -99,10 +100,10 @@ class ImportPresenter
                                 #{tcnt_msg}
                         </li>
                         <li>
-                          Background Importer State: #{$importer.state}
+                          Background Importer State: #{@importer.state}
                         </li>
                         <li>
-                          Importer Progress: #{$importer.progress}
+                          Importer Progress: #{@importer.progress}
                         </li>
                 </ul>
   	HTML
