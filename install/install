@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DB_FILE="$2"
-REPO="git@github.com:lukerohde/churnometer_asu.git"
+REPO="git@github.com:lukerohde/churnometer_base.git"
 PRODUCTION_BRANCH="master"
 DB_REPO="git@github.com:lukerohde/churnometer_data.git"
 
