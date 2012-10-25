@@ -15,6 +15,10 @@ class ImportPresenter
     @db
   end
   
+  def close_db
+    @db.close_db()
+  end
+  
   def dimensions
     @dimensions
   end
@@ -203,7 +207,7 @@ class ImportPresenter
       err = e.read
       result = o.read
     end
-    if !err.nil? && !err.empty? 
+    if !(err.nil? || err.empty?)
       raise err
     end
     result
@@ -260,6 +264,10 @@ class ImportPresenter
   	cmd << "\\copy transactionsource (id, creationdate, memberid, userid, amount) " 
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
+  end
+  
+  def empty_cache
+    console_ex("rm -f tmp/*.Marshal")
   end
   
 end

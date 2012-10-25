@@ -39,19 +39,6 @@ class Churnobyl < Sinatra::Base
     @churn_app ||= self.class.server_lifetime_churnometer_app
   end
 
-  def churn_db
-    @churn_db ||= churn_db_class().new(app())
-  end
-
-  def cr
-    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, app(), churn_db())
-    @sql = @cr.sql # This is set for error message
-    @cr
-  end
-
-  def churn_request_class
-    ChurnRequest
-  end
 
   def churn_db_class
     if app().use_database_cache?
@@ -59,6 +46,24 @@ class Churnobyl < Sinatra::Base
     else
       ChurnDB
     end
+  end
+  
+  def churn_db
+    @churn_db ||= churn_db_class().new(app())
+  end
+
+  def churn_request_class
+    ChurnRequest
+  end
+
+  def cr
+    @cr ||= churn_request_class().new(request.url, request.query_string, auth, params, app(), churn_db())
+    @sql = @cr.sql # This is set for error message
+    @cr
+  end
+  
+  def ip
+    @ip  ||= ImportPresenter.new(app(), self.class.importer, ChurnDB.new(app())) # don't use the disk cache db for importing!
   end
 
   def reload_config_on_every_request?
@@ -139,7 +144,7 @@ class Churnobyl < Sinatra::Base
   
   after '/import' do
     log
-    churn_db.close_db()
+    ip.close_db()
   end
 
   def log
@@ -200,7 +205,7 @@ class Churnobyl < Sinatra::Base
     @flash = session[:flash]
     session[:flash] = nil
     
-    @model = ImportPresenter.new(app(), self.class.importer, churn_db())
+    @model = ip()
     if params['scripted'] == 'true'
       if @model.importing?
         return response.write @model.import_status
@@ -215,7 +220,7 @@ class Churnobyl < Sinatra::Base
   
   post "/import" do
     session[:flash] = nil
-    @model = ImportPresenter.new(app(), self.class.importer, churn_db())
+    @model = ip()
     
     if params['action'] == "reset"
       @model.reset
@@ -243,6 +248,21 @@ class Churnobyl < Sinatra::Base
         end
       end
     end
+    
+    if params['action'] == "empty_cache"
+      begin
+        @model.empty_cache()
+      rescue StandardError => err
+        raise err if ! (err.message == 'rm: tmp/*.Marshal: No such file or directory')
+      end
+            
+      session[:flash] = "Successfully emptied cache"
+      if params['scripted'] == 'true'
+        return response.write session[:flash]
+      else
+        redirect '/import'
+      end
+    end  
     
     if params['action'] == "rebuild"
       @model.rebuild
