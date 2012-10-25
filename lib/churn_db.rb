@@ -20,6 +20,11 @@ class Db
     )
   end
 
+  def close_db
+    @conn.finish() if !@conn.nil?
+    @conn = nil
+  end
+
   def process_query_result(query_result)
     # dbeswick: add a 'length' method to the sql results, so code that relies on the array returned
     # from the sql disk cache will continue to work.
@@ -86,6 +91,11 @@ class ChurnDB
   
   def db
     @db ||= Db.new(@app)
+  end
+
+  def close_db
+    @db.close_db() if !@db.nil?
+    @db = nil
   end
   
   def ex(sql)

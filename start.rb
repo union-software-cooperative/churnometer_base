@@ -99,18 +99,21 @@ class Churnobyl < Sinatra::Base
   $importer.run
   
   error do
-    @error = env['sinatra.error']
+    begin
+      @error = env['sinatra.error']
 
-    if app().nil? || app().email_on_error?
-      Pony.mail({
-                  :to   => app().config['email_errors'].value['to'].value,
-                  :from => app().config['email_errors'].value['from'].value,
-                  :subject => "[Error] #{@error.message}",
-                  :body => erb(:'errors/error_email', layout: false)
-                })
+      #if app().nil? || app().email_on_error?
+        #Pony.mail({
+        #            :to   => app().config.element('email_errors').value['to'].value,
+        #            :from => app().config.element('email_errors').value['from'].value,
+        #            :subject => "[Error] #{@error.message}",
+        #            :body => erb(:'errors/error_email', layout: false)
+        #          })
+      #end
+      erb :'errors/error'
+    rescue StandardError => err
+      return response.write "error in error handler! #{err.message}"
     end
-    
-    erb :'errors/error'
   end
 
   helpers do
@@ -125,10 +128,16 @@ class Churnobyl < Sinatra::Base
   
   after '/' do
     log
+    cr.close_db() 
   end
   
   after '/upload/' do
     log
+  end
+
+  after '/import' do
+    log
+    churn_db.close_db()
   end
 
   def log
@@ -189,7 +198,7 @@ class Churnobyl < Sinatra::Base
     @flash = session[:flash]
     session[:flash] = nil
     
-    @model = ImportPresenter.new(app())
+    @model = ImportPresenter.new(app(), churn_db())
     if params['scripted'] == 'true'
       if @model.importing?
         return response.write @model.import_status
@@ -204,7 +213,7 @@ class Churnobyl < Sinatra::Base
   
   post "/import" do
     session[:flash] = nil
-    @model = ImportPresenter.new(app())
+    @model = ImportPresenter.new(app(), churn_db())
     
     if params['action'] == "reset"
       @model.reset
@@ -284,7 +293,7 @@ class Churnobyl < Sinatra::Base
       redirect '/import'
     end
   end
-  
+
   get '/scss/:name.css' do |name|
     scss name.to_sym, :style => :expanded
   end
