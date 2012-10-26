@@ -1,10 +1,10 @@
 database:
     host: localhost
     port: 5432
-    dbname: churnometer_regression_general
+    dbname: churnometer_base
     user: churnuser
     password: fcchurnpass
-    facttable: memberfacthelper5
+    facttable: memberfacthelper
 use_database_cache: false
 use_new_query_generation_method: true
 work_site_dimension_id: companyid
