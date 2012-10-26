@@ -1,4 +1,4 @@
-application_start_date: 2012-10-3
+application_start_date: 2011-09-01
 use_new_query_generation_method: true
 work_site_dimension_id: companyid
 default_groupby_dimension_id: branchid
@@ -50,7 +50,7 @@ dimensions:
 	13: 
         id: statusstaffid
         name: Data Entry
-		roles: leadership
+		roles: lead
 	14: 
         id: supportstaffid
         name: Support Staff
@@ -60,7 +60,7 @@ dimensions:
 	16: 
         id: hostemployerid
         name: Owner
-		roles: admin
+		roles: lead
 	17: 
         id: employmenttypeid
         name: Employment Type

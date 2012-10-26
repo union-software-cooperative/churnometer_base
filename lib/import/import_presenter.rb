@@ -44,7 +44,7 @@ class ImportPresenter
   def diags
     <<-HTML
       <pre>
-        #{member_import_command("asdf")};
+        #{dbm.rebuild_sql};
       </pre>
     HTML
   end

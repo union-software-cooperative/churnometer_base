@@ -63,14 +63,16 @@ class DatabaseManager
       drop view if exists memberfacthelperquery;
 
       drop table if exists memberfact_migration;
+      drop table if exists membersourceprev_migration;
       drop table if exists transactionfact_migration;
       drop table if exists displaytext_migration;
       drop table if exists memberfacthelper_migration;
       
-	    alter table memberfact rename to memberfact_migration;
-      alter table transactionfact rename to transactionfact_migration;
-      alter table displaytext rename to displaytext_migration;
-      alter table memberfacthelper rename to memberfacthelper_migration;
+	    alter table if exists memberfact rename to memberfact_migration;
+      alter table if exists membersourceprev rename to membersourceprev_migration;
+      alter table if exists transactionfact rename to transactionfact_migration;
+      alter table if exists displaytext rename to displaytext_migration;
+      alter table if exists memberfacthelper rename to memberfacthelper_migration;
      
       #{rebuild_displaytextsource_sql};
       #{rebuild_transactionsource_sql};
@@ -152,9 +154,9 @@ class DatabaseManager
         , displaytext varchar(255) null
       );
       
-      DROP INDEX "displaytext_attribute_idx";
-	    DROP INDEX "displaytext_id_idx";
-      DROP INDEX "displaytext_attribute_id_idx";
+      drop index if exists "displaytext_attribute_idx";
+	    drop index if exists "displaytext_id_idx";
+      drop index if exists "displaytext_attribute_id_idx";
 
       CREATE INDEX "displaytext_attribute_idx" ON "displaytext" USING btree(attribute ASC NULLS LAST);
       CREATE INDEX "displaytext_id_idx" ON "displaytext" USING btree(id ASC NULLS LAST);
@@ -228,10 +230,10 @@ class DatabaseManager
     sql << <<-SQL
       );
       
-      DROP INDEX "memberfact_changeid_idx";
-      DROP INDEX "memberfact_memberid_idx";
-      DROP INDEX "memberfact_oldstatus_idx";
-      DROP INDEX "memberfact_newstatus_idx";
+      drop index if exists "memberfact_changeid_idx";
+      drop index if exists "memberfact_memberid_idx";
+      drop index if exists "memberfact_oldstatus_idx";
+      drop index if exists "memberfact_newstatus_idx";
       
       CREATE INDEX "memberfact_changeid_idx" ON "memberfact" USING btree(changeid ASC NULLS LAST);
       CREATE INDEX "memberfact_memberid_idx" ON "memberfact" USING btree(memberid ASC NULLS LAST);
@@ -652,9 +654,9 @@ class DatabaseManager
       where 
         #{memberfacthelper_subset_sql};
         
-    DROP INDEX "memberfacthelper_changeid_idx";
-    DROP INDEX "memberfacthelper_memberid_idx";
-    DROP INDEX "memberfacthelper_changedate_idx";
+    drop index if exists "memberfacthelper_changeid_idx";
+    drop index if exists "memberfacthelper_memberid_idx";
+    drop index if exists "memberfacthelper_changedate_idx";
     
     CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
     CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);
@@ -662,7 +664,7 @@ class DatabaseManager
     SQL
     
     dimensions.each { |d| sql << <<-REPEAT }
-      DROP INDEX "memberfacthelper_#{d.column_base_name}_idx" ;
+      drop index if exists "memberfacthelper_#{d.column_base_name}_idx" ;
       CREATE INDEX "memberfacthelper_#{d.column_base_name}_idx" ON "memberfacthelper" USING btree(#{d.column_base_name} ASC NULLS LAST);
     REPEAT
     
@@ -681,8 +683,8 @@ class DatabaseManager
         , changeid bigint not null
       );
       
-      DROP INDEX "transactionfact_memberid_idx";
-      DROP INDEX "transactionfact_changeid_idx";
+      drop index if exists "transactionfact_memberid_idx";
+      drop index if exists "transactionfact_changeid_idx";
       CREATE INDEX "transactionfact_memberid_idx" ON "transactionfact" USING btree(memberid ASC NULLS LAST);
       CREATE INDEX "transactionfact_changeid_idx" ON "transactionfact" USING btree(changeid ASC NULLS LAST);
     SQL
@@ -859,4 +861,321 @@ class DatabaseManager
   def insertdisplaytext
     db.ex(insertdisplaytext_sql)
   end
+  
+  def migrate_regression_generalise_to_base
+    <<-SQL
+          
+      insert into membersourceprev
+      (
+      col0
+      ,col1
+      ,col10
+      ,col11
+      ,col12
+      ,col13
+      ,col14
+      ,col15
+      ,col16
+      ,col17
+      ,col18
+      ,col2
+      ,col3
+      ,col4
+      ,col5
+      ,col6
+      ,col7
+      ,col8
+      ,col9
+      ,memberid
+      ,status
+      )
+      select
+      branchid
+      , industryid
+      , feegroupid
+      , state
+      , nuwelectorate
+      , statusstaffid
+      , supportstaffid
+      , employerid
+      , hostemployerid
+      , employmenttypeid
+      , paymenttypeid
+      , lead
+      , org
+      , areaid
+      , companyid
+      , agreementexpiry
+      , del
+      , hsr
+      , gender
+      , memberid
+      , status
+      from
+      membersourceprev_migration;
+      
+      delete from memberfact_migration where not memberid in (select distinct memberid from memberfacthelper_migration) ;
+      
+      insert into memberfact
+      (
+      changedate
+      , changeid
+      , memberid
+      , newcol0
+      , newcol1
+      , newcol10
+      , newcol11
+      , newcol12
+      , newcol13
+      , newcol14
+      , newcol15
+      , newcol16
+      , newcol17
+      , newcol18
+      , newcol2
+      , newcol3
+      , newcol4
+      , newcol5
+      , newcol6
+      , newcol7
+      , newcol8
+      , newcol9
+      , newstatus
+      , oldcol0
+      , oldcol1
+      , oldcol10
+      , oldcol11
+      , oldcol12
+      , oldcol13
+      , oldcol14
+      , oldcol15
+      , oldcol16
+      , oldcol17
+      , oldcol18
+      , oldcol2
+      , oldcol3
+      , oldcol4
+      , oldcol5
+      , oldcol6
+      , oldcol7
+      , oldcol8
+      , oldcol9
+      , oldstatus
+      )
+      
+      select
+      changedate
+      , changeid
+      , memberid
+      , newcol0
+      , newcol1
+      , newcol10
+      , newcol11
+      , newcol12
+      , newcol13
+      , newcol14
+      , newcol15
+      , newcol16
+      , newcol17
+      , newcol18
+      , newcol2
+      , newcol3
+      , newcol4
+      , newcol5
+      , newcol6
+      , newcol7
+      , newcol8
+      , newcol9
+      , newstatus
+      , oldcol0
+      , oldcol1
+      , oldcol10
+      , oldcol11
+      , oldcol12
+      , oldcol13
+      , oldcol14
+      , oldcol15
+      , oldcol16
+      , oldcol17
+      , oldcol18
+      , oldcol2
+      , oldcol3
+      , oldcol4
+      , oldcol5
+      , oldcol6
+      , oldcol7
+      , oldcol8
+      , oldcol9
+      , oldstatus
+      from 
+      memberfact_migration
+      ;
+      
+      
+      insert into displaytext
+      (
+      attribute
+      , id
+      , displaytext
+      )
+      select
+      attribute
+      , id
+      , displaytext
+      from displaytext_migration;
+      
+      insert into transactionfact
+      (
+      id
+      , creationdate
+      , memberid
+      , userid
+      , amount
+      , changeid
+      )
+      select 
+      transactionid
+      , creationdate
+      , memberid
+      , staffid
+      , amount
+      , changeid
+      from 
+      transactionfact_migration
+      
+      ;
+      
+      insert into memberfacthelper (
+      changeid
+      , memberid
+      , changedate
+      , net
+      , gain
+      , loss
+      , status
+      , _status
+      , statusdelta
+      , payinggain
+      , payingloss
+      , a1pgain
+      , a1ploss
+      , stoppedgain
+      , stoppedloss
+      , othergain
+      , otherloss
+      , col0
+      , col0delta
+      , col1
+      , col1delta
+      , col2
+      , col2delta
+      , col3
+      , col3delta
+      , col4
+      , col4delta
+      , col5
+      , col5delta
+      , col6
+      , col6delta
+      , col7
+      , col7delta
+      , col8
+      , col8delta
+      , col9
+      , col9delta
+      , col10
+      , col10delta
+      , col11
+      , col11delta
+      , col12
+      , col12delta
+      , col13
+      , col13delta
+      , col14
+      , col14delta
+      , col15
+      , col15delta
+      , col16
+      , col16delta
+      , col17
+      , col17delta
+      , col18
+      , col18delta
+      , duration
+      , _changeid
+      , _changedate
+      )
+      
+      select 
+      changeid
+      , memberid
+      , changedate
+      , net
+      , gain
+      , loss
+      , status
+      , _status
+      , statusdelta
+      , payinggain
+      , payingloss
+      , a1pgain
+      , a1ploss
+      , stoppedgain
+      , stoppedloss
+      , othergain
+      , otherloss
+      , col0
+      , col0delta
+      , col1
+      , col1delta
+      , col2
+      , col2delta
+      , col3
+      , col3delta
+      , col4
+      , col4delta
+      , col5
+      , col5delta
+      , col6
+      , col6delta
+      , col7
+      , col7delta
+      , col8
+      , col8delta
+      , col9
+      , col9delta
+      , col10
+      , col10delta
+      , col11
+      , col11delta
+      , col12
+      , col12delta
+      , col13
+      , col13delta
+      , col14
+      , col14delta
+      , col15
+      , col15delta
+      , col16
+      , col16delta
+      , col17
+      , col17delta
+      , col18
+      , col18delta
+      , duration
+      , _changeid
+      , _changedate
+      from 
+      memberfacthelper_migration;
+      
+      drop table memberfact_migration;
+      drop table memberfacthelper_migration;
+      drop table membersourceprev_migration;
+      drop table displaytext_migration;
+      drop table transactionfact_migration;
+      
+
+    SQL
+  end
+  
 end

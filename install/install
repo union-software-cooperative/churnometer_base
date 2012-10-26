@@ -154,7 +154,7 @@ function db_import
   echo "***********************************************************************"
   
   if [[ ! ${DB_FILE} ]] ; then 
-    DB_FILE="/home/$CHURN_USER/churnometer_temp/sql/churnometer_regression_general.sql"    
+    DB_FILE="/home/$CHURN_USER/churnometer_temp/sql/churnometer_base.sql"    
     if [[ ! -f ${DB_FILE} ]] ; then 
       sudo -u $CHURN_USER git clone $DB_REPO /home/$CHURN_USER/churnometer_temp/
     fi
