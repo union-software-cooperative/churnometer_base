@@ -206,6 +206,16 @@ class Churnobyl < Sinatra::Base
     session[:flash] = nil
     
     @model = ip()
+    
+    if params['action'] == "diags"
+      response.write @model.diags
+      return
+    end 
+    
+    #if params['action'] == "rebuild"
+    #  @model.rebuild
+    #end 
+    
     if params['scripted'] == 'true'
       if @model.importing?
         return response.write @model.import_status
