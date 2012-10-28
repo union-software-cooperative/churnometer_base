@@ -79,7 +79,10 @@ function churn_user
   sudo usermod -s /bin/bash $CHURN_USER # set up bash shell
 
   sudo -u $CHURN_USER ssh-keygen -t rsa -b 4096 -f /home/$CHURN_USER/.ssh/id_rsa -N ""
-  echo -e '\n\nCopy this key to https://github.com/account/ssh and make sure your are a collaborator on $REPO\n'
+  echo -e "\n\nCopy this key to https://github.com/account/ssh"
+  echo -e "- To download the source you'll need to be a collaborator on $REPO (if it isn't public)"
+  echo -e "- To download the demo data you'll need to be a collaborator on $DB_REPO (if it isn't public)"
+  echo -e "\n"
   sudo -u $CHURN_USER cat /home/$CHURN_USER/.ssh/id_rsa.pub
   echo -e '\nPress enter once done'
   read
