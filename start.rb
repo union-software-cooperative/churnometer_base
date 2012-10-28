@@ -21,12 +21,12 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 class Churnobyl < Sinatra::Base
   include Authorization
 
-  set :raise_errors, false
-  set :show_exceptions, false
-
   logger = Logger.new('log/churnometer.log')
      
   configure :production, :development do
+    set :raise_errors, Proc.new { false }
+    set :show_exceptions, false
+
     set :session_secret, "something" # I don't understand what this does but it lets my flash work
     enable :sessions
     
@@ -107,25 +107,23 @@ class Churnobyl < Sinatra::Base
   not_found do
     erb :'errors/not_found'
   end
-  
-  
+ 
   error do
     begin
       @error = env['sinatra.error']
-
-      #if app().nil? || app().email_on_error?
-        #Pony.mail({
-        #            :to   => app().config.element('email_errors').value['to'].value,
-        #            :from => app().config.element('email_errors').value['from'].value,
-        #            :subject => "[Error] #{@error.message}",
-        #            :body => erb(:'errors/error_email', layout: false)
-        #          })
-      #end
+      if app().email_on_error?
+        Pony.mail({
+                    :to   => app().config.element('email_errors').value['to'].value,
+                    :from => app().config.element('email_errors').value['from'].value,
+                    :subject => "[Error] #{@error.message}",
+                    :body => erb(:'errors/error_email', layout: false)
+                  })
+      end
       erb :'errors/error'
     rescue StandardError => err
-      return response.write "error in error handler! #{err.message}"
+      return response.write "Error in error handler: #{err.message}"
     end
-  end
+  end 
 
   helpers do
     include Rack::Utils
@@ -139,12 +137,12 @@ class Churnobyl < Sinatra::Base
   
   after '/' do
     log
-    cr.close_db() 
+    @cr.close_db() if !@cr.nil? 
   end
   
   after '/import' do
     log
-    ip.close_db()
+    @ip.close_db() if !ip.nil?
   end
 
   def log
@@ -152,8 +150,8 @@ class Churnobyl < Sinatra::Base
     #cache_control :public, :must_revalidate, :max_age => 60
     if app().config['demo']
       Pony.mail({
-                :to   => Config['email_errors']['to'],
-                :from => Config['email_errors']['from'],
+                :to   => app().config.element('email_errors').value['to'].value,
+                :from => app().config.element('email_errors').value['from'].value,
                 :subject => "[Demo] #{request.env['HTTP_X_FORWARDED_FOR']}",
                 :body => erb(:'demo_email', layout: false)
               })
