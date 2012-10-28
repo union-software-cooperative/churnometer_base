@@ -21,16 +21,17 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 class Churnobyl < Sinatra::Base
   include Authorization
 
-  logger = Logger.new('log/churnometer.log')
      
   configure :production, :development do
+    enable :logging
+    $logger = Logger.new('log/churnometer.log')
+    
     set :raise_errors, Proc.new { false }
     set :show_exceptions, false
 
     set :session_secret, "something" # I don't understand what this does but it lets my flash work
     enable :sessions
     
-    enable :logging
     set :churn_app_mutex, Monitor.new
   end
   
@@ -157,7 +158,7 @@ class Churnobyl < Sinatra::Base
               })
     end
     
-    logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
+    $logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
   end
 
   get '/' do
