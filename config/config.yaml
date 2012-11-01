@@ -37,7 +37,7 @@ dimensions:
         id: industry
         name: Industry
     10:
-        id: pay method
+        id: pay_method
         name: Pay Method
     11:
         id: charge_scale
@@ -52,7 +52,7 @@ dimensions:
         id: supporter type
         name: Supporter Type
     15:
-        id: union role
+        id: union_role
         name: Union Role
     16:
         id: signal8
@@ -61,7 +61,7 @@ dimensions:
           - staff
           - lead
     17:
-        id: arrears cycle
+        id: arrears_cycle
         name: Stopped Paying - Cycle
         roles:
           - staff
@@ -79,6 +79,14 @@ drilldown_order:
   employer: location
   location: department 
   department: section
+  industry: employer
+  pay_method: charge_scale
+  charge_scale: pay_method
+  signal8: pay_method
+  arrears_cycle: signal8
+  emptype: pay_method
+  gender: union_role
+  union_role: gender
 summary_data_tables:
     summary:
         display_name: Summary
