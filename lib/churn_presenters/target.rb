@@ -13,14 +13,14 @@ class ChurnPresenter_Target
   
   def weeks
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
     
     (Float(end_date - start_date) / 7).round(1)
   end
   
   def growth
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
   
     start_count = paying_start_total
     
@@ -59,7 +59,7 @@ class ChurnPresenter_Target
     @request.data.each { | row | cards += row['a1p_real_gain'].to_i }
     
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
     
     cards_per_week = 0.0
     if start_date != end_date  
@@ -103,7 +103,7 @@ class ChurnPresenter_Target
     @request.data.each { | row | failed -= row['a1p_to_other'].to_i }
     
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
     
     cards_per_week = 0.0
     if start_date != end_date  
@@ -135,7 +135,7 @@ class ChurnPresenter_Target
      @request.data.each { | row | failed -= row['a1p_to_other'].to_i }
 
      start_date = Date.parse(@request.params['startDate'])
-     end_date = Date.parse(@request.params['endDate'])
+     end_date = Date.parse(@request.params['endDate']) + 1
 
      cards_per_week = 0.0
      weeks = 0
@@ -157,7 +157,7 @@ class ChurnPresenter_Target
     @request.data.each { | row | cards += row['a1p_real_gain'].to_i }
     
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
     
     cards_per_week = 0.0
     if start_date != end_date  

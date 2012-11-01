@@ -171,7 +171,16 @@ module Settings
      end
 
      def tips
-      app().col_descriptions
+      result = {}
+      
+      # substitute any reference in the tooltip to {group_by} 
+      # with the currently grouped dimension
+      row_header_col_name = @request.groupby_column_name.downcase
+      app().col_descriptions.each do | k, v |
+        v.gsub! '{group_by}', row_header_col_name
+        result[k] = v
+      end  
+      result
      end
 
 end
