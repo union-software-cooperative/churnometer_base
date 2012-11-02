@@ -3,6 +3,10 @@ require 'time'
 require 'pg'
 
 class Db
+
+  attr_reader :host
+  attr_reader :dbname
+  
   def initialize(churn_app)
     element = churn_app.config.get_mandatory('database')
     element.ensure_hashkey('host')
@@ -11,14 +15,18 @@ class Db
     element.ensure_hashkey('user')
     element.ensure_hashkey('password')
 
+    @host = element['host'].value
+    @dbname = element['dbname'].value
+    
     @conn = PGconn.open(
-      :host =>      element['host'].value,
+      :host =>      @host,
       :port =>      element['port'].value,
-      :dbname =>    element['dbname'].value,
+      :dbname =>    @dbname,
       :user =>      element['user'].value,
       :password =>  element['password'].value
     )
-  end
+    
+    end
 
   def close_db
     @conn.finish() if !@conn.nil?
@@ -84,6 +92,14 @@ class ChurnDB
   attr_reader :params
   attr_reader :sql
   attr_reader :cache_hit
+  
+  def host
+    db.host
+  end
+  
+  def dbname
+    db.dbname
+  end
   
   def initialize(app)
     @app = app

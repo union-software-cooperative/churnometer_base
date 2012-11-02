@@ -18,6 +18,10 @@ class ServiceRequestHandlerAutocomplete
         service.execute
       end
     end
+    
+    churnobyl_app_class.after "/services/autocomplete/:handler_name" do |handler_name|
+      @cr.close_db() if !@cr.nil? 
+    end
   end
 end
 
