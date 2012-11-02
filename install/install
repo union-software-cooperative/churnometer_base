@@ -65,6 +65,7 @@ function install
   sudo apt-get -y install sendmail
   sudo apt-get -y install libxml2-dev libxslt-dev
   sudo apt-get -y install nginx 
+  sudo apt-get -y install zip
 }
 
 function churn_user
@@ -120,6 +121,7 @@ function source_config
   sudo -u $CHURN_USER mkdir $WWW_PATH/uploads
   sudo -u $CHURN_USER mkdir $WWW_PATH/tmp
   sudo -u $CHURN_USER mkdir $WWW_PATH/log
+  sudo -u $CHURN_USER mkdir $WWW_PATH/backup
 
   sudo git config --system user.email "$USER@$HOSTNAME"
   sudo git config --system user.name "$USER"

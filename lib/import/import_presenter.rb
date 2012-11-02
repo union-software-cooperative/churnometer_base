@@ -244,6 +244,10 @@ class ImportPresenter
     console_ex("mv \"#{file}\" \"#{file}.imported\"")
   end
   
+  def backup(file)
+    console_ex(backup_command(file))
+  end
+  
   def member_import_command(file)
     cmd = "psql churnometer -c \"\\copy membersource (memberid, status" 
     
@@ -266,6 +270,11 @@ class ImportPresenter
   	cmd << "\\copy transactionsource (id, creationdate, memberid, userid, amount) " 
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
+  end
+  
+  def backup_command(file)
+    cmd = "pg_dump --host #{@db.host} #{@db.dbname}  > backup/#{@db.dbname}_db_backup.sql"
+    cmd << "; zip -r #{file} * "
   end
   
   def empty_cache
