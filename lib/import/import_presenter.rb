@@ -273,7 +273,7 @@ class ImportPresenter
   end
   
   def backup_command(file)
-    cmd = "pg_dump --host #{@db.host} #{@db.dbname}  > backup/#{@db.dbname}_db_backup.sql"
+    cmd = "pg_dump #{@db.dbname}  > backup/#{@db.dbname}_db_backup.sql"
     cmd << "; zip -r #{file} * "
   end
   
