@@ -268,13 +268,6 @@ class ImportPresenter
     cmd << "\""
   end
   
-  def transaction_import_command(file)
-  	cmd = "pg_dump churnometer -c \""
-  	cmd << "\\copy transactionsource (id, creationdate, memberid, userid, amount) " 
-    cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
-    cmd << "\""
-  end
-  
   def empty_cache
     console_ex("rm -f tmp/*.Marshal")
   end
