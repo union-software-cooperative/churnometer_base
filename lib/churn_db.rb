@@ -35,7 +35,7 @@ class Db
 
     @host = element['host'].value
     @dbname = element['dbname'].value
-    @dbpass = element['dbpass'].value
+    @dbpass = element['password'].value
     
     @conn = PGconn.open(
       :host =>      @host,
