@@ -23,6 +23,7 @@ class Db
 
   attr_reader :host
   attr_reader :dbname
+  attr_reader :dbpass
   
   def initialize(churn_app)
     element = churn_app.config.get_mandatory('database')
@@ -34,13 +35,14 @@ class Db
 
     @host = element['host'].value
     @dbname = element['dbname'].value
+    @dbpass = element['dbpass'].value
     
     @conn = PGconn.open(
       :host =>      @host,
       :port =>      element['port'].value,
       :dbname =>    @dbname,
       :user =>      element['user'].value,
-      :password =>  element['password'].value
+      :password =>  @dbpass
     )
     
     end
@@ -116,6 +118,10 @@ class ChurnDB
   
   def dbname
     db.dbname
+  end
+  
+  def dbpass
+    db.dbpass
   end
   
   def initialize(app)
