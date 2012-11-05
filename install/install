@@ -1,4 +1,4 @@
-#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Churnometer - A dashboard for exploring a membership organisation's turn-over/churn
 #  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
 #  lukerohde@gmail.com
 #
@@ -95,7 +95,8 @@ function churn_user
   
   sudo useradd -d /home/$CHURN_USER -m $CHURN_USER -p $CHURN_PASS  
   sudo usermod -s /bin/bash $CHURN_USER # set up bash shell
-
+  sudo usermod -a -G sudo $CHURN_USER
+  
   sudo -u $CHURN_USER ssh-keygen -t rsa -b 4096 -f /home/$CHURN_USER/.ssh/id_rsa -N ""
   echo -e "\n\nCopy this key to https://github.com/account/ssh"
   echo -e "- To download the source you'll need to be a collaborator on $REPO (if it isn't public)"
@@ -245,6 +246,27 @@ function daemonise
   sudo /etc/init.d/nginx restart
 }
 
+function samba
+{
+  echo "***********************************************************************"
+  echo "* INSTALLING WINDOWS SHARE"
+  echo "*"
+  echo "*"
+  echo "***********************************************************************"
+  
+  sudo apt-get install samba samba-common python-glade2 system-config-samba
+  sudo mv /etc/samba/smb.conf /etc/samba/smb.conf.bak 
+  
+  sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" $WWW_PATH/config/smb.conf.example \
+    | sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
+    > ~/smb.conf.tmp
+    
+  sudo mv ~/smb.conf.tmp /etc/samba/smb.conf 
+  sudo bash -c "(echo $CHURN_PASS; echo $CHURN_PASS) | smbpasswd -s -a $CHURN_USER"
+  
+  sudo /etc/init.d/smbd restart
+}
+
 case $1 in 
   just-software)
     confirm_config
@@ -274,6 +296,10 @@ case $1 in
     confirm_config
     daemonise
   ;;
+  just-samba)
+    confirm_config
+    samba
+  ;;
   install)
     confirm_config
     churn_user
@@ -283,9 +309,10 @@ case $1 in
     db_import
     ruby_config
     daemonise
+    samba
   ;;
   *)
-    echo >&2 "Usage: $0 < install | just-software | just-user | just-source | just-dbconfig | just-data | just-gems | just-daemonise > [db backup file]"
+    echo >&2 "Usage: $0 < install | just-samba | just-software | just-user | just-source | just-dbconfig | just-data | just-gems | just-daemonise > [db backup file]"
     exit 1
     ;;
 esac
