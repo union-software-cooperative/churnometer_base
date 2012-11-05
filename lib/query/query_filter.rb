@@ -177,9 +177,9 @@ class FilterTerms
   # The hash should be only the "filter" part of the request hash, not the complete request hash with
   # all other parameters present.
   # dimensions: The Dimensions instance containing all possible filterable dimensions.
-  def self.from_request_params(parameter_hash, dimensions)
+  def self.from_request_params(parameter_hash, locks, dimensions)
     instance = self.new
-    instance._from_request_params(parameter_hash, dimensions)
+    instance._from_request_params(parameter_hash, locks, dimensions)
     instance
   end
 
@@ -266,7 +266,7 @@ class FilterTerms
     end
   end
 
-  def _from_request_params(parameter_hash, dimensions)
+  def _from_request_params(parameter_hash, locks, dimensions)
     parameter_hash.each do |key, values|
       values = Array(values)
       
@@ -301,6 +301,16 @@ class FilterTerms
         raise "Unknown dimension '#{key}' given for filter term." if dimension.nil?
         
         append(dimension, value, is_exclude)
+      end
+      
+      locks.each do | key, csv|
+        csv.split(',').each do | value |
+          dimension = dimensions.dimension_for_id(key)
+  
+          raise "Unknown dimension '#{key}' given for filter term." if dimension.nil?
+          
+          append(dimension, value, false)
+        end
       end
     end
   end

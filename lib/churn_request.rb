@@ -30,6 +30,7 @@ class ChurnRequest
   attr_reader :data
   attr_reader :cache_hit
   attr_reader :xml
+  attr_reader :query_filterterms
   
   include Settings
   
@@ -61,14 +62,14 @@ class ChurnRequest
     @transactions = auth.role.allow_transactions?
     @site_constraint = @params['site_constraint'].to_s
     @xml = self.class.filter_xml parsed_params()[Filter], locks(@params['lock'])
-      
+    
     # load data and public members
     @type = :summary if @filter_column == ''
     @type = :detail if @filter_column != '' or @export_type=='detail'
 
     @query_filterterms = 
       if @app.use_new_query_generation_method?()
-        FilterTerms.from_request_params(parsed_params()[Filter], @app.dimensions)
+        FilterTerms.from_request_params(parsed_params()[Filter], locks(@params['lock']), @app.dimensions)
       else
         nil
       end
@@ -240,7 +241,7 @@ class ChurnRequest
     @start = startDate
     @end = endDate
 
-    if (params['group_by']!='companyid' &&  !(params['site_constraint'] == '' || params['site_constraint'].nil?))
+    if (params['group_by']!=@app.config['work_site_dimension_id'] &&  !(params['site_constraint'] == '' || params['site_constraint'].nil?))
       params['site_constraint'] = ''
       warning +="WARNING:  Disabled site constraint because it only makes sense when grouping by Work Site <br/>"
     end
