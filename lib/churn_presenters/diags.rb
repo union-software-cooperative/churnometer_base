@@ -39,7 +39,7 @@ class ChurnPresenter_Diags
     @role = request.auth.role
     @rows = request.data.length if !request.data.nil?
     @rows ||= 0
-    @filter = request.parsed_params()[Filter]
+    @filter = request.query_filterterms.terms #request.parsed_params()[Filter]
     @filter_xml = request.xml
   end
   
