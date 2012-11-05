@@ -53,9 +53,35 @@ This is still very technical.  When starting from scratch, you'll need to edit c
 DISASTER RECOVERY
 
 Scenario 1 - restore database from backup (assuming data corruption)
+copy database file from backup to server (from linux to linux - use winscp or cygwin on windows)
+$ scp backup/churnometer_db_backup.sql churnometer@churnometer:~/
+copy install script from backup to server (from linux to linux - use wincscp or cygwin on windows)
+$ scp install/install churnometer@churnometer:~/
+login to the server via ssh
+$ ssh churnometer@churnometer
+$ ~/install just-data ~/churnometer_db_backup.sql
+accept Y for default options
 
-# copy
+Scenario 2 - starting from fresh ubuntu installation
+copy backup to server
+$ scp backup.zip yourusername@churnometer
+login to the server via ssh
+$ ssh yourusername@churnometer
+unzip the backup
+$ mkdir backup
+$ cd backup
+$ unzip ~/backup.zip
+install everything
+$ ~/backup/install/install install ~/backup/backup/churnometer_db_backup.sql
+check/confirm proposed username, password - the source repo doesn't matter because we'll over right it
+delete the downloaded source
+$ sudo rm -Rf /opt/churnometer/*
+restore the backup source
+$ cp -R ~/backup/* /opt/churnometer/
+restart the server
+$ sudo -u churnometer /etc/init.d/thin restart
+you're done
 
-# login to the server via ssh
-$ sudo -u postgres psql -c "drop database churnometer"
+
+
 
