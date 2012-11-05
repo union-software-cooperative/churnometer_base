@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 #!/bin/bash
 
 DB_FILE="$2"
@@ -115,7 +132,9 @@ function source_config
   
   sudo -u $CHURN_USER bash -c " \
     sed \"s|REPLACEME_CHURN_USER|$CHURN_USER|g\" $WWW_PATH/config/config_site.yaml.example \
-    | sed \"s|REPLACEME_CHURN_PASS|$CHURN_PASS|g\" > $WWW_PATH/config/config_site.yaml"
+    | sed \"s|REPLACEME_CHURN_PASS|$CHURN_PASS|g\" \
+    | sed \"s|REPLACEME_SOURCE_REPO|$REPO |g\" \
+    > $WWW_PATH/config/config_site.yaml"
 
   sudo -u $CHURN_USER vim config/config_site.yaml
   sudo -u $CHURN_USER mkdir $WWW_PATH/uploads

@@ -11,3 +11,4 @@ database:
   facttable: memberfacthelper
 demo: false
 use_new_query_generation_method: true 
+source_repo: REPLACEME_SOURCE_REPO

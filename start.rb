@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 #require 'debugger'
 require 'rubygems'
 require 'sinatra/base'
@@ -237,6 +254,15 @@ class Churnobyl < Sinatra::Base
     end 
   end
   
+  get "/source" do
+    @model = ip()
+    file = "source_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
+    path = "tmp/source"
+    @model.download_source(path)
+    send_file("#{path}.zip", :disposition => 'attachment', :filename => file)   
+    @model.close_db()
+  end
+  
   post "/import" do
     session[:flash] = nil
     @model = ip()
@@ -285,10 +311,10 @@ class Churnobyl < Sinatra::Base
       end
     end  
     
-    if params['action'] == "rebuild"
-      @model.rebuild
-      redirect '/import'
-    end 
+    #if params['action'] == "rebuild"
+    #  @model.rebuild
+    #  redirect '/import'
+    #end 
     
     if params['action'] == "diags"
       response.write @model.diags
