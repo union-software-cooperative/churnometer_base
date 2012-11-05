@@ -95,8 +95,10 @@ function churn_user
   
   sudo useradd -d /home/$CHURN_USER -m $CHURN_USER -p $CHURN_PASS  
   sudo usermod -s /bin/bash $CHURN_USER # set up bash shell
-  sudo usermod -a -G sudo $CHURN_USER
-  
+  sudo usermod -a -G sudo $CHURN_USER # allow sudo from churnometer
+  sudo bash -c "echo AllowUsers $CHURN_USER >> /etc/ssh/sshd_config"
+  sudo restart ssh
+    
   sudo -u $CHURN_USER ssh-keygen -t rsa -b 4096 -f /home/$CHURN_USER/.ssh/id_rsa -N ""
   echo -e "\n\nCopy this key to https://github.com/account/ssh"
   echo -e "- To download the source you'll need to be a collaborator on $REPO (if it isn't public)"
