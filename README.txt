@@ -49,3 +49,13 @@ $ /etc/init.d/thin restart
 CONFIGURATION 
 
 This is still very technical.  When starting from scratch, you'll need to edit config.yaml.  Run /import?action=rebuild (remarked out in start.rb), then import three files via /import.  members.txt, transactions.txt and displaytext.txt.  We need some examples of these files.
+
+DISASTER RECOVERY
+
+Scenario 1 - restore database from backup (assuming data corruption)
+
+# copy
+
+# login to the server via ssh
+$ sudo -u postgres psql -c "drop database churnometer"
+
