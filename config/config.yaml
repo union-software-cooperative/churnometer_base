@@ -1,6 +1,6 @@
 application_start_date: 2012-10-3
 use_new_query_generation_method: true
-work_site_dimension_id: department
+work_site_dimension_id: employer
 default_groupby_dimension_id: union
 member_paying_status_code: paying
 member_awaiting_first_payment_status_code: a1p

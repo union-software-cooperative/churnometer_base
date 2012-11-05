@@ -78,5 +78,9 @@ class ChurnPresenter_Transfers
     @request.params['endDate']
   end
   
+  def work_site_dimension_id
+    @app.config['work_site_dimension_id']
+  end
+  
 end
 
