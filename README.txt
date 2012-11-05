@@ -26,7 +26,7 @@ Contact lukerohde@freechange.com.au to get added as a collaborator to the projec
 
 To install on Ubuntu 12.04 or 12.10, run the script located at git@github.com:/lukerohde/churnometer_base/install/install (You'll need to be a collaborator - see above) 
 
-Download this file. 
+# Download the installer file from git@github.com:/lukerohde/churnometer_base/install/install or get from backup
 $ chmod 755 ./install  
 $ ./install install
 
