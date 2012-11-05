@@ -29,7 +29,7 @@ class QueryDetail < QueryDetailBase
       'a1p_newjoin' => 'where c.a1p_newjoin<>0',
       'a1p_rejoin' => 'where c.a1p_rejoin<>0',
       'a1p_real_loss' => 'where c.a1p_real_loss<>0',
-      'a1p_to_paying' => 'where c.a1p_to_paying>0',
+      'a1p_to_paying' => 'where c.a1p_to_paying<>0',
       'a1p_to_other' => 'where c.a1p_to_other<>0',
       'a1p_other_gain' => 'where c.a1p_other_gain<>0',
       'a1p_other_loss' => 'where c.a1p_other_loss<>0',
@@ -68,7 +68,8 @@ class QueryDetail < QueryDetailBase
     non_status_filter = filter.exclude('status')
     user_selections_filter = filter.include('status')
 
-    with_trans = @with_trans && non_transaction_filter_column?(@filter_column) == false
+    #with_trans = @with_trans && non_transaction_filter_column?(@filter_column) == false
+    with_trans = @with_trans 
 
     end_date = @end_date + 1
 
