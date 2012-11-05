@@ -1,7 +1,10 @@
 select
 	members.memberid
-	, case when rtrim(ltrim(coalesce(exitcode, ''))) <> ''
-	then lower(rtrim(ltrim(coalesce(exitcode, ''))))
+	, 
+	case 
+		when ChargeScale = 'life' then 'life'
+		when PayMethod = 'non' then  lower(rtrim(ltrim(coalesce(members.status, ''))))
+		when rtrim(ltrim(coalesce(exitcode, ''))) <> ''	then lower(rtrim(ltrim(coalesce(exitcode, ''))))
 	else 
 		case when 
 			coalesce(members.signal8, 0) > 0 --OR payers.timecreated < DATEADD(y,-42,getdate())
@@ -41,7 +44,7 @@ select
 	, lower(rtrim(ltrim(members.signal8))) as col16 --signal8
 	, lower(rtrim(ltrim(members.mainlanguage))) as col17 --arrears_cycle
 	, lower(rtrim(ltrim(members.EWBNo))) as col18 -- fulltime, partTime, casual
-	, lower(rtrim(ltrim(case when members.KitIssued = -1 then 'growth' else 'dev' end))) as col19 -- 0/-1 (growth, development)
+	, 'asuqld' as col19
 from
 	members
 	left join employers on members.employer = employers.employerid
@@ -56,4 +59,7 @@ from
 		group by 
 			memberid
 	) as payers on members.memberid = payers.memberid
+where
+	members.memberid <> 0
+
 

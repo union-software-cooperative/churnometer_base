@@ -7,21 +7,21 @@ from
 	select
 		'status' as attribute
 		, 'A1P' as id
-		, 'Application In' as displaytext
+		, 'New Application' as displaytext
 	union all
 	select
 		'status' as attribute
 		, 'PAYING' as id
-		, 'Paid-Up' as displaytext
+		, 'Paying' as displaytext
 	union all	
 	select
 		'status' as attribute
 		, 'STOPPED' as id
-		, 'In Arrears' as displaytext
+		, 'Stopped Paying' as displaytext
 	union all
 	select
 		'status' as attribute
-		, cast(code as varchar(max)) as id
+		, lower(rtrim(ltrim(coalesce(cast(code as varchar(max)), '')))) as id
 		, Description
 	from
 		exits e
@@ -30,7 +30,7 @@ from
 	union all
 	select
 		'status' as attribute
-		, cast(code as varchar(max)) as id
+		, lower(rtrim(ltrim(coalesce(cast(code as varchar(max)), '')))) as id
 		, Description
 	from
 		Status 
@@ -44,6 +44,8 @@ from
 		, coalesce(surname, '') + ', ' + coalesce(case when isnull(knownname, '') <> '' then knownname else givennames end, '') as displaytext
 	from
 		members
+	where
+		MemberID <> 0
 	union all
 	select 
 		'col0' as attribute
@@ -164,28 +166,59 @@ from
 		, 'advocate'
 		, 'Advocate'
 	union all
-	select
-		'col15'
-		, '30'
-		, 'Delegate'
-	union all
+	--select
+	--	'col15'
+	--	, '30'
+	--	, 'Delegate'
+	--union all
+	--select 
+	--	'col15'
+	--	, '10'
+	--	, 'Contact'
 	select 
 		'col15'
-		, '10'
-		, 'Contact'
+		, cast(d.code as varchar(max)) as id
+		, d.description as displaytext
+	from
+		WorkplaceRoles d	 
 	union all
 	select
 		'col16'
 		, '0'
 		, 'Paid-up'
-	union all
-	select
-		'col17'
-		, '0'
-		, 'Development'
+	union all 
+	select 
+		'col16'
+		, '1'
+		, 'Phone call'
+	union all 
+	select 
+		'col16'
+		, '2'
+		, 'Letter 1 (no resignation)'
+	union all 
+	select 
+		'col16'
+		, '3'
+		, 'Letter 1 (resignation)'
+	union all 
+	select 
+		'col16'
+		, '4'
+		, 'Letter 2 (no resignation)'
+	union all 
+	select 
+		'col16'
+		, '5'
+		, 'Letter 2 (resignation)'
+	union all 
+	select 
+		'col16'
+		, '6'
+		, 'Debt Collector'
 	union all
 	select
 		'col19'
-		, '-1'
-		, 'Growth'
+		, 'asuqld'
+		, 'ASU Queensland'
 )as asdf
