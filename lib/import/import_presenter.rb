@@ -315,4 +315,12 @@ class ImportPresenter
     console_ex("rm -f tmp/*.Marshal")
   end
   
+  def restart
+    cmd = "sudo /etc/init.d/postgresql restart"
+    cmd << "; /etc/init.d/thin restart"
+    cmd << "; rm -f tmp/*.Marshal"
+    
+    console_ex(cmd)
+  end
+  
 end

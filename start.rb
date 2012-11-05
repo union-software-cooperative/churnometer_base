@@ -228,16 +228,6 @@ class Churnobyl < Sinatra::Base
       return
     end 
     
-    if params['action'] == "backup"
-      file = "backup_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
-      path = "backup/backup.zip"
-      @model.backup(path)
-      send_file(path, :disposition => 'attachment', :filename => file)
-  
-      session[:flash] = "Successfully backed up data"
-      redirect '/import'
-    end
-    
     #if params['action'] == "rebuild"
     #  @model.rebuild
     #end 
@@ -263,6 +253,23 @@ class Churnobyl < Sinatra::Base
     @model.close_db()
   end
   
+  get "/backup" do
+    @model = ip()
+    file = "backup_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
+    path = "backup/backup.zip"
+    @model.backup(path)
+    send_file(path, :disposition => 'attachment', :filename => file)
+    @model.close_db()
+  end
+  
+  get "/restart" do
+    @model = ip()
+    @model.restart
+    @model.close_db()
+    session[:flash] = "Successfully restarted database, web server and emptied cache"
+    redirect '/import'
+  end
+  
   post "/import" do
     session[:flash] = nil
     @model = ip()
@@ -272,8 +279,6 @@ class Churnobyl < Sinatra::Base
       session[:flash] = "Successfully emptied staging tables"
       redirect '/import'
     end 
-    
-
     
     if params['action'] == "import"
       if @model.import_ready? 
