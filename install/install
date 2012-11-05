@@ -74,15 +74,16 @@ function install
   echo "***********************************************************************"
 
   sudo apt-get update
-  sudo apt-get -y install ruby1.9.1
-  sudo apt-get -y install postgresql libpq-dev
-  sudo apt-get -y install git
-  sudo apt-get -y install ruby1.9.1-dev
-  sudo apt-get -y install build-essential
-  sudo apt-get -y install sendmail
-  sudo apt-get -y install libxml2-dev libxslt-dev
-  sudo apt-get -y install nginx 
-  sudo apt-get -y install zip
+  sudo apt-get -y install \ 
+    ruby1.9.1 \
+    postgresql libpq-dev \
+    git \
+    ruby1.9.1-dev \
+    build-essential \
+    sendmail \
+    libxml2-dev libxslt-dev \
+    nginx \
+    zip 
 }
 
 function churn_user
@@ -93,11 +94,12 @@ function churn_user
   echo "*"
   echo "***********************************************************************"
   
-  sudo useradd -d /home/$CHURN_USER -m $CHURN_USER -p $CHURN_PASS  
+  sudo useradd -d /home/$CHURN_USER -m $CHURN_USER # -p option for setting password doesn't work
+  sudo bash -c "echo $CHURN_USER:$CHURN_PASS | chpasswd" # set password
   sudo usermod -s /bin/bash $CHURN_USER # set up bash shell
-  sudo usermod -a -G sudo $CHURN_USER # allow sudo from churnometer
-  sudo bash -c "echo AllowUsers $CHURN_USER >> /etc/ssh/sshd_config"
-  sudo restart ssh
+  sudo usermod -a -G sudo $CHURN_USER # allow sudo
+  sudo bash -c "echo AllowUsers $CHURN_USER >> /etc/ssh/sshd_config" # allow ssh
+  sudo /etc/init.d/ssh restart
     
   sudo -u $CHURN_USER ssh-keygen -t rsa -b 4096 -f /home/$CHURN_USER/.ssh/id_rsa -N ""
   echo -e "\n\nCopy this key to https://github.com/account/ssh"
@@ -310,8 +312,8 @@ case $1 in
     db_config
     db_import
     ruby_config
-    daemonise
     samba
+    daemonise
   ;;
   *)
     echo >&2 "Usage: $0 < install | just-samba | just-software | just-user | just-source | just-dbconfig | just-data | just-gems | just-daemonise > [db backup file]"

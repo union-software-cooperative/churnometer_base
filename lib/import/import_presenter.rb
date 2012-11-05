@@ -316,7 +316,8 @@ class ImportPresenter
   end
   
   def restart
-    cmd = "sudo /etc/init.d/postgresql restart"
+    # Crudely assumes dbpass and churnometer user pass is the same (that's how its configured)
+    cmd = "echo #{@db.dbpass} | sudo -S /etc/init.d/postgresql restart"
     cmd << "; /etc/init.d/thin restart"
     cmd << "; rm -f tmp/*.Marshal"
     
