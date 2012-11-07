@@ -239,6 +239,7 @@ roles:
 column_names:
   a1p_real_gain: new applications (total)
   a1p_to_other: applications failed
+  a1p_to_other: applications exited w/out payment
   paying_start_count: paying at start date
   paying_real_gain: started paying
   paying_real_loss: ceased paying
@@ -261,15 +262,15 @@ column_names:
   end_date: end date
   annualisedavgcontribution: estimated annual contribution
   contributors: unique contributors
-  stopped_start_count: stopped paying at start date, 
+  stopped_start_count: stopped paying at start date 
   stopped_end_count: stopped paying at end date
   stopped_real_gain: entered stopped paying cycle
   stopped_real_loss: ceased stopped paying
   stopped_other_gain: stopped paying transfers in
   stopped_other_loss: stopped paying transfers out
-  stopped_to_paying: stopped paying (resumed paying)
-  stopped_to_other: stopped paying (exited)
-  stopped_unchanged_gain: became stopped paying (pending resolution)
+  stopped_to_paying: left stopped paying cycle (resumed paying)
+  stopped_to_other: left stopped paying cycle (exited)
+  stopped_unchanged_gain: entered stopped paying cycle (pending resolution)
   a1p_unchanged_gain: new applications (pending payment)
   contactdetail: current contact detail
   followupnotes: follow up notes

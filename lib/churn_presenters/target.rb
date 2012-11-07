@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 require './lib/churn_presenters/helpers.rb'
 require './lib/settings.rb'
 
@@ -13,14 +30,14 @@ class ChurnPresenter_Target
   
   def weeks
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
     
     (Float(end_date - start_date) / 7).round(1)
   end
   
   def growth
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
   
     start_count = paying_start_total
     
@@ -59,7 +76,7 @@ class ChurnPresenter_Target
     @request.data.each { | row | cards += row['a1p_real_gain'].to_i }
     
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
     
     cards_per_week = 0.0
     if start_date != end_date  
@@ -103,7 +120,7 @@ class ChurnPresenter_Target
     @request.data.each { | row | failed -= row['a1p_to_other'].to_i }
     
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
     
     cards_per_week = 0.0
     if start_date != end_date  
@@ -135,7 +152,7 @@ class ChurnPresenter_Target
      @request.data.each { | row | failed -= row['a1p_to_other'].to_i }
 
      start_date = Date.parse(@request.params['startDate'])
-     end_date = Date.parse(@request.params['endDate'])
+     end_date = Date.parse(@request.params['endDate']) + 1
 
      cards_per_week = 0.0
      weeks = 0
@@ -157,7 +174,7 @@ class ChurnPresenter_Target
     @request.data.each { | row | cards += row['a1p_real_gain'].to_i }
     
     start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate'])
+    end_date = Date.parse(@request.params['endDate']) + 1
     
     cards_per_week = 0.0
     if start_date != end_date  
