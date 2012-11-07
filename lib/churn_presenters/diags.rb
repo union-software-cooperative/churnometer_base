@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 require './lib/churn_presenters/helpers.rb'
 
 class ChurnPresenter_Diags
@@ -22,7 +39,7 @@ class ChurnPresenter_Diags
     @role = request.auth.role
     @rows = request.data.length if !request.data.nil?
     @rows ||= 0
-    @filter = request.parsed_params()[Filter]
+    @filter = request.query_filterterms.terms #request.parsed_params()[Filter]
     @filter_xml = request.xml
   end
   

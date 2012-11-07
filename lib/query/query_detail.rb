@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 require './lib/query/query_detail_base'
 
 # The detail query is used when 'drilling down' into non-groupby cells in the table display, accessed
@@ -29,7 +46,7 @@ class QueryDetail < QueryDetailBase
       'a1p_newjoin' => 'where c.a1p_newjoin<>0',
       'a1p_rejoin' => 'where c.a1p_rejoin<>0',
       'a1p_real_loss' => 'where c.a1p_real_loss<>0',
-      'a1p_to_paying' => 'where c.a1p_to_paying>0',
+      'a1p_to_paying' => 'where c.a1p_to_paying<>0',
       'a1p_to_other' => 'where c.a1p_to_other<>0',
       'a1p_other_gain' => 'where c.a1p_other_gain<>0',
       'a1p_other_loss' => 'where c.a1p_other_loss<>0',
@@ -68,7 +85,8 @@ class QueryDetail < QueryDetailBase
     non_status_filter = filter.exclude('status')
     user_selections_filter = filter.include('status')
 
-    with_trans = @with_trans && non_transaction_filter_column?(@filter_column) == false
+    #with_trans = @with_trans && non_transaction_filter_column?(@filter_column) == false
+    with_trans = @with_trans 
 
     end_date = @end_date + 1
 

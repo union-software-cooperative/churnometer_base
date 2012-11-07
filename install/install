@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisation's turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 #!/bin/bash
 
 DB_FILE="$2"
@@ -57,14 +74,17 @@ function install
   echo "***********************************************************************"
 
   sudo apt-get update
-  sudo apt-get -y install ruby1.9.1
-  sudo apt-get -y install postgresql libpq-dev
-  sudo apt-get -y install git
-  sudo apt-get -y install ruby1.9.1-dev
-  sudo apt-get -y install build-essential
-  sudo apt-get -y install sendmail
-  sudo apt-get -y install libxml2-dev libxslt-dev
-  sudo apt-get -y install nginx 
+
+  sudo apt-get -y install \ 
+    ruby1.9.1 \
+    postgresql libpq-dev \
+    git \
+    ruby1.9.1-dev \
+    build-essential \
+    sendmail \
+    libxml2-dev libxslt-dev \
+    nginx \
+    zip 
 }
 
 function churn_user
@@ -75,9 +95,13 @@ function churn_user
   echo "*"
   echo "***********************************************************************"
   
-  sudo useradd -d /home/$CHURN_USER -m $CHURN_USER -p $CHURN_PASS  
+  sudo useradd -d /home/$CHURN_USER -m $CHURN_USER # -p option for setting password doesn't work
+  sudo bash -c "echo $CHURN_USER:$CHURN_PASS | chpasswd" # set password
   sudo usermod -s /bin/bash $CHURN_USER # set up bash shell
-
+  sudo usermod -a -G sudo $CHURN_USER # allow sudo
+  sudo bash -c "echo AllowUsers $CHURN_USER >> /etc/ssh/sshd_config" # allow ssh
+  sudo /etc/init.d/ssh restart
+    
   sudo -u $CHURN_USER ssh-keygen -t rsa -b 4096 -f /home/$CHURN_USER/.ssh/id_rsa -N ""
   echo -e "\n\nCopy this key to https://github.com/account/ssh"
   echo -e "- To download the source you'll need to be a collaborator on $REPO (if it isn't public)"
@@ -114,12 +138,15 @@ function source_config
   
   sudo -u $CHURN_USER bash -c " \
     sed \"s|REPLACEME_CHURN_USER|$CHURN_USER|g\" $WWW_PATH/config/config_site.yaml.example \
-    | sed \"s|REPLACEME_CHURN_PASS|$CHURN_PASS|g\" > $WWW_PATH/config/config_site.yaml"
+    | sed \"s|REPLACEME_CHURN_PASS|$CHURN_PASS|g\" \
+    | sed \"s|REPLACEME_SOURCE_REPO|$REPO |g\" \
+    > $WWW_PATH/config/config_site.yaml"
 
   sudo -u $CHURN_USER vim config/config_site.yaml
   sudo -u $CHURN_USER mkdir $WWW_PATH/uploads
   sudo -u $CHURN_USER mkdir $WWW_PATH/tmp
   sudo -u $CHURN_USER mkdir $WWW_PATH/log
+  sudo -u $CHURN_USER mkdir $WWW_PATH/backup
 
   sudo git config --system user.email "$USER@$HOSTNAME"
   sudo git config --system user.name "$USER"
@@ -224,6 +251,30 @@ function daemonise
   sudo /etc/init.d/nginx restart
 }
 
+<<<<<<< HEAD
+=======
+function samba
+{
+  echo "***********************************************************************"
+  echo "* INSTALLING WINDOWS SHARE"
+  echo "*"
+  echo "*"
+  echo "***********************************************************************"
+  
+  sudo apt-get install samba samba-common python-glade2 system-config-samba
+  sudo mv /etc/samba/smb.conf /etc/samba/smb.conf.bak 
+  
+  sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" $WWW_PATH/config/smb.conf.example \
+    | sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
+    > ~/smb.conf.tmp
+    
+  sudo mv ~/smb.conf.tmp /etc/samba/smb.conf 
+  sudo bash -c "(echo $CHURN_PASS; echo $CHURN_PASS) | smbpasswd -s -a $CHURN_USER"
+  
+  sudo /etc/init.d/smbd restart
+}
+
+>>>>>>> 21b4e8f94be6d7a9eb9b8d4a2b266964aeb75c33
 case $1 in 
   just-software)
     confirm_config
@@ -253,6 +304,10 @@ case $1 in
     confirm_config
     daemonise
   ;;
+  just-samba)
+    confirm_config
+    samba
+  ;;
   install)
     confirm_config
     churn_user
@@ -261,10 +316,11 @@ case $1 in
     db_config
     db_import
     ruby_config
+    samba
     daemonise
   ;;
   *)
-    echo >&2 "Usage: $0 < install | just-software | just-user | just-source | just-dbconfig | just-data | just-gems | just-daemonise > [db backup file]"
+    echo >&2 "Usage: $0 < install | just-samba | just-software | just-user | just-source | just-dbconfig | just-data | just-gems | just-daemonise > [db backup file]"
     exit 1
     ;;
 esac
