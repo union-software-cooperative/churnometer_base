@@ -1,0 +1,15 @@
+#======================= Global Settings ===================================== 
+[global]
+workgroup = WORKGROUP
+server string = Samba Server %v
+netbios name = churnometer
+security = user
+map to guest = bad user
+dns proxy = no
+unix password sync = yes
+#============================ Share Definitions ============================== 
+[production]
+path = REPLACEME_WWW_PATH
+valid users = REPLACEME_CHURN_USER
+browsable = yes
+writable = yes
