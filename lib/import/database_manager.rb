@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 require './lib/churn_db'
 require 'open3.rb'
 
@@ -544,9 +561,9 @@ class DatabaseManager
             then -1 else 0 end as stoppedloss
         , 0 as othergain
         , case when 
-            NOT coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
-            AND NOT coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
-            AND NOT coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
+            NOT (coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p')
+            AND NOT (coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying')
+            AND NOT (coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped')
             then -1 else 0 end as otherloss
     SQL
   
@@ -562,7 +579,7 @@ class DatabaseManager
         , nextduration duration
       from 
         memberfact
-        inner join nextchange on memberfact.changeid = nextchange.changeid
+        left join nextchange on memberfact.changeid = nextchange.changeid
 
       UNION ALL
 
@@ -577,19 +594,19 @@ class DatabaseManager
         , coalesce(oldstatus, '') as _status
         , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
             then 1 else 0 end as statusdelta
-        , case when coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
+        , case when coalesce(oldstatus, '') <> 'a1p' and coalesce(newstatus, '') = 'a1p'
             then 1 else 0 end as a1pgain
         , 0 as a1ploss
-        , case when coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
+        , case when coalesce(oldstatus, '') <> 'paying' and coalesce(newstatus, '') = 'paying'
           then 1 else 0 end as payinggain
         , 0 as payingloss
-        , case when coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
+        , case when coalesce(oldstatus, '') <> 'stopped' and coalesce(newstatus, '') = 'stopped'
             then 1 else 0 end as stoppedgain
         , 0 as stoppedloss
         , case when 
-            NOT coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
-            AND NOT coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
-            AND NOT coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
+            NOT (coalesce(oldstatus, '') <> 'a1p' and coalesce(newstatus, '') = 'a1p')
+            AND NOT (coalesce(oldstatus, '') <> 'paying' and coalesce(newstatus, '') = 'paying')
+            AND NOT (coalesce(oldstatus, '') <> 'stopped' and coalesce(newstatus, '') = 'stopped')
             then 1 else 0 end as othergain
         , 0 as otherloss
     SQL
@@ -606,7 +623,7 @@ class DatabaseManager
         , nextduration duration
       from 
         memberfact
-        inner join nextchange on memberfact.changeid = nextchange.changeid
+       left join nextchange on memberfact.changeid = nextchange.changeid
     SQL
   end
   

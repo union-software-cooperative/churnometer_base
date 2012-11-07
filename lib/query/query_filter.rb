@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 require './lib/query/query_memberfact'
 
 # A query of Churnometer data that makes use of filtering by dimension.
@@ -160,9 +177,9 @@ class FilterTerms
   # The hash should be only the "filter" part of the request hash, not the complete request hash with
   # all other parameters present.
   # dimensions: The Dimensions instance containing all possible filterable dimensions.
-  def self.from_request_params(parameter_hash, dimensions)
+  def self.from_request_params(parameter_hash, locks, dimensions)
     instance = self.new
-    instance._from_request_params(parameter_hash, dimensions)
+    instance._from_request_params(parameter_hash, locks, dimensions)
     instance
   end
 
@@ -249,7 +266,7 @@ class FilterTerms
     end
   end
 
-  def _from_request_params(parameter_hash, dimensions)
+  def _from_request_params(parameter_hash, locks, dimensions)
     parameter_hash.each do |key, values|
       values = Array(values)
       
@@ -284,6 +301,16 @@ class FilterTerms
         raise "Unknown dimension '#{key}' given for filter term." if dimension.nil?
         
         append(dimension, value, is_exclude)
+      end
+      
+      locks.each do | key, csv|
+        csv.split(',').each do | value |
+          dimension = dimensions.dimension_for_id(key)
+  
+          raise "Unknown dimension '#{key}' given for filter term." if dimension.nil?
+          
+          append(dimension, value, false)
+        end
       end
     end
   end

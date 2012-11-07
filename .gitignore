@@ -5,5 +5,7 @@ log
 doc
 config/config_site.yaml
 uploads/*
+backup/*
 .sass_cache
 .sass_cache/*
+.DS_Store

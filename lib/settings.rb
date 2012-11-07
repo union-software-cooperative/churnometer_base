@@ -1,3 +1,20 @@
+#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Churnometer is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
+
 require 'date'
 require 'yaml'
 
@@ -171,7 +188,16 @@ module Settings
      end
 
      def tips
-      app().col_descriptions
+      result = {}
+      
+      # substitute any reference in the tooltip to {group_by} 
+      # with the currently grouped dimension
+      row_header_col_name = @request.groupby_column_name.downcase
+      app().col_descriptions.each do | k, v |
+        v.gsub! '{group_by}', row_header_col_name
+        result[k] = v
+      end  
+      result
      end
 
 end
