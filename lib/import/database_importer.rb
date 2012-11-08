@@ -76,10 +76,10 @@ class Importer
     @progress = "Step 1. Inserting member changes"
     db.async_ex("select insertmemberfact('#{@import_date}')")
     db.async_ex("vacuum memberfact")
-    db.async_ex("analyse memberfact")
     db.async_ex("vacuum membersourceprev")
+    db.async_ex("analyse memberfact")
     db.async_ex("analyse membersourceprev")
-
+    
     @progress = "Step 2. Inserting new transactions"
     db.async_ex("select inserttransactionfact('#{@import_date}')")
     db.async_ex("vacuum transactionfact")
