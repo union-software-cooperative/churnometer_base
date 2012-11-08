@@ -271,7 +271,7 @@ class ImportPresenter
   end
 
   def member_import_command(file)
-    cmd = "psql churnometer -c \"\\copy membersource (memberid, status" 
+    cmd = "psql #{@db.dbname} -c \"\\copy membersource (memberid, status" 
     
     dimensions.each do |d|
     	cmd << ", #{d.column_base_name}" 
@@ -281,14 +281,14 @@ class ImportPresenter
   end
   
   def displaytext_import_command(file)
-  	cmd = "psql churnometer -c \""
+  	cmd = "psql #{@db.dbname} -c \""
   	cmd << "\\copy displaytextsource (attribute, id, displaytext) " 
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
   end
   
   def transaction_import_command(file)
-  	cmd = "psql churnometer -c \""
+  	cmd = "psql #{@db.dbname} -c \""
   	cmd << "\\copy transactionsource (id, creationdate, memberid, userid, amount) " 
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
@@ -317,7 +317,7 @@ class ImportPresenter
   end
   
   def restart
-    # Crudely assumes dbpass and churnometer user pass is the same (that's how its configured)
+    # Crudely assumes dbpass and #{@db.dbname} user pass is the same (that's how its configured)
     cmd = "echo #{@db.dbpass} | sudo -S /etc/init.d/postgresql restart"
     cmd << "; rm -f tmp/*.Marshal"
     cmd << "; /etc/init.d/thin restart & "
