@@ -265,11 +265,14 @@ class Churnobyl < Sinatra::Base
   end
   
   get "/restart" do
+    @flash = session[:flash]
+    session[:flash] = nil
+    erb :restart
+  end
+  
+  post "/restart" do
     @model = ip()
     @model.restart
-    @model.close_db()
-    session[:flash] = "Successfully restarted database, web server and emptied cache"
-    redirect '/import'
   end
   
   post "/import" do
@@ -369,6 +372,106 @@ class Churnobyl < Sinatra::Base
     else
       redirect '/import'
     end
+  end
+
+  get '/config' do 
+    @flash = session[:flash]
+    session[:flash] = nil
+    
+    @config = ""
+    File.open("config/config.yaml", 'r') do |f|
+      while line=f.gets
+        @config+=line
+      end
+    end
+    
+    erb :config
+  end
+  
+  post '/config' do
+    @flash = nil
+    @config = params['config']
+      
+    begin
+      
+      if ! (params['config'].nil? || params['config'].empty?) 
+        
+        testConfig = ChurnometerApp.new(settings.environment, StringIO.new(params['config']), self.class.churnometer_app_config_io_desc())
+        testConfig.validate
+        dbm = DatabaseManager.new(testConfig)
+        @yaml_spec = dbm.migration_yaml_spec
+        if @yaml_spec.nil?
+          File.open("config/config.yaml", 'w') do |f|
+            f.puts params['config']
+          end
+        else
+          session[:new_config] = @config
+          redirect :migrate
+        end
+      else
+        raise "empty config!"
+      end
+    rescue StandardError => err
+      @flash = "Failed to save config/config.yaml: " + err.message
+    rescue Psych::SyntaxError => err
+      @flash = "Failed to save config/config.yaml: " + err.message
+    end
+    
+    return erb :config if !@flash.nil?
+    
+    session[:flash] = "Successfully saved config/config.yaml "
+    redirect '/restart?redirect=/config'
+  end
+
+  get '/migrate' do
+    @yaml_spec = nil
+    @config = session[:new_config]
+    if @config.nil? return erb :migrate
+    
+    # get new config and dimensions
+    new_config = ChurnometerApp.new(settings.environment, StringIO.new(@config), self.class.churnometer_app_config_io_desc())
+    dbm = DatabaseManager.new(new_config)
+    
+    # get the proposed migration, and return it to the user to allow intervention
+    @yaml_spec = dbm.migration_yaml_spec
+    erb :migrate
+  end
+  
+  post '/migrate' do
+    @flash = nil
+    @yaml_spec = params['yaml_spec']
+    @config = session[:new_config]
+    if @config.nil? return erb :migrate
+    
+    begin 
+      new_config = ChurnometerApp.new(settings.environment, StringIO.new(@config), self.class.churnometer_app_config_io_desc())
+      dbm = DatabaseManager.new(new_config)
+      migration_spec = dbm.parse_migration(@yaml_spec)
+      
+      @yaml_spec = dbm.migrate_sql(migration_spec) # just for diags
+      
+      dbm.migrate(migration_spec) # this can take some serious time
+    rescue StandardError => err
+      @flash = "Failed to migrate: " + err.message
+    rescue Psych::SyntaxError => err
+      @flash = "Failed to migrate: " + err.message
+    end
+    
+    return erb :migrate if !@flash.nil?
+    
+    # If we made it this far, save the new config
+    begin
+      File.open("config/config.yaml", 'w') do |f|
+        f.puts @config
+      end
+    rescue StandardError => err
+      @flash = "This is bad.  Successfully migrated database but to save config/config.yaml: " + err.message
+    end
+    session[:config] = nil # don't need this anymore, either on success or failure
+    
+    return erb :config if !@flash.nil? # problem saving config, should be able to render from @config
+    
+    redirect '/restart?redirect=/config'
   end
 
   get '/scss/:name.css' do |name|
