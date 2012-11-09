@@ -441,6 +441,7 @@ class Churnobyl < Sinatra::Base
   
   post '/migrate' do
     @flash = nil
+    session[:flash] = nil
     @yaml_spec = params['yaml_spec']
     @config = session[:new_config]
     if @config.nil?
@@ -454,6 +455,8 @@ class Churnobyl < Sinatra::Base
       dbm = DatabaseManager.new(new_config)
       migration_spec = dbm.parse_migration(@yaml_spec)
       
+      #@yaml_spec = dbm.migrate_sql(migration_spec)
+      #@flash = "getting sql"
       dbm.migrate(migration_spec) # this can take some serious time
     rescue StandardError => err
       @flash = "Failed to migrate: " + err.message
@@ -474,7 +477,7 @@ class Churnobyl < Sinatra::Base
     end
     
     return erb :config if !@flash.nil? # problem saving config, should be able to render from @config
-    
+    session[:flash] = "Successfully restructed database and saved config/config.yaml"
     redirect '/restart?redirect=/config'
   end
 
