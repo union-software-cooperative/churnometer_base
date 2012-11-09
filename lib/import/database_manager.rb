@@ -28,6 +28,10 @@ class DatabaseManager
     @dimensions = app.custom_dimensions
     @db = Db.new(app)
     @app = app
+    
+    @paying_db = @db.quote(@app.member_paying_status_code)
+    @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
+    @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
   end
 
   def dimensions
@@ -69,14 +73,12 @@ class DatabaseManager
     sql
   end
 
-  def rebuild_sql()
+  def migrate_rebuild_without_indexes_sql()
     sql = <<-SQL
       drop table if exists importing;
       select 0 as importing into importing;
    
       drop function if exists insertmemberfact();
-      drop function if exists inserttransactionfact();
-      drop function if exists updatedisplaytext();
       drop function if exists updatememberfacthelper();
       
       drop view if exists memberchangefromlastchange;
@@ -86,27 +88,15 @@ class DatabaseManager
 
       drop table if exists memberfact_migration;
       drop table if exists membersourceprev_migration;
-      drop table if exists transactionfact_migration;
-      drop table if exists transactionsourceprev_migration;
-      drop table if exists displaytext_migration;
       drop table if exists memberfacthelper_migration;
       
-	    alter table if exists memberfact rename to memberfact_migration;
+      alter table if exists memberfact rename to memberfact_migration;
       alter table if exists membersourceprev rename to membersourceprev_migration;
-      alter table if exists transactionfact rename to transactionfact_migration;
-      alter table if exists transactionsourceprev rename to transactionsourceprev_migration;
-      alter table if exists displaytext rename to displaytext_migration;
       alter table if exists memberfacthelper rename to memberfacthelper_migration;
      
-      #{rebuild_displaytextsource_sql};
-      #{rebuild_transactionsource_sql};
-      #{rebuild_transactionsourceprev_sql};
       #{rebuild_membersource_sql};
       #{rebuild_membersourceprev_sql};
-      
       #{memberfact_sql};
-      #{transactionfact_sql};
-      #{displaytext_sql};
       
       #{lastchange_sql};
       #{memberchangefromlastchange_sql};
@@ -114,15 +104,69 @@ class DatabaseManager
       #{memberfacthelperquery_sql};
       #{memberfacthelper_sql}
       
-      #{updatedisplaytext_sql};
       #{updatememberfacthelper_sql};
       #{insertmemberfact_sql};
+    SQL
+  end
+  
+  def rebuild_from_scratch_without_indexes_sql()
+    sql = <<-SQL
+      drop table if exists importing;
+      select 0 as importing into importing;
+   
+      drop function if exists inserttransactionfact();
+      drop function if exists updatedisplaytext();
+      drop function if exists insertmemberfact();
+      drop function if exists updatememberfacthelper();
+      
+      drop view if exists memberchangefromlastchange;
+      drop view if exists memberchangefrommembersourceprev;
+      drop view if exists lastchange;
+      drop view if exists memberfacthelperquery;
+
+      drop table if exists memberfact_migration;
+      drop table if exists membersourceprev_migration;
+      drop table if exists memberfacthelper_migration;
+      
+      drop table if exists transactionfact_migration;
+      drop table if exists transactionsourceprev_migration;
+      drop table if exists displaytext_migration;
+      
+      alter table if exists transactionfact rename to transactionfact_migration;
+      alter table if exists transactionsourceprev rename to transactionsourceprev_migration;
+      alter table if exists displaytext rename to displaytext_migration;
+
+	    alter table if exists memberfact rename to memberfact_migration;
+      alter table if exists membersourceprev rename to membersourceprev_migration;
+      alter table if exists memberfacthelper rename to memberfacthelper_migration;
+      
+      #{memberfact_sql};
+      #{rebuild_membersourceprev_sql};
+      #{rebuild_membersource_sql};
+      
+      #{displaytext_sql};
+      #{rebuild_transactionsourceprev_sql};
+      #{transactionfact_sql};
+      
+      #{rebuild_displaytextsource_sql};
+      #{rebuild_transactionsource_sql};
+      
+      #{lastchange_sql};
+      #{memberchangefromlastchange_sql};
+      #{memberchangefrommembersourceprev_sql};
+      #{memberfacthelperquery_sql};
+      #{memberfacthelper_sql}
+      
+      #{updatememberfacthelper_sql};
+      #{insertmemberfact_sql};
+      #{updatedisplaytext_sql};
       #{inserttransactionfact_sql};      
     SQL
   end
   
+  
   def rebuild()
-    db.ex(rebuild_sql)
+    db.ex(rebuild_from_scratch_without_indexes_sql)
     db.ex(rebuild_most_indexes_sql)
     db.ex(rebuild_memberfacthelper_indexes_sql)
     
@@ -457,12 +501,12 @@ class DatabaseManager
           where
             mf.memberid = h.memberid
             and (
-              oldstatus = 'paying'
-              or oldstatus = 'stopped'
-              or oldstatus = 'a1p'
-              or newstatus = 'paying'
-              or newstatus = 'stopped'
-              or newstatus = 'a1p'
+              oldstatus = #{@paying_db}
+              or oldstatus = #{@stopped_db}
+              or oldstatus = #{@a1p_db}
+              or newstatus = #{@paying_db}
+              or newstatus = #{@stopped_db}
+              or newstatus = #{@a1p_db}
             )
         )
         -- or have paid something since tracking begun
@@ -542,19 +586,19 @@ class DatabaseManager
         , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
             then -1 else 0 end as statusdelta
         , 0 as a1pgain
-        , case when coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p'
+        , case when coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db}
             then -1 else 0 end as a1ploss
         , 0 as payinggain
-        , case when coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying'
+        , case when coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db}
           then -1 else 0 end as payingloss
         , 0 as stoppedgain
-        , case when coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped'
+        , case when coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db}
             then -1 else 0 end as stoppedloss
         , 0 as othergain
         , case when 
-            NOT (coalesce(oldstatus, '') = 'a1p' and coalesce(newstatus, '') <> 'a1p')
-            AND NOT (coalesce(oldstatus, '') = 'paying' and coalesce(newstatus, '') <> 'paying')
-            AND NOT (coalesce(oldstatus, '') = 'stopped' and coalesce(newstatus, '') <> 'stopped')
+            NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
+            AND NOT (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
+            AND NOT (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
             then -1 else 0 end as otherloss
     SQL
   
@@ -585,19 +629,19 @@ class DatabaseManager
         , coalesce(oldstatus, '') as _status
         , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
             then 1 else 0 end as statusdelta
-        , case when coalesce(oldstatus, '') <> 'a1p' and coalesce(newstatus, '') = 'a1p'
+        , case when coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db}
             then 1 else 0 end as a1pgain
         , 0 as a1ploss
-        , case when coalesce(oldstatus, '') <> 'paying' and coalesce(newstatus, '') = 'paying'
+        , case when coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db}
           then 1 else 0 end as payinggain
         , 0 as payingloss
-        , case when coalesce(oldstatus, '') <> 'stopped' and coalesce(newstatus, '') = 'stopped'
+        , case when coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db}
             then 1 else 0 end as stoppedgain
         , 0 as stoppedloss
         , case when 
-            NOT (coalesce(oldstatus, '') <> 'a1p' and coalesce(newstatus, '') = 'a1p')
-            AND NOT (coalesce(oldstatus, '') <> 'paying' and coalesce(newstatus, '') = 'paying')
-            AND NOT (coalesce(oldstatus, '') <> 'stopped' and coalesce(newstatus, '') = 'stopped')
+            NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
+            AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
+            AND NOT (coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db})
             then 1 else 0 end as othergain
         , 0 as otherloss
     SQL
@@ -630,12 +674,12 @@ class DatabaseManager
           where
             mf.memberid = h.memberid
             and (
-              oldstatus = 'paying'
-              or oldstatus = 'stopped'
-              or oldstatus = 'a1p'
-              or newstatus = 'paying'
-              or newstatus = 'stopped'
-              or newstatus = 'a1p'
+              oldstatus = #{@paying_db}
+              or oldstatus = #{@stopped_db}
+              or oldstatus = #{@a1p_db}
+              or newstatus = #{@paying_db}
+              or newstatus = #{@stopped_db}
+              or newstatus = #{@a1p_db}
             )
         )
         -- or have paid something since tracking begun
@@ -1294,6 +1338,7 @@ class DatabaseManager
     SQL
   end
   
+  # ASU to NUW back-porting migration
   def migrate_transactionfact_sql
     <<-SQL
     
@@ -1318,6 +1363,7 @@ class DatabaseManager
     SQL
   end
   
+  # ASU to NUW back-porting migration
   def migrate_transactionsourceprev_sql
     <<-SQL
     
@@ -1340,7 +1386,7 @@ class DatabaseManager
     SQL
   end
   
-  
+  # ASU to NUW back-porting migration
   def migrate_displaytext_sql
     <<-SQL
     
@@ -1378,15 +1424,13 @@ class DatabaseManager
   
   def migration_yaml_spec
     m = {}
-    nothing_to_do = true
     result = nil
     
     # retreive current db schema, action = delete by default
     columns = db.ex("select column_name from information_schema.columns where table_name='membersourceprev';")
     columns.each do |row|
-      if ! ['memberid', 'status'].include?(row['column_name'])
+      if !['memberid', 'status'].include?(row['column_name'])
         m[row['column_name']] = 'DELETE'
-        nothing_to_do = false
       end
     end
       
@@ -1397,10 +1441,10 @@ class DatabaseManager
         m[d.column_base_name] = d.column_base_name 
       else
         m[d.column_base_name] = 'CREATE' 
-        nothing_to_do = false
       end
     end
-    result = m.to_yaml() #if !nothing_to_do
+        
+    result = m.to_yaml() if (m.count{ |k,v| v == 'DELETE' || v == 'CREATE' } > 0)
   end
   
   def parse_migration(yaml_spec)
@@ -1421,16 +1465,29 @@ class DatabaseManager
     migration_spec
   end
    
+  # ASU to NUW specific migration (replaced below!)
   def migrate_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
     <<-SQL
-      #{rebuild_sql()}
+      #{migrate_rebuild_without_indexes_sql()}
       #{migrate_membersourceprev_sql(mapping)}
       #{migrate_memberfact_sql(mapping)}
       #{migrate_transactionfact_sql()}
       #{migrate_transactionsourceprev_sql()}
       #{migrate_displaytext_sql()}
+      #{migrate_dimstart_sql(migration_spec)}
+      #{rebuild_most_indexes_sql()}
+    SQL
+  end
+  
+  def migrate_sql(migration_spec)
+    mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
+    
+    <<-SQL
+      #{migrate_rebuild_without_indexes_sql()}
+      #{migrate_membersourceprev_sql(mapping)}
+      #{migrate_memberfact_sql(mapping)}
       #{migrate_dimstart_sql(migration_spec)}
       #{rebuild_most_indexes_sql()}
     SQL
