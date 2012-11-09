@@ -90,9 +90,9 @@ class DatabaseManager
       drop table if exists membersourceprev_migration;
       drop table if exists memberfacthelper_migration;
       
-      alter table if exists memberfact rename to memberfact_migration;
-      alter table if exists membersourceprev rename to membersourceprev_migration;
-      alter table if exists memberfacthelper rename to memberfacthelper_migration;
+      alter table memberfact rename to memberfact_migration;
+      alter table membersourceprev rename to membersourceprev_migration;
+      alter table memberfacthelper rename to memberfacthelper_migration;
      
       #{rebuild_membersource_sql};
       #{rebuild_membersourceprev_sql};
@@ -132,13 +132,13 @@ class DatabaseManager
       drop table if exists transactionsourceprev_migration;
       drop table if exists displaytext_migration;
       
-      alter table if exists transactionfact rename to transactionfact_migration;
-      alter table if exists transactionsourceprev rename to transactionsourceprev_migration;
-      alter table if exists displaytext rename to displaytext_migration;
+      alter table transactionfact rename to transactionfact_migration;
+      alter table transactionsourceprev rename to transactionsourceprev_migration;
+      alter table displaytext rename to displaytext_migration;
 
-	    alter table if exists memberfact rename to memberfact_migration;
-      alter table if exists membersourceprev rename to membersourceprev_migration;
-      alter table if exists memberfacthelper rename to memberfacthelper_migration;
+	    alter table memberfact rename to memberfact_migration;
+      alter table membersourceprev rename to membersourceprev_migration;
+      alter table memberfacthelper rename to memberfacthelper_migration;
       
       #{memberfact_sql};
       #{rebuild_membersourceprev_sql};
