@@ -38,33 +38,27 @@ class ChurnometerApp
   attr_reader :col_descriptions
 
   # application_environment: either ':production' or ':development'
-  # config_io: if non-nil, then an IO stream is used to read config data. Otherwise, a file stream
-  #   referring to the result of the app's 'config_filename' method is opened and used. 
-  #		The 'site_config' file is ignored if the stream is given. 
-  #		The ChurnometerApp instance assumes ownership of the IO instance and closes it when no longer 
-  #		needed.
-  # config_io_description: Description of the source of the config_io instance, when it's supplied.
-  def initialize(application_environment = :development, config_io = nil, config_io_description = nil)
+  # config_io:  general config filename or stream.  If nil, will load general config 
+  #   config from default path
+  # site_config_io:  site specific config filename or stream that can't be versioned 
+  #   because it contains passwords.  If nil, will load general config from default path
+  # The ChurnometerApp instance assumes ownership of the IO instance and closes it when no longer 
+  #	needed.
+  def initialize(application_environment = :development, site_config_io = nil, config_io = nil)
     @application_environment = application_environment
     
-    reload_config(config_io, config_io_description)
+    reload_config(site_config_io, config_io)
   end
 
   # Uses the given IO instance to reinitialise config data from a yaml definition.
   # Note that if other systems hold references to objects instantiated by the config system, such as
   # AppRoles or Dimensions, then those systems will still be referring to the outdated data.
-  # io: An IO instance, or nil. Ownership is assumed of the IO instance; it will be closed when no 
-  # 	longer needed. If nil is supplied, then data will be loaded from the  standard config files.
-  # io_description: A string describing the source of the io stream (i.e. filename). Only required if
-  #		'io' is specified.
-  def reload_config(io = nil, io_description = nil)
+  # site_config: a stream or filename to the site specific config 
+  # config: a stream or filename to the general config
+  def reload_config(site_config = nil, config = nil)
     clear_cached_config_data()
 
-    @config_io = io
-    @config_io_description = io_description
-    @use_site_config = io.nil?
-    
-    make_config_file_set()
+    make_config_file_set(site_config, config)
     make_user_data_tables()
     make_roles()
     make_builtin_dimensions()
@@ -188,33 +182,56 @@ protected
   def clear_cached_config_data
     @dimensions = nil
   end
+  
+  def config_filename
+    @config_filename ||= "./config/config.yaml"
+  end
 
   def config_io
     @config_io ||= File.new(config_filename())
   end
-
-  def config_io_description
-    @config_io_description || config_filename()
-  end
-
-  def config_filename
-    "./config/config.yaml"
-  end
-
+  
   def site_config_filename
-    "./config/config_site.yaml"
+    @site_config_filename ||= "./config/config_site.yaml"
   end
 
-  def make_config_file_set
-    @config_file_set = ConfigFileSet.new
-    @config_file_set.add(ConfigFile.new(config_io_description(), @config_file_set, config_io()))
+  def site_config_io
+    @site_config_io ||= File.new(site_config_filename())
+  end
 
-    if @use_site_config
-      begin
-        @config_file_set.add(ConfigFile.new(site_config_filename(), @config_file_set))
-      rescue ConfigFileMissingException
-        puts "Site config file '#{site_config_filename()}' missing, proceeding without site-specific config."
+  # site_config: stream of filename to site specific config, with passwords etc...
+  # config: stream or filename
+  def make_config_file_set(site_config, config)
+    @config_file_set = ConfigFileSet.new
+    
+    if !config.nil?
+      if @config.is_a?(String)
+        @config_filename = config # io stream will load from this file
+      else
+        @config_io = config
+        @config_filename = config.class() # so there isn't any confusion
       end
+    end
+    
+    begin 
+      @config_file_set.add(ConfigFile.new(config_io()))
+    rescue
+      puts "Site config file '#{config_filename()}' missing, proceeding without general config."
+    end
+
+    if !site_config.nil?
+      if @site_config.is_a?(String)
+        @site_config_filename = site_config # io stream will load from this file
+      else
+        @site_config_io = site_config
+        @site_config_filename = site_config.class() # so there isn't any confusion
+      end
+    end
+    
+    begin
+      @config_file_set.add(ConfigFile.new(site_config_io()))
+    rescue ConfigFileMissingException
+      puts "Site config file '#{site_config_filename()}' missing, proceeding without site-specific config."
     end
   end
 
