@@ -40,10 +40,10 @@ class Dimensions
   # inbuilt_dimensions: Dimensions defined by the app outside of the config file.
   # app_roles: The AppRoles instance describing all available roles.
   def from_config_element(config_element, inbuilt_dimensions, app_roles)
-    config_element.ensure_kindof(Hash)
+    config_element.ensure_kindof(Array)
 
-    config_element.value.each do |index, config_hash_element|
-      dimension = DimensionUser.new(index)
+    config_element.value.each do |config_hash_element|
+      dimension = DimensionUser.new()
       dimension.from_config_element(config_hash_element, app_roles)
       add(dimension)
     end
@@ -226,13 +226,9 @@ class DimensionUser < Dimension
   attr_reader :name
   attr_reader :allowed_roles
 
-  # The index of the dimension as given in the user config file.
-  attr_reader :index
-
   # index: the index number of the generic column for the dimension.
-  def initialize(index)
+  def initialize()
     super(nil)
-    @index = index
   end
 
   # config_hash: mappings from index numbers to hashes defining Dimension columns. 
@@ -277,10 +273,6 @@ class DimensionUser < Dimension
 
   # Intended for the use of the Dimensions class only, to be called after load_from_config_hash.
   def _post_load_from_config_hash(all_dimensions)
-  end
-
-  def column_base_name
-    "col#{@index}"
   end
 
   # roles: An array of Role instances.

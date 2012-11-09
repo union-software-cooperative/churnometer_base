@@ -19,7 +19,7 @@ require './lib/churn_db'
 require 'open3.rb'
 
 class DatabaseManager
-  
+
   def db 
     @db
   end
@@ -27,10 +27,15 @@ class DatabaseManager
   def initialize(app)
     @dimensions = app.custom_dimensions
     @db = Db.new(app)
+    @app = app
   end
 
   def dimensions
     @dimensions 
+  end
+
+  def app
+    @app
   end
 
   def temp_fix
@@ -82,12 +87,14 @@ class DatabaseManager
       drop table if exists memberfact_migration;
       drop table if exists membersourceprev_migration;
       drop table if exists transactionfact_migration;
+      drop table if exists transactionsourceprev_migration;
       drop table if exists displaytext_migration;
       drop table if exists memberfacthelper_migration;
       
 	    alter table if exists memberfact rename to memberfact_migration;
       alter table if exists membersourceprev rename to membersourceprev_migration;
       alter table if exists transactionfact rename to transactionfact_migration;
+      alter table if exists transactionsourceprev rename to transactionsourceprev_migration;
       alter table if exists displaytext rename to displaytext_migration;
       alter table if exists memberfacthelper rename to memberfacthelper_migration;
      
@@ -190,10 +197,11 @@ class DatabaseManager
     sql = <<-SQL
       create table membersource 
       (
-        memberid varchar(255) not null
-        , status varchar(255) not null
+          memberid varchar(255) not null 
+          , status varchar(255) not null
+    
     SQL
-  
+      
     dimensions.each { |d| sql << <<-REPEAT } 
         , #{d.column_base_name} varchar(255) null
     REPEAT
@@ -881,7 +889,6 @@ class DatabaseManager
   
   def migrate_regression_generalise_to_base
     <<-SQL
-          
       insert into membersourceprev
       (
       col0
@@ -1195,4 +1202,228 @@ class DatabaseManager
     SQL
   end
   
+  def migrate_membersourceprev_sql(mapping)
+    
+    sql = <<-SQL
+    
+      insert into membersourceprev
+      (
+        memberid
+        , status
+    SQL
+    
+    mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
+        , #{newvalue}  
+    REPEAT
+    
+    sql << <<-SQL
+      )
+      select
+        memberid
+        , status
+    SQL
+    
+    mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
+        , #{oldvalue}  
+    REPEAT
+    
+    sql << <<-SQL
+      from
+        membersourceprev_migration;
+    SQL
+  end
+  
+    
+  def migrate_memberfact_sql(mapping)
+    
+    sql = <<-SQL
+    
+      insert into memberfact
+      (
+        changeid
+        , changedate
+        , memberid
+        , oldstatus
+        , newstatus
+    SQL
+    
+    mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
+        , old#{newvalue}  
+        , new#{newvalue}  
+    REPEAT
+    
+    sql << <<-SQL
+      )
+      select
+        changeid
+        , changedate
+        , memberid
+        , oldstatus
+        , newstatus
+    SQL
+    
+    mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
+        , old#{oldvalue}  
+        , new#{oldvalue}  
+    REPEAT
+    
+    sql << <<-SQL
+      from
+        memberfact_migration;
+        
+      SELECT setval('memberfact_changeid_seq', (SELECT MAX(changeid) FROM memberfact));
+    SQL
+  end
+  
+  def migrate_transactionfact_sql
+    <<-SQL
+    
+      insert into transactionfact
+      (
+        id
+        , creationdate
+        , memberid
+        , userid
+        , amount
+        , changeid
+      )
+      select 
+        transactionid
+        , creationdate
+        , memberid
+        , staffid
+        , coalesce(amount,0::money)
+        , changeid
+      from 
+        transactionfact_migration;
+    SQL
+  end
+  
+  def migrate_transactionsourceprev_sql
+    <<-SQL
+    
+      insert into transactionsourceprev
+      (
+        id
+        , creationdate
+        , memberid
+        , userid
+        , amount
+      )
+      select 
+        transactionid
+        , creationdate
+        , memberid
+        , staffid
+        , coalesce(amount,0::money)
+      from 
+        transactionsourceprev_migration;
+    SQL
+  end
+  
+  
+  def migrate_displaytext_sql
+    <<-SQL
+    
+      insert into displaytext
+      (
+        attribute
+        , id
+        , displaytext
+      )
+      select
+        attribute
+        , id
+        , displaytext
+      from 
+        displaytext_migration;
+    SQL
+  end
+  
+  
+  def migrate_dimstart_sql(migration_spec)
+    sql = ""
+    
+    migration_spec.each do | k, v |
+      case v.to_s
+      when "CREATE"
+        sql << "insert into dimstart (dimension, startdate) select '#{k.to_s}', current_date; \n";
+      when "DELETE"
+        sql << "delete from dimstart where dimension = '#{k.to_s}'; \n" ;
+      else
+        sql << "update dimstart set dimension = '#{v.to_s}' where dimension = '#{k.to_s}'; \n" if (k.to_s != v.to_s); 
+      end
+    end
+    sql
+  end
+  
+  def migration_yaml_spec
+    m = {}
+    nothing_to_do = true
+    result = nil
+    
+    # retreive current db schema, action = delete by default
+    columns = db.ex("select column_name from information_schema.columns where table_name='membersourceprev';")
+    columns.each do |row|
+      if ! ['memberid', 'status'].include?(row['column_name'])
+        m[row['column_name']] = 'DELETE'
+        nothing_to_do = false
+      end
+    end
+      
+    # match dimensions to db columns, if a dimensions isn't in db list, create it
+    # any unmatched db columns, will remain deleted
+    dimensions().each do | d |
+      if m.has_key?(d.column_base_name)
+        m[d.column_base_name] = d.column_base_name 
+      else
+        m[d.column_base_name] = 'CREATE' 
+        nothing_to_do = false
+      end
+    end
+    result = m.to_yaml() if !nothing_to_do
+  end
+  
+  def parse_migration(yaml_spec)
+    migration_spec = YAML.load(yaml_spec)
+    
+    # make sure columns being mapped are present in both db and config
+    mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
+    dimension_names = dimensions.collect { |d| d.column_base_name }
+    
+    column_data = db.ex("select column_name from information_schema.columns where table_name='membersourceprev';")
+    columns = column_data.collect { |row| row['column_name'] }
+    
+    mapping.each do |k,v|
+      raise "Reporting dimension #{v} not found in config/config.yaml" if !dimension_names.include?(v)
+      raise "Reporting dimension #{k} not found in database" if !columns.include?(k)
+    end
+    
+    migration_spec
+  end
+   
+  def migrate_sql(migration_spec)
+    mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
+    
+    <<-SQL
+      #{rebuild_sql()}
+      #{migrate_membersourceprev_sql(mapping)}
+      #{migrate_memberfact_sql(mapping)}
+      #{migrate_transactionfact_sql()}
+      #{migrate_transactionsourceprev_sql()}
+      #{migrate_displaytext_sql()}
+      #{migrate_dimstart_sql(migration_spec)}
+      select updatememberfacthelper();
+    SQL
+  end
+  
+  def migrate(migration_spec)
+    db.ex(migrate_sql(migration_spec))
+    db.ex("analyse memberfact");
+    db.ex("analyse membersourceprev");
+    db.ex("analyse transactionfact");
+    db.ex("analyse transactionsourceprev");
+    db.ex("analyse displaytext");
+    db.ex("analyse memberfacthelper");
+  end
 end

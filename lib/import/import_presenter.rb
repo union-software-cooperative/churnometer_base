@@ -316,10 +316,11 @@ class ImportPresenter
   
   def restart
     # Crudely assumes dbpass and #{@db.dbname} user pass is the same (that's how its configured)
-    cmd = "echo #{@db.dbpass} | sudo -S /etc/init.d/postgresql restart"
-    cmd << "; rm -f tmp/*.Marshal"
-    cmd << "; /etc/init.d/thin restart & "
+    #cmd = "echo #{@db.dbpass} | sudo -S /etc/init.d/postgresql restart"
+    #cmd << "; rm -f tmp/*.Marshal"
+    #cmd << "; /etc/init.d/thin restart & "
+    cmd = "killall ruby; thin start"
     
-    console_ex(cmd)
+    exec(cmd) # terminates current thin session, so nothing will be executed after this
   end
 end
