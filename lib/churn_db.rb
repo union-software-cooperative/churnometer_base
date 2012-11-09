@@ -363,7 +363,7 @@ class ChurnDB
     end
 
     <<-SQL
-      select getdimstart('#{group_by}') 
+      select startdate getdimstart from dimstart where dimension = '#{group_by}'
     SQL
   end
   
