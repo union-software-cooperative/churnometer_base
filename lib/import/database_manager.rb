@@ -1466,11 +1466,11 @@ class DatabaseManager
   end
    
   # ASU to NUW specific migration (replaced below!)
-  def migrate_sql(migration_spec)
+  def migrate_nuw_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
     <<-SQL
-      #{migrate_rebuild_without_indexes_sql()}
+      #{rebuild_from_scratch_without_indexes_sql()}
       #{migrate_membersourceprev_sql(mapping)}
       #{migrate_memberfact_sql(mapping)}
       #{migrate_transactionfact_sql()}
@@ -1494,7 +1494,7 @@ class DatabaseManager
   end
   
   def migrate(migration_spec)
-    db.ex(migrate_sql(migration_spec))
+    db.ex(migrate_nuw_sql(migration_spec))
     db.ex("vacuum memberfact");
     db.ex("vacuum membersourceprev");
     db.ex("vacuum transactionfact");
