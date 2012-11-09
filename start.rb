@@ -48,8 +48,9 @@ class Churnobyl < Sinatra::Base
     set :raise_errors, Proc.new { false }
     set :show_exceptions, false
 
-    set :session_secret, "something" # I don't understand what this does but it lets my flash work
     enable :sessions
+    set :session_secret, "something" # I don't understand what this does but it lets my flash work
+    use Rack::Session::Pool #  # rack::session::pool handles large cookies for temporary config configuration
     
     set :churn_app_mutex, Monitor.new
   end
@@ -100,17 +101,16 @@ class Churnobyl < Sinatra::Base
     # several requests arrive after the server is first started. The mutex ensures only one app will
     # be created.
     settings.churn_app_mutex.synchronize do
-      @server_lifetime_churnometer_app ||= ChurnometerApp.new(settings.environment, churnometer_app_config_io(), churnometer_app_config_io_desc())
+      @server_lifetime_churnometer_app ||= ChurnometerApp.new(settings.environment,  churnometer_app_site_config_io(), churnometer_app_config_io())
     end
   end
 
-  # Return the IO object that config data is loaded from, or 'nil' to use the regular config file
-  # locations.
+  # Return the IO object that config data is loaded from, or 'nil' to use the regular config file locations.
   def self.churnometer_app_config_io
     nil
   end
-
-  def self.churnometer_app_config_io_desc
+  
+  def self.churnometer_app_site_config_io
     nil
   end
 
@@ -390,13 +390,11 @@ class Churnobyl < Sinatra::Base
   
   post '/config' do
     @flash = nil
-    @config = params['config']
-      
     begin
       
       if ! (params['config'].nil? || params['config'].empty?) 
         
-        testConfig = ChurnometerApp.new(settings.environment, StringIO.new(params['config']), self.class.churnometer_app_config_io_desc())
+        testConfig = ChurnometerApp.new(settings.environment, nil, StringIO.new(params['config']))
         testConfig.validate
         dbm = DatabaseManager.new(testConfig)
         @yaml_spec = dbm.migration_yaml_spec
@@ -405,7 +403,8 @@ class Churnobyl < Sinatra::Base
             f.puts params['config']
           end
         else
-          session[:new_config] = @config
+          session[:flash] = "Need to restructure data before saving config/config.yaml"
+          session[:new_config] = params['config']
           redirect :migrate
         end
       else
@@ -424,12 +423,15 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/migrate' do
-    @yaml_spec = nil
+    @flash = session[:flash]
     @config = session[:new_config]
-    if @config.nil? return erb :migrate
+    if @config.nil?
+      session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
+      redirect :config 
+    end
     
     # get new config and dimensions
-    new_config = ChurnometerApp.new(settings.environment, StringIO.new(@config), self.class.churnometer_app_config_io_desc())
+    new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
     dbm = DatabaseManager.new(new_config)
     
     # get the proposed migration, and return it to the user to allow intervention
@@ -441,14 +443,16 @@ class Churnobyl < Sinatra::Base
     @flash = nil
     @yaml_spec = params['yaml_spec']
     @config = session[:new_config]
-    if @config.nil? return erb :migrate
+    if @config.nil?
+      session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
+      redirect :config 
+    end
     
+    # attempt migration using user supplied spec
     begin 
-      new_config = ChurnometerApp.new(settings.environment, StringIO.new(@config), self.class.churnometer_app_config_io_desc())
+      new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
       dbm = DatabaseManager.new(new_config)
       migration_spec = dbm.parse_migration(@yaml_spec)
-      
-      @yaml_spec = dbm.migrate_sql(migration_spec) # just for diags
       
       dbm.migrate(migration_spec) # this can take some serious time
     rescue StandardError => err
@@ -457,7 +461,8 @@ class Churnobyl < Sinatra::Base
       @flash = "Failed to migrate: " + err.message
     end
     
-    return erb :migrate if !@flash.nil?
+    return erb :migrate if !@flash.nil? # problem migrating
+    session[:config] = nil
     
     # If we made it this far, save the new config
     begin
@@ -467,7 +472,6 @@ class Churnobyl < Sinatra::Base
     rescue StandardError => err
       @flash = "This is bad.  Successfully migrated database but to save config/config.yaml: " + err.message
     end
-    session[:config] = nil # don't need this anymore, either on success or failure
     
     return erb :config if !@flash.nil? # problem saving config, should be able to render from @config
     

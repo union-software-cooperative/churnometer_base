@@ -1381,7 +1381,7 @@ class DatabaseManager
         nothing_to_do = false
       end
     end
-    result = m.to_yaml() if !nothing_to_do
+    result = m.to_yaml() #if !nothing_to_do
   end
   
   def parse_migration(yaml_spec)
