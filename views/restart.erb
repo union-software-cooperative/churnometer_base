@@ -1,0 +1,31 @@
+<% if !@flash.nil? %>
+    <div class="flash">
+      <%= @flash %>
+    </div>
+<% end %>
+
+<h1><span id="count_down">Restarting...</span></h1>
+<form method="post" name="restart">
+</form>
+
+<script type="text/javascript">
+
+ function add_dot(i, url){
+    $("#count_down").text('Restarting in ' + i + ' seconds');
+    if (i > 0) 
+      setTimeout('add_dot(' + (i-1) + ',"' + url + '")', 1000);
+    else
+      location.href=url;
+  }
+  
+  window.onload = function() {
+    // restart in background so shutdown crash doesn't show to user
+    $.ajax({
+      type: 'POST',
+      url: '/restart'
+    });
+    
+    // add x dots a second at a time, then redirect 
+    add_dot(5, '<%= params['redirect'] %>');
+  }
+</script>
