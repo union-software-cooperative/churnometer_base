@@ -1,4 +1,4 @@
-application_start_date: 2012-8-13
+application_start_date: 2011-8-14
 use_new_query_generation_method: true
 work_site_dimension_id: companyid
 default_groupby_dimension_id: branchid
@@ -48,8 +48,21 @@ dimensions:
     name: Employment Type
   - id: paymenttypeid
     name: Payment Type
-  - id: last_training
+  - id: last_site_training_type
+    name: Last Course Category
+    roles: trainer
+  - id: last_site_training
     name: Last Course
+    roles: trainer
+  - id: last_site_training_age
+    name: Training Age
+    roles: trainer
+  - id: last_site_trainer
+    name: Trainer
+    roles: trainer
+  - id: last_site_training_venue
+    name:  Training Venue
+    roles: trainer
 drilldown_order:
   branchid: lead
   industryid: companyid
@@ -219,6 +232,17 @@ roles:
         detail_data_tables:
             - member_summary
             - organiser
+    trainer:
+        password: gogogo
+        show_target_calculation: true
+        summary_data_tables:
+            - summary
+            - paying
+            - a1p
+            - stopped
+        detail_data_tables:
+            - member_summary
+            - organiser
 column_names:
   a1p_real_gain: new applications (total)
   a1p_to_other: applications failed
@@ -340,5 +364,9 @@ column_descriptions:
   
     
     
+  
+  
+  
+  
   
   
