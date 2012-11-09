@@ -123,6 +123,8 @@ class DatabaseManager
   
   def rebuild()
     db.ex(rebuild_sql)
+    db.ex(rebuild_most_indexes_sql)
+    db.ex(rebuild_memberfacthelper_indexes_sql)
     
     # ANALYSE and VACUUM have to be run as separate database calls
     str = <<-SQL
@@ -177,15 +179,7 @@ class DatabaseManager
         , id varchar(255) null
         , displaytext varchar(255) null
       );
-      
-      drop index if exists "displaytext_attribute_idx";
-	    drop index if exists "displaytext_id_idx";
-      drop index if exists "displaytext_attribute_id_idx";
-
-      CREATE INDEX "displaytext_attribute_idx" ON "displaytext" USING btree(attribute ASC NULLS LAST);
-      CREATE INDEX "displaytext_id_idx" ON "displaytext" USING btree(id ASC NULLS LAST);
-      CREATE INDEX "displaytext_attribute_id_idx" ON "displaytext" USING btree(attribute ASC, id ASC NULLS LAST);
-    
+         
     SQL
   end
   
@@ -216,7 +210,6 @@ class DatabaseManager
     sql = <<-SQL
       drop table if exists membersource;
       #{membersource_sql};
-      CREATE INDEX "membersource_memberid_idx" ON "membersource" USING btree(memberid ASC NULLS LAST);
     SQL
   end
   
@@ -254,16 +247,6 @@ class DatabaseManager
 
     sql << <<-SQL
       );
-      
-      drop index if exists "memberfact_changeid_idx";
-      drop index if exists "memberfact_memberid_idx";
-      drop index if exists "memberfact_oldstatus_idx";
-      drop index if exists "memberfact_newstatus_idx";
-      
-      CREATE INDEX "memberfact_changeid_idx" ON "memberfact" USING btree(changeid ASC NULLS LAST);
-      CREATE INDEX "memberfact_memberid_idx" ON "memberfact" USING btree(memberid ASC NULLS LAST);
-      CREATE INDEX "memberfact_oldstatus_idx" ON "memberfact" USING btree(oldstatus ASC NULLS LAST);
-      CREATE INDEX "memberfact_newstatus_idx" ON "memberfact" USING btree(newstatus ASC NULLS LAST);
     SQL
   end
 
@@ -678,22 +661,7 @@ class DatabaseManager
         memberfacthelperquery h
       where 
         #{memberfacthelper_subset_sql};
-        
-    drop index if exists "memberfacthelper_changeid_idx";
-    drop index if exists "memberfacthelper_memberid_idx";
-    drop index if exists "memberfacthelper_changedate_idx";
-    
-    CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
-    CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);
-    CREATE INDEX "memberfacthelper_changedate_idx" ON "memberfacthelper" USING btree(changedate ASC NULLS LAST);
     SQL
-    
-    dimensions.each { |d| sql << <<-REPEAT }
-      drop index if exists "memberfacthelper_#{d.column_base_name}_idx" ;
-      CREATE INDEX "memberfacthelper_#{d.column_base_name}_idx" ON "memberfacthelper" USING btree(#{d.column_base_name} ASC NULLS LAST);
-    REPEAT
-    
-    sql
   end
   
   def transactionfact_sql
@@ -707,13 +675,7 @@ class DatabaseManager
         , amount money not null
         , changeid bigint not null
       );
-      
-      drop index if exists "transactionfact_memberid_idx";
-      drop index if exists "transactionfact_changeid_idx";
-      CREATE INDEX "transactionfact_memberid_idx" ON "transactionfact" USING btree(memberid ASC NULLS LAST);
-      CREATE INDEX "transactionfact_changeid_idx" ON "transactionfact" USING btree(changeid ASC NULLS LAST);
     SQL
-    
   end
   
   def transactionfact
@@ -886,6 +848,63 @@ class DatabaseManager
   def insertdisplaytext
     db.ex(insertdisplaytext_sql)
   end
+  
+  def rebuild_most_indexes_sql()
+    sql = <<-SQL 
+      drop index if exists "displaytext_attribute_idx";
+	    drop index if exists "displaytext_id_idx";
+      drop index if exists "displaytext_attribute_id_idx";
+
+      drop index if exists "memberfact_changeid_idx";
+      drop index if exists "memberfact_memberid_idx";
+      drop index if exists "memberfact_oldstatus_idx";
+      drop index if exists "memberfact_newstatus_idx";
+      
+      drop index if exists "transactionfact_memberid_idx";
+      drop index if exists "transactionfact_changeid_idx";
+    SQL
+    
+    
+    sql << <<-SQL
+      CREATE INDEX "displaytext_attribute_idx" ON "displaytext" USING btree(attribute ASC NULLS LAST);
+      CREATE INDEX "displaytext_id_idx" ON "displaytext" USING btree(id ASC NULLS LAST);
+      CREATE INDEX "displaytext_attribute_id_idx" ON "displaytext" USING btree(attribute ASC, id ASC NULLS LAST);
+      CREATE INDEX "membersource_memberid_idx" ON "membersource" USING btree(memberid ASC NULLS LAST);
+
+      CREATE INDEX "memberfact_changeid_idx" ON "memberfact" USING btree(changeid ASC NULLS LAST);
+      CREATE INDEX "memberfact_memberid_idx" ON "memberfact" USING btree(memberid ASC NULLS LAST);
+      CREATE INDEX "memberfact_oldstatus_idx" ON "memberfact" USING btree(oldstatus ASC NULLS LAST);
+      CREATE INDEX "memberfact_newstatus_idx" ON "memberfact" USING btree(newstatus ASC NULLS LAST);
+    
+      
+      CREATE INDEX "transactionfact_memberid_idx" ON "transactionfact" USING btree(memberid ASC NULLS LAST);
+      CREATE INDEX "transactionfact_changeid_idx" ON "transactionfact" USING btree(changeid ASC NULLS LAST);
+    SQL
+  end
+  
+  def rebuild_memberfacthelper_indexes_sql()
+    sql = "" 
+    dimensions.each { |d| sql << <<-REPEAT }
+      drop index if exists "memberfacthelper_#{d.column_base_name}_idx" ;
+    REPEAT
+  
+    sql << <<-SQL
+      drop index if exists "memberfacthelper_changeid_idx";
+      drop index if exists "memberfacthelper_memberid_idx";
+      drop index if exists "memberfacthelper_changedate_idx";
+    
+      CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
+      CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);
+      CREATE INDEX "memberfacthelper_changedate_idx" ON "memberfacthelper" USING btree(changedate ASC NULLS LAST);
+    SQL
+    
+    dimensions.each { |d| sql << <<-REPEAT }
+      CREATE INDEX "memberfacthelper_#{d.column_base_name}_idx" ON "memberfacthelper" USING btree(#{d.column_base_name} ASC NULLS LAST);
+    REPEAT
+  
+    sql
+  end
+  
   
   def migrate_regression_generalise_to_base
     <<-SQL
@@ -1413,17 +1432,30 @@ class DatabaseManager
       #{migrate_transactionsourceprev_sql()}
       #{migrate_displaytext_sql()}
       #{migrate_dimstart_sql(migration_spec)}
-      select updatememberfacthelper();
+      #{rebuild_most_indexes_sql()}
     SQL
   end
   
   def migrate(migration_spec)
     db.ex(migrate_sql(migration_spec))
+    db.ex("vacuum memberfact");
+    db.ex("vacuum membersourceprev");
+    db.ex("vacuum transactionfact");
+    db.ex("vacuum transactionsourceprev");
+    db.ex("vacuum displaytext");
+    db.ex("vacuum memberfacthelper");
+    
     db.ex("analyse memberfact");
     db.ex("analyse membersourceprev");
     db.ex("analyse transactionfact");
     db.ex("analyse transactionsourceprev");
     db.ex("analyse displaytext");
+    db.ex("analyse memberfacthelper");
+
+    # with lots of data memberfacthelper can be impossibly slow to rebuild
+    db.ex("select updatememberfacthelper();");
+    db.ex(rebuild_memberfacthelper_indexes_sql());
+    db.ex("vacuum memberfacthelper");
     db.ex("analyse memberfacthelper");
   end
 end
