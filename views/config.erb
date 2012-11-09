@@ -1,0 +1,17 @@
+<% if !@flash.nil? %>
+    <div class="flash">
+      <%= @flash %>
+    </div>
+<% end %>
+
+<h2>Configure</h2>
+<section id="data">
+
+<form method="post">
+  <input type="submit" name="action" value="save and restart">
+  <textarea name="config" style="width:100%;height:90%">
+<%= @config %>
+  </textarea>
+</form>
+  
+</section>
