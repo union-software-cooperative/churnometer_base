@@ -1,3 +1,4 @@
+hostos: ubuntu
 email_on_error: true
 email_errors:
   to: admin@yourdomain.com
