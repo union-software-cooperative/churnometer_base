@@ -251,8 +251,6 @@ function daemonise
   sudo /etc/init.d/nginx restart
 }
 
-<<<<<<< HEAD
-=======
 function samba
 {
   echo "***********************************************************************"
@@ -274,7 +272,6 @@ function samba
   sudo /etc/init.d/smbd restart
 }
 
->>>>>>> 21b4e8f94be6d7a9eb9b8d4a2b266964aeb75c33
 case $1 in 
   just-software)
     confirm_config
