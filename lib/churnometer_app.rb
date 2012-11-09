@@ -46,7 +46,7 @@ class ChurnometerApp
   # config_io_description: Description of the source of the config_io instance, when it's supplied.
   def initialize(application_environment = :development, config_io = nil, config_io_description = nil)
     @application_environment = application_environment
-
+    
     reload_config(config_io, config_io_description)
   end
 
@@ -63,9 +63,8 @@ class ChurnometerApp
     @config_io = io
     @config_io_description = io_description
     @use_site_config = io.nil?
-
+    
     make_config_file_set()
-
     make_user_data_tables()
     make_roles()
     make_builtin_dimensions()
@@ -74,7 +73,11 @@ class ChurnometerApp
     make_col_names()
     make_col_desc()
   end
-
+  
+  def validate
+    application_start_date()
+  end
+  
   # A ConfigFileSet instance.
   def config
     @config_file_set
