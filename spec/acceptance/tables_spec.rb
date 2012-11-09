@@ -41,15 +41,7 @@ class Churnobyl
   def self.churnometer_app_config_io
     StringIO.new(config_text_override() || $regression_config_str)
   end
-
-  def self.churnometer_app_config_io_desc
-    if @config_text
-      'with_config override text'
-    else
-      'regression_config.yaml'
-    end
-  end
-
+  
   # Override authentication
   def protected!
   end

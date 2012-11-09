@@ -165,18 +165,13 @@ class ConfigFile
 
   attr_reader :filename
 
-  # filename: The filename of the config file. In the case of a supplied IO instance as the last
-  #		parameter, then this parameter should be descriptive of the source of the IO instance.
-  # config_file_set: The ConfigFileSet instance that the ConfigFile will belong to. The ConfigFile must
-  #		be added to the ConfigFileSet after initialization.
-  # io: If nil, then the file 'filename' is used as the source of the config data. Otherwise, config 
-  # 	data is read from the IO instance supplied to this parameter.
-  #		This ConfigFile instance assumes ownership of the IO instance and closes it when no longer needed.
-  def initialize(filename, config_file_set, io = nil)
-    @filename = filename
-
+  # file: A stream or the filename of the config file
+  def initialize(file)
+    
     @io = 
-      if io.nil?
+      if file.is_a?(String)
+        @filename = file
+        
         if !File.exists?(@filename)
           raise ConfigFileMissingException.new(@filename)
         end
@@ -187,7 +182,8 @@ class ConfigFile
 
         File.new(@filename)
       else
-        io
+        @filename = file.class()
+        file
       end
 
     yaml = @io.read
