@@ -75,16 +75,7 @@ function install
 
   sudo apt-get update
 
-  sudo apt-get -y install \ 
-    ruby1.9.1 \
-    postgresql libpq-dev \
-    git \
-    ruby1.9.1-dev \
-    build-essential \
-    sendmail \
-    libxml2-dev libxslt-dev \
-    nginx \
-    zip 
+  sudo apt-get -y install ruby1.9.1 postgresql libpq-dev git ruby1.9.1-dev build-essential sendmail libxml2-dev libxslt-dev nginx zip 
 }
 
 function churn_user
@@ -96,7 +87,7 @@ function churn_user
   echo "***********************************************************************"
   
   sudo useradd -d /home/$CHURN_USER -m $CHURN_USER # -p option for setting password doesn't work
-  sudo bash -c "echo $CHURN_USER:$CHURN_PASS | chpasswd" # set password
+  sudo bash -c "echo \"$CHURN_USER:$CHURN_PASS\" | chpasswd" # set password
   sudo usermod -s /bin/bash $CHURN_USER # set up bash shell
   sudo usermod -a -G sudo $CHURN_USER # allow sudo
   sudo bash -c "echo AllowUsers $CHURN_USER >> /etc/ssh/sshd_config" # allow ssh
