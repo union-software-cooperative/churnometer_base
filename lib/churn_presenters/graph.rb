@@ -33,12 +33,12 @@ class ChurnPresenter_Graph
   end
 
   def line?
-    series_count <= 30 && @request.type == :summary && @request.params['interval'] != 'none'
+    series_count <= 30 && @request.type == :summary && @request.params['interval'] != 'none' && @request.groupby_column_id != 'userid'
   end
 
   def waterfall?
     cnt =  @request.data.reject{ |row | row["paying_real_gain"] == '0' && row["paying_real_loss"] == '0' }.count
-    cnt > 0  && cnt <= 30 && @request.type == :summary && @request.params['interval'] == 'none'
+    cnt > 0  && cnt <= 30 && @request.type == :summary && @request.params['interval'] == 'none' &&  @request.groupby_column_id != 'userid'
   end
   
   def waterfallItems

@@ -31,7 +31,11 @@ class ChurnPresenter_Tables
 
     user_data_tables =
       if @request.type == :summary
-        @request.auth.role.summary_data_tables
+        if @request.groupby_column_id == 'userid'
+          (Array.new << @app.summary_user_data_tables['userid'])
+        else
+          @request.auth.role.summary_data_tables
+        end
       else
         @request.auth.role.detail_data_tables
       end
@@ -64,7 +68,7 @@ class ChurnPresenter_Table
   
   def initialize(app, request, name, columns)
     @app = app
-    @id = name.sub(' ', '').downcase
+    @id = name.gsub(' ', '').downcase
     @name = name
     @request = request
     @type = request.type

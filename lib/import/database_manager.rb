@@ -42,37 +42,6 @@ class DatabaseManager
     @app
   end
 
-  def temp_fix
-    sql = <<-SQL
-      update 
-        memberfact 
-      set
-        oldstatus = lower(trim(oldstatus))
-        , newstatus = lower(trim(newstatus))
-    SQL
-    
-    dimensions.each { |d| sql << <<-SQL }
-      , old#{d.column_base_name} = lower(trim(old#{d.column_base_name}))
-      , new#{d.column_base_name} = lower(trim(new#{d.column_base_name}))
-    SQL
-    
-    sql << <<-SQL
-    ;
-      update 
-        memberfacthelper
-      set
-        , status = lower(trim(status))
-    SQL
-    
-    dimensions.each { |d| sql << <<-SQL }
-      , #{d.column_base_name} = lower(trim(#{d.column_base_name}))
-    SQL
-    
-    sql << "; update displaytext set id = lower(trim(id))"
-    
-    sql
-  end
-
   def migrate_rebuild_without_indexes_sql()
     sql = <<-SQL
       drop table if exists importing cascade;
@@ -236,6 +205,7 @@ class DatabaseManager
       create table membersource 
       (
           memberid varchar(255) not null 
+          , userid varchar(255) null
           , status varchar(255) not null
     
     SQL
@@ -280,6 +250,7 @@ class DatabaseManager
         changeid BIGSERIAL PRIMARY KEY
         , changedate timestamp not null
         , memberid varchar(255) not null
+        , userid varchar(255) null
         , oldstatus varchar(255) null
         , newstatus varchar(255) null
     SQL
@@ -301,6 +272,7 @@ class DatabaseManager
           changeid
           , changedate
           , memberid
+          , userid
           , newstatus status
     SQL
 
@@ -333,6 +305,7 @@ class DatabaseManager
       select
         now() as changedate
         , old.memberid
+        , new.userid
         , trim(lower(old.status)) as oldstatus
         , trim(lower(new.status)) as newstatus
     SQL
@@ -360,6 +333,7 @@ class DatabaseManager
       select
         now() as changedate
         , old.memberid
+        , null -- We have a problem here - this doesn't indicate the user that deleted the member
         , trim(lower(old.status)) as oldstatus
         , null as newstatus
     SQL
@@ -397,6 +371,7 @@ class DatabaseManager
       select
         now() as changedate
         , new.memberid
+        , new.userid
         , null as oldstatus
         , trim(lower(new.status)) as newstatus
     SQL
@@ -437,6 +412,7 @@ class DatabaseManager
         insert into memberfact (
           changedate
           , memberid
+          , userid
           , oldstatus
           , newstatus
     SQL
@@ -451,6 +427,7 @@ class DatabaseManager
         select
           import_date
           , memberid
+          , userid
           , oldstatus
           , newstatus
     SQL
@@ -578,6 +555,7 @@ class DatabaseManager
         memberfact.changeid
         , changedate
         , memberid      
+        , userid
         , -1 as net
         , 0 as gain
         , 1 as loss
@@ -622,6 +600,7 @@ class DatabaseManager
         memberfact.changeid
         , changedate
         , memberid
+        , userid
         , 1 as net
         , 1 as gain
         , 0 as loss
@@ -949,322 +928,6 @@ class DatabaseManager
     sql
   end
   
-  
-  def migrate_regression_generalise_to_base
-    <<-SQL
-      insert into membersourceprev
-      (
-      col0
-      ,col1
-      ,col10
-      ,col11
-      ,col12
-      ,col13
-      ,col14
-      ,col15
-      ,col16
-      ,col17
-      ,col18
-      ,col2
-      ,col3
-      ,col4
-      ,col5
-      ,col6
-      ,col7
-      ,col8
-      ,col9
-      ,memberid
-      ,status
-      )
-      select
-      branchid
-      , industryid
-      , feegroupid
-      , state
-      , nuwelectorate
-      , statusstaffid
-      , supportstaffid
-      , employerid
-      , hostemployerid
-      , employmenttypeid
-      , paymenttypeid
-      , lead
-      , org
-      , areaid
-      , companyid
-      , agreementexpiry
-      , del
-      , hsr
-      , gender
-      , memberid
-      , status
-      from
-      membersourceprev_migration;
-      
-      delete from memberfact_migration where not memberid in (select distinct memberid from memberfacthelper_migration) ;
-      
-      insert into memberfact
-      (
-      changedate
-      , changeid
-      , memberid
-      , newcol0
-      , newcol1
-      , newcol10
-      , newcol11
-      , newcol12
-      , newcol13
-      , newcol14
-      , newcol15
-      , newcol16
-      , newcol17
-      , newcol18
-      , newcol2
-      , newcol3
-      , newcol4
-      , newcol5
-      , newcol6
-      , newcol7
-      , newcol8
-      , newcol9
-      , newstatus
-      , oldcol0
-      , oldcol1
-      , oldcol10
-      , oldcol11
-      , oldcol12
-      , oldcol13
-      , oldcol14
-      , oldcol15
-      , oldcol16
-      , oldcol17
-      , oldcol18
-      , oldcol2
-      , oldcol3
-      , oldcol4
-      , oldcol5
-      , oldcol6
-      , oldcol7
-      , oldcol8
-      , oldcol9
-      , oldstatus
-      )
-      
-      select
-      changedate
-      , changeid
-      , memberid
-      , newcol0
-      , newcol1
-      , newcol10
-      , newcol11
-      , newcol12
-      , newcol13
-      , newcol14
-      , newcol15
-      , newcol16
-      , newcol17
-      , newcol18
-      , newcol2
-      , newcol3
-      , newcol4
-      , newcol5
-      , newcol6
-      , newcol7
-      , newcol8
-      , newcol9
-      , newstatus
-      , oldcol0
-      , oldcol1
-      , oldcol10
-      , oldcol11
-      , oldcol12
-      , oldcol13
-      , oldcol14
-      , oldcol15
-      , oldcol16
-      , oldcol17
-      , oldcol18
-      , oldcol2
-      , oldcol3
-      , oldcol4
-      , oldcol5
-      , oldcol6
-      , oldcol7
-      , oldcol8
-      , oldcol9
-      , oldstatus
-      from 
-      memberfact_migration
-      ;
-      
-      
-      insert into displaytext
-      (
-      attribute
-      , id
-      , displaytext
-      )
-      select
-      attribute
-      , id
-      , displaytext
-      from displaytext_migration;
-      
-      insert into transactionfact
-      (
-      id
-      , creationdate
-      , memberid
-      , userid
-      , amount
-      , changeid
-      )
-      select 
-      transactionid
-      , creationdate
-      , memberid
-      , staffid
-      , amount
-      , changeid
-      from 
-      transactionfact_migration
-      
-      ;
-      
-      insert into memberfacthelper (
-      changeid
-      , memberid
-      , changedate
-      , net
-      , gain
-      , loss
-      , status
-      , _status
-      , statusdelta
-      , payinggain
-      , payingloss
-      , a1pgain
-      , a1ploss
-      , stoppedgain
-      , stoppedloss
-      , othergain
-      , otherloss
-      , col0
-      , col0delta
-      , col1
-      , col1delta
-      , col2
-      , col2delta
-      , col3
-      , col3delta
-      , col4
-      , col4delta
-      , col5
-      , col5delta
-      , col6
-      , col6delta
-      , col7
-      , col7delta
-      , col8
-      , col8delta
-      , col9
-      , col9delta
-      , col10
-      , col10delta
-      , col11
-      , col11delta
-      , col12
-      , col12delta
-      , col13
-      , col13delta
-      , col14
-      , col14delta
-      , col15
-      , col15delta
-      , col16
-      , col16delta
-      , col17
-      , col17delta
-      , col18
-      , col18delta
-      , duration
-      , _changeid
-      , _changedate
-      )
-      
-      select 
-      changeid
-      , memberid
-      , changedate
-      , net
-      , gain
-      , loss
-      , status
-      , _status
-      , statusdelta
-      , payinggain
-      , payingloss
-      , a1pgain
-      , a1ploss
-      , stoppedgain
-      , stoppedloss
-      , othergain
-      , otherloss
-      , col0
-      , col0delta
-      , col1
-      , col1delta
-      , col2
-      , col2delta
-      , col3
-      , col3delta
-      , col4
-      , col4delta
-      , col5
-      , col5delta
-      , col6
-      , col6delta
-      , col7
-      , col7delta
-      , col8
-      , col8delta
-      , col9
-      , col9delta
-      , col10
-      , col10delta
-      , col11
-      , col11delta
-      , col12
-      , col12delta
-      , col13
-      , col13delta
-      , col14
-      , col14delta
-      , col15
-      , col15delta
-      , col16
-      , col16delta
-      , col17
-      , col17delta
-      , col18
-      , col18delta
-      , duration
-      , _changeid
-      , _changedate
-      from 
-      memberfacthelper_migration;
-      
-      drop table memberfact_migration cascade;
-      drop table memberfacthelper_migration cascade ;
-      drop table membersourceprev_migration cascade;
-      drop table displaytext_migration cascade;
-      drop table transactionfact_migration cascade;
-      
-
-    SQL
-  end
-  
   def migrate_membersourceprev_sql(mapping)
     
     sql = <<-SQL
@@ -1272,6 +935,7 @@ class DatabaseManager
       insert into membersourceprev
       (
         memberid
+        , userid
         , status
     SQL
     
@@ -1283,6 +947,7 @@ class DatabaseManager
       )
       select
         memberid
+        , userid --replace_me
         , status
     SQL
     
@@ -1306,6 +971,7 @@ class DatabaseManager
         changeid
         , changedate
         , memberid
+        , userid
         , oldstatus
         , newstatus
     SQL
@@ -1321,6 +987,7 @@ class DatabaseManager
         changeid
         , changedate
         , memberid
+        , userid --replace_me
         , oldstatus
         , newstatus
     SQL
@@ -1339,7 +1006,7 @@ class DatabaseManager
   end
   
   # ASU to NUW back-porting migration
-  def migrate_transactionfact_sql
+  def migrate_nuw_transactionfact_sql
     <<-SQL
     
       insert into transactionfact
@@ -1364,7 +1031,7 @@ class DatabaseManager
   end
   
   # ASU to NUW back-porting migration
-  def migrate_transactionsourceprev_sql
+  def migrate_nuw_transactionsourceprev_sql
     <<-SQL
     
       insert into transactionsourceprev
@@ -1387,7 +1054,7 @@ class DatabaseManager
   end
   
   # ASU to NUW back-porting migration
-  def migrate_displaytext_sql
+  def migrate_nuw_displaytext_sql
     <<-SQL
     
       insert into displaytext
@@ -1429,7 +1096,7 @@ class DatabaseManager
     # retreive current db schema, action = delete by default
     columns = db.ex("select column_name from information_schema.columns where table_name='membersourceprev';")
     columns.each do |row|
-      if !['memberid', 'status'].include?(row['column_name'])
+      if !['memberid', 'status', 'userid'].include?(row['column_name'])
         m[row['column_name']] = 'DELETE'
       end
     end
@@ -1440,7 +1107,7 @@ class DatabaseManager
       if m.has_key?(d.column_base_name)
         m[d.column_base_name] = d.column_base_name 
       else
-        m[d.column_base_name] = 'CREATE' 
+        m[d.column_base_name] = 'CREATE' if d.column_base_name != 'userid'
       end
     end
         
@@ -1454,7 +1121,7 @@ class DatabaseManager
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     dimension_names = dimensions.collect { |d| d.column_base_name }
     
-    column_data = db.ex("select column_name from information_schema.columns where table_name='membersourceprev';")
+    column_data = db.ex("select column_name from information_schema.columns where table_name='membersourceprev' and column_name <> 'userid';")
     columns = column_data.collect { |row| row['column_name'] }
     
     mapping.each do |k,v|
@@ -1471,13 +1138,39 @@ class DatabaseManager
     
     <<-SQL
       #{rebuild_from_scratch_without_indexes_sql()}
-      #{migrate_membersourceprev_sql(mapping)}
-      #{migrate_memberfact_sql(mapping)}
-      #{migrate_transactionfact_sql()}
-      #{migrate_transactionsourceprev_sql()}
-      #{migrate_displaytext_sql()}
+      -- start of migration
+      #{migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', statusstaffid') }
+      #{migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', newstatusstaffid') }
+      #{migrate_nuw_transactionfact_sql()}
+      #{migrate_nuw_transactionsourceprev_sql()}
+      #{migrate_nuw_displaytext_sql()}
       #{migrate_dimstart_sql(migration_spec)}
       #{rebuild_most_indexes_sql()}
+      insert into dimstart (dimension, startdate)  select 'userid', '2012-04-27' where not exists (select 1 from dimstart where dimension = 'userid');
+      update displaytext set attribute = 'userid' where attribute = 'statusstaffid';
+      
+      update memberfacthelper set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
+      update memberfact set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
+      update transactionfact set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
+    
+      
+      drop table memberid_detail;
+      
+      select 
+        d.id
+        , displaytext
+        , contactdetail
+        , followupnotes 
+      into 
+        memberid_detail
+      from 
+        displaytext d left join membersourceprev_migration m on trim(d.id) = trim(m.memberid)
+      
+      where
+        d.attribute = 'memberid';
+      
+      create index memberid_detail_id_idx on memberid_detail (id);
+          
     SQL
   end
   
@@ -1494,7 +1187,7 @@ class DatabaseManager
   end
   
   def migrate(migration_spec)
-    db.ex(migrate_sql(migration_spec))
+    db.ex(migrate_nuw_sql(migration_spec))
     db.ex("vacuum memberfact");
     db.ex("vacuum membersourceprev");
     db.ex("vacuum transactionfact");
