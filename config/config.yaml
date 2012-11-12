@@ -48,16 +48,16 @@ dimensions:
     name: Employment Type
   - id: paymenttypeid
     name: Payment Type
+  - id: last_site_training_course
+    name: Last Course
+    roles: trainer
   - id: last_site_training_type
     name: Last Course Category
-    roles: trainer
-  - id: last_site_training
-    name: Last Course
     roles: trainer
   - id: last_site_training_age
     name: Training Age
     roles: trainer
-  - id: last_site_trainer
+  - id: last_site_training_trainer
     name: Trainer
     roles: trainer
   - id: last_site_training_venue
@@ -364,6 +364,8 @@ column_descriptions:
   
     
     
+  
+  
   
   
   
