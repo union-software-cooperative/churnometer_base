@@ -34,9 +34,6 @@ dimensions:
     name: State
   - id: nuwelectorate
     name: Electorate
-  - id: statusstaffid
-    name: Data Entry
-    roles: lead
   - id: supportstaffid
     name: Support Staff
   - id: employerid
@@ -63,6 +60,8 @@ dimensions:
   - id: last_site_training_venue
     name:  Training Venue
     roles: trainer
+  - id: userid
+    name: Data Entry
 drilldown_order:
   branchid: lead
   industryid: companyid
@@ -75,7 +74,6 @@ drilldown_order:
   feegroupid: companyid
   state: areaid
   nuwelectorate: org
-  statusstaffid: companyid
   supportstaffid: org
   employerid: companyid
   hostemployerid: companyid
@@ -157,6 +155,24 @@ summary_data_tables:
           - stopped_other_loss
           - stopped_end_count
           - stopped_unchanged_gain
+    userid:
+        display_name: Data Entry Changes
+        query_columns:
+          - row_header 
+          - row_header1 
+          - period_header
+          - a1p_real_gain
+          - a1p_unchanged_gain
+          - a1p_to_other
+          - a1p_to_paying
+          - stopped_real_gain
+          - stopped_unchanged_gain
+          - stopped_to_other
+          - stopped_to_paying
+          - rule59_unchanged_gain
+          - transactions
+          - posted
+          - unposted
 detail_data_tables:
     member_summary:
         display_name: Member Summary
@@ -364,6 +380,9 @@ column_descriptions:
   
     
     
+  
+  
+  
   
   
   
