@@ -25,7 +25,7 @@ class DetailFriendlyDimensionSQLGenerator
   end
 
   def table_alias
-    "dim_#{@dimension.index}"
+    "dim_#{@dimension.column_base_name}"
   end
 
   # should be in Dimension instead?
