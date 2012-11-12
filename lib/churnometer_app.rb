@@ -37,6 +37,9 @@ class ChurnometerApp
   # Optional descriptions of columns used in tool tips
   attr_reader :col_descriptions
 
+  # Descriptions of all possible summary tables (only used to get data entry dimension)
+  attr_reader :summary_user_data_tables
+  
   # application_environment: either ':production' or ':development'
   # config_io:  general config filename or stream.  If nil, will load general config 
   #   config from default path
@@ -335,7 +338,7 @@ protected
 protected
   # User data tables should be accessed via an AppRole instance when performing application logic for 
   # the user.
-  attr_accessor :summary_user_data_tables
+  #attr_accessor :summary_user_data_tables
   attr_accessor :detail_user_data_tables
 end
 

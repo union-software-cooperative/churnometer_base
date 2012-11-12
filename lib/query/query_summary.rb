@@ -35,6 +35,7 @@ class QuerySummary < QueryFilter
     db = @churn_db.db
 
     header1 = @groupby_dimension.column_base_name
+    trans_header1 = header1 == 'userid' ? 't.userid' : "u1.#{header1}" # join on transactionfact's userid (transaction poster) rather than memberfact's userid (member [status] editor)
 
     filter = modified_filter_for_site_constraint(filter_terms(), @site_constraint, @start_date, @end_date)
 
@@ -80,12 +81,12 @@ sql = <<-EOS
 			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection 
 			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 ) -- both sides (if in user selection) if one side is paying and there was a paying change 
  			or u1.changeid in (select changeid from userselections u where a1pgain <> 0 or a1ploss <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
- 			or u1.#{header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items
+ 			#{header1 == 'userid' ? '' : "or u1.#{header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items" }
  	)
 	, trans as
 	(
 		select 
-			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1
+			case when coalesce(#{trans_header1}::varchar(200),'') = '' then 'unassigned' else #{trans_header1}::varchar(200) end row_header1
 		, sum(case when amount::numeric > 0.0 then amount::numeric else 0.0 end) posted
 		, sum(case when amount::numeric < 0.0 then amount::numeric else 0.0 end) undone
 		, sum(amount::numeric) income_net
@@ -102,7 +103,7 @@ sql = <<-EOS
 		t.creationdate >= #{db.sql_date(@start_date)}
 		and t.creationdate < #{db.sql_date(end_date)}
 	group by
-		case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end
+		case when coalesce(#{trans_header1}::varchar(200),'') = '' then 'unassigned' else #{trans_header1}::varchar(200) end
 	)
 	, counts as
 	(

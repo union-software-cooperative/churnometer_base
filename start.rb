@@ -390,17 +390,18 @@ class Churnobyl < Sinatra::Base
   
   post '/config' do
     @flash = nil
+    @config = params['config']
     begin
       
-      if ! (params['config'].nil? || params['config'].empty?) 
+      if ! (@config.nil? || @config.empty?) 
         
-        testConfig = ChurnometerApp.new(settings.environment, nil, StringIO.new(params['config']))
+        testConfig = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
         testConfig.validate
         dbm = DatabaseManager.new(testConfig)
         @yaml_spec = dbm.migration_yaml_spec
         if @yaml_spec.nil?
           File.open("config/config.yaml", 'w') do |f|
-            f.puts params['config']
+            f.puts @config
           end
         else
           session[:flash] = "Need to restructure data before saving config/config.yaml"
