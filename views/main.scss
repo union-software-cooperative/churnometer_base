@@ -1,10 +1,15 @@
 $line: 18px;
 
-$tab-active-bg: #353535;
+$bg: #C60C30;
+
+$highlight-bg: #DFDF00;
+$highlight-fg: $bg;
+
+$tab-active-bg: #777;
 $tab-active-fg: ivory;
 
 $tab-inactive-bg: ivory;
-$tab-inactive-fg: #00AFA2;
+$tab-inactive-fg: #777;
 
 
 #nav {
@@ -155,7 +160,7 @@ input.selections {
 }
 
 body {
-	background-color: #353535;
+	background-color: $bg;
 }
 
 h1, h2, h3, h4 {
@@ -170,14 +175,14 @@ h1 a {
 }
 
 h1 a:hover {
-		color: #00AFA2 !important;
+		color: $highlight-bg !important;
 		#text-decoration:underline !important;
 	}
 
 .ui-state-default {
-  border-left-color: #00AFA2 !important;
-  border-top-color: #00AFA2 !important;
-  border-right-color: #00AFA2 !important;
+  border-left-color: $highlight-bg !important;
+  border-top-color: $highlight-bg !important;
+  border-right-color: $highlight-bg !important;
   border-top-width: 1px !important;
   border-left-width: 1px !important;
   border-right-width: 1px !important;
@@ -206,7 +211,7 @@ h1 a:hover {
 }
 
 .ui-widget-header {
-	background:#00AFA2;
+	background:$highlight-bg;
 	border:#ffe;
 }
 
@@ -272,12 +277,12 @@ pre {
 }
 
 .flash {
-  background-color: #00AFA2;
+  background-color: $highlight-bg;
   border-bottom: 1px solid grey;
   padding: 7px 0;
   text-align: center;
   font-weight: bold;
-  color: #FFED71
+  color: $highlight-fg
   }
 
 .bold_col {
