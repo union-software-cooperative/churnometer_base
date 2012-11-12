@@ -75,20 +75,20 @@ class DatabaseManager
 
   def migrate_rebuild_without_indexes_sql()
     sql = <<-SQL
-      drop table if exists importing;
+      drop table if exists importing cascade;
       select 0 as importing into importing;
    
-      drop function if exists insertmemberfact();
-      drop function if exists updatememberfacthelper();
+      drop function if exists insertmemberfact() cascade;
+      drop function if exists updatememberfacthelper() cascade;
       
-      drop view if exists memberchangefromlastchange;
-      drop view if exists memberchangefrommembersourceprev;
-      drop view if exists lastchange;
-      drop view if exists memberfacthelperquery;
+      drop view if exists memberchangefromlastchange cascade;
+      drop view if exists memberchangefrommembersourceprev cascade;
+      drop view if exists lastchange cascade;
+      drop view if exists memberfacthelperquery cascade;
 
-      drop table if exists memberfact_migration;
-      drop table if exists membersourceprev_migration;
-      drop table if exists memberfacthelper_migration;
+      drop table if exists memberfact_migration cascade ;
+      drop table if exists membersourceprev_migration cascade;
+      drop table if exists memberfacthelper_migration cascade;
       
       alter table memberfact rename to memberfact_migration;
       alter table membersourceprev rename to membersourceprev_migration;
@@ -114,23 +114,23 @@ class DatabaseManager
       drop table if exists importing;
       select 0 as importing into importing;
    
-      drop function if exists inserttransactionfact();
-      drop function if exists updatedisplaytext();
-      drop function if exists insertmemberfact();
-      drop function if exists updatememberfacthelper();
+      drop function if exists inserttransactionfact() cascade;
+      drop function if exists updatedisplaytext() cascade;
+      drop function if exists insertmemberfact() cascade ;
+      drop function if exists updatememberfacthelper() cascade;
       
-      drop view if exists memberchangefromlastchange;
-      drop view if exists memberchangefrommembersourceprev;
-      drop view if exists lastchange;
-      drop view if exists memberfacthelperquery;
+      drop view if exists memberchangefromlastchange cascade;
+      drop view if exists memberchangefrommembersourceprev cascade;
+      drop view if exists lastchange cascade;
+      drop view if exists memberfacthelperquery cascade;
 
-      drop table if exists memberfact_migration;
-      drop table if exists membersourceprev_migration;
-      drop table if exists memberfacthelper_migration;
+      drop table if exists memberfact_migration cascade;
+      drop table if exists membersourceprev_migration cascade;
+      drop table if exists memberfacthelper_migration cascade;
       
-      drop table if exists transactionfact_migration;
-      drop table if exists transactionsourceprev_migration;
-      drop table if exists displaytext_migration;
+      drop table if exists transactionfact_migration cascade;
+      drop table if exists transactionsourceprev_migration cascade;
+      drop table if exists displaytext_migration cascade;
       
       alter table transactionfact rename to transactionfact_migration;
       alter table transactionsourceprev rename to transactionsourceprev_migration;
@@ -199,7 +199,7 @@ class DatabaseManager
   
   def rebuild_displaytextsource_sql
     sql = <<-SQL
-      drop table if exists displaytextsource;
+      drop table if exists displaytextsource cascade;
       
       create table displaytextsource
       (
@@ -252,7 +252,7 @@ class DatabaseManager
   
   def rebuild_membersource_sql
     sql = <<-SQL
-      drop table if exists membersource;
+      drop table if exists membersource cascade;
       #{membersource_sql};
     SQL
   end
@@ -697,7 +697,7 @@ class DatabaseManager
   
   def memberfacthelper_sql
     sql = <<-SQL
-      drop table if exists memberfacthelper;
+      drop table if exists memberfacthelper cascade;
       create table memberfacthelper as 
       select 
         * 
@@ -741,7 +741,7 @@ class DatabaseManager
   
   def rebuild_transactionsource_sql
     sql = <<-SQL
-      drop table if exists transactionsource;
+      drop table if exists transactionsource cascade;
       
       #{transactionsource_sql}
     SQL
@@ -1255,11 +1255,11 @@ class DatabaseManager
       from 
       memberfacthelper_migration;
       
-      drop table memberfact_migration;
-      drop table memberfacthelper_migration;
-      drop table membersourceprev_migration;
-      drop table displaytext_migration;
-      drop table transactionfact_migration;
+      drop table memberfact_migration cascade;
+      drop table memberfacthelper_migration cascade ;
+      drop table membersourceprev_migration cascade;
+      drop table displaytext_migration cascade;
+      drop table transactionfact_migration cascade;
       
 
     SQL
@@ -1494,7 +1494,7 @@ class DatabaseManager
   end
   
   def migrate(migration_spec)
-    db.ex(migrate_nuw_sql(migration_spec))
+    db.ex(migrate_sql(migration_spec))
     db.ex("vacuum memberfact");
     db.ex("vacuum membersourceprev");
     db.ex("vacuum transactionfact");
