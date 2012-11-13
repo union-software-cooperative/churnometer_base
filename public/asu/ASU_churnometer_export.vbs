@@ -27,16 +27,22 @@
 '*   Tested on Windows XP, Windows 7, Server 2003
 '******************************************************************************
 
+
+'******************************************************************************
+'* SECTION: Diagnostics
+'******************************************************************************
+debugging = false ' throw pop-up error messages instead of catching and logging
+silent = true ' suppress pop-up progress mesages
+clientsend = true' send email notification to end-users
+
 '******************************************************************************
 '* SECTION: Configuration
 '******************************************************************************
 ' Churnometer
-silent = true 'if silent = true then don't pop up messages
 data_path = "C:\Users\lucas.rohde\Desktop\churn_export"    ' This is where you put this script and SQL files
 url = "http://user:@churnometer:3000/import"    ' This is where you want the data uploaded
 logfilename = data_path & "\"    & "churn_export.log"    ' This is where you want the log file to save
 curl_path = data_path ' This is where curl.exe is
-debugging = false
 ' Database
 dbusername = "sa"
 dbpassword = "TsuK@1tech"
@@ -47,12 +53,20 @@ dbprovider = "Microsoft.ACE.OLEDB.12.0"    '"Microsoft.Jet.OLEDB.4.0"
 dbserver = "TSUSQL2008"
 dbname = "membership"
 dbconnectionstring = "DRIVER=SQL Server;SERVER="    & dbserver & ";DATABASE="    & dbname & ";UID=sa;PWD="    & dbpassword & ";APP=churnometer_export;"
-' Mail
-mailserver = "mail.nuw.org.au"
-mailto = "lrohde@nuw.org.au"
-mailcc = ""
-mailfrom = "churnometer@nuw.org.au"
+expected_backup_size = (5 * 1024 * 1024)
 
+' freechange mail
+fcmailserver = "mail.nuw.org.au"
+fcmailto = "lrohde@nuw.org.au"
+fcmailcc = ""
+fcmailfrom = "churnometer@theservicesunion.com.au"
+
+' client mail
+clientmailserver = "mail.theservicesunion.com.au"
+clientmailto = "Cary.Pollock@theservicesunion.com.au"
+clientmailcc = ""
+clientmailfrom = "churnometer@freechange.com.au"
+	
 
 '******************************************************************************
 '* SECTION: Helper functions
@@ -248,6 +262,59 @@ private function upload(url, path, filename) ' if it fails, returns path to log 
 	end if
 end function
 
+'******************************************************************************
+'* FUNCTION: backup
+'* Authors:  lrohde 2-112012
+'* backup of the software and database
+'* Inputs: 
+'*  url:  backup
+'* Returns: 
+'*  Success: true
+'*  Failure: false, output from curl's log will be in main log file
+'******************************************************************************
+private function backup(url, path) ' if it fails, returns path to log file, if it succeeds returns ""
+	if not debugging then on error resume next
+	backup = false
+
+	If fso.FileExists(path & "\backup_prev.zip") Then fso.DeleteFile path & "\backup_prev.zip"
+	If fso.FileExists(path & "\backup.zip") Then fso.MoveFile path & "\backup.zip", path & "\backup_prev.zip"
+	
+	curl_log = path & "\curl.log"
+	
+	' Call CURL from the command line
+	' NB --insecure allows for the certificate to be self signed with an odd name
+	' But data will still be encrypted
+	Set WshShell = WScript.CreateObject("WScript.Shell")
+	WshShell.Run "cmd /c "    & curl_path & "\curl.exe -o backup.zip --insecure -X GET --form scripted=true "    & replace(url, "import", "backup") & "    > "    & curl_log & "    2>&1", 0, true
+	if error_handler("           failed to execute curl to download backup ") then exit function  
+		
+	' Open curl's log file
+	text = read_curl_log(curl_log)
+	
+	' Check the backup file
+	if fso.FileExists(path & "\backup.zip") then 
+		set f = fso.getfile(path & "\backup.zip")
+		if f.size > expected_backup_size then 
+			backup = true
+		else
+			logfile.writeline "           backup file smaller than expected: " & (f.size \ 1024) & "kb"
+		end if
+	end if
+
+	if backup = true then 
+		if not silent then msgbox "successfully downloaded backup"
+		logfile.writeline "           Successfully downloaded backup"
+
+		If fso.FileExists(path & "\backup_prev.zip") Then fso.DeleteFile path & "\backup_prev.zip"
+	else
+		If fso.FileExists(path & "\backup_prev.zip") Then fso.MoveFile path & "\backup_prev.zip", path & "\backup.zip"
+		if not silent then msgbox "failed to download backup"   
+		
+		logfile.writeline "           Failed to download backup"
+		logfile.write text ' write curl's log to main log file
+	end if
+end function
+
 
 '******************************************************************************
 '* FUNCTION: import
@@ -287,9 +354,8 @@ private function import(url, path) ' if it fails, returns path to log file, if i
 		text = read_curl_log(curl_log)
 	
 		if instr(text, "Successfully commenced import of staged data") > 0 then 
-			logfile.writeline "           Successfully commenced import of staged data"
-
-			do
+			logfile.writeline "           Successfully commenced import of staged data"			
+				do
 				logfile.writeline "           Importing..."
 				Wscript.sleep 5000
  
@@ -305,7 +371,7 @@ private function import(url, path) ' if it fails, returns path to log file, if i
 			end if
 		end if
 	end if
-
+	
 	if import = false then 
 		if not silent then msgbox "Import failed" & text
 		logfile.writeline "           Import failed "
@@ -363,22 +429,44 @@ end function
 '******************************************************************************
 private sub wrap_up(result)
 	logfile.close
-	 
+	
+	subject = "Churnometer Import Success"
+	if result = false then subject = "CHURNOMETER IMPORT FAILURE!"
+	
+ 
 	' Read log from file
 	Set logfile = fso.OpenTextFile(logfilename, 1)
 	logtext = logfile.ReadAll
 	logfile.Close
 	
 	' Send email with log as message body
+	sendmail fcmailserver, fcmailfrom, fcmailto, fcmailcc, subject, logtext
+	if clientsend then sendmail clientmailserver, clientmailfrom, clientmailto, clientmailcc, subject, logtext
+	
+	cnn.close
+	set cnn = nothing
+	set fso = nothing
+	set folder = nothing
+	set files = nothing	
+end sub
+
+'******************************************************************************
+'* FUNCTION: sendmail
+'* Authors:  lrohde 5-11-2012
+'* Purpose:  send email, can't relay to different domains so refactored so we can send two emails (client and fc)
+'* Inputs: None
+'*  mailserver
+'*  mailfrom
+'*  mailto
+'*  mailcc
+'*  mailsubject
+'*  mailbody
+'* Returns: None
+'******************************************************************************
+private sub sendmail(mailserver, mailfrom, mailto, mailcc, mailsubject, mailbody)
 	Set objMessage = CreateObject("CDO.Message")
 	
-	'objMessage.From = "churnometer@theservicesunion.com.au"
-	'objMessage.To = "Cary.Pollock@theservicesunion.com.au"
-	'objMessage.CC = "lukerohde@gmail.com"
-	
-	if result = true then objMessage.Subject = "Churnometer Import Success"
-	if result = false then objMessage.Subject = "CHURNOMETER IMPORT FAILURE!"
-
+	objMessage.Subject = mailsubject
 	objMessage.From = mailfrom
 	objMessage.To = mailto
 	objMessage.CC = mailcc
@@ -386,14 +474,10 @@ private sub wrap_up(result)
 	objMessage.Configuration.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpserver")=mailserver
 	objMessage.Configuration.Fields.Item("http://schemas.microsoft.com/cdo/configuration/smtpserverport")=25 
 	objMessage.Configuration.Fields.Update
-	objMessage.TextBody = logtext
+	objMessage.TextBody = mailbody
 	objMessage.Send
-	
-	cnn.close
-	set cnn = nothing
-	set fso = nothing
-	set folder = nothing
-	set files = nothing	
+
+	set objMessage = nothing
 end sub
 
 '******************************************************************************
@@ -426,50 +510,59 @@ set folder = fso.GetFolder(data_path)
 set files = folder.files
 if error_handler("Invalid data path: "    & data_path) then call wrap_up: Wscript.Quit
 
+
 ' Set up regular expression for matching file names that have .sql extentions
 set r = new regexp
 r.Pattern = ".+\.sql$"    ' matches anything ending in .sql
 r.IgnoreCase = true
 
-' Iterate through each file
-for each file in files
-	if r.test(file.name) then 	
-		logfile.writeline "    Processing "    & file.name
-		' Read SQL from file
-		SQL = read_file(file)
-		if SQL <> ""    then 
-			' Execute SQL against database
-			set rs = get_recordset(cnn, SQL)
-			if not rs is nothing then 
-				logfile.writeline "           Executed query in "    & file.name
-				data_filename = replace(file.name, ".sql", ".txt")
-			
-				' Write SQL result to text file
-				write_result = write_data (rs, data_path & "\"    & data_filename)
-				if write_result then 
-					logfile.writeline "           Wrote data to "    & data_filename
-					
-					' upload text file to website
-					upload_result = upload(url, data_path,  data_filename)
-				end if ' successful data write
+if 1 = 1 then 
+	' Iterate through each file
+	for each file in files
+		if r.test(file.name) then 	
+			logfile.writeline "    Processing "    & file.name
+			' Read SQL from file
+			SQL = read_file(file)
+			if SQL <> ""    then 
+				' Execute SQL against database
+				set rs = get_recordset(cnn, SQL)
+				if not rs is nothing then 
+					logfile.writeline "           Executed query in "    & file.name
+					data_filename = replace(file.name, ".sql", ".txt")
 				
-				rs.close
-				set rs = nothing
-			end if ' successful data load
-		end if ' successful SQL file read
-	else
-		if debugging then logfile.writeline "    Skipping "    & file.name
-	end if
-next
+					' Write SQL result to text file
+					write_result = write_data (rs, data_path & "\"    & data_filename)
+					if write_result then 
+						logfile.writeline "           Wrote data to "    & data_filename
+						
+						' upload text file to website
+						upload_result = upload(url, data_path,  data_filename)
+					end if ' successful data write
+					
+					rs.close
+					set rs = nothing
+				end if ' successful data load
+			end if ' successful SQL file read
+		else
+			if debugging then logfile.writeline "    Skipping "    & file.name
+		end if
+	next
 
-' Check if server is ready for import, and if it is, start import
-result = import(url, data_path)
-if result then 
-	result = empty_cache(url, data_path)
+	' Check if server is ready for import, and if it is, start import
+	result = import(url, data_path)
+	if result then 
+		result = empty_cache(url, data_path)
+		if result then
+			result=backup(url, data_path)
+		end if 
+	end if
+else 
+	result=backup(url, data_path)
 end if
+
+
 logfile.writeline "Import Finished "    & Now()
 
 On Error Goto 0 ' raise errors normally now because logging won't work during wrap-up
 call wrap_up(result)
 if not silent then msgbox("Done")
-
