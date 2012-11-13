@@ -317,7 +317,7 @@ class ImportPresenter
   def restart
     cmd = ""
     if @app.config['host_os'].to_s == "osx"
-      cmd = "killall ruby; shotgun" # "killall ruby; thin start"
+      cmd = "killall ruby; thin start" # "killall ruby; thin start"
     else
       # Crudely assumes dbpass and #{@db.dbname} user pass is the same (that's how its configured)
       cmd = "echo #{@db.dbpass} | sudo -S /etc/init.d/postgresql restart"

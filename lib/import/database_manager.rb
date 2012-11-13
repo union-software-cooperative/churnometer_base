@@ -1084,6 +1084,7 @@ class DatabaseManager
         sql << "delete from dimstart where dimension = '#{k.to_s}'; \n" ;
       else
         sql << "update dimstart set dimension = '#{v.to_s}' where dimension = '#{k.to_s}'; \n" if (k.to_s != v.to_s); 
+        sql << "update displaytext set attribute = '#{v.to_s}' where attribute = '#{k.to_s}'; \n" if (k.to_s != v.to_s); 
       end
     end
     sql
@@ -1174,6 +1175,20 @@ class DatabaseManager
     SQL
   end
   
+    def migrate_asu_sql(migration_spec)
+    mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
+    
+    <<-SQL
+      #{migrate_rebuild_without_indexes_sql()}
+      -- start of migration
+      #{migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', null') }
+      #{migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', null') }
+      #{migrate_dimstart_sql(migration_spec)}
+      #{rebuild_most_indexes_sql()}
+    SQL
+  end
+  
+  
   def migrate_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
@@ -1187,7 +1202,7 @@ class DatabaseManager
   end
   
   def migrate(migration_spec)
-    db.ex(migrate_nuw_sql(migration_spec))
+    db.ex(migrate_asu_sql(migration_spec))
     db.ex("vacuum memberfact");
     db.ex("vacuum membersourceprev");
     db.ex("vacuum transactionfact");
