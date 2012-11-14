@@ -287,7 +287,7 @@ class ImportPresenter
   end
   
   def backup_command(file)
-    cmd = "pg_dump #{@db.dbname}  > backup/#{@db.dbname}_db_backup.sql"
+    cmd = "pg_dump #{@db.dbname}  > data_backup/#{@db.dbname}_db_backup.sql"
     cmd << "; rm -Rf #{file}"
     cmd << "; zip -q -r #{file} . -x uploads/\* -x tmp/\* -x .sass-cache/\* -x tmp/\* "
   end
@@ -301,7 +301,7 @@ class ImportPresenter
     cmd << "; mkdir #{file}"
     cmd << "; git clone #{source_repo} #{file}"
     cmd << "; cd #{file}"
-    cmd << "; zip -r ../../#{file}.zip ."
+    cmd << "; zip -q -r ../../#{file}.zip ."
   end
   
   def empty_cache
