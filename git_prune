@@ -1,4 +1,5 @@
 #!/bin/bash
+# https://help.github.com/articles/remove-sensitive-data
 
 cd $1
 
