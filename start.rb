@@ -220,6 +220,8 @@ class Churnobyl < Sinatra::Base
   end
   
   get "/import" do
+    admin!
+    
     @flash = session[:flash]
     session[:flash] = nil
     
@@ -256,6 +258,16 @@ class Churnobyl < Sinatra::Base
   end
   
   get "/backup" do
+    admin!
+    
+    @flash = session[:flash]
+    session[:flash] = nil
+    erb :backup
+  end
+  
+  get "/backup_download" do
+    admin!
+    
     @model = ip()
     file = "backup_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
     path = "backup/backup.zip"
@@ -265,17 +277,23 @@ class Churnobyl < Sinatra::Base
   end
   
   get "/restart" do
+    admin!
+    
     @flash = session[:flash]
     session[:flash] = nil
     erb :restart
   end
   
   post "/restart" do
+    admin!
+    
     @model = ip()
     @model.restart
   end
   
   post "/import" do
+    admin!
+    
     session[:flash] = nil
     @model = ip()
     
@@ -375,6 +393,8 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/config' do 
+    admin!
+    
     @flash = session[:flash]
     session[:flash] = nil
     
@@ -389,6 +409,8 @@ class Churnobyl < Sinatra::Base
   end
   
   post '/config' do
+    admin!
+    
     @flash = nil
     @config = params['config']
     begin
@@ -424,6 +446,8 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/migrate' do
+    admin!
+    
     @flash = session[:flash]
     @config = session[:new_config]
     if @config.nil?
@@ -441,6 +465,8 @@ class Churnobyl < Sinatra::Base
   end
   
   post '/migrate' do
+    admin!
+    
     @flash = nil
     session[:flash] = nil
     @yaml_spec = params['yaml_spec']
@@ -456,11 +482,13 @@ class Churnobyl < Sinatra::Base
       dbm = DatabaseManager.new(new_config)
       migration_spec = dbm.parse_migration(@yaml_spec)
       
-      #@yaml_spec = dbm.migrate_sql(migration_spec)
-      #@flash = "getting sql"
-      dbm.migrate(migration_spec) # this can take some serious time
+      migration_sql = dbm.migrate_nuw_sql(migration_spec)
+      raise "User specified script only" if params['script_only'] == 'true'
+      
+      dbm.migrate(migration_sql) # this can take some serious time
     rescue StandardError => err
-      @flash = "Failed to migrate: " + err.message
+      @flash = "Failed to migrate: " + err.message + " <br/> see below for diagnostic sql"
+      @diag_sql = migration_sql
     rescue Psych::SyntaxError => err
       @flash = "Failed to migrate: " + err.message
     end
