@@ -270,7 +270,7 @@ class Churnobyl < Sinatra::Base
     
     @model = ip()
     file = "backup_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
-    path = "backup/backup.zip"
+    path = "tmp/backup.zip"
     @model.backup(path)
     send_file(path, :disposition => 'attachment', :filename => file)
     @model.close_db()
