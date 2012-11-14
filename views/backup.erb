@@ -1,0 +1,35 @@
+<% if !@flash.nil? %>
+    <div class="flash">
+      <%= @flash %>
+    </div>
+<% end %>
+
+<div class="container">
+  <h1><a href="/"><%= "churnometer" %></a></h1>
+</div>
+
+<div class="menu container">
+  <ul>
+    <li><a href="/config">config</a></li>
+    <li><a class="selected" href="/backup">backup</a></li>
+    <li><a href="/restart?redirect=/">restart</a></li>
+    <li><a href="/import">import</a></li>
+  </ul>
+  <h3><span>Please wait while we prepare the backup...</span></h3>
+  <form method="get" name="backup">
+  </form>
+</div>
+
+
+<script type="text/javascript">
+
+  window.onload = function() {
+    window.location = "/backup_download"
+    //document.forms["backup"].submit();
+    // restart in background so shutdown crash doesn't show to user
+    //$.ajax({
+    //  type: 'GET',
+    //  url: '/backup_get'
+    //});
+  }
+</script>

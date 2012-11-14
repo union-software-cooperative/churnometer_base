@@ -17,6 +17,8 @@
   </ul>
 </div>
 
+<section id="data" class="ui-widget-content">
+
 <% if @model.importing? %>
   
   <%= @model.import_status %>
@@ -28,6 +30,7 @@
   </script>
 
 <% else %>
+	
   <%= @model.staging_status %>
   <form method="post" enctype="multipart/form-data">
     <input type="file" name="myfile">
@@ -59,6 +62,14 @@
       <input type="submit" name="action" value="import">
     </form>
   <% end %>
+  
+  <br/>
+
+  <%= @model.import_history %>
+
 <% end %>
 
+  
+
+</section>
 
