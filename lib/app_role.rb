@@ -33,11 +33,11 @@ class AppRoles
   # summary_data_tables: A UserDataTables instance containing all of the possible UserDataTables defined
   # 	for 'summary' queries.
   # detail_data_tables: As above, for 'detail' queries.
-  def from_config_element(config_element, summary_data_tables, detail_data_tables)
+  def from_config_element(config_element, summary_data_tables, detail_data_tables, default_password)
     config_element.ensure_kindof(Hash)
 
     config_element.value.each do |role_id, hash_element|
-      role = AppRole.from_config_element(role_id.downcase, hash_element, summary_data_tables, detail_data_tables)
+      role = AppRole.from_config_element(role_id.downcase, hash_element, summary_data_tables, detail_data_tables, default_password)
       @id_to_role[role.id] = role
     end
   end
@@ -60,12 +60,13 @@ class AppRole
   attr_reader :password
   attr_reader :summary_data_tables
   attr_reader :detail_data_tables
+  attr_reader :admin
   
   def self.config_forbidden_ids
     ['all', 'none']
   end
 
-  def self.from_config_element(id, config_element, summary_data_tables, detail_data_tables)
+  def self.from_config_element(id, config_element, summary_data_tables, detail_data_tables, default_password)
     config_element.instance_eval do
       ensure_kindof(Hash)
     end
@@ -77,11 +78,12 @@ class AppRole
     hash = config_element
 
     new(id,
-        config_element.optional('password'),
+        config_element.optional('password') || default_password,
         resolve_data_tables(config_element['summary_data_tables'], summary_data_tables, config_element),
         resolve_data_tables(config_element['detail_data_tables'], detail_data_tables, config_element),
         config_element.optional('show_transactions') || false,
-        config_element.optional('show_target_calculation') || false)
+        config_element.optional('show_target_calculation') || false,
+        config_element.optional('admin') || false)
   end
 
   # id: a string identifier
@@ -97,13 +99,15 @@ class AppRole
                  summary_data_tables,
                  detail_data_tables,
                  allow_transactions,
-                 allow_target_calculation_display)
+                 allow_target_calculation_display,
+                 admin)
     @id = id
     @password = password
     @summary_data_tables = summary_data_tables
     @detail_data_tables = detail_data_tables
     @allow_transactions = allow_transactions
     @allow_target_calculation_display = allow_target_calculation_display
+    @admin = admin
   end
 
   def allow_transactions?
@@ -117,6 +121,10 @@ class AppRole
   # Returns true if the given password passes the role's authentication requirements.
   def password_authenticates?(password)
     @password.nil? || password == @password
+  end
+  
+  def admin?
+    @admin
   end
 
 protected
@@ -138,7 +146,7 @@ end
 # Describes an unauthenticated user.
 class AppRoleUnauthenticated < AppRole
   def initialize
-    super('unauthenticated', nil, nil, nil, false, false)
+    super('unauthenticated', nil, nil, nil, false, false, nil)
   end
 
   def password_authenticates?(password)
