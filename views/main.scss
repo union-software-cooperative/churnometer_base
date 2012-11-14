@@ -1,13 +1,12 @@
 $line: 18px;
 
-$bg: #353535;
-
-$highlight-bg: #00AFA2;
-$highlight-fg: #DFDF00;
-$tab-active-bg: #353535;
+$bg: #C60C30;
+$highlight-bg: #DFDF00;
+$highlight-fg: $bg;
+$tab-active-bg: #777;
 $tab-active-fg: ivory;
 $tab-inactive-bg: ivory;
-$tab-inactive-fg: #00AFA2;
+$tab-inactive-fg: #1C94C4;
 
 #nav {
   margin-top: $line;
@@ -160,6 +159,7 @@ body {
 
 h1, h2, h3, h4 {
 	color: #ffd;
+	padding-left: 18px;
 }
 
 h1 a {
@@ -173,6 +173,41 @@ h1 a:hover {
 		color: $highlight-bg !important;
 		#text-decoration:underline !important;
 	}
+
+.menu {
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    height: 80px;
+    }
+    
+  li {
+    float: left;
+  }  
+  
+  ul a {
+    background-repeat: no-repeat;
+    background-position: right;
+    padding-right: 32px;
+    padding-left: 18px;
+	  display: block;
+    line-height: 80px;
+    text-decoration: none;
+    font-size: 21px;
+    color: $highlight-bg;
+  }
+  
+  ul a:hover {
+    color: ivory;
+  }
+  
+  .selected {
+    color: ivory;
+  }
+  
+}
 
 .ui-state-default {
   border-left-color: $highlight-bg !important;

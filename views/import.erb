@@ -4,7 +4,18 @@
     </div>
 <% end %>
 
-<h2>Churnometer Data Importer</h2>
+<div class="container">
+  <h1><a href="/"><%= "churnometer" %></a></h1>
+</div>
+
+<div class="menu container">
+  <ul>
+    <li><a href="/config">config</a></li>
+    <li><a href="/backup">backup</a></li>
+    <li><a href="/restart?redirect=/">restart</a></li>
+    <li><a class="selected" href="/import">import</a></li>
+  </ul>
+</div>
 
 <% if @model.importing? %>
   
