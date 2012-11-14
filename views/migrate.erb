@@ -4,7 +4,20 @@
     </div>
 <% end %>
 
-<h2>Restructure Data</h2>
+<div class="container">
+  <h1><a href="/"><%= "churnometer" %></a></h1>
+</div>
+
+<div class="menu container">
+  <ul>
+    <li><a class="selected" href="/config">config</a></li>
+    <li><a href="/backup">backup</a></li>
+    <li><a href="/restart?redirect=/">restart</a></li>
+    <li><a href="/import">import</a></li>
+  </ul>
+</div>
+
+<h3>Restructure Data</h3>
 
 <% if @yaml_spec.nil? %>
   <h4>No migration required</h4>
@@ -15,9 +28,16 @@
   <section id="data">
     <form method="post">
       <input type="submit" name="action" value="restructure and restart">
+      <input type="checkbox" name="script_only" value="true"> Script only (do not execute)
       <textarea name="yaml_spec" style="width:100%;height:90%">
 <%= @yaml_spec%>
       </textarea>
     </form>
   </section>
+<% end %>
+
+<% if ! @diag_sql.nil? %>
+<pre>
+<%=@diag_sql %>
+</pre>
 <% end %>

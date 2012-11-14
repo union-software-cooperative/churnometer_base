@@ -28,9 +28,19 @@ module Authorization
   
   def protected!
     unless auth.authenticated?
-      response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
-      throw(:halt, [401, "Not authorized\n"])
+      not_authorised
     end
+  end
+  
+  def admin!
+    unless auth.authenticated? && auth.admin?
+      not_authorised
+    end
+  end
+  
+  def not_authorised
+    response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
+    throw(:halt, [401, "Not authorized\n"])
   end
   
 end
@@ -39,11 +49,12 @@ end
 class Authorize
   attr_accessor :auth
   attr_reader :role
+  attr_reader :admin
 
   def initialize(churn_app, auth)
     @app = churn_app
     @auth = auth
-
+    
     @role = 
       if @auth.provided?
         @app.roles[@auth.credentials.first]
@@ -52,6 +63,8 @@ class Authorize
       end
 
     @role ||= @app.unauthenticated_role
+    
+    @admin = @role.admin?
 
     @authenticated = 
       auth.provided? && 
@@ -62,5 +75,9 @@ class Authorize
 
   def authenticated?
     @authenticated == true
+  end
+  
+  def admin?
+    @admin
   end
 end

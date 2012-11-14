@@ -281,7 +281,8 @@ protected
     @roles = AppRoles.new
     @roles.from_config_element(config().get_mandatory('roles'),
                                @summary_user_data_tables,
-                               @detail_user_data_tables)
+                               @detail_user_data_tables,
+                               config().get_mandatory('database')['password'].value)
   end
 
   def make_user_data_tables
