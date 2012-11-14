@@ -35,7 +35,7 @@ class DatabaseManager
   end
 
   def dimensions
-    @dimensions 
+    @dimensions.reject { |d| d.column_base_name == 'userid' }
   end
 
   def app
@@ -1138,8 +1138,9 @@ class DatabaseManager
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
     <<-SQL
+      -- nuw migration
       #{rebuild_from_scratch_without_indexes_sql()}
-      -- start of migration
+      -- start of nuw data migration
       #{migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', statusstaffid') }
       #{migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', newstatusstaffid') }
       #{migrate_nuw_transactionfact_sql()}
@@ -1153,9 +1154,8 @@ class DatabaseManager
       update memberfacthelper set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
       update memberfact set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
       update transactionfact set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
-    
       
-      drop table memberid_detail;
+      drop table if exists memberid_detail;
       
       select 
         d.id
@@ -1179,6 +1179,7 @@ class DatabaseManager
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
     <<-SQL
+      -- asu migration
       #{migrate_rebuild_without_indexes_sql()}
       -- start of migration
       #{migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', null') }
@@ -1193,6 +1194,7 @@ class DatabaseManager
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
     <<-SQL
+      -- regular migration
       #{migrate_rebuild_without_indexes_sql()}
       #{migrate_membersourceprev_sql(mapping)}
       #{migrate_memberfact_sql(mapping)}
@@ -1201,8 +1203,8 @@ class DatabaseManager
     SQL
   end
   
-  def migrate(migration_spec)
-    db.ex(migrate_asu_sql(migration_spec))
+  def migrate(migration_sql)
+    db.ex(migration_sql)
     db.ex("vacuum memberfact");
     db.ex("vacuum membersourceprev");
     db.ex("vacuum transactionfact");
