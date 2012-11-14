@@ -305,6 +305,5 @@ column_descriptions:
   lateness: The remittance status of each employer with at least one OOP member attached. The next due date is determined from the '{paidto}' plus the average duration between payments (multipled by the number of unposted payments) plus half this average duration to allow for processing.
   paidto: The date up to which money has been posted.  The employer may have paid past this date but unposted payment don't count toward the '{paidto}' because the '{paidto}' is determined during payment posting.
   paymenttype: Code representing either out of pay, direct debit, credit card or personal (invoice)
-      
   
   
