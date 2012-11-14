@@ -4,9 +4,22 @@
     </div>
 <% end %>
 
-<h1><span id="count_down">Restarting...</span></h1>
-<form method="post" name="restart">
-</form>
+<div class="container">
+  <h1><a href="/"><%= "churnometer" %></a></h1>
+</div>
+
+<div class="menu container">
+  <ul>
+    <li><a href="/config">config</a></li>
+    <li><a href="/backup">backup</a></li>
+    <li><a class="selected" href="/restart?redirect=/">restart</a></li>
+    <li><a href="/import">import</a></li>
+  </ul>
+  <h3><span id="count_down">Restarting...</span></h3>
+  <form method="post" name="restart">
+  </form>
+</div>
+
 
 <script type="text/javascript">
 
