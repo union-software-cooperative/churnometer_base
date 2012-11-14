@@ -104,7 +104,7 @@ class ImportPresenter
   end
   
   def importer_status
-	load_staging_counts
+	  load_staging_counts
 		
   	mcnt_msg = (@mcnt == "0" ? "No member data staged - expecting members.txt to be upload" : @mcnt.to_s + " rows of member data staged for import")
   	dcnt_msg = (@dcnt == "0" ? "No displaytext data staged - expecting displaytext.txt to be upload" : @dcnt.to_s + " rows of displaytext data staged for import")
@@ -132,18 +132,10 @@ class ImportPresenter
   end
 
   def staging_status
-    
-  	
-  	<<-HTML
-  	  <h3>
-  	    Prior imports
-  	  </h3>
-  	  #{import_history}
-          #{importer_status}
-        HTML
+    <<-HTML
+  	  #{importer_status}
+    HTML
   end
-  
-
   
   def import_history
     
@@ -162,17 +154,19 @@ class ImportPresenter
     # render table of history
     html = <<-HTML
       <table>
-        <tr>
-          <th>
-            import date
-          </th>
-          <th>
-            member changes
-          </th>
-          <th>
-            transaction changes
-          </th>
-        </tr>
+        <thead>
+          <tr>
+            <th>
+              import date
+            </th>
+            <th>
+              member changes
+            </th>
+            <th>
+              transaction changes
+            </th>
+          </tr>
+        </thead>
     HTML
     
     tab.each do |k,v|
@@ -209,11 +203,11 @@ class ImportPresenter
   end
   
   def transaction_import_history
-    data = db.ex("select creationdate, count(*) cnt from transactionfact group by creationdate order by creationdate")
+    data = db.ex("select creationdate, count(*) cnt from transactionfact group by creationdate order by creationdate desc")
   end
   
   def member_import_history
-    data = db.ex("select changedate as creationdate, count(*) cnt from memberfact group by changedate order by changedate")
+    data = db.ex("select changedate as creationdate, count(*) cnt from memberfact group by changedate order by changedate desc")
   end
   
   def console_ex(cmd)
