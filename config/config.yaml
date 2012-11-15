@@ -79,6 +79,11 @@ drilldown_order:
   hostemployerid: companyid
   employmenttypeid: companyid
   paymenttypeid: paymenttypeid
+  companyid: last_site_training_course
+  last_site_training_type: last_site_training_venue
+  last_site_training_venue: last_site_training_trainer
+  last_site_training_trainer: last_site_training_course
+  last_site_training_course: companyid
 summary_data_tables:
     summary:
         display_name: Summary
@@ -406,5 +411,6 @@ column_descriptions:
   
   
   
+    
     
     
