@@ -379,7 +379,7 @@ class ChurnDB
   
   def get_display_text(dimension, id)
     raise "A Dimension instance must be supplied." if !dimension.kind_of?(Dimension)
-    t = "error!"
+    t = "#{id} !"
     
     if id == "unassigned" 
       t = "unassigned"

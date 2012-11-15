@@ -290,7 +290,7 @@ protected
 	select 
 		coalesce(d1.displaytext, c.row_header1)::varchar(200) row_header1 -- c.row_header
 		--, c.row_header2::varchar(200) row_header2
-		, c.row_header1::varchar(20) row_header1_id
+		, c.row_header1::varchar(200) row_header1_id
 		--, ''::varchar(20) row_header2_id
 		, c.start_count::int
 		, c.a1p_start_count::int

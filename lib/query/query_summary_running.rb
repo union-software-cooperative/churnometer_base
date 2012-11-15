@@ -348,7 +348,7 @@ sql << <<-EOS
 	)
 	select 
 		coalesce(d1.displaytext, c.row_header1)::varchar(200) row_header1 -- c.row_header
-		, c.row_header1::varchar(20) row_header1_id
+		, c.row_header1::varchar(200) row_header1_id
 		, (c.period_header::varchar(20) || ' - ' || #{db.quote(@header2)} || ' ' || extract(#{db.quote(@header2)} from c.period_header)::varchar(2))::varchar(200) as period_header
 		, c.running_a1p_net::bigint
 		, c.running_paying_net::bigint
