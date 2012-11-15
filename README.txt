@@ -15,9 +15,9 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
 
-This file is located in the root directory of the source code - /README.txt
+This file is located in the root directory of the source code - /README.txt 
 
-INSTALLATION - UBUNTU 12.04 & 12.10
+INSTALLATION - ON UBUNTU 12.04 & 12.10
 
 We've been developing on osx and ubuntu, and only written installation script for Ubuntu server 12.04 which also seems to work on 12.10.  
 
@@ -46,6 +46,47 @@ $ sudo su churnometer
 $ rm /opt/churnometer/*
 $ cp -R ~/churnometer_backup/* /opt/churnometer/
 $ /etc/init.d/thin restart
+
+INSTALLATION LOG FOR UBUNTU 12.04
+
+We followed these steps to install ubuntu on vmware
+
+Create vmware machine: 2GB Ram, 2 cores, 20GB HDD
+VMWare - edit settings - options tab - advanced, general - configuration parameters - add row - keyboard.typematicMinDelay = 2000000
+Attached ubuntu 12.04 iso to cdrom and boot
+
+English
+Install Server
+Language: English
+Country Territory or Area: Australia
+Detect keyboard layout: No
+Country of origin for the keyboard: English UK
+Keyboard Layout: English UK
+hostname: tsuchurnometer
+full name: Lucas Rohde
+username for your account: lrohde
+password: same as windows login
+encrypt home directory: no
+Configure Clock\your timezone is queensland australia: Yes
+Partition disk:  use entire disk
+Select disk to partition: SCSI3 (0,0,0) (sda) - 21.5 GB VMWare Virtual disk
+Write the changes to disk: Yes
+Http proxy: blank for none	
+manage upgrades: No automatic updates
+Software selection:  OpenSSH and postgresql
+Install GRUB: Yes
+Disconnect CDRom and reboot
+
+DEPLOYMENT OF VB SCRIPT FOR DEVELOPMENT AND DAILY IMPORT/EXPORT
+On Windows 2008 
+install SQL Server 2008 tools
+- Client Tools Connectivity
+- Client tools backward compatibility
+- Management Tools - Basic
+- Management Tools - Complete
+
+Created a scheduled task to run C:\Users\lucas.rohde\Desktop\churn_export\ASU_churnometer_export.vbs at 3pm as lucas.rohde
+This file contains SQL server passwords and churnometer passwords - it should be secured.
 
 CONFIGURATION 
 
