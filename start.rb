@@ -482,7 +482,7 @@ class Churnobyl < Sinatra::Base
       dbm = DatabaseManager.new(new_config)
       migration_spec = dbm.parse_migration(@yaml_spec)
       
-      migration_sql = dbm.migrate_nuw_sql(migration_spec)
+      migration_sql = dbm.migrate_sql(migration_spec)
       raise "User specified script only" if params['script_only'] == 'true'
       
       dbm.migrate(migration_sql) # this can take some serious time
