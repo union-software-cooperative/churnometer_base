@@ -60,6 +60,7 @@ class DatabaseManager
       drop table if exists memberfacthelper_migration cascade;
       
       alter table memberfact rename to memberfact_migration;
+      alter sequence memberfact_changeid_seq rename to memberfact_migration_changeid_seq;
       alter table membersourceprev rename to membersourceprev_migration;
       alter table memberfacthelper rename to memberfacthelper_migration;
      
