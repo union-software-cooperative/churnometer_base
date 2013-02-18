@@ -35,6 +35,7 @@ class ImportPresenter
   
   def close_db
     @db.close_db()
+    @dbm.close_db()
   end
   
   def dimensions

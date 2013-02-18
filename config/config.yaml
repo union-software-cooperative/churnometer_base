@@ -1,4 +1,4 @@
-application_start_date: 2012-10-3
+application_start_date: 2012-12-1
 use_new_query_generation_method: true
 work_site_dimension_id: employer
 default_groupby_dimension_id: branch
@@ -23,7 +23,7 @@ dimensions:
   - id: locale
     name: Location
   - id: employer
-    name: Employer
+    name: Employer ID
   - id: industry
     name: Industry
   - id: pay_method
@@ -52,6 +52,8 @@ dimensions:
     name: Employment Type
   - id: branch
     name: ASU
+  - id: employer_group
+    name: Employer Group
 drilldown_order:
   branch: lead
   lead: org
@@ -320,4 +322,5 @@ column_descriptions:
   paymenttype: Code representing either out of pay, direct debit, credit card or personal (invoice)
   
   
+    
     
