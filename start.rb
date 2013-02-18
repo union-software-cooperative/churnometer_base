@@ -162,7 +162,7 @@ class Churnobyl < Sinatra::Base
   
   after '/import' do
     log
-    @ip.close_db() if !ip.nil?
+    @ip.close_db() unless @ip.nil?
   end
 
   def log

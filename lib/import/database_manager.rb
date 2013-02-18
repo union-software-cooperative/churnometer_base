@@ -34,6 +34,10 @@ class DatabaseManager
     @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
   end
 
+  def close_db()
+    @db.close_db()
+  end
+
   def dimensions
     @dimensions.reject { |d| d.column_base_name == 'userid' }
   end
