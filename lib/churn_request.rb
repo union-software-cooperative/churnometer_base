@@ -31,6 +31,7 @@ class ChurnRequest
   attr_reader :cache_hit
   attr_reader :xml
   attr_reader :query_filterterms
+  attr_reader :interval
   
   include Settings
   
