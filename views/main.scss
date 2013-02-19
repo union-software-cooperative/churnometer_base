@@ -1,12 +1,13 @@
 $line: 18px;
 
-$bg: #C60C30;
-$highlight-bg: #DFDF00;
-$highlight-fg: $bg;
-$tab-active-bg: #777;
+$bg: #353535;
+
+$highlight-bg: #00AFA2;
+$highlight-fg: #DFDF00;
+$tab-active-bg: #353535;
 $tab-active-fg: ivory;
 $tab-inactive-bg: ivory;
-$tab-inactive-fg: #1C94C4;
+$tab-inactive-fg: #00AFA2;
 
 #nav {
   margin-top: $line;
@@ -329,6 +330,7 @@ pre {
     color: ivory;
   }
 }
+
 
 #card_target_tip {
   width: 800px;
