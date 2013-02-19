@@ -26,162 +26,137 @@ class ChurnPresenter_Target
   def initialize(app, request)
     @request=request
     @app=app
-  end
-  
-  def weeks
-    start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate']) + 1
     
-    (Float(end_date - start_date) / 7).round(1)
-  end
-  
-  def growth
-    start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate']) + 1
-  
-    start_count = paying_start_total
-    
-    started = 0
-    @request.data.each { | row | started += row['paying_real_gain'].to_i }
-    
-    stopped = 0
-    @request.data.each { | row | stopped += row['paying_real_loss'].to_i }
-    
-    end_count = start_count + stopped + started
-    
-    start_date == end_date || start_count == 0 ? Float(1/0.0) : Float((((Float(end_count) / Float(start_count)) **  (365.0/(Float(end_date - start_date)))) - 1) * 100).round(1)
-  end
-
-  def get_cards_in_growth_target
-    
-    # the number of people who stopped paying
-    stopped = 0
-    @request.data.each { | row | stopped -= row['paying_real_loss'].to_i }
-    
-    # count the people who start paying without giving us a card
-    # we calculate this by subtracting the people who become paying from a1p (a1p_to_paying which is negative) from the paying gain
-    resume = 0 
-    @request.data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
-    
-    # count of a1p people who start paying
-    conversions = 0
-    @request.data.each { | row | conversions -= row['a1p_to_paying'].to_i }
-    
-    # count the joiners who fail to convert to paying
-    failed = 0 
-    @request.data.each { | row | failed -= row['a1p_to_other'].to_i }
-    
-    # count the joiners who fail to convert to paying
-    cards = 0 
-    @request.data.each { | row | cards += row['a1p_real_gain'].to_i }
-    
-    start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate']) + 1
-    
-    cards_per_week = 0.0
-    if start_date != end_date  
-      growth = Float((paying_start_total + paying_transfers_total)) * 0.1 / 365 * Float(end_date - start_date) # very crude growth calculation - But I don't think CAGR makes sense, the formula would be # growth = (((10% + 1) ^ (duration/365) * start) - start) 
-       
-      # METHOD 1.  for every sign up, we only convert some to paying
-      # growth = conversions == 0 || cards == 0 ? growth : growth * (cards/conversions) # if we got no conversions or cards, then don't worry about the ratio and just go for cards in - bad bad bad.
-      
-      # METHOD 2. For every card we get in, there is some that never start paying 10 vs 2.  If we get 20 we'd expect 4 to not start paying.
-      # To get the 4 we multiple growth target number failed/cards * target + target 
-      # growth += (cards == 0 ? 0 : failed/cards * growth)  
-      
-      # METHOD 3.  Maybe I'm counting the conversion ratio twice in Method 1 and 2.  
-      # The conversion ratio may be already included in the cards we need to hold our ground
-      # See + failed in equation below, so I should leave the raw growth figure alone
-      # Method 1 and 2 also leave the equation vulnerable to crazy volatility
-       
-      # to hold our ground we need to recruit the same number as those that stopped, 
-      # less those that historically resume paying on their own (these are freebies)
-      # plus those that new cards that failed to start paying
-      # plus a certain amount to achieve some growth figure.  The growth figure should reflect
-      cards_per_week = Float((Float(stopped - resume + failed + growth) / Float(end_date - start_date) * 7 )).round(1) 
+    if @request.interval == 'month'
+      @period = 365.25/12.0 # average month inc leap years
+      @period_desc = 'month'
+    else
+      @period = 7
+      @period_desc = 'week'
     end
     
-    cards_per_week
-  end
-
-  def get_cards_in_target
+    @start_date = Date.parse(@request.params['startDate'])
+    @end_date = Date.parse(@request.params['endDate'])
+    @days_duration = (@end_date + 1) - @start_date
     
-    # the number of people who stopped paying
-    stopped = 0
-    @request.data.each { | row | stopped -= row['paying_real_loss'].to_i }
-    
-    # count the people who start paying without giving us a card
-    # we calculate this by subtracting the people who become paying from a1p (a1p_to_paying which is negative) from the paying gain
-    resume = 0 
-    @request.data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
-    
-    # count the joiners who fail to convert to paying
-    failed = 0 
-    @request.data.each { | row | failed -= row['a1p_to_other'].to_i }
-    
-    start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate']) + 1
-    
-    cards_per_week = 0.0
-    if start_date != end_date  
-      cards_per_week = Float((Float(stopped - resume + failed) / Float(end_date - start_date) * 7 )).round(1)
-    end
-    
-    cards_per_week
-  end
-
-  def getmath_get_cards_in_target
+    @paying_start_total = paying_start_total
+    @paying_end_total = paying_end_total
+    @paying_transfers_total = paying_transfers_total
 
      # the number of people who stopped paying
-     stopped = 0
-     @request.data.each { | row | stopped -= row['paying_real_loss'].to_i }
+     @stopped = 0
+     @request.data.each { | row | @stopped -= row['paying_real_loss'].to_i }
 
      # count the people who start paying without giving us a card
      # we calculate this by subtracting the people who become paying from a1p (a1p_to_paying which is negative) from the paying gain
-     resume = 0 
-     @request.data.each { | row | resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
+     @resume = 0 
+     @request.data.each { | row | @resume += (row['paying_real_gain'].to_i + row['a1p_to_paying'].to_i) } 
 
-     paying_real_gain = 0 
-     @request.data.each { | row | paying_real_gain += row['paying_real_gain'].to_i } 
+     @paying_real_gain = 0 
+     @request.data.each { | row | @paying_real_gain += row['paying_real_gain'].to_i } 
      
-     a1p_to_paying = 0 
-     @request.data.each { | row | a1p_to_paying += row['a1p_to_paying'].to_i } 
+     @a1p_to_paying = 0 
+     @request.data.each { | row | @a1p_to_paying += row['a1p_to_paying'].to_i } 
+     
+     #cards_in
+     @cards_in = 0
+     @request.data.each { | row | @cards_in += row['a1p_real_gain'].to_i }
+    
+     @cards_per_period = Float(((@cards_in) / Float(@days_duration) * @period )).round(1)
      
      # count the joiners who fail to convert to paying
-     failed = 0 
-     @request.data.each { | row | failed -= row['a1p_to_other'].to_i }
-
-     start_date = Date.parse(@request.params['startDate'])
-     end_date = Date.parse(@request.params['endDate']) + 1
-
-     cards_per_week = 0.0
-     weeks = 0
-     cards = 0 
-     cards_per_week = 0
-     if start_date != end_date 
-       weeks =  Float(end_date - start_date) / 7
-       cards = Float(stopped - resume + failed)
-       cards_per_week = Float(cards / weeks ).round(1)
+     @failed = 0 
+     @request.data.each { | row | @failed -= row['a1p_to_other'].to_i }
+     @conversion_rate = -Float(@a1p_to_paying) / Float(@cards_in)
+     @conversion_rate = 1 if @conversion_rate.nan?
+     
+     #http://en.wikipedia.org/wiki/Turnover_(employment)
+     @real_losses = @stopped - @resume
+     @turn_over = 0 
+     @turn_over = (Float(@real_losses)) / (Float(@paying_start_total + @paying_end_total) / 2.0) if ((@paying_start_total + @paying_end_total) != 0)
+     @annual_turn_over = (Float(@real_losses) / Float(@days_duration) * 365.25) / (Float(@paying_start_total + @paying_end_total) / 2.0)
+     
+     #turn over would be different at 10% growth
+     @growth = Float(@paying_start_total) * 0.1 / 365.25 * Float(@days_duration) # very crude growth calculation - But I don't think CAGR makes sense, the formula would be # growth = (((10% + 1) ^ (duration/365.25) * start) - start) 
+     @real_losses_with_growth = @turn_over * (( Float(@paying_start_total + @paying_start_total + @growth)) / 2.0)  
+     
+     #cards_hold
+     @cards_hold = @real_losses / @conversion_rate
+     @cards_hold_per_period = Float(@cards_hold) / Float(@days_duration) * @period
+     
+     if @cards_hold.to_s == 'infinity'
+      @cards_hold_display = 'infinity' 
+     else 
+      @cards_hold_display = @cards_hold.round(1)
      end
+     
+     
+     #cards_grow
+     @cards_grow = (@real_losses_with_growth + @growth) / @conversion_rate
+     @cards_grow_per_period = Float(@cards_grow) / Float(@days_duration) * @period
+     
+     if @cards_grow.to_s == 'infinity'
+      @cards_grow_display = 'infinity' 
+     else 
+      @cards_grow_display = @cards_grow.round(1)
+     end
+  end
+  
+  def periods
+    (Float(@days_duration) / @period).round(1)
+  end
+  
+  def period_desc
+    @period_desc
+  end
+  
+  def growth
+    end_count = (@paying_start_total - @stopped + @paying_real_gain).to_f
+    years = @days_duration.to_f / 365.25
+    g = 
+      begin 
+         Float((((end_count / @paying_start_total) ** (1/years)) - 1) * 100).round(1)
+      rescue StandardError => err
+        "NaN".to_f
+      end
+    
+    g = 0 if g.to_s == "NaN"
+    g
+  end
 
-     "#{cards.round(0)} cards needed (#{stopped} #{col_names['paying_real_loss']} + #{failed} #{col_names['a1p_to_other']} - #{resume} resumed paying without a card (#{paying_real_gain} #{col_names['paying_real_gain']} - #{-a1p_to_paying} #{col_names['a1p_to_paying']}) ) / #{weeks.round(1)} weeks = #{cards_per_week}  cards per week"
+  def get_cards_in_growth_target
+    @cards_grow_per_period.round(1)
+  end
+
+  def get_cards_in_target
+    @cards_hold_per_period.round(1)
+  end
+  
+  def get_cards_in
+    @cards_per_period
+  end
+
+  def getmath_get_cards_in_target
+     
+     #"#{cards.round(0)} cards needed (#{stopped} #{col_names['paying_real_loss']} + #{failed} #{col_names['a1p_to_other']} - #{resume} resumed paying without a card (#{paying_real_gain} #{col_names['paying_real_gain']} - #{-a1p_to_paying} #{col_names['a1p_to_paying']}) ) / #{periods.round(1)} periods = #{cards_per_period}  cards per period.  We add #{growth_per_period} cards per period for 10% growth (10% = #{growth} )"
+     <<-HTML
+       <pre>
+          CARDS_NEEDED_TO_HOLD_OUR_GROUND_PER_#{@period_desc.upcase} (#{@cards_hold_per_period.round(1)}) = cards_needed_to_hold_our_ground (#{@cards_hold_display}) / days_duration (#{@days_duration.round(0)}) * #{@period} 
+          cards_needed_to_hold_our_ground (#{@cards_hold_display}) = losses (#{@real_losses.round(0)}) / rough_conversion_rate (#{(@conversion_rate * 100).round(1)}%)
+          rough_conversion_rate (#{(@conversion_rate * 100).round(1)}%) = cards_in_that_start_paying (#{-@a1p_to_paying.round(0)}) / cards_in (#{@cards_in})
+          losses (#{@real_losses.round(0)}) = people_who_stop_paying (#{@stopped.round(0)}) - people_who_resume_paying (#{@resume.round(0)})
+          days_duration (#{@days_duration.round(0)}) = @end_date (#{@end_date}) + 1 - @start_date (#{@start_date})
+          
+          CARDS_NEEDED_TO_GROW_PER_#{@period_desc.upcase} (#{@cards_grow_per_period.round(1)}) = cards_need_to_grow (#{@cards_grow_display}) / days_duration (#{@days_duration.round(0)}) * #{@period} 
+          cards_needed_to_grow (#{@cards_grow_display}) = (losses_from_larger_patch (#{@real_losses_with_growth.round(0)}) + desired_growth_for_period (#{@growth.round(0)})) / rough_conversion_rate (#{(@conversion_rate * 100).round(1)}%)
+          losses_from_larger_patch (#{@real_losses_with_growth.round(0) }) = turn_over (#{(@turn_over * 100).round(1)}%) * (( start_count (#{@paying_start_total.round(0)}) + start_count (#{@paying_start_total.round(0)}) + desired_growth_for_period (#{@growth.round(0)}) ) / 2)
+          desired_growth_for_period (#{@growth.round(0)}) = start_count (#{@paying_start_total.round(0)}) * 10% / 365.25 * days_duration (#{@days_duration.round(0)})
+          turn_over (#{(@turn_over * 100).round(1)}%) = losses (#{@real_losses.round(0)}) / ((start_count (#{@paying_start_total.round(0)}) + end_count (#{@paying_end_total.round(0)})) / 2 ) - http://en.wikipedia.org/wiki/Turnover_(employment)
+          
+          annual_turn_over = #{(@annual_turn_over * 100).round(1)}% 
+       </pre>
+     HTML
    end
 
-  def get_cards_in
-    
-    # the number of people who stopped paying
-    cards = 0
-    @request.data.each { | row | cards += row['a1p_real_gain'].to_i }
-    
-    start_date = Date.parse(@request.params['startDate'])
-    end_date = Date.parse(@request.params['endDate']) + 1
-    
-    cards_per_week = 0.0
-    if start_date != end_date  
-      cards_per_week = Float(((cards) / Float(end_date - start_date) * 7 )).round(1)
-    end
-    
-    cards_per_week
-  end
    
 end
