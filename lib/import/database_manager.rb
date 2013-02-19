@@ -32,6 +32,7 @@ class DatabaseManager
     @paying_db = @db.quote(@app.member_paying_status_code)
     @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
     @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
+    @waiver_db = "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
   end
 
   def close_db()
@@ -138,6 +139,34 @@ class DatabaseManager
     SQL
   end
   
+  def rebuild_sql
+    <<-SQL
+      #{rebuild_from_scratch_without_indexes_sql}
+      #{rebuild_most_indexes_sql}
+      #{rebuild_memberfacthelper_indexes_sql}
+      
+      ANALYSE memberfact;
+      ANALYSE memberfact;
+      ANALYSE memberfacthelper;
+      ANALYSE transactionfact;
+      ANALYSE displaytext;
+      ANALYSE membersource;
+      ANALYSE membersourceprev;
+      ANALYSE transactionsource;
+      ANALYSE transactionsourceprev;
+      ANALYSE displaytextsource;
+      
+      VACUUM memberfact;
+      VACUUM memberfacthelper;
+      VACUUM transactionfact;
+      VACUUM displaytext;
+      VACUUM membersource;
+      VACUUM membersourceprev;
+      VACUUM transactionsource;
+      VACUUM transactionsourceprev;
+      VACUUM displaytextsource;
+    SQL
+  end
   
   def rebuild()
     db.ex(rebuild_from_scratch_without_indexes_sql)
@@ -486,9 +515,11 @@ class DatabaseManager
               oldstatus = #{@paying_db}
               or oldstatus = #{@stopped_db}
               or oldstatus = #{@a1p_db}
+              or oldstatus in #{@waiver_db}
               or newstatus = #{@paying_db}
               or newstatus = #{@stopped_db}
               or newstatus = #{@a1p_db}
+              or newstatus in #{@waiver_db}
             )
         )
         -- or have paid something since tracking begun
@@ -577,12 +608,23 @@ class DatabaseManager
         , 0 as stoppedgain
         , case when coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db}
             then -1 else 0 end as stoppedloss
+        , 0 as waivergain
+        , case when coalesce(oldstatus, '') in (#{@waiver_db}) and not coalesce(newstatus, '') in (#{@waiver_db})
+            then -1 else 0 end as waiverloss
         , 0 as othergain
         , case when 
             NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
             AND NOT (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
+            AND NOT (coalesce(oldstatus, '') in #{@waiver_db} and not coalesce(newstatus, '') in #{@waiver_db})
             then -1 else 0 end as otherloss
+        , 0 as membergain
+        , case when 
+            (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
+            or (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
+            or (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
+            or (coalesce(oldstatus, '') in #{@waiver_db} and not coalesce(newstatus, '') in #{@waiver_db})
+            then -1 else 0 end as memberloss
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
@@ -622,12 +664,23 @@ class DatabaseManager
         , case when coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db}
             then 1 else 0 end as stoppedgain
         , 0 as stoppedloss
+        , case when not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db}
+            then 1 else 0 end as waivergain
+        , 0 as waiverloss
         , case when 
             NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
             AND NOT (coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db})
+            AND NOT (not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db}))
             then 1 else 0 end as othergain
         , 0 as otherloss
+        , case when 
+            (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
+            or (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
+            or (coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db})
+            or (not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db}))
+            then 1 else 0 end as membergain
+        , 0 as memberloss
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
@@ -661,9 +714,11 @@ class DatabaseManager
               oldstatus = #{@paying_db}
               or oldstatus = #{@stopped_db}
               or oldstatus = #{@a1p_db}
+              or oldstatus in (#{@waiver_db})
               or newstatus = #{@paying_db}
               or newstatus = #{@stopped_db}
               or newstatus = #{@a1p_db}
+              or newstatus in (#{@waiver_db})
             )
         )
         -- or have paid something since tracking begun
