@@ -168,6 +168,16 @@ class DatabaseManager
     SQL
   end
   
+  def rebuild_memberfacthelper_sql()
+    <<-SQL
+      drop view if exists memberfacthelperquery cascade;
+      #{memberfacthelperquery_sql};
+      #{memberfacthelper_sql}
+      #{updatememberfacthelper_sql}
+      #{rebuild_memberfacthelper_indexes_sql}
+    SQL
+  end
+  
   def rebuild()
     db.ex(rebuild_from_scratch_without_indexes_sql)
     db.ex(rebuild_most_indexes_sql)
@@ -515,11 +525,11 @@ class DatabaseManager
               oldstatus = #{@paying_db}
               or oldstatus = #{@stopped_db}
               or oldstatus = #{@a1p_db}
-              or oldstatus in #{@waiver_db}
+              or oldstatus in (#{@waiver_db})
               or newstatus = #{@paying_db}
               or newstatus = #{@stopped_db}
               or newstatus = #{@a1p_db}
-              or newstatus in #{@waiver_db}
+              or newstatus in (#{@waiver_db})
             )
         )
         -- or have paid something since tracking begun
@@ -597,34 +607,68 @@ class DatabaseManager
         , 1 as loss
         , coalesce(oldstatus, '') as status
         , coalesce(newstatus, '') as _status
-        , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
+        , case when
+            (
+              (
+                coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db})
+                or coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db})
+              )
+              and coalesce(oldstatus, '') <> coalesce(newstatus, '') -- when changing between a1p, paying and stopped
+            )
+            or
+            (
+              (
+                coalesce(oldstatus, '') in (#{@waiver_db})
+                and not coalesce(newstatus, '') in (#{@waiver_db})
+              )
+              or
+              (
+                not coalesce(oldstatus, '') in (#{@waiver_db})
+                and coalesce(newstatus, '') in (#{@waiver_db})
+              )
+            )
             then -1 else 0 end as statusdelta
         , 0 as a1pgain
         , case when coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db}
             then -1 else 0 end as a1ploss
+        , case when coalesce(oldstatus, '') = #{@a1p_db}
+          then -1 else 0 end as a1pnet
         , 0 as payinggain
         , case when coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db}
           then -1 else 0 end as payingloss
+        , case when coalesce(oldstatus, '') = #{@paying_db}
+          then -1 else 0 end as payingnet
         , 0 as stoppedgain
         , case when coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db}
             then -1 else 0 end as stoppedloss
+        , case when coalesce(oldstatus, '') = #{@stopped_db}
+          then -1 else 0 end as stoppednet
         , 0 as waivergain
         , case when coalesce(oldstatus, '') in (#{@waiver_db}) and not coalesce(newstatus, '') in (#{@waiver_db})
             then -1 else 0 end as waiverloss
+        , case when coalesce(oldstatus, '') in (#{@waiver_db})
+          then -1 else 0 end as waivernet
+        , 0 as membergain
+        , case when 
+            coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
+            and (not coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
+            then -1 else 0 end as memberloss
+        , case when 
+            coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
+            then -1 else 0 end as membernet
         , 0 as othergain
         , case when 
             NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
             AND NOT (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
-            AND NOT (coalesce(oldstatus, '') in #{@waiver_db} and not coalesce(newstatus, '') in #{@waiver_db})
+            AND NOT (coalesce(oldstatus, '') in (#{@waiver_db}) and not coalesce(newstatus, '') in (#{@waiver_db}))
             then -1 else 0 end as otherloss
-        , 0 as membergain
         , case when 
-            (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
-            or (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
-            or (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
-            or (coalesce(oldstatus, '') in #{@waiver_db} and not coalesce(newstatus, '') in #{@waiver_db})
-            then -1 else 0 end as memberloss
+            NOT (coalesce(oldstatus, '') = #{@a1p_db})
+            AND NOT (coalesce(oldstatus, '') = #{@paying_db})
+            AND NOT (coalesce(oldstatus, '') = #{@stopped_db})
+            AND NOT (coalesce(oldstatus, '') in (#{@waiver_db}))
+            then -1 else 0 end as othernet
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
@@ -653,20 +697,55 @@ class DatabaseManager
         , 0 as loss
         , coalesce(newstatus, '') as status
         , coalesce(oldstatus, '') as _status
-        , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
-            then 1 else 0 end as statusdelta
+        , case when
+          (
+            (
+              coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db})
+              or coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db})
+            )
+            and coalesce(oldstatus, '') <> coalesce(newstatus, '') -- when changing between a1p, paying and stopped
+          )
+          or
+          (
+            (
+              coalesce(oldstatus, '') in (#{@waiver_db})
+              and not coalesce(newstatus, '') in (#{@waiver_db})
+            )
+            or
+            (
+              not coalesce(oldstatus, '') in (#{@waiver_db})
+              and coalesce(newstatus, '') in (#{@waiver_db})
+            )
+          )
+          then 1 else 0 end as statusdelta
         , case when coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db}
             then 1 else 0 end as a1pgain
         , 0 as a1ploss
+        , case when coalesce(newstatus, '') = #{@a1p_db}
+            then 1 else 0 end as a1pnet
         , case when coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db}
           then 1 else 0 end as payinggain
         , 0 as payingloss
+        , case when coalesce(newstatus, '') = #{@paying_db}
+          then 1 else 0 end as payingnet
         , case when coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db}
             then 1 else 0 end as stoppedgain
         , 0 as stoppedloss
-        , case when not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db}
+        , case when coalesce(newstatus, '') = #{@stopped_db}
+            then 1 else 0 end as stoppednet
+        , case when not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db})
             then 1 else 0 end as waivergain
         , 0 as waiverloss
+        , case when coalesce(newstatus, '') in (#{@waiver_db})
+            then 1 else 0 end as waivernet
+        , case when 
+            (not coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db})) 
+            and (coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
+            then 1 else 0 end as membergain
+        , 0 as memberloss
+        , case when 
+            coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
+            then 1 else 0 end as membernet
         , case when 
             NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
@@ -675,12 +754,11 @@ class DatabaseManager
             then 1 else 0 end as othergain
         , 0 as otherloss
         , case when 
-            (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
-            or (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
-            or (coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db})
-            or (not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db}))
-            then 1 else 0 end as membergain
-        , 0 as memberloss
+            NOT (coalesce(newstatus, '') = #{@a1p_db})
+            AND NOT (coalesce(newstatus, '') = #{@paying_db})
+            AND NOT (coalesce(newstatus, '') = #{@stopped_db})
+            AND NOT (coalesce(newstatus, '') in (#{@waiver_db}))
+            then 1 else 0 end as othernet
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
