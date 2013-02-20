@@ -32,7 +32,7 @@ class DatabaseManager
     @paying_db = @db.quote(@app.member_paying_status_code)
     @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
     @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
-    @waiver_db = "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
+    @waiver_db = @db.sql_in(@app.waiver_statuses) # "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
   end
 
   def close_db()
