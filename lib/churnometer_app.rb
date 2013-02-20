@@ -40,6 +40,8 @@ class ChurnometerApp
   # Descriptions of all possible summary tables (only used to get data entry dimension)
   attr_reader :summary_user_data_tables
   
+  attr_reader :waiver_statuses
+
   # application_environment: either ':production' or ':development'
   # config_io:  general config filename or stream.  If nil, will load general config 
   #   config from default path
@@ -49,7 +51,7 @@ class ChurnometerApp
   #	needed.
   def initialize(application_environment = :development, site_config_io = nil, config_io = nil)
     @application_environment = application_environment
-    
+
     reload_config(site_config_io, config_io)
   end
 
@@ -69,12 +71,14 @@ class ChurnometerApp
     make_drilldown_order()
     make_col_names()
     make_col_desc()
+    make_waiver_statuses()
+    validate()
   end
   
   def validate
     application_start_date()
   end
-  
+
   # A ConfigFileSet instance.
   def config
     @config_file_set
@@ -217,9 +221,9 @@ protected
     end
     
     begin 
-      @config_file_set.add(ConfigFile.new(config_io()))
-    rescue
-      puts "Site config file '#{config_filename()}' missing, proceeding without general config."
+      @config_file_set.add(ConfigFile.new(config_io(), @config_filename))
+    rescue ConfigFileMissingException
+      puts "Config file '#{config_filename()}' missing, proceeding without general config."
     end
 
     if !site_config.nil?
@@ -232,7 +236,7 @@ protected
     end
     
     begin
-      @config_file_set.add(ConfigFile.new(site_config_io()))
+      @config_file_set.add(ConfigFile.new(site_config_io(), @site_config_filename))
     rescue ConfigFileMissingException
       puts "Site config file '#{site_config_filename()}' missing, proceeding without site-specific config."
     end
@@ -334,8 +338,21 @@ protected
     @col_descriptions
   end
   
-  
+  def make_waiver_statuses()
+    element = config().get_mandatory('waiver_statuses')
+    element.ensure_kindof(Array, NilClass)
 
+    @waiver_statuses = 
+      if element.nil? 
+        []
+      else
+        element.value.collect do |element|
+        	element.ensure_kindof(String)
+        	element.value
+        end
+      end
+  end
+  
 protected
   # User data tables should be accessed via an AppRole instance when performing application logic for 
   # the user.

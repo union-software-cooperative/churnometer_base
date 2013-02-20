@@ -5,6 +5,29 @@ default_groupby_dimension_id: branch
 member_paying_status_code: paying
 member_awaiting_first_payment_status_code: a1p
 member_stopped_paying_status_code: stopped
+waiver_statuses:
+  - pat
+  - anbs
+  - assoc
+  - fhardship
+  - trainee
+  - fam
+  - half pay
+  - leave
+  - life
+  - lsl
+  - mat
+  - o/s
+  - pend
+  - res
+  - stu
+  - study
+  - waiv
+  - work
+  - unemployed
+  - emp unkn
+  - mid career
+  - nofee
 dimensions:
   - id: lead
     name: Lead
