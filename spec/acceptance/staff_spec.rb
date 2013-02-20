@@ -41,8 +41,8 @@ class Churnobyl
   def protected!
   end
   
-  def auth
-    @auth ||= AuthorizeOverride.new(Rack::Auth::Basic::Request.new(request.env))
+  def auth_class
+    AuthorizeOverride
   end
 
   def churn_request_class

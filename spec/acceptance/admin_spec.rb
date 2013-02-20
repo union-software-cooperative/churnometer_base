@@ -17,45 +17,55 @@
 
 require File.expand_path(File.dirname(__FILE__) + "/acceptance_helper")
 
+$testing_role = 'leadership'
 
-class AuthorizeOverride < Authorize
-  def role
-    app().roles.get_mandatory('leader')
-  end
+def test_app
+  Churnobyl.server_lifetime_churnometer_app
 end
-
-class ChurnRequestOverride < ChurnRequest
-  # Override ChurnDB dates
-  def query_defaults
-    super.rmerge({
-      'startDate' => '2012-04-05',
-      'endDate'   => '2012-04-26',
-    })
-  end
-end
-
-
-class Churnobyl
-
-  # Override authentication
-  def protected!
-  end
-  
-  def auth
-    @auth ||=  AuthorizeOverride.new Rack::Auth::Basic::Request.new(request.env)
-  end
-
-  def churn_request_class
-    ChurnRequestOverride
-  end
-end
-
 
 describe "admin" do
   
   before :each do
     # Don't send email when testing
     Pony.stub!(:mail)
+
+    class AuthorizeOverride < Authorize
+      def role
+        @app.roles.get_mandatory($testing_role)
+      end
+    end
+
+    class ChurnRequestOverride < ChurnRequest
+      # Override ChurnDB dates
+      def query_defaults
+        super.rmerge({
+                       'startDate' => '2012-04-05',
+                       'endDate'   => '2012-04-26',
+                     })
+      end
+    end
+
+    class Churnobyl
+      def self.churnometer_app_site_config_io
+        StringIO.new($regression_config_str)
+      end
+
+      def testing?
+        true
+      end
+
+      # Override authentication
+      def protected!
+      end
+      
+      def auth_class
+        AuthorizeOverride
+      end
+
+      def churn_request_class
+        ChurnRequestOverride
+      end
+    end
   end
   
   it "Leader can login" do
@@ -68,8 +78,6 @@ describe "admin" do
     page.should have_content("Running total") 
     page.should have_no_content "Error"
   end
-
-
   
   it "has a data entry group by option that works" do
     visit "/"
@@ -84,10 +92,21 @@ describe "admin" do
     page.should have_content("Group by") 
     page.should have_content("Running total") 
     page.should have_no_content "Error"
-    
-    click_link("Summary")
-    within 'table#table-summary thead' do
-      table_header_has "data entry", "total cards in", "cards in not followed up", "cards failed", "a1p started paying", "became stopped paying", "became stopped paying not followed up", "stopped paying followed up", "stopped paying resumed paying", "became rule59 not followed up", "transactions", "income posted", "income corrections"
+
+    test_app().roles.get_mandatory($testing_role).summary_data_tables.each do |table|
+      click_link(table.display_name)
+
+      page.should have_css("table#table-#{table.display_name.downcase} thead")
+
+      within "table#table-#{table.display_name.downcase} thead" do
+        tables = test_app().roles.get_mandatory($testing_role).summary_data_tables
+        table_headers = table.column_names.collect do |col_name|
+          test_app().col_names[col_name]
+        end
+
+        # tbd: infer first entry from 'group by'
+        table_header_has ['data entry'] + table_headers.compact
+      end
     end
     
     drill_down_into_data_entry
@@ -112,6 +131,7 @@ describe "admin" do
     
     click_link("Stopped")
     within 'table#table-stopped thead' do
+      
       table_header_has "branch", "stopped paying at start date", "became stopped paying", "became stopped paying not followed up", "stopped paying followed up", "stopped paying resumed paying", "stopped paying transfers in", "stopped paying transfers out", "stopped paying at end date", "became rule59 not followed up"
     end
     within 'table#table-stopped tfoot' do
@@ -155,7 +175,9 @@ describe "admin" do
   
   def table_header_has(*items)
     items.flatten.each_with_index do |item, i|
-      within "th:nth-child(#{i + 1})" do
+      within "th:nth-child(#{i + 1})" do |element|
+        $stderr.puts element.text
+        $stderr.puts "*" + item
         page.should have_content item
       end
     end
