@@ -63,7 +63,7 @@ class ImportPresenter
   def diags
     <<-HTML
       <pre>
-        #{dbm.rebuild_sql};
+        #{dbm.rebuild_memberfacthelper_sql};
       </pre>
     HTML
   end
