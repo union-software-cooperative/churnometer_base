@@ -77,7 +77,8 @@ class Db
     process_query_result(@conn.async_exec(sql))
   end
 
-  # Quotes the string as appropriate for insertion into an SQL query string.
+  # Quotes a string or boolean as appropriate for insertion into an SQL query string.
+  # dbeswick tbd: add a method that will quote any data type where possible.
   def quote(value)
     if value == true || value == false
       "#{value}"
@@ -99,6 +100,15 @@ class Db
     result = "ARRAY[#{array.collect{ |x| quote(x) }.join(', ')}]"
     result << "::#{type}[]" if type
     result
+  end
+
+  # Returns a comma separated, quoted list of elements suitable for use in an SQL 
+  # 'where <column> in' clause.
+  # Doesn't include surrounding brackets.
+  # Example: "select * from table where id in ( #{sql_in(my_array)} )"
+  # dbeswick tbd: support other data types such as DateTime objects.
+  def sql_in(array)
+    array.collect { |element| quote(element) }.join(",")
   end
 
   # Returns the date portion of the given ruby Time object, formatted appropriately for use in a 
