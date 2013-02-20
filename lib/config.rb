@@ -232,7 +232,7 @@ class ConfigFileSet
   end
 
   def add(config_file)
-    @config_files << config_file
+    @config_files.insert(0, config_file)
   end
   
   def filenames

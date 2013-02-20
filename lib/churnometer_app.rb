@@ -52,6 +52,16 @@ class ChurnometerApp
   def initialize(application_environment = :development, site_config_io = nil, config_io = nil)
     @application_environment = application_environment
 
+    # Special case: force site_config file to use regression database if requested database.
+    # This necessitates reading the site_config file before the main config processing logic.
+    # This isn't appropriate if an explicit site_config_io was given.
+    if site_config_io.nil?
+      yaml = YAML.load_file(site_config_filename())
+      if yaml['use_regression_db'] == true
+        site_config_io = File.new('./spec/config/config_regression.yaml')
+      end
+    end
+    
     reload_config(site_config_io, config_io)
   end
 
@@ -122,7 +132,7 @@ class ChurnometerApp
   
   # ensure col_names is initialised before access
   def col_names
-    @col_names ||= make_col_names
+    @col_names ||= make_col_names()
   end
 
   # Returns a string containing the name of the Query class used to handle Chunometer's 'summary'
@@ -194,51 +204,60 @@ protected
     @config_filename ||= "./config/config.yaml"
   end
 
-  def config_io
-    @config_io ||= File.new(config_filename())
-  end
-  
   def site_config_filename
     @site_config_filename ||= "./config/config_site.yaml"
-  end
-
-  def site_config_io
-    @site_config_io ||= File.new(site_config_filename())
   end
 
   # site_config: stream of filename to site specific config, with passwords etc...
   # config: stream or filename
   def make_config_file_set(site_config, config)
     @config_file_set = ConfigFileSet.new
-    
-    if !config.nil?
-      if @config.is_a?(String)
-        @config_filename = config # io stream will load from this file
-      else
-        @config_io = config
-        @config_filename = config.class() # so there isn't any confusion
-      end
-    end
-    
-    begin 
-      @config_file_set.add(ConfigFile.new(config_io(), @config_filename))
-    rescue ConfigFileMissingException
-      puts "Config file '#{config_filename()}' missing, proceeding without general config."
+    config_io = nil
+    site_config_io = nil
+
+    config ||= config_filename()
+    site_config ||= site_config_filename()
+
+    if config.is_a?(String)
+      config_io = File.new(config)
+      @config_filename = config
+    else
+      config_io = config
+      # Ensure that later error messages report that the config was generated from a non-standard source
+      # if necessary.
+      @config_filename = 
+        if config_io.respond_to?(:path)
+          config_io.path
+        else
+          "unspecified source"
+        end
     end
 
-    if !site_config.nil?
-      if @site_config.is_a?(String)
-        @site_config_filename = site_config # io stream will load from this file
-      else
-        @site_config_io = site_config
-        @site_config_filename = site_config.class() # so there isn't any confusion
-      end
-    end
-    
-    begin
-      @config_file_set.add(ConfigFile.new(site_config_io(), @site_config_filename))
+    begin 
+      @config_file_set.add(ConfigFile.new(config_io, @config_filename))
     rescue ConfigFileMissingException
-      puts "Site config file '#{site_config_filename()}' missing, proceeding without site-specific config."
+      $stderr.puts "Config file '#{config_filename()}' missing, proceeding without general config."
+    end
+
+    if site_config.is_a?(String)
+      site_config_io = File.new(site_config)
+      @site_config_filename = site_config
+    else
+      site_config_io = site_config
+      # Ensure that later error messages report that the config was generated from a non-standard source
+      # if necessary.
+      @site_config_filename =
+        if site_config_io.respond_to?(:path)
+          site_config_io.path
+        else
+          "unspecified source"
+        end
+    end
+
+    begin
+      @config_file_set.add(ConfigFile.new(site_config_io, @site_config_filename))
+    rescue ConfigFileMissingException
+      $stderr.puts "Site config file '#{site_config_filename()}' missing, proceeding without site-specific config."
     end
   end
 

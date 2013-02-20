@@ -38,7 +38,7 @@ class AuthorizeOverride < Authorize
 end
 
 class Churnobyl
-  def self.churnometer_app_config_io
+  def self.churnometer_app_site_config_io
     StringIO.new(config_text_override() || $regression_config_str)
   end
   
@@ -85,7 +85,7 @@ class Churnobyl
     # An app is instantiated only so the block can read config settings. The instance is not the same
     # instance that Capybara will be using.
     reference_app = 
-      ChurnometerApp.new(:development, StringIO.new(@config_text), churnometer_app_config_io_desc())
+      ChurnometerApp.new(:development, StringIO.new(@config_text), churnometer_app_site_config_io())
 
     yield reference_app
 

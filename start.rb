@@ -95,6 +95,10 @@ class Churnobyl < Sinatra::Base
     true
   end
 
+  def testing?
+    false
+  end
+
   # Returns the single ChurnometerApp instance used throughout the app's execution, across requests.
   def self.server_lifetime_churnometer_app
     # The instance is created lazily, so several threads may attempt to create it at the same time if
@@ -157,7 +161,8 @@ class Churnobyl < Sinatra::Base
   
   after '/' do
     log
-    @cr.close_db() if !@cr.nil? 
+    @cr.close_db() if !@cr.nil?
+    @cr = nil if testing?
   end
   
   after '/import' do
@@ -182,7 +187,7 @@ class Churnobyl < Sinatra::Base
 
   get '/' do
     if reload_config_on_every_request?
-      app().reload_config(self.class.churnometer_app_config_io(), self.class.churnometer_app_config_io_desc())
+      app().reload_config(self.class.churnometer_app_site_config_io(), self.class.churnometer_app_config_io())
     end
 
     if allow_http_caching?
