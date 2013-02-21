@@ -163,7 +163,7 @@ class ChurnDB
   end  
 
   def fact_table
-    @fact_table ||= @app.config.get_mandatory('database')['facttable'].value
+    @fact_table ||= @app.memberfact_table
   end
 
   def summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml, filter_terms)

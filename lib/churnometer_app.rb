@@ -52,12 +52,12 @@ class ChurnometerApp
   def initialize(application_environment = :development, site_config_io = nil, config_io = nil)
     @application_environment = application_environment
 
-    # Special case: force site_config file to use regression database if requested database.
+    # Special case: force site_config file to the regression config if requested.
     # This necessitates reading the site_config file before the main config processing logic.
     # This isn't appropriate if an explicit site_config_io was given.
     if site_config_io.nil?
       yaml = YAML.load_file(site_config_filename())
-      if yaml['use_regression_db'] == true
+      if yaml != false && yaml['use_regression_config'] == true
         site_config_io = File.new('./spec/config/config_regression.yaml')
       end
     end
@@ -114,6 +114,11 @@ class ChurnometerApp
     end
   end
 
+  # The name of the database table that contains the member facts.
+  def memberfacthelper_table
+    config().get_mandatory('database')['facttable'].value
+  end
+
   # The first iteration of Churnometer retrieved its results by calling SQL functions.
   # Set 'use_new_query_generation_method: true' in config.yaml to use the new method that produces the 
   # same output, but builds the query string in the Ruby domain rather than SQL.
@@ -124,11 +129,10 @@ class ChurnometerApp
   # This is the date we started tracking data.  
   # The user can't select before this date
   def application_start_date
-    result = config().element('application_start_date')
+    result = config().get_mandatory('application_start_date')
     result.ensure_kindof(Date)
     result.value
   end
-
   
   # ensure col_names is initialised before access
   def col_names
@@ -362,7 +366,7 @@ protected
     element.ensure_kindof(Array, NilClass)
 
     @waiver_statuses = 
-      if element.nil? 
+      if element.value.nil?
         []
       else
         element.value.collect do |element|
