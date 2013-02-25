@@ -5,7 +5,7 @@ database:
     dbname: churnometer_regression
     user: churnuser
     password: churnuser
-    facttable: memberfacthelper5
+    facttable: memberfacthelper
 use_database_cache: false
 use_new_query_generation_method: true
 work_site_dimension_id: companyid
