@@ -116,7 +116,13 @@ class ChurnometerApp
 
   # The name of the database table that contains the member facts.
   def memberfacthelper_table
-    config().get_mandatory('database')['facttable'].value
+    database = config().get_mandatory('database')
+
+    if database['facttable'].nil?
+      'memberfacthelper'
+    else
+      database['facttable'].value
+    end
   end
 
   # The first iteration of Churnometer retrieved its results by calling SQL functions.

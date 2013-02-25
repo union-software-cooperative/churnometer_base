@@ -190,6 +190,7 @@ detail_data_tables:
             - unposted
 roles:
     admin:
+        admin: true
         password: letmein
     leadership:
         password: fallout
