@@ -47,7 +47,7 @@ class QuerySummary < QueryFilter
     paying_db = db.quote(@app.member_paying_status_code)
     a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
     stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
-
+    waiver_db = db.sql_in(@app.waiver_statuses) 
 sql = <<-EOS
 	-- summary query
 	with nonstatusselections as
@@ -79,8 +79,7 @@ sql = <<-EOS
 			userselections u1
 		where
 			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection 
-			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 ) -- both sides (if in user selection) if one side is paying and there was a paying change 
- 			or u1.changeid in (select changeid from userselections u where a1pgain <> 0 or a1ploss <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
+			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain<>0 or stoppedloss<>0 or waivergain <> 0 or waiverloss <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
  			#{header1 == 'userid' ? '' : "or u1.#{header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items" }
  	)
 	, trans as
@@ -112,45 +111,75 @@ sql = <<-EOS
 			case when coalesce(#{header1}::varchar(200),'') = '' then 'unassigned' else #{header1}::varchar(200) end row_header1
 			--, date_trunc('week', changedate)::date row_header2
 			, sum(case when changedate < #{db.sql_date(@start_date)} then net else 0 end) as start_count
-			, sum(case when changedate < #{db.sql_date(@start_date)} and status = #{a1p_db} then net else 0 end) as a1p_start_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
-			, sum(case when changedate < #{db.sql_date(@start_date)} and status = #{paying_db} then net else 0 end) as paying_start_count
-			, sum(case when changedate < #{db.sql_date(@start_date)} and status = #{stoppedpay_db} then net else 0 end) as stopped_start_count
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then a1pgain else 0 end) a1p_unchanged_gain
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') = '' then a1pgain else 0 end) a1p_newjoin
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') <>'' then a1pgain else 0 end) a1p_rejoin			
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then a1ploss else 0 end) a1p_to_paying
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then a1ploss else 0 end) a1p_to_other			
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end) stopped_to_paying
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end) stopped_to_other			
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{a1p_db} then othergain else 0 end) a1p_other_gain
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{a1p_db} then otherloss else 0 end) a1p_other_loss
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{paying_db} then othergain else 0 end) paying_other_gain
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{paying_db} then otherloss else 0 end) paying_other_loss
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{stoppedpay_db} then othergain else 0 end) stopped_other_gain
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{stoppedpay_db} then otherloss else 0 end) stopped_other_loss
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db}) then othergain else 0 end) other_other_gain
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db}) then otherloss else 0 end) other_other_loss
-			, sum(case when status = #{a1p_db} then net else 0 end) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
-			, sum(case when status = #{paying_db} then net else 0 end) as paying_end_count
-			, sum(case when status = #{stoppedpay_db} then net else 0 end) as stopped_end_count
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
-			, sum(net) as end_count
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then a1pgain else 0 end) a1p_gain
+			, sum(case when changedate < #{db.sql_date(@start_date)} then a1pnet else 0 end) as a1p_start_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
+			, sum(case when changedate < #{db.sql_date(@start_date)} then payingnet else 0 end) as paying_start_count
+			, sum(case when changedate < #{db.sql_date(@start_date)} then stoppednet else 0 end) as stopped_start_count
+			, sum(case when changedate < #{db.sql_date(@start_date)} then waivernet else 0 end) as waiver_start_count
+      , sum(case when changedate < #{db.sql_date(@start_date)} then membernet else 0 end) as member_start_count
+      , sum(case when changedate < #{db.sql_date(@start_date)} then othernet else 0 end) as other_start_count
+      , sum(case when changedate < #{db.sql_date(@start_date)} then nonpayingnet else 0 end) as nonpaying_start_count
+      
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then a1pgain else 0 end) a1p_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then a1ploss else 0 end) a1p_loss
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then payinggain else 0 end) paying_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then payingloss else 0 end) paying_loss
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedgain else 0 end) stopped_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedloss else 0 end) stopped_loss
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergain else 0 end) waiver_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waiverloss else 0 end) waiver_loss
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then membergain else 0 end) member_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then memberloss else 0 end) member_loss
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then othergain else 0 end) other_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then otherloss else 0 end) other_loss
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then goodnonpayinggain else 0 end) nonpaying_gain_good
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then badnonpayinggain  else 0 end) nonpaying_gain_bad
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then goodnonpayingloss else 0 end) nonpaying_loss_good
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then badnonpayingloss  else 0 end) nonpaying_loss_bad
+      
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{a1p_db} then othergain else 0 end) a1p_other_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{a1p_db} then otherloss else 0 end) a1p_other_loss
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{paying_db} then othergain else 0 end) paying_other_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{paying_db} then otherloss else 0 end) paying_other_loss
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{stoppedpay_db} then othergain else 0 end) stopped_other_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{stoppedpay_db} then otherloss else 0 end) stopped_other_loss
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and waivernet <> 0 then othergain else 0 end) waiver_other_gain
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and waivernet <> 0 then otherloss else 0 end) waiver_other_loss
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and membernet <> 0 then othergain else 0 end) member_other_gain
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and membernet <> 0 then otherloss else 0 end) member_other_loss
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db} or waivernet <> 0) then othergain else 0 end) other_other_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db} or waivernet <> 0) then otherloss else 0 end) other_other_loss
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then othernonpayinggain else 0 end) nonpaying_other_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then othernonpayingloss else 0 end) nonpaying_other_loss
+			
+			, sum(a1pnet) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
+			, sum(payingnet) as paying_end_count
+			, sum(stoppednet) as stopped_end_count
+			, sum(waivernet) as waiver_end_count
+			, sum(membernet) as member_end_count
+      , sum(othernet) as other_end_count
+      , sum(nonpayingnet) as nonpaying_end_count
+      , sum(net) as end_count
+      
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then a1pgain+a1ploss else 0 end) a1p_net
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then payinggain+payingloss else 0 end) paying_net
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedgain+stoppedloss else 0 end) stopped_net
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergain + waiverloss else 0 end) waiver_net
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then membergain + memberloss else 0 end) member_net
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then othergain+otherloss else 0 end) other_net
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then coalesce(c.net,0) else 0 end) net
-			
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then goodnonpayinggain+goodnonpayingloss+badnonpayinggain+badnonpayingloss else 0 end) nonpaying_net
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then coalesce(c.net,0) else 0 end) net
+      
+      -- Odd non standard columns
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then a1pgain else 0 end) a1p_unchanged_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') = '' then a1pgain else 0 end) a1p_newjoin
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') <>'' then a1pgain else 0 end) a1p_rejoin			
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then a1ploss else 0 end) a1p_to_paying
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then a1ploss else 0 end) a1p_to_other			
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end) stopped_to_paying
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end) stopped_to_other
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
 		from 
 			nonegations c
 		group by 
@@ -201,42 +230,74 @@ sql << <<-EOS
 			, 0::int a1p_start_count
 			, 0::int paying_start_count
 			, 0::int stopped_start_count
-			, 0 a1p_gain
-			, 0 a1p_unchanged_gain
-			, 0 a1p_newjoin
-			, 0 a1p_rejoin
-			, 0 a1p_loss
-			, 0 a1p_to_paying
-			, 0 a1p_to_other
-			, 0 paying_gain
+			, 0::int waiver_start_count
+			, 0::int member_start_count
+			, 0::int other_start_count
+			, 0::int nonpaying_start_count
+      
+      , 0 a1p_gain
+      , 0 a1p_loss
+      , 0 paying_gain
 			, 0 paying_loss
 			, 0 stopped_gain
-			, 0 stopped_unchanged_gain
 			, 0 stopped_loss
-			, 0 stopped_to_paying
-			, 0 stopped_to_other
+			, 0 waiver_gain
+			, 0 waiver_loss
+			, 0 member_gain
+			, 0 member_loss
+			, 0 other_gain
+			, 0 other_loss
+			, 0 nonpaying_gain_good
+			, 0 nonpaying_gain_bad
+			, 0 nonpaying_loss_good
+			, 0 nonpaying_loss_bad
+			
 			, 0 a1p_other_gain
 			, 0 a1p_other_loss
 			, 0 paying_other_gain
 			, 0 paying_other_loss
 			, 0 stopped_other_gain
 			, 0 stopped_other_loss
-			, 0 other_other_gain
+      , 0 waiver_other_gain
+			, 0 waiver_other_loss
+			, 0 member_other_gain
+			, 0 member_other_loss
+      , 0 other_other_gain
 			, 0 other_other_loss
-			, 0 other_gain
-			, 0 other_loss
-			, 0 external_gain
-			, 0 external_loss
-			, 0 a1p_net
-			, 0 paying_net
-			, 0 stopped_net
-			, 0 other_net
-			, 0 net
-			, 0 end_count
+			, 0 nonpaying_other_gain
+			, 0 nonpaying_other_loss
+      			
 			, 0 a1p_end_count
 			, 0 paying_end_count
 			, 0 stopped_end_count
-			, coalesce(t.posted,0)::numeric(12,2) posted
+			, 0 waiver_end_count
+			, 0 member_end_count
+      , 0 other_end_count
+      , 0 nonpaying_end_count
+      , 0 end_count
+      
+      , 0 a1p_net
+			, 0 paying_net
+			, 0 stopped_net
+			, 0 waiver_net
+			, 0 member_net
+			, 0 other_net
+			, 0 nonpaying_net
+      , 0 net
+			
+      -- odd columns
+      , 0 a1p_unchanged_gain
+			, 0 a1p_newjoin
+			, 0 a1p_rejoin
+			, 0 a1p_to_paying
+			, 0 a1p_to_other
+			, 0 stopped_to_paying
+			, 0 stopped_to_other
+      , 0 stopped_unchanged_gain
+      , 0 external_gain
+      , 0 external_loss
+      
+      , coalesce(t.posted,0)::numeric(12,2) posted
 			, coalesce(t.undone,0)::numeric(12,2) unposted
 			, income_net
 			, contributors
@@ -269,11 +330,13 @@ sql << <<-EOS
 		or c.paying_loss <> 0
 		or c.stopped_gain <> 0
 		or c.stopped_loss <> 0
-		or c.other_gain <> 0
+		or c.waiver_gain <> 0
+		or c.waiver_loss <> 0
+    or c.other_gain <> 0
 		or c.other_loss <> 0
 		or start_count <> 0
 		or end_count <> 0
-	    or posted <> 0
+	  or posted <> 0
 		or unposted <> 0
 	order by
 		coalesce(d1.displaytext, c.row_header1)::varchar(200) asc
@@ -293,17 +356,20 @@ protected
 		, c.row_header1::varchar(200) row_header1_id
 		--, ''::varchar(20) row_header2_id
 		, c.start_count::int
+		
 		, c.a1p_start_count::int
 		, c.a1p_gain::int as a1p_real_gain
 		, c.a1p_unchanged_gain::int
 		, c.a1p_newjoin::int
 		, c.a1p_rejoin::int
 		, c.a1p_loss::int as a1p_real_loss
-		, c.a1p_to_paying::int
+		, c.a1p_net::int as a1p_real_net
+    , c.a1p_to_paying::int
 		, c.a1p_to_other::int
 		, c.a1p_other_gain::int
 		, c.a1p_other_loss::int
 		, c.a1p_end_count::int
+		
 		, c.paying_start_count::int
 		, c.paying_gain::int as paying_real_gain
 		, c.paying_loss::int as paying_real_loss
@@ -315,23 +381,56 @@ protected
 		, c.stopped_start_count::int
 		, c.stopped_gain::int as stopped_real_gain
 		, c.stopped_unchanged_gain::int
-
 		, c.stopped_loss::int as stopped_real_loss
+		, c.stopped_net::int as stopped_real_net
 		, c.stopped_to_paying::int
 		, c.stopped_to_other::int
-		, c.stopped_net::int as stopped_real_net
 		, c.stopped_other_gain::int
 		, c.stopped_other_loss::int
 		, c.stopped_end_count::int
+		
+		, c.waiver_start_count::int
+		, c.waiver_gain::int as waiver_real_gain
+		, c.waiver_loss::int as waiver_real_loss
+		, c.waiver_net::int
+		, c.waiver_other_gain::int
+		, c.waiver_other_loss::int
+		, c.waiver_end_count::int
+		
+		, c.member_start_count::int
+		, c.member_gain::int as member_real_gain
+		, c.member_loss::int as member_real_loss
+		, c.member_net::int
+		, c.member_other_gain::int
+		, c.member_other_loss::int
+		, c.member_end_count::int
+     
+    , c.nonpaying_start_count::int
+		, c.nonpaying_gain_good::int as nonpaying_real_gain_good
+		, c.nonpaying_loss_good::int as nonpaying_real_loss_good
+		, c.nonpaying_gain_bad::int as nonpaying_real_gain_bad
+		, c.nonpaying_loss_bad::int as nonpaying_real_loss_bad
+    , c.nonpaying_net::int
+		, c.nonpaying_other_gain::int
+		, c.nonpaying_other_loss::int
+		, c.nonpaying_end_count::int
+
 -- dbeswick: other_other_gain/loss is returned as other_gain/loss in the SQL function.
+		, c.other_start_count::int
+		, c.other_gain::int other_real_gain
+		, c.other_loss::int other_real_loss
+    , c.other_net::int
 		, c.other_other_gain::int other_gain
 		, c.other_other_loss::int other_loss
+		, c.other_end_count::int
+		
 		, c.external_gain::int
 		, c.external_loss::int
 		, c.net::int
 		, c.end_count::int
 		, (c.start_count + c.a1p_gain + c.a1p_loss + c.a1p_other_gain+ c.a1p_other_loss + c.paying_gain + c.paying_loss + c.paying_other_gain + c.paying_other_loss + c.stopped_gain + c.stopped_loss + c.stopped_other_gain + c.stopped_other_loss + c.other_other_gain + c.other_other_loss - c.end_count)::int  cross_check
-		, c.posted
+		, (c.member_start_count + c.paying_gain + c.paying_loss + c.paying_other_gain + c.paying_other_loss + c.nonpaying_gain_good + c.nonpaying_loss_good + c.nonpaying_gain_bad + c.nonpaying_loss_bad + c.nonpaying_other_gain + c.nonpaying_other_loss - c.member_end_count)::int member_cross_check
+    , c.posted
 		, c.unposted
 		, c.income_net
 		, c.contributors::int

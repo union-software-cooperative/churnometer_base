@@ -124,6 +124,18 @@ summary_data_tables:
             - contributors
             - income_net
             - annualisedavgcontribution
+    summary_dev:
+        display_name: Summary
+        query_columns:
+            - row_header
+            - row_header1
+            - period_header
+            - member_real_gain
+            - nonpaying_real_gain_bad
+            - member_real_loss
+            - contributors
+            - income_net
+            - annualisedavgcontribution
     paying:
         display_name: Paying
         query_columns:
@@ -168,6 +180,47 @@ summary_data_tables:
           - stopped_other_loss
           - stopped_end_count
           - stopped_unchanged_gain
+    waiver:
+        display_name: Waivers
+        query_columns:
+          - row_header 
+          - row_header1 
+          - period_header
+          - waiver_start_count
+          - waiver_real_gain
+          - waiver_real_loss
+          - waiver_other_gain
+          - waiver_other_loss
+          - waiver_end_count
+          - waiver_net
+    member:
+        display_name: Members
+        query_columns:
+          - row_header 
+          - row_header1 
+          - period_header
+          - member_start_count
+          - member_real_gain
+          - member_real_loss
+          - member_other_gain
+          - member_other_loss
+          - member_end_count
+          - member_net
+    nonpaying:
+      display_name: Non-Paying
+      query_columns:
+        - row_header 
+        - row_header1 
+        - period_header
+        - nonpaying_start_count
+        - nonpaying_real_gain_good
+        - nonpaying_real_gain_bad
+        - nonpaying_real_loss_good
+        - nonpaying_real_loss_bad
+        - nonpaying_other_gain
+        - nonpaying_other_loss
+        - nonpaying_end_count
+        - nonpaying_net
 detail_data_tables:
     member_summary:
         display_name: Member Summary
@@ -256,6 +309,22 @@ roles:
          - member_summary
          - organiser
          - financial
+    dev:
+        password: dev
+        show_transactions: true
+        show_target_calculation: true
+        summary_data_tables:
+            - summary_dev
+            - member
+            - a1p
+            - paying
+            - stopped
+            - waiver
+            - nonpaying
+        detail_data_tables:
+            - member_summary
+            - organiser
+            - financial
 column_names:
   a1p_real_gain: new applications (total)
   a1p_to_other: applications exited w/out payment
@@ -346,4 +415,6 @@ column_descriptions:
   
   
     
+    
+        
     
