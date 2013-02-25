@@ -206,7 +206,7 @@ class ChurnRequest
     dim_start_id = @app.dimensions[params['group_by']].column_base_name
     dim_start_result = db.getdimstart(dim_start_id)
 
-    if dim_start_result.nil? || dim_start_result[0]['getdimstart'].nil?
+    if dim_start_result.nil? || dim_start_result.num_tuples == 0 || dim_start_result[0]['getdimstart'].nil?
       raise "Couldn't find an entry in the 'dimstart' table for the groupby dimension '#{params['group_by']}' (column is '#{dim_start_id}')"
     end
 

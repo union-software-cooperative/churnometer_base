@@ -19,7 +19,7 @@ require File.expand_path(File.dirname(__FILE__) + "/acceptance_helper")
 
 class AuthorizeOverride < Authorize
   def role
-    app().roles.get_mandatory('leader')
+    @app.roles.get_mandatory('leadership')
   end
 end
 
@@ -29,8 +29,8 @@ class Churnobyl
   def protected!
   end
   
-  def auth
-    @auth ||=  AuthorizeOverride.new Rack::Auth::Basic::Request.new(request.env)
+  def auth_class
+    AuthorizeOverride
   end
 end
 
