@@ -39,7 +39,7 @@ class DatabaseManager
        @app.member_awaiting_first_payment_status_code,
        @app.member_stopped_paying_status_code] + @app.waiver_statuses
 
-    all_status_but_paying_ary = all_status_ary - @app.member_paying_status_code
+    all_status_but_paying_ary = all_status_ary - [@app.member_paying_status_code]
 
     @all_status_ary_db = @db.sql_array(all_status_ary, 'varchar')
     @all_status_but_paying_ary_db = @db.sql_array(all_status_but_paying_ary, 'varchar')
