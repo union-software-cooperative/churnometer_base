@@ -85,10 +85,6 @@ class ChurnometerApp
     validate()
   end
   
-  def validate
-    application_start_date()
-  end
-
   # A ConfigFileSet instance.
   def config
     @config_file_set
@@ -103,6 +99,26 @@ class ChurnometerApp
       development? == false
     else
       config()['email_on_error'] != false
+    end
+  end
+
+  # The address from which error emails are sent.
+  # Returns nil if email_on_error? is false (error emails disabled.)
+  def email_on_error_from
+    if email_on_error? == false
+      nil
+    else
+      app().config.element('email_errors').value['from'].value
+    end
+  end
+
+  # The address to which error emails are sent.
+  # Returns nil if email_on_error? is false (error emails disabled.)
+  def email_on_error_to
+    if email_on_error? == false
+      nil
+    else
+      app().config.element('email_errors').value['to'].value
     end
   end
 
@@ -382,7 +398,22 @@ protected
       end
   end
   
-protected
+  # Config values can be validated at startup in this method. This provides a means of verifying parts
+  # of the config without waiting until they're first accessed.
+  def validate
+    application_start_date()
+    config().ensure_kindof('waiver_statuses', Array, NilClass)
+    validate_email()
+  end
+
+  def validate_email
+    if email_on_error?
+      config().ensure_kindof('email_errors', Hash)
+      config().element('email_errors').value['to'].ensure_kindof(String)
+      config().element('email_errors').value['from'].ensure_kindof(String)
+    end
+  end
+
   # User data tables should be accessed via an AppRole instance when performing application logic for 
   # the user.
   #attr_accessor :summary_user_data_tables

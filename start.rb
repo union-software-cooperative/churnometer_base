@@ -137,8 +137,8 @@ class Churnobyl < Sinatra::Base
       @error = env['sinatra.error']
       if app().email_on_error?
         Pony.mail({
-                    :to   => app().config.element('email_errors').value['to'].value,
-                    :from => app().config.element('email_errors').value['from'].value,
+                    :to   => app().email_on_error_from,
+                    :from => app().email_on_error_to,
                     :subject => "[Error] #{@error.message}",
                     :body => erb(:'errors/error_email', layout: false)
                   })

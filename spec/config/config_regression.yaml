@@ -13,6 +13,7 @@ default_groupby_dimension_id: branchid
 member_paying_status_code: 1
 member_awaiting_first_payment_status_code: 14
 member_stopped_paying_status_code: 11
+waiver_statuses:
 dimensions:
   - id: branchid
     name: Branch
