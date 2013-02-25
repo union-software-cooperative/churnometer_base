@@ -85,6 +85,16 @@ class ChurnometerApp
     validate()
   end
   
+  # Config values can be validated at startup in this method. This provides a means of verifying parts
+  # of the config without waiting until they're first accessed.
+  # Can also be called by systems that modify config data to ensure that changes are valid.
+  # Throws an exception if any problem occurs.
+  def validate
+    application_start_date()
+    config().ensure_kindof('waiver_statuses', Array, NilClass)
+    validate_email()
+  end
+
   # A ConfigFileSet instance.
   def config
     @config_file_set
@@ -398,14 +408,6 @@ protected
       end
   end
   
-  # Config values can be validated at startup in this method. This provides a means of verifying parts
-  # of the config without waiting until they're first accessed.
-  def validate
-    application_start_date()
-    config().ensure_kindof('waiver_statuses', Array, NilClass)
-    validate_email()
-  end
-
   def validate_email
     if email_on_error?
       config().ensure_kindof('email_errors', Hash)
