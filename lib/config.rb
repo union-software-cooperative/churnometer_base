@@ -282,7 +282,7 @@ class ConfigFileSet
       raise MissingConfigDataException.new(element_id)
     end
 
-    element.ensure_kindof(class_types)
+    element.ensure_kindof(*class_types)
   end
 
   # As for 'element', but raises a MissingConfigDataException if the element id isn't found.
