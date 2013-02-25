@@ -650,11 +650,13 @@ class DatabaseManager
             then -1 else 0 end as stoppedloss
         , case when coalesce(oldstatus, '') = #{@stopped_db}
           then -1 else 0 end as stoppednet
+
         , 0 as waivergain
         , case when coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@waiver_db})
             then -1 else 0 end as waiverloss
         , case when coalesce(oldstatus, '') = ANY (#{@waiver_db})
           then -1 else 0 end as waivernet
+        
         , 0 as membergain
         , case when 
             coalesce(oldstatus, '') = ANY (#{@all_status_ary_db})
@@ -663,6 +665,27 @@ class DatabaseManager
         , case when 
             coalesce(oldstatus, '') = ANY (#{@all_status_ary_db})
             then -1 else 0 end as membernet
+        
+        , 0 as goodnonpayinggain
+        , 0 as badnonpayinggain
+        , case when 
+              coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db}) 
+              and coalesce(newstatus, '') in (#{@paying_db})
+            then -1 else 0 end as goodnonpayingloss
+        , case when 
+              coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db}) 
+              and not coalesce(newstatus, '') in (#{@paying_db}, #{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+            then -1 else 0 end as badnonpayingloss
+        
+        , 0 as othernonpayinggain
+        , case when 
+            coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+            and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+          then -1 else 0 end as othernonpayingloss
+    
+        , case when coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+          then -1 else 0 end as nonpayingnet
+
         , 0 as othergain
         , case when 
             NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
@@ -740,11 +763,13 @@ class DatabaseManager
         , 0 as stoppedloss
         , case when coalesce(newstatus, '') = #{@stopped_db}
             then 1 else 0 end as stoppednet
+            
         , case when not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivergain
         , 0 as waiverloss
         , case when coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivernet
+            
         , case when 
             (not coalesce(oldstatus, '') = ANY (#{@all_status_ary_db})
             and (coalesce(newstatus, '') = ANY (#{@all_status_ary_db})))
@@ -753,6 +778,27 @@ class DatabaseManager
         , case when 
             coalesce(newstatus, '') = ANY (#{@all_status_ary_db})
             then 1 else 0 end as membernet
+        
+        , case when 
+              not coalesce(oldstatus, '') in (#{@paying_db}, #{@a1p_db}, #{@stopped_db}, #{@waiver_db}) 
+              and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+            then 1 else 0 end as goodnonpayinggain
+        , case when 
+              coalesce(oldstatus, '') in (#{@paying_db}) 
+              and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+            then 1 else 0 end as badnonpayinggain
+        , 0 as goodnonpayingloss
+        , 0 as badnonpayingloss
+        
+        , case when 
+            coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+            and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+          then 1 else 0 end as othernonpayinggain
+        , 0 as othernonpayingloss
+
+        , case when coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+            then 1 else 0 end as nonpayingnet
+        
         , case when 
             NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})

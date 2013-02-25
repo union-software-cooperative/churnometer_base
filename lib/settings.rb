@@ -48,7 +48,7 @@ module Settings
            app().member_paying_status_code,
            app().member_awaiting_first_payment_status_code,
            app().member_stopped_paying_status_code
-        ] # todo - get rid of this because exceptions are required for it when displaying filters
+        ] + app().waiver_statuses # todo - get rid of this because exceptions are required for it when displaying filters
       }
     }
   end
