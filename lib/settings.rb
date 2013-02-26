@@ -97,6 +97,7 @@ module Settings
          a1p_real_gain 
          a1p_unchanged_gain
          a1p_real_loss 
+         a1p_real_net
          a1p_other_gain 
          a1p_other_loss 
          paying_real_gain 
@@ -120,6 +121,7 @@ module Settings
          stopped_real_gain
          stopped_unchanged_gain
          stopped_real_loss
+         stopped_real_net
          stopped_to_paying
          stopped_to_other
          stopped_other_gain
@@ -130,6 +132,23 @@ module Settings
          posted
          unposted
          transactions
+         waiver_real_gain
+     		 waiver_real_loss
+     		 waiver_real_net
+     		 waiver_other_gain
+     		 waiver_other_loss
+         member_real_gain
+     		 member_real_loss
+     		 member_real_net
+     		 member_other_gain
+     		 member_other_loss
+         nonpaying_real_gain_good
+     		 nonpaying_real_loss_good
+     		 nonpaying_real_gain_bad
+     		 nonpaying_real_loss_bad
+         nonpaying_real_net
+     		 nonpaying_other_gain
+     		 nonpaying_other_loss
          }
      end
      
