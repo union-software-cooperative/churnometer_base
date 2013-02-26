@@ -261,7 +261,7 @@ class ChurnDB
         member_date = filter_column.include?('start') ? start_date : (end_date+1)
         
         filter_column = filter_column.sub('_start_count', '').sub('_end_count', '')
-
+        
         if @app.use_new_query_generation_method?
           raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
@@ -413,7 +413,20 @@ class ChurnDB
       'paying_end_count',
       'paying_start_count',
       'stopped_start_count',
+      'stopped_end_count',
+      'a1p_end_count',
+      'a1p_start_count',
+      'paying_end_count',
+      'paying_start_count',
+      'waiver_start_count',
+   		'waiver_end_count',
+      'member_start_count',
+   		'member_end_count',
+   		'nonpaying_start_count',
+      'nonpaying_end_count',
+      'stopped_start_count',
       'stopped_end_count'
+      
     ]
   end
 

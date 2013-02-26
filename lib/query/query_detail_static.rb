@@ -33,7 +33,10 @@ class QueryDetailStatic < QueryDetailBase
       'paying' => 'where c.paying<>0',
       'a1p' => 'where c.a1p<>0',
       'stopped' => 'where c.stopped<>0',
-      'other' => 'where c.other<>0'
+      'other' => 'where c.other<>0',
+      'waiver' => 'where c.waiver<>0',
+      'member' => 'where c.member<>0',
+      'nonpaying' => 'where c.nonpaying<>0'
     }
   end
 
@@ -107,7 +110,10 @@ sql = <<-EOS
 			, case when coalesce(status, '') = #{paying_db} then 1 else 0 end::bigint paying
 			, case when coalesce(status, '') = #{a1p_db} then 1 else 0 end::bigint a1p
 			, case when coalesce(status, '') = #{stoppedpay_db} then 1 else 0 end::bigint stopped
-			, case when not (coalesce(status, '') = #{paying_db} or coalesce(status, '') = #{a1p_db}) then 1 else 0 end::bigint other
+			, case when waivernet <> 0 then 1 else 0 end::bigint waiver
+      , case when membernet <> 0 then 1 else 0 end::bigint member
+      , case when nonpayingnet <> 0 then 1 else 0 end::bigint nonpaying
+      , case when not (coalesce(status, '') = #{paying_db} or coalesce(status, '') = #{a1p_db} or coalesce(status, '') = #{stoppedpay_db} or waivernet <> 0) then 1 else 0 end::bigint other
 		from 
 			userselections c			
 	)
@@ -119,6 +125,9 @@ sql = <<-EOS
 		, c.paying
 		, c.a1p
 		, c.stopped
+		, c.waiver
+		, c.member
+		, c.nonpaying
 		, c.other
 	from
 		counts c
