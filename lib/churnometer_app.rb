@@ -118,7 +118,7 @@ class ChurnometerApp
     if email_on_error? == false
       nil
     else
-      app().config.element('email_errors').value['from'].value
+      config.element('email_errors').value['from'].value
     end
   end
 
@@ -128,7 +128,7 @@ class ChurnometerApp
     if email_on_error? == false
       nil
     else
-      app().config.element('email_errors').value['to'].value
+      config.element('email_errors').value['to'].value
     end
   end
 
