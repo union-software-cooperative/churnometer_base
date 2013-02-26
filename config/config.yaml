@@ -126,18 +126,26 @@ summary_data_tables:
             - annualisedavgcontribution
     summary_dev:
         display_name: Summary
+        description:  This data is a selection of key columns from the other data tabs.
         query_columns:
             - row_header
             - row_header1
             - period_header
             - member_real_gain
-            - nonpaying_real_gain_bad
+            - member_real_loss_orange
             - member_real_loss
+            - member_real_net
+            - member_real_gain_fee
+            - member_real_loss_fee
+            - paying_real_gain
+            - paying_real_loss
+            - paying_real_net
             - contributors
             - income_net
             - annualisedavgcontribution
     paying:
         display_name: Paying
+        description: This data represents those members that are paying the union money.  For the union to grow, the number of paying members has to grow, as these are the only members that fund union activity.  Other union members on service agreement are not counted.  Gratis members such as students and those on waivers are not counted.  Members in an arrears cycle are not counted unless they pay by invoice.  Invoiced members in arrears will be counted until they are sent to the debt collector.
         query_columns:
             - row_header
             - row_header1
@@ -151,6 +159,7 @@ summary_data_tables:
             - paying_real_net
     a1p:
         display_name: New Applications
+        description: This data represents those members haven't yet paid since a new application has been received.  If the number of new non-paying applications is growing, this indicates a problem with admin and applications not being processed.  It is also worth nothing, a certain percentage of new applications may be consistently exited before payment is started.  This may need to be factored when setting recruitment targets.  NB if an application is processed and payment recieved on the same day, then it won't be counted in new applications.  This member will go straight to being counted as a new paying member. 
         query_columns:
             - row_header
             - row_header1
@@ -168,6 +177,7 @@ summary_data_tables:
             - a1p_unchanged_gain
     stopped:
         display_name: Stopped Paying
+        description:  This data represents all members who are being chased for payment.  They are in an arrears cycle, if you group by arrears cycle (which may be hidden) you can see what stage of follow-up they are at.
         query_columns:
           - row_header 
           - row_header1 
@@ -181,33 +191,46 @@ summary_data_tables:
           - stopped_end_count
           - stopped_unchanged_gain
     waiver:
-        display_name: Waivers
+        display_name: Waivers etc
+        description:  This data represents all members who are not expected to pay.  It includes all students, other union members on service agreement, members on maternity leave etc...  Growing this pool of members doesn't necessarily improve the union's bottom line.   
         query_columns:
           - row_header 
           - row_header1 
           - period_header
           - waiver_start_count
           - waiver_real_gain
+          - waiver_real_gain_good
+          - waiver_real_gain_bad
           - waiver_real_loss
+          - waiver_real_loss_good
+          - waiver_real_loss_bad
           - waiver_other_gain
           - waiver_other_loss
           - waiver_end_count
           - waiver_net
     member:
         display_name: Members
+        description:  This data represents all members.  It includes but is not limited to paying members, members on waiver, members in arrears and other union members on service agreement.  New members represents the green in the chart.  However a significant portion of new members may be gratis members - meaning the are not required to pay.    
         query_columns:
           - row_header 
           - row_header1 
           - period_header
           - member_start_count
           - member_real_gain
+          - member_real_gain_nofee
+          - member_real_gain_fee
           - member_real_loss
+          - member_real_loss_nofee
+          - member_real_loss_fee
           - member_other_gain
           - member_other_loss
           - member_end_count
           - member_net
+          - member_real_loss_orange
+          - member_real_gain_orange
     nonpaying:
       display_name: Non-Paying
+      description:  This data represents the inverse of the Paying data.  It is all members that aren't paying, which includes those that should pay (new applications and arrears cycle members) and gratis members (waivers and service agreement members).  The key column is 'paying members who entered a cycle or got a waiver'.  This will be used for determining the orange in the chart.  Apart from that I don't think this data is very interesting. 
       query_columns:
         - row_header 
         - row_header1 
@@ -287,6 +310,7 @@ roles:
             - organiser
             - financial
     user:
+        password: user
         show_target_calculation: true
         summary_data_tables:
             - summary
@@ -316,11 +340,10 @@ roles:
         summary_data_tables:
             - summary_dev
             - member
-            - a1p
             - paying
+            - a1p
             - stopped
             - waiver
-            - nonpaying
         detail_data_tables:
             - member_summary
             - organiser
@@ -374,6 +397,39 @@ column_names:
   oldorg: old organiser
   oldemployerid: old employer
   neworg: new organiser
+  waiver_start_count: Waivers at start date
+  waiver_real_gain: New waivers
+  waiver_real_gain_good: New waivers (for non-payers)
+  waiver_real_gain_bad:  New waivers (for payers)
+  waiver_real_loss: Ended waivers
+  waiver_real_loss_good: Ended waivers (for payers)
+  waiver_real_loss_bad: Ended waivers (exited)
+  waiver_other_gain: Waivers transferred in
+  waiver_other_loss: Waivers transferred out
+  waiver_end_count: Waivers at end date
+  waiver_net: Net difference in waivers
+  member_start_count: Members at start date
+  member_real_gain: New members
+  member_real_gain_nofee: New members (gratis)
+  member_real_gain_fee: New members (non-gratis)
+  member_real_loss: Exited members
+  member_real_loss_nofee: Exited members (gratis)
+  member_real_loss_fee: Exited members (non-gratis)
+  member_real_gain_orange: Retained members
+  member_real_loss_orange: Out-going members
+  member_other_gain: Members transferred in
+  member_other_loss: Members transferred out 
+  member_end_count: Members at end date
+  member_real_net: Net difference in members
+  nonpaying_start_count: Not-paying at start date
+  nonpaying_real_gain_good: New non-paying members
+  nonpaying_real_gain_bad: Paying members who entered cycle or got a waiver
+  nonpaying_real_loss_good: Non-paying members who started paying
+  nonpaying_real_loss_bad: Non-paying members exited
+  nonpaying_other_gain: Not-paying transferred in
+  nonpaying_other_loss: Not-paying transferred out
+  nonpaying_end_count: Not-paying at end date
+  nonpaying_net: Net difference in members that aren't paying
 column_descriptions:
   paying_start_count: The number of members who had made at least one payment and had no problem with their payment at the start of the period.
   paying_end_count: The number of members who had made at least one payment and had no problem with their payment at the end of the period.  '{paying_end_count}' is equal to '{paying_start_count}' plus '{paying_real_gain}' minus '{paying_real_loss}' plus '{paying_other_gain}' minus '{paying_other_loss}'.
@@ -412,8 +468,7 @@ column_descriptions:
   lateness: The remittance status of each employer with at least one OOP member attached. The next due date is determined from the '{paidto}' plus the average duration between payments (multipled by the number of unposted payments) plus half this average duration to allow for processing.
   paidto: The date up to which money has been posted.  The employer may have paid past this date but unposted payment don't count toward the '{paidto}' because the '{paidto}' is determined during payment posting.
   paymenttype: Code representing either out of pay, direct debit, credit card or personal (invoice)
-  
-  
+
     
     
         

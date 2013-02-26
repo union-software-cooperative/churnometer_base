@@ -69,12 +69,22 @@ class QueryDetail < QueryDetailBase
       
       'member_real_gain' => 'where c.member_real_gain<>0',
       'member_real_loss' => 'where c.member_real_loss<>0',
+      'member_real_gain_nofee' => 'where c.member_real_gain_nofee<>0',
+      'member_real_gain_fee' => 'where c.member_real_gain_fee<>0',
+      'member_real_loss_nofee' => 'where c.member_real_loss_nofee<>0',
+      'member_real_loss_fee' => 'where c.member_real_loss_fee<>0',
+      'member_real_gain_orange' => 'where c.member_real_gain_orange<>0',
+      'member_real_loss_orange' => 'where c.member_real_loss_orange<>0',
       'member_real_net' => 'where c.member_real_net<>0',
       'member_other_loss' => 'where c.member_other_loss<>0',
       'member_other_loss' => 'where c.member_other_loss<>0',
 
       'waiver_real_gain' => 'where c.waiver_real_gain<>0',
       'waiver_real_loss' => 'where c.waiver_real_loss<>0',
+      'waiver_real_gain_good' => 'where c.waiver_real_gain_good<>0',
+      'waiver_real_gain_bad' => 'where c.waiver_real_gain_bad<>0',
+      'waiver_real_loss_good' => 'where c.waiver_real_loss_good<>0',
+      'waiver_real_loss_bad' => 'where c.waiver_real_loss_bad<>0',
       'waiver_real_net' => 'where c.waiver_real_net<>0',
       'waiver_other_loss' => 'where c.waiver_other_loss<>0',
       'waiver_other_loss' => 'where c.waiver_other_loss<>0',
@@ -189,8 +199,18 @@ sql = <<-EOS
       , stoppedloss::bigint stopped_real_loss
       , waivergain::bigint waiver_real_gain
       , waiverloss::bigint waiver_real_loss
+      , waivergaingood::bigint waiver_real_gain_good
+      , waivergainbad::bigint waiver_real_gain_bad
+      , waiverlossgood::bigint waiver_real_loss_good
+      , waiverlossbad::bigint waiver_real_loss_bad
       , membergain::bigint member_real_gain
       , memberloss::bigint member_real_loss
+      , membergainnofee::bigint member_real_gain_nofee
+      , membergainfee::bigint member_real_gain_fee
+      , memberlossnofee::bigint member_real_loss_nofee
+      , memberlossfee::bigint member_real_loss_fee
+      , membergainorange::bigint member_real_gain_orange
+      , memberlossorange::bigint member_real_loss_orange
       , goodnonpayinggain::bigint nonpaying_real_gain_good
       , badnonpayinggain::bigint nonpaying_real_gain_bad
       , goodnonpayingloss::bigint nonpaying_real_loss_good
@@ -287,12 +307,22 @@ sql = <<-EOS
 		, c.other_other_loss
 		, c.waiver_real_gain
 		, c.waiver_real_loss
-		, c.waiver_real_net
+		, c.waiver_real_gain_good
+		, c.waiver_real_gain_bad
+    , c.waiver_real_loss_good
+    , c.waiver_real_loss_bad
+    , c.waiver_real_net
 		, c.waiver_other_gain
 		, c.waiver_other_loss
     , c.member_real_gain
 		, c.member_real_loss
-		, c.member_real_net
+		, c.member_real_gain_fee
+		, c.member_real_gain_nofee
+    , c.member_real_loss_fee
+    , c.member_real_loss_nofee
+    , c.member_real_gain_orange
+    , c.member_real_loss_orange
+    , c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
     , c.nonpaying_real_gain_good
@@ -357,12 +387,22 @@ if with_trans
 		, 0::bigint other_other_loss
 		, 0::bigint waiver_real_gain
 		, 0::bigint waiver_real_loss
-		, 0::bigint waiver_real_net
+		, 0::bigint waiver_real_gain_good
+		, 0::bigint waiver_real_gain_bad
+    , 0::bigint waiver_real_loss_good
+    , 0::bigint waiver_real_loss_bad
+    , 0::bigint waiver_real_net
 		, 0::bigint waiver_other_gain
 		, 0::bigint waiver_other_loss
     , 0::bigint member_real_gain
 		, 0::bigint member_real_loss
-		, 0::bigint member_real_net
+    , 0::bigint member_real_gain_fee
+		, 0::bigint member_real_gain_nofee
+    , 0::bigint member_real_loss_fee
+    , 0::bigint member_real_loss_nofee
+		, 0::bigint member_real_gain_orange
+    , 0::bigint member_real_loss_orange
+    , 0::bigint member_real_net
 		, 0::bigint member_other_gain
 		, 0::bigint member_other_loss
     , 0::bigint nonpaying_real_gain_good
@@ -415,12 +455,22 @@ sql << <<-EOS
 		, c.other_other_loss other_loss
 		, c.waiver_real_gain
 		, c.waiver_real_loss
-		, c.waiver_real_net
+		, c.waiver_real_gain_good
+		, c.waiver_real_gain_bad
+    , c.waiver_real_loss_good
+    , c.waiver_real_loss_bad
+    , c.waiver_real_net
 		, c.waiver_other_gain
 		, c.waiver_other_loss
     , c.member_real_gain
 		, c.member_real_loss
-		, c.member_real_net
+		, c.member_real_gain_fee
+		, c.member_real_gain_nofee
+    , c.member_real_loss_fee
+    , c.member_real_loss_nofee
+    , c.member_real_gain_orange
+    , c.member_real_loss_orange
+    , c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
     , c.nonpaying_real_gain_good

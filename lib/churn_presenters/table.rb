@@ -41,7 +41,7 @@ class ChurnPresenter_Tables
       end
 
     user_data_tables.each do |user_data_table|
-      @tables << ChurnPresenter_Table.new(app, request, user_data_table.display_name, user_data_table.column_names)
+      @tables << ChurnPresenter_Table.new(app, request, user_data_table.display_name, user_data_table.description, user_data_table.column_names)
     end
   end
   
@@ -60,16 +60,18 @@ end
 class ChurnPresenter_Table
   attr_reader :id
   attr_reader :name
+  attr_reader :description
   attr_reader :type
   attr_reader :columns
   
   include Settings
   include ChurnPresenter_Helpers
   
-  def initialize(app, request, name, columns)
+  def initialize(app, request, name, description, columns)
     @app = app
     @id = name.gsub(' ', '').downcase
     @name = name
+    @description = description
     @request = request
     @type = request.type
     @data = request.data
