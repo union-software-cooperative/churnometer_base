@@ -46,6 +46,7 @@ class QueryDetail < QueryDetailBase
       'a1p_newjoin' => 'where c.a1p_newjoin<>0',
       'a1p_rejoin' => 'where c.a1p_rejoin<>0',
       'a1p_real_loss' => 'where c.a1p_real_loss<>0',
+      'a1p_real_net' => 'where c.a1p_real_net<>0',
       'a1p_to_paying' => 'where c.a1p_to_paying<>0',
       'a1p_to_other' => 'where c.a1p_to_other<>0',
       'a1p_other_gain' => 'where c.a1p_other_gain<>0',
@@ -60,10 +61,31 @@ class QueryDetail < QueryDetailBase
       'stopped_real_gain' => 'where c.stopped_real_gain<>0',
       'stopped_unchanged_gain' => 'where c.stopped_unchanged_gain<>0',
       'stopped_real_loss' => 'where c.stopped_real_loss<>0',
+      'stopped_real_net' => 'where c.stopped_real_net<>0',
       'stopped_to_paying' => 'where c.stopped_to_paying<>0',
       'stopped_to_other' => 'where c.stopped_to_other<>0',
       'stopped_other_loss' => 'where c.stopped_other_loss<>0',
       'stopped_other_loss' => 'where c.stopped_other_loss<>0',
+      
+      'member_real_gain' => 'where c.member_real_gain<>0',
+      'member_real_loss' => 'where c.member_real_loss<>0',
+      'member_real_net' => 'where c.member_real_net<>0',
+      'member_other_loss' => 'where c.member_other_loss<>0',
+      'member_other_loss' => 'where c.member_other_loss<>0',
+
+      'waiver_real_gain' => 'where c.waiver_real_gain<>0',
+      'waiver_real_loss' => 'where c.waiver_real_loss<>0',
+      'waiver_real_net' => 'where c.waiver_real_net<>0',
+      'waiver_other_loss' => 'where c.waiver_other_loss<>0',
+      'waiver_other_loss' => 'where c.waiver_other_loss<>0',
+
+      'nonpaying_real_gain_good' => 'where c.nonpaying_real_gain_good<>0',
+      'nonpaying_real_loss_good' => 'where c.nonpaying_real_loss_good<>0',
+      'nonpaying_real_gain_bad' => 'where c.nonpaying_real_gain_bad<>0',
+      'nonpaying_real_loss_bad' => 'where c.nonpaying_real_loss_bad<>0',
+      'nonpaying_real_net' => 'where c.nonpaying_real_net<>0',
+      'nonpaying_other_loss' => 'where c.nonpaying_other_loss<>0',
+      'nonpaying_other_loss' => 'where c.nonpaying_other_loss<>0',
 
       'other_gain' => 'where c.other_other_gain<>0',
       'other_loss' => 'where c.other_other_loss<>0',
@@ -126,8 +148,7 @@ sql = <<-EOS
 			userselections u1
 		where
 			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection 
-			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 ) -- both sides (if in user selection) if one side is paying and there was a paying change 
- 			or u1.changeid in (select changeid from userselections u where a1pgain <> 0 or a1ploss <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
+			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or waivergain <> 0 or waivergain <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
  			#{header1 == 'userid' ? '' : "or u1.#{db.quote_db(header1 + 'delta')} <> 0 -- unless the changes that cancel out but are transfers between grouped items" }
  	)
 	, trans as
@@ -159,30 +180,56 @@ sql = <<-EOS
 			c.memberid
 			, c.changeid::bigint	
 			, case when coalesce(#{db.quote_db(header1)}::varchar(50),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(50) end row_header
+			
 			, a1pgain::bigint a1p_real_gain
-			, case when _changeid is null then a1pgain else 0 end::bigint a1p_unchanged_gain
-			, case when coalesce(_status, '') = '' then a1pgain else 0 end::bigint a1p_newjoin
-			, case when coalesce(_status, '') <> '' then a1pgain else 0 end::bigint a1p_rejoin
 			, a1ploss::bigint a1p_real_loss
-			, case when coalesce(_status, '') = #{paying_db} then a1ploss else 0 end::bigint a1p_to_paying
-			, case when coalesce(_status, '') <> #{paying_db} then a1ploss else 0 end::bigint a1p_to_other
+      , payinggain::bigint paying_real_gain
+			, payingloss::bigint paying_real_loss
+			, stoppedgain::bigint stopped_real_gain
+      , stoppedloss::bigint stopped_real_loss
+      , waivergain::bigint waiver_real_gain
+      , waiverloss::bigint waiver_real_loss
+      , membergain::bigint member_real_gain
+      , memberloss::bigint member_real_loss
+      , goodnonpayinggain::bigint nonpaying_real_gain_good
+      , badnonpayinggain::bigint nonpaying_real_gain_bad
+      , goodnonpayingloss::bigint nonpaying_real_loss_good
+      , badnonpayingloss::bigint nonpaying_real_loss_bad
+      
 			, case when coalesce(status, '') = #{a1p_db} then othergain else 0 end::bigint a1p_other_gain
 			, case when coalesce(status, '') = #{a1p_db} then otherloss else 0 end::bigint a1p_other_loss
-			, payinggain::bigint paying_real_gain
-			, payingloss::bigint paying_real_loss
-			, (payinggain+payingloss)::bigint paying_real_net
-			, stoppedgain::bigint stopped_real_gain
-			, case when _changeid is null then stoppedgain else 0 end::bigint stopped_unchanged_gain
-			, stoppedloss::bigint stopped_real_loss
-			, case when coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end::bigint stopped_to_paying
-			, case when coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end::bigint stopped_to_other			
-			
-			, case when coalesce(status, '') = #{paying_db} then othergain else 0 end::bigint paying_other_gain
+      , case when coalesce(status, '') = #{paying_db} then othergain else 0 end::bigint paying_other_gain
 			, case when coalesce(status, '') = #{paying_db} then otherloss else 0 end::bigint paying_other_loss
 			, case when coalesce(status, '') = #{stoppedpay_db} then othergain else 0 end::bigint stopped_other_gain
 			, case when coalesce(status, '') = #{stoppedpay_db} then otherloss else 0 end::bigint stopped_other_loss
-			, case when not (status = #{paying_db} or status = #{a1p_db}) then othergain else 0 end::bigint other_other_gain
-			, case when not (status = #{paying_db} or status = #{a1p_db}) then otherloss else 0 end::bigint other_other_loss
+			, case when waivernet <> 0 then othergain else 0 end waiver_other_gain
+      , case when waivernet <> 0 then otherloss else 0 end waiver_other_loss
+      , case when membernet <> 0 then othergain else 0 end member_other_gain
+      , case when membernet <> 0 then otherloss else 0 end member_other_loss
+      , case when not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db} or waivernet <> 0) then othergain else 0 end::bigint other_other_gain
+  		, case when not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db} or waivernet <> 0) then otherloss else 0 end::bigint other_other_loss
+      , othernonpayinggain nonpaying_other_gain
+			, othernonpayingloss nonpaying_other_loss
+    
+			, (a1pgain+a1ploss)::bigint a1p_real_net
+      , (payinggain+payingloss)::bigint paying_real_net
+			, (stoppedgain+stoppedloss)::bigint stopped_real_net
+			, (waivergain + waiverloss)::bigint waiver_real_net
+			, (membergain + memberloss)::bigint member_real_net
+			, (othergain+otherloss)::bigint other_real_net
+			, (goodnonpayinggain+goodnonpayingloss+badnonpayinggain+badnonpayingloss)::bigint nonpaying_real_net
+			
+			-- odd columns
+			, case when _changeid is null then a1pgain else 0 end::bigint a1p_unchanged_gain
+			, case when coalesce(_status, '') = '' then a1pgain else 0 end::bigint a1p_newjoin
+			, case when coalesce(_status, '') <> '' then a1pgain else 0 end::bigint a1p_rejoin
+			, case when coalesce(_status, '') = #{paying_db} then a1ploss else 0 end::bigint a1p_to_paying
+			, case when coalesce(_status, '') <> #{paying_db} then a1ploss else 0 end::bigint a1p_to_other
+			  
+			, case when _changeid is null then stoppedgain else 0 end::bigint stopped_unchanged_gain
+			, case when coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end::bigint stopped_to_paying
+			, case when coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end::bigint stopped_to_other			
+			
 			, net::bigint
 		from  
 			nonegations c
@@ -194,8 +241,10 @@ sql = <<-EOS
 				or c.payingloss <> 0
 				or c.othergain <> 0
 				or c.otherloss <> 0
-				or c.stoppedgain<>0
-				or c.stoppedloss<>0
+				or c.stoppedgain <> 0
+				or c.stoppedloss <> 0
+				or c.waivergain <> 0
+				or c.waiverloss <> 0
 			)			
 	)
 	, notrans as
@@ -216,7 +265,8 @@ sql = <<-EOS
 		, c.a1p_newjoin
 		, c.a1p_rejoin
 		, c.a1p_real_loss
-		, c.a1p_to_paying
+		, c.a1p_real_net
+    , c.a1p_to_paying
 		, c.a1p_to_other
 		, c.a1p_other_gain
 		, c.a1p_other_loss
@@ -228,12 +278,31 @@ sql = <<-EOS
 		, c.stopped_real_gain
 		, c.stopped_unchanged_gain
 		, c.stopped_real_loss
+		, c.stopped_real_net
 		, c.stopped_to_paying
 		, c.stopped_to_other
 		, c.stopped_other_loss
 		, c.stopped_other_gain
 		, c.other_other_gain
 		, c.other_other_loss
+		, c.waiver_real_gain
+		, c.waiver_real_loss
+		, c.waiver_real_net
+		, c.waiver_other_gain
+		, c.waiver_other_loss
+    , c.member_real_gain
+		, c.member_real_loss
+		, c.member_real_net
+		, c.member_other_gain
+		, c.member_other_loss
+    , c.nonpaying_real_gain_good
+		, c.nonpaying_real_gain_bad
+    , c.nonpaying_real_loss_good
+		, c.nonpaying_real_loss_bad
+    , c.nonpaying_real_net
+		, c.nonpaying_other_gain
+		, c.nonpaying_other_loss
+
 EOS
 
 sql << if with_trans
@@ -266,7 +335,8 @@ if with_trans
 		, 0::bigint a1p_newjoin
 		, 0::bigint a1p_rejoin
 		, 0::bigint a1p_real_loss
-		, 0::bigint a1p_to_paying
+		, 0::bigint a1p_real_net
+    , 0::bigint a1p_to_paying
 		, 0::bigint a1p_to_other
 		, 0::bigint a1p_other_gain
 		, 0::bigint a1p_other_loss
@@ -278,12 +348,30 @@ if with_trans
 		, 0::bigint stopped_real_gain
 		, 0::bigint stopped_unchanged_gain
 		, 0::bigint stopped_real_loss
-		, 0::bigint stopped_to_paying
+		, 0::bigint stopped_real_net
+    , 0::bigint stopped_to_paying
 		, 0::bigint stopped_to_other
 		, 0::bigint stopped_other_loss
 		, 0::bigint stopped_other_gain
 		, 0::bigint other_other_gain
 		, 0::bigint other_other_loss
+		, 0::bigint waiver_real_gain
+		, 0::bigint waiver_real_loss
+		, 0::bigint waiver_real_net
+		, 0::bigint waiver_other_gain
+		, 0::bigint waiver_other_loss
+    , 0::bigint member_real_gain
+		, 0::bigint member_real_loss
+		, 0::bigint member_real_net
+		, 0::bigint member_other_gain
+		, 0::bigint member_other_loss
+    , 0::bigint nonpaying_real_gain_good
+		, 0::bigint nonpaying_real_loss_bad
+		, 0::bigint nonpaying_real_gain_good
+		, 0::bigint nonpaying_real_loss_bad
+    , 0::bigint nonpaying_real_net
+		, 0::bigint nonpaying_other_gain
+		, 0::bigint nonpaying_other_loss
 		, t.posted::numeric posted
 		, t.unposted::numeric unposted
 	from
@@ -305,6 +393,7 @@ sql << <<-EOS
 		, c.a1p_newjoin
 		, c.a1p_rejoin
 		, c.a1p_real_loss
+		, c.a1p_real_net
 		, c.a1p_to_paying
 		, c.a1p_to_other
 		, c.a1p_other_gain
@@ -317,12 +406,30 @@ sql << <<-EOS
 		, c.stopped_real_gain
 		, c.stopped_unchanged_gain
 		, c.stopped_real_loss
+		, c.stopped_real_net
 		, c.stopped_to_paying
 		, c.stopped_to_other
 		, c.stopped_other_loss
 		, c.stopped_other_gain
 		, c.other_other_gain other_gain
 		, c.other_other_loss other_loss
+		, c.waiver_real_gain
+		, c.waiver_real_loss
+		, c.waiver_real_net
+		, c.waiver_other_gain
+		, c.waiver_other_loss
+    , c.member_real_gain
+		, c.member_real_loss
+		, c.member_real_net
+		, c.member_other_gain
+		, c.member_other_loss
+    , c.nonpaying_real_gain_good
+		, c.nonpaying_real_loss_bad
+		, c.nonpaying_real_gain_good
+		, c.nonpaying_real_loss_bad
+    , c.nonpaying_real_net
+		, c.nonpaying_other_gain
+		, c.nonpaying_other_loss
 		, c.posted
 		, c.unposted
 	from
