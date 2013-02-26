@@ -1,4 +1,4 @@
-application_start_date: 2012-12-1
+application_start_date: 2012-12-4
 use_new_query_generation_method: true
 work_site_dimension_id: employer
 default_groupby_dimension_id: branch
@@ -216,16 +216,14 @@ summary_data_tables:
           - row_header1 
           - period_header
           - member_start_count
-          - member_real_gain
           - member_real_gain_nofee
           - member_real_gain_fee
-          - member_real_loss
           - member_real_loss_nofee
           - member_real_loss_fee
           - member_other_gain
           - member_other_loss
           - member_end_count
-          - member_net
+          - member_real_net
           - member_real_loss_orange
           - member_real_gain_orange
     nonpaying:
@@ -399,10 +397,10 @@ column_names:
   neworg: new organiser
   waiver_start_count: Waivers at start date
   waiver_real_gain: New waivers
-  waiver_real_gain_good: New waivers (for non-payers)
-  waiver_real_gain_bad:  New waivers (for payers)
+  waiver_real_gain_good: New waivers (new members)
+  waiver_real_gain_bad:  New waivers (paying members)
   waiver_real_loss: Ended waivers
-  waiver_real_loss_good: Ended waivers (for payers)
+  waiver_real_loss_good: Ended waivers (to pay again)
   waiver_real_loss_bad: Ended waivers (exited)
   waiver_other_gain: Waivers transferred in
   waiver_other_loss: Waivers transferred out
@@ -410,11 +408,11 @@ column_names:
   waiver_net: Net difference in waivers
   member_start_count: Members at start date
   member_real_gain: New members
-  member_real_gain_nofee: New members (gratis)
-  member_real_gain_fee: New members (non-gratis)
+  member_real_gain_nofee: New members (non-paying)
+  member_real_gain_fee: New members (fee-paying)
   member_real_loss: Exited members
-  member_real_loss_nofee: Exited members (gratis)
-  member_real_loss_fee: Exited members (non-gratis)
+  member_real_loss_nofee: Exited members (non-paying)
+  member_real_loss_fee: Exited members (fee-paying)
   member_real_gain_orange: Retained members
   member_real_loss_orange: Out-going members
   member_other_gain: Members transferred in
@@ -472,4 +470,9 @@ column_descriptions:
     
     
         
+    
+    
+    
+    
+    
     
