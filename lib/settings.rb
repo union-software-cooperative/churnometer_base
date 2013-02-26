@@ -113,11 +113,6 @@ module Settings
          paying_real_net
          other_gain
          other_loss
-         a1p_end_count
-         a1p_start_count
-         paying_end_count
-         paying_start_count
-         stopped_start_count
          stopped_real_gain
          stopped_unchanged_gain
          stopped_real_loss
@@ -125,14 +120,12 @@ module Settings
          stopped_to_paying
          stopped_to_other
          stopped_other_gain
-         stopped_end_count
          stopped_other_loss
          contributors
          income_net
          posted
          unposted
          transactions
-         waiver_start_count
          waiver_real_gain
      		 waiver_real_loss
      		 waiver_real_gain_good
@@ -142,8 +135,6 @@ module Settings
          waiver_real_net
      		 waiver_other_gain
      		 waiver_other_loss
-     		 waiver_end_count
-         member_start_count
          member_real_gain
      		 member_real_gain_nofee
          member_real_gain_fee
@@ -153,18 +144,15 @@ module Settings
          member_real_net
      		 member_other_gain
      		 member_other_loss
-     		 member_end_count
      		 member_real_loss_orange
          member_real_gain_orange
-     		 nonpaying_start_count
-         nonpaying_real_gain_good
+     		 nonpaying_real_gain_good
      		 nonpaying_real_loss_good
      		 nonpaying_real_gain_bad
      		 nonpaying_real_loss_bad
          nonpaying_real_net
      		 nonpaying_other_gain
      		 nonpaying_other_loss
-     		 nonpaying_end_count
          }
      end
      
@@ -207,7 +195,13 @@ module Settings
            'a1p_start_count',
            'a1p_end_count',
            'stopped_start_count',
-           'stopped_end_count'
+           'stopped_end_count',
+           'member_start_count',
+           'member_end_count',
+           'waiver_start_count',
+           'waiver_end_count',
+           'nonpaying_start_count',
+           'nonpaying_end_count'
          ]
        end
 
