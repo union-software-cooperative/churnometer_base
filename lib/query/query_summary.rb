@@ -126,10 +126,20 @@ sql = <<-EOS
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedgain else 0 end) stopped_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedloss else 0 end) stopped_loss
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergain else 0 end) waiver_gain
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waiverloss else 0 end) waiver_loss
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then membergain else 0 end) member_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergaingood else 0 end) waiver_gain_good
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergainbad else 0 end) waiver_gain_bad
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waiverloss else 0 end) waiver_loss
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waiverlossgood else 0 end) waiver_loss_good
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waiverlossbad else 0 end) waiver_loss_bad
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then membergain else 0 end) member_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then memberloss else 0 end) member_loss
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then othergain else 0 end) other_gain
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then membergainnofee else 0 end) member_gain_nofee
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then membergainfee else 0 end) member_gain_fee
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then memberlossnofee else 0 end) member_loss_nofee
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then memberlossfee else 0 end) member_loss_fee
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then membergainorange else 0 end) member_gain_orange
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then memberlossorange else 0 end) member_loss_orange
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then othergain else 0 end) other_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then otherloss else 0 end) other_loss
       , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then goodnonpayinggain else 0 end) nonpaying_gain_good
       , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then badnonpayinggain  else 0 end) nonpaying_gain_bad
@@ -243,9 +253,19 @@ sql << <<-EOS
 			, 0 stopped_loss
 			, 0 waiver_gain
 			, 0 waiver_loss
-			, 0 member_gain
+			, 0 waiver_gain_good
+			, 0 waiver_gain_bad
+      , 0 waiver_loss_good
+      , 0 waiver_loss_bad
+      , 0 member_gain
 			, 0 member_loss
-			, 0 other_gain
+			, 0 member_gain_nofee
+			, 0 member_gain_fee
+      , 0 member_loss_nofee
+      , 0 member_loss_fee
+      , 0 member_gain_orange
+      , 0 member_loss_orange
+      , 0 other_gain
 			, 0 other_loss
 			, 0 nonpaying_gain_good
 			, 0 nonpaying_gain_bad
@@ -392,7 +412,11 @@ protected
 		, c.waiver_start_count::int
 		, c.waiver_gain::int as waiver_real_gain
 		, c.waiver_loss::int as waiver_real_loss
-		, c.waiver_net::int
+		, c.waiver_gain_good::int as waiver_real_gain_good
+		, c.waiver_gain_bad::int as waiver_real_gain_bad
+    , c.waiver_loss_good::int as waiver_real_loss_good
+    , c.waiver_loss_bad::int as waiver_real_loss_bad
+    , c.waiver_net::int
 		, c.waiver_other_gain::int
 		, c.waiver_other_loss::int
 		, c.waiver_end_count::int
@@ -400,7 +424,13 @@ protected
 		, c.member_start_count::int
 		, c.member_gain::int as member_real_gain
 		, c.member_loss::int as member_real_loss
-		, c.member_net::int
+		, c.member_gain_nofee::int as member_real_gain_nofee
+		, c.member_gain_fee::int as member_real_gain_fee
+    , c.member_loss_nofee::int as member_real_loss_nofee
+    , c.member_loss_fee::int as member_real_loss_fee
+    , c.member_gain_orange::int as member_real_gain_orange
+    , c.member_loss_orange::int as member_real_loss_orange
+    , c.member_net::int as member_real_net
 		, c.member_other_gain::int
 		, c.member_other_loss::int
 		, c.member_end_count::int

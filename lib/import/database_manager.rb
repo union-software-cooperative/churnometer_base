@@ -645,20 +645,41 @@ class DatabaseManager
           then -1 else 0 end as stoppednet
 
         , 0 as waivergain
+        , 0 as waivergaingood
+        , 0 as waivergainbad
         , case when coalesce(oldstatus, '') in (#{@waiver_db}) and not coalesce(newstatus, '') in (#{@waiver_db})
             then -1 else 0 end as waiverloss
+        , case when coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db})
+            then -1 else 0 end as waiverlossgood
+        , case when coalesce(oldstatus, '') in (#{@waiver_db}) and not coalesce(newstatus, '') in (#{@waiver_db}, #{@a1p_db}, #{@paying_db}, #{@stopped_db})
+            then -1 else 0 end as waiverlossbad
         , case when coalesce(oldstatus, '') in (#{@waiver_db})
           then -1 else 0 end as waivernet
         
         , 0 as membergain
+        , 0 as membergainnofee
+        , 0 as membergainfee
         , case when 
             coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
             and (not coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
             then -1 else 0 end as memberloss
         , case when 
+            coalesce(oldstatus, '') in (#{@waiver_db}) 
+            and (not coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
+            then-1 else 0 end as memberlossnofee
+        , case when 
+            coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}) 
+            and (not coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
+            then -1 else 0 end as memberlossfee
+        , case when 
             coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
             then -1 else 0 end as membernet
-        
+        , 0 membergainorange
+        , case when 
+              coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}) 
+              and coalesce(newstatus, '') in (#{@stopped_db}, #{@waiver_db})
+            then -1 else 0 end as memberlossorange
+    
         , 0 as goodnonpayinggain
         , 0 as badnonpayinggain
         , case when 
@@ -759,19 +780,41 @@ class DatabaseManager
             
         , case when not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db})
             then 1 else 0 end as waivergain
+        , case when not coalesce(oldstatus, '') in (#{@waiver_db}, #{@a1p_db}, #{@paying_db}, #{@stopped_db}) and coalesce(newstatus, '') in (#{@waiver_db})
+            then 1 else 0 end as waivergaingood
+        , case when coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}) and coalesce(newstatus, '') in (#{@waiver_db}) 
+            then 1 else 0 end as waivergainbad
         , 0 as waiverloss
+        , 0 as waiverlossgood
+        , 0 as waiverlossbad
         , case when coalesce(newstatus, '') in (#{@waiver_db})
             then 1 else 0 end as waivernet
             
         , case when 
             (not coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db})) 
             and (coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
-            then 1 else 0 end as membergain
+          then 1 else 0 end as membergain
+        , case when 
+            (not coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db})) 
+            and (coalesce(newstatus, '') in (#{@waiver_db}))
+          then 1 else 0 end as membergainnofee
+        , case when 
+            (not coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db})) 
+            and (coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}))
+          then 1 else 0 end as membergainfee
         , 0 as memberloss
+        , 0 as memberlossnofee
+        , 0 as memberlossfee
         , case when 
             coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
             then 1 else 0 end as membernet
+        , case when 
+            coalesce(oldstatus, '') in (#{@stopped_db}, #{@waiver_db}) 
+            and coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db})
+            then 1 else 0 end as membergainorange
+        , 0 memberlossorange
         
+    
         , case when 
               not coalesce(oldstatus, '') in (#{@paying_db}, #{@a1p_db}, #{@stopped_db}, #{@waiver_db}) 
               and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})

@@ -132,16 +132,31 @@ module Settings
          posted
          unposted
          transactions
+         waiver_start_count
          waiver_real_gain
      		 waiver_real_loss
-     		 waiver_real_net
+     		 waiver_real_gain_good
+      	 waiver_real_gain_bad
+         waiver_real_loss_good
+         waiver_real_loss_bad
+         waiver_real_net
      		 waiver_other_gain
      		 waiver_other_loss
+     		 waiver_end_count
+         member_start_count
          member_real_gain
-     		 member_real_loss
-     		 member_real_net
+     		 member_real_gain_nofee
+         member_real_gain_fee
+         member_real_loss
+     		 member_real_loss_nofee
+         member_real_loss_fee
+         member_real_net
      		 member_other_gain
      		 member_other_loss
+     		 member_end_count
+     		 member_real_loss_orange
+         member_real_gain_orange
+     		 nonpaying_start_count
          nonpaying_real_gain_good
      		 nonpaying_real_loss_good
      		 nonpaying_real_gain_bad
@@ -149,6 +164,7 @@ module Settings
          nonpaying_real_net
      		 nonpaying_other_gain
      		 nonpaying_other_loss
+     		 nonpaying_end_count
          }
      end
      
