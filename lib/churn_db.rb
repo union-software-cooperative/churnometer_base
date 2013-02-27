@@ -57,6 +57,10 @@ class Db
     @conn = nil
   end
 
+  def transaction(&block)
+    @conn.transaction(&block)
+  end
+
   def process_query_result(query_result)
     # dbeswick: add a 'length' method to the sql results, so code that relies on the array returned
     # from the sql disk cache will continue to work.
@@ -96,7 +100,10 @@ class Db
   # Returns a string representing a literal array suitable for use in a query string. Individual elements
   # are quoted appropriately.
   # If 'type' is a string, then the return string also expresses a cast to the given sql data type.
+  # A type must be supplied if an empty array is given, or an exception is raised.
   def sql_array(array, type=nil)
+    raise "PostgreSQL requires empty arrays to have an explicit type when creating an empty array. You must supply a type." if array.empty? && type.nil?
+
     result = "ARRAY[#{array.collect{ |x| quote(x) }.join(', ')}]"
     result << "::#{type}[]" if type
     result
@@ -105,9 +112,12 @@ class Db
   # Returns a comma separated, quoted list of elements suitable for use in an SQL 
   # 'where <column> in' clause.
   # Doesn't include surrounding brackets.
+  # Will raise an exception if an empty array is given, as IN clauses always require at least one
+  # element.
   # Example: "select * from table where id in ( #{sql_in(my_array)} )"
   # dbeswick tbd: support other data types such as DateTime objects.
   def sql_in(array)
+    raise "Empty arrays can't be used as input to an SQL WHERE IN clause. IN clauses always require at least one value to be supplied." if array.empty?
     array.collect { |element| quote(element) }.join(",")
   end
 
@@ -151,6 +161,10 @@ class ChurnDB
     @db.close_db() if !@db.nil?
     @db = nil
   end
+
+  def transaction(&block)
+    @db.transaction(&block)
+  end
   
   def ex(sql)
     @cache_hit = false
@@ -163,7 +177,7 @@ class ChurnDB
   end  
 
   def fact_table
-    @fact_table ||= @app.config.get_mandatory('database')['facttable'].value
+    @fact_table ||= @app.memberfacthelper_table
   end
 
   def summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml, filter_terms)

@@ -52,12 +52,12 @@ class ChurnometerApp
   def initialize(application_environment = :development, site_config_io = nil, config_io = nil)
     @application_environment = application_environment
 
-    # Special case: force site_config file to use regression database if requested database.
+    # Special case: force site_config file to the regression config if requested.
     # This necessitates reading the site_config file before the main config processing logic.
     # This isn't appropriate if an explicit site_config_io was given.
     if site_config_io.nil?
       yaml = YAML.load_file(site_config_filename())
-      if yaml['use_regression_db'] == true
+      if yaml != false && yaml['use_regression_config'] == true
         site_config_io = File.new('./spec/config/config_regression.yaml')
       end
     end
@@ -85,8 +85,14 @@ class ChurnometerApp
     validate()
   end
   
+  # Config values can be validated at startup in this method. This provides a means of verifying parts
+  # of the config without waiting until they're first accessed.
+  # Can also be called by systems that modify config data to ensure that changes are valid.
+  # Throws an exception if any problem occurs.
   def validate
     application_start_date()
+    config().ensure_kindof('waiver_statuses', Array, NilClass)
+    validate_email()
   end
 
   # A ConfigFileSet instance.
@@ -106,11 +112,42 @@ class ChurnometerApp
     end
   end
 
+  # The address from which error emails are sent.
+  # Returns nil if email_on_error? is false (error emails disabled.)
+  def email_on_error_from
+    if email_on_error? == false
+      nil
+    else
+      config.element('email_errors').value['from'].value
+    end
+  end
+
+  # The address to which error emails are sent.
+  # Returns nil if email_on_error? is false (error emails disabled.)
+  def email_on_error_to
+    if email_on_error? == false
+      nil
+    else
+      config.element('email_errors').value['to'].value
+    end
+  end
+
   def growth_target_percentage
     if config()['growth_target_percentage'].nil?
       10
     else
       config()['growth_target_percentage'].to_i
+    end
+  end
+
+  # The name of the database table that contains the member facts.
+  def memberfacthelper_table
+    database = config().get_mandatory('database')
+
+    if database['facttable'].nil?
+      'memberfacthelper'
+    else
+      database['facttable'].value
     end
   end
 
@@ -124,11 +161,10 @@ class ChurnometerApp
   # This is the date we started tracking data.  
   # The user can't select before this date
   def application_start_date
-    result = config().element('application_start_date')
+    result = config().get_mandatory('application_start_date')
     result.ensure_kindof(Date)
     result.value
   end
-
   
   # ensure col_names is initialised before access
   def col_names
@@ -362,7 +398,7 @@ protected
     element.ensure_kindof(Array, NilClass)
 
     @waiver_statuses = 
-      if element.nil? 
+      if element.value.nil?
         []
       else
         element.value.collect do |element|
@@ -372,7 +408,14 @@ protected
       end
   end
   
-protected
+  def validate_email
+    if email_on_error?
+      config().ensure_kindof('email_errors', Hash)
+      config().element('email_errors').value['to'].ensure_kindof(String)
+      config().element('email_errors').value['from'].ensure_kindof(String)
+    end
+  end
+
   # User data tables should be accessed via an AppRole instance when performing application logic for 
   # the user.
   #attr_accessor :summary_user_data_tables

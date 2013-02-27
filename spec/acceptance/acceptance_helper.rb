@@ -22,7 +22,6 @@ require 'capybara/dsl'
 
 Capybara.app = Churnobyl
 Capybara.default_driver = :selenium
-Capybara.server_boot_timeout = 50
 Capybara.save_and_open_page_path = './tmp/capybara/'
 
 include Capybara::DSL

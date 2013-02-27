@@ -32,7 +32,17 @@ class DatabaseManager
     @paying_db = @db.quote(@app.member_paying_status_code)
     @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
     @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
-    @waiver_db = @db.sql_in(@app.waiver_statuses) # "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
+    @waiver_db = @db.sql_array(@app.waiver_statuses, 'varchar') # "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
+
+    all_status_ary = 
+      [@app.member_paying_status_code, 
+       @app.member_awaiting_first_payment_status_code,
+       @app.member_stopped_paying_status_code] + @app.waiver_statuses
+
+    all_status_but_paying_ary = all_status_ary - [@app.member_paying_status_code]
+
+    @all_status_ary_db = @db.sql_array(all_status_ary, 'varchar')
+    @all_status_but_paying_ary_db = @db.sql_array(all_status_but_paying_ary, 'varchar')
   end
 
   def close_db()
@@ -67,7 +77,7 @@ class DatabaseManager
       alter table memberfact rename to memberfact_migration;
       alter sequence memberfact_changeid_seq rename to memberfact_migration_changeid_seq;
       alter table membersourceprev rename to membersourceprev_migration;
-      alter table memberfacthelper rename to memberfacthelper_migration;
+      alter table #{@app.memberfacthelper_table} rename to memberfacthelper_migration;
      
       #{rebuild_membersource_sql};
       #{rebuild_membersourceprev_sql};
@@ -113,7 +123,7 @@ class DatabaseManager
 
 	    alter table memberfact rename to memberfact_migration;
       alter table membersourceprev rename to membersourceprev_migration;
-      alter table memberfacthelper rename to memberfacthelper_migration;
+      alter table #{@app.memberfacthelper_table} rename to memberfacthelper_migration;
       
       #{memberfact_sql};
       #{rebuild_membersourceprev_sql};
@@ -145,6 +155,16 @@ class DatabaseManager
       #{rebuild_most_indexes_sql}
       #{rebuild_memberfacthelper_indexes_sql}
       
+      VACUUM memberfact;
+      VACUUM memberfacthelper;
+      VACUUM transactionfact;
+      VACUUM displaytext;
+      VACUUM membersource;
+      VACUUM membersourceprev;
+      VACUUM transactionsource;
+      VACUUM transactionsourceprev;
+      VACUUM displaytextsource;
+
       ANALYSE memberfact;
       ANALYSE memberfact;
       ANALYSE memberfacthelper;
@@ -155,16 +175,6 @@ class DatabaseManager
       ANALYSE transactionsource;
       ANALYSE transactionsourceprev;
       ANALYSE displaytextsource;
-      
-      VACUUM memberfact;
-      VACUUM memberfacthelper;
-      VACUUM transactionfact;
-      VACUUM displaytext;
-      VACUUM membersource;
-      VACUUM membersourceprev;
-      VACUUM transactionsource;
-      VACUUM transactionsourceprev;
-      VACUUM displaytextsource;
     SQL
   end
   
@@ -185,6 +195,16 @@ class DatabaseManager
     
     # ANALYSE and VACUUM have to be run as separate database calls
     str = <<-SQL
+      VACUUM memberfact;
+      VACUUM memberfacthelper;
+      VACUUM transactionfact;
+      VACUUM displaytext;
+      VACUUM membersource;
+      VACUUM membersourceprev;
+      VACUUM transactionsource;
+      VACUUM transactionsourceprev;
+      VACUUM displaytextsource;
+
       ANALYSE memberfact;
       ANALYSE memberfact;
       ANALYSE memberfacthelper;
@@ -195,16 +215,6 @@ class DatabaseManager
       ANALYSE transactionsource;
       ANALYSE transactionsourceprev;
       ANALYSE displaytextsource;
-      
-      VACUUM memberfact;
-      VACUUM memberfacthelper;
-      VACUUM transactionfact;
-      VACUUM displaytext;
-      VACUUM membersource;
-      VACUUM membersourceprev;
-      VACUUM transactionsource;
-      VACUUM transactionsourceprev;
-      VACUUM displaytextsource;
     SQL
     
     str.split("\n").each { |cmd| db.ex(cmd) }
@@ -525,11 +535,11 @@ class DatabaseManager
               oldstatus = #{@paying_db}
               or oldstatus = #{@stopped_db}
               or oldstatus = #{@a1p_db}
-              or oldstatus in (#{@waiver_db})
+              or oldstatus = ANY (#{@waiver_db})
               or newstatus = #{@paying_db}
               or newstatus = #{@stopped_db}
               or newstatus = #{@a1p_db}
-              or newstatus in (#{@waiver_db})
+              or newstatus = ANY (#{@waiver_db})
             )
         )
         -- or have paid something since tracking begun
@@ -618,13 +628,13 @@ class DatabaseManager
             or
             (
               (
-                coalesce(oldstatus, '') in (#{@waiver_db})
-                and not coalesce(newstatus, '') in (#{@waiver_db})
+                coalesce(oldstatus, '') = ANY (#{@waiver_db})
+                and not coalesce(newstatus, '') = ANY (#{@waiver_db})
               )
               or
               (
-                not coalesce(oldstatus, '') in (#{@waiver_db})
-                and coalesce(newstatus, '') in (#{@waiver_db})
+                not coalesce(oldstatus, '') = ANY (#{@waiver_db})
+                and coalesce(newstatus, '') = ANY (#{@waiver_db})
               )
             )
             then -1 else 0 end as statusdelta
@@ -647,57 +657,49 @@ class DatabaseManager
         , 0 as waivergain
         , 0 as waivergaingood
         , 0 as waivergainbad
-        , case when coalesce(oldstatus, '') in (#{@waiver_db}) and not coalesce(newstatus, '') in (#{@waiver_db})
+        , case when coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@waiver_db})
             then -1 else 0 end as waiverloss
-        , case when coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db})
+        , case when coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db})
             then -1 else 0 end as waiverlossgood
         , case when coalesce(oldstatus, '') in (#{@waiver_db}) and not coalesce(newstatus, '') in (#{@waiver_db}, #{@a1p_db}, #{@paying_db}, #{@stopped_db})
             then -1 else 0 end as waiverlossbad
-        , case when coalesce(oldstatus, '') in (#{@waiver_db})
+        , case when coalesce(oldstatus, '') = ANY (#{@waiver_db})
           then -1 else 0 end as waivernet
         
         , 0 as membergain
         , 0 as membergainnofee
         , 0 as membergainfee
         , case when 
-            coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
-            and (not coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
+            coalesce(oldstatus, '') = ANY (#{@all_status_ary_db})
+            and (not coalesce(newstatus, '')  = ANY (#{@all_status_ary_db}))
             then -1 else 0 end as memberloss
         , case when 
-            coalesce(oldstatus, '') in (#{@waiver_db}) 
-            and (not coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
-            then-1 else 0 end as memberlossnofee
-        , case when 
-            coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}) 
-            and (not coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
-            then -1 else 0 end as memberlossfee
-        , case when 
-            coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
+            coalesce(oldstatus, '') = ANY (#{@all_status_ary_db})
             then -1 else 0 end as membernet
         , 0 membergainorange
         , case when 
               coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}) 
               and coalesce(newstatus, '') in (#{@stopped_db}, #{@waiver_db})
             then -1 else 0 end as memberlossorange
-    
+        
         , 0 as goodnonpayinggain
         , 0 as badnonpayinggain
         , case when 
-              coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db}) 
+              coalesce(oldstatus, '') = ANY (#{@all_status_but_paying_ary_db}) 
               and coalesce(newstatus, '') in (#{@paying_db})
             then -1 else 0 end as goodnonpayingloss
         , case when 
-              coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db}) 
-              and not coalesce(newstatus, '') in (#{@paying_db}, #{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+              coalesce(oldstatus, '') = ANY (#{@all_status_but_paying_ary_db})
+              and not coalesce(newstatus, '') = ANY (#{@all_status_ary_db})
             then -1 else 0 end as badnonpayingloss
         
         , 0 as othernonpayinggain
         , case when 
-            coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
-            and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+            coalesce(oldstatus, '') = ANY (#{@all_status_but_paying_ary_db})
+            and coalesce(newstatus, '') = ANY (#{@all_status_but_paying_ary_db})
           then -1 else 0 end as othernonpayingloss
     
-        , case when coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+        , case when coalesce(oldstatus, '') = ANY (#{@all_status_but_paying_ary_db})
           then -1 else 0 end as nonpayingnet
 
         , 0 as othergain
@@ -705,13 +707,13 @@ class DatabaseManager
             NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
             AND NOT (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
-            AND NOT (coalesce(oldstatus, '') in (#{@waiver_db}) and not coalesce(newstatus, '') in (#{@waiver_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as otherloss
         , case when 
             NOT (coalesce(oldstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') = #{@paying_db})
             AND NOT (coalesce(oldstatus, '') = #{@stopped_db})
-            AND NOT (coalesce(oldstatus, '') in (#{@waiver_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as othernet
     SQL
   
@@ -752,13 +754,13 @@ class DatabaseManager
           or
           (
             (
-              coalesce(oldstatus, '') in (#{@waiver_db})
-              and not coalesce(newstatus, '') in (#{@waiver_db})
+              coalesce(oldstatus, '') = ANY (#{@waiver_db})
+              and not coalesce(newstatus, '') = ANY (#{@waiver_db})
             )
             or
             (
-              not coalesce(oldstatus, '') in (#{@waiver_db})
-              and coalesce(newstatus, '') in (#{@waiver_db})
+              not coalesce(oldstatus, '') = ANY (#{@waiver_db})
+              and coalesce(newstatus, '') = ANY (#{@waiver_db})
             )
           )
           then 1 else 0 end as statusdelta
@@ -778,22 +780,20 @@ class DatabaseManager
         , case when coalesce(newstatus, '') = #{@stopped_db}
             then 1 else 0 end as stoppednet
             
-        , case when not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db})
+        , case when not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivergain
         , case when not coalesce(oldstatus, '') in (#{@waiver_db}, #{@a1p_db}, #{@paying_db}, #{@stopped_db}) and coalesce(newstatus, '') in (#{@waiver_db})
             then 1 else 0 end as waivergaingood
         , case when coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}) and coalesce(newstatus, '') in (#{@waiver_db}) 
             then 1 else 0 end as waivergainbad
         , 0 as waiverloss
-        , 0 as waiverlossgood
-        , 0 as waiverlossbad
         , case when coalesce(newstatus, '') in (#{@waiver_db})
             then 1 else 0 end as waivernet
             
         , case when 
-            (not coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db})) 
-            and (coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}))
-          then 1 else 0 end as membergain
+            (not coalesce(oldstatus, '') = ANY (#{@all_status_ary_db})
+            and (coalesce(newstatus, '') = ANY (#{@all_status_ary_db})))
+            then 1 else 0 end as membergain
         , case when 
             (not coalesce(oldstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db})) 
             and (coalesce(newstatus, '') in (#{@waiver_db}))
@@ -806,7 +806,7 @@ class DatabaseManager
         , 0 as memberlossnofee
         , 0 as memberlossfee
         , case when 
-            coalesce(newstatus, '') in (#{@a1p_db}, #{@paying_db}, #{@stopped_db}, #{@waiver_db}) 
+            coalesce(newstatus, '') = ANY (#{@all_status_ary_db})
             then 1 else 0 end as membernet
         , case when 
             coalesce(oldstatus, '') in (#{@stopped_db}, #{@waiver_db}) 
@@ -814,39 +814,39 @@ class DatabaseManager
             then 1 else 0 end as membergainorange
         , 0 memberlossorange
         
-    
+        
         , case when 
-              not coalesce(oldstatus, '') in (#{@paying_db}, #{@a1p_db}, #{@stopped_db}, #{@waiver_db}) 
-              and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+              not coalesce(oldstatus, '') = ANY (#{@all_status_ary_db}) 
+              and coalesce(newstatus, '') = ANY (#{@all_status_but_paying_ary_db})
             then 1 else 0 end as goodnonpayinggain
         , case when 
               coalesce(oldstatus, '') in (#{@paying_db}) 
-              and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+              and coalesce(newstatus, '') = ANY (#{@all_status_but_paying_ary_db})
             then 1 else 0 end as badnonpayinggain
         , 0 as goodnonpayingloss
         , 0 as badnonpayingloss
         
         , case when 
-            coalesce(oldstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
-            and coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+            coalesce(oldstatus, '') = ANY (#{@all_status_but_paying_ary_db})
+            and coalesce(newstatus, '') = ANY (#{@all_status_but_paying_ary_db})
           then 1 else 0 end as othernonpayinggain
         , 0 as othernonpayingloss
 
-        , case when coalesce(newstatus, '') in (#{@a1p_db}, #{@stopped_db}, #{@waiver_db})
+        , case when coalesce(newstatus, '') = ANY (#{@all_status_but_paying_ary_db})
             then 1 else 0 end as nonpayingnet
         
         , case when 
             NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
             AND NOT (coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db})
-            AND NOT (not coalesce(oldstatus, '') in (#{@waiver_db}) and coalesce(newstatus, '') in (#{@waiver_db}))
+            AND NOT (not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othergain
         , 0 as otherloss
         , case when 
             NOT (coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(newstatus, '') = #{@paying_db})
             AND NOT (coalesce(newstatus, '') = #{@stopped_db})
-            AND NOT (coalesce(newstatus, '') in (#{@waiver_db}))
+            AND NOT (coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othernet
     SQL
   
@@ -881,11 +881,11 @@ class DatabaseManager
               oldstatus = #{@paying_db}
               or oldstatus = #{@stopped_db}
               or oldstatus = #{@a1p_db}
-              or oldstatus in (#{@waiver_db})
+              or oldstatus = ANY (#{@waiver_db})
               or newstatus = #{@paying_db}
               or newstatus = #{@stopped_db}
               or newstatus = #{@a1p_db}
-              or newstatus in (#{@waiver_db})
+              or newstatus = ANY (#{@waiver_db})
             )
         )
         -- or have paid something since tracking begun
@@ -1416,40 +1416,76 @@ class DatabaseManager
     SQL
   end
   
-  
+  # Returns an array of sql statements.
   def migrate_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
-    <<-SQL
-      -- regular migration
-      #{migrate_rebuild_without_indexes_sql()}
-      #{migrate_membersourceprev_sql(mapping)}
-      #{migrate_memberfact_sql(mapping)}
-      #{migrate_dimstart_sql(migration_spec)}
-      #{rebuild_most_indexes_sql()}
-    SQL
+#      -- regular migration
+      [migrate_rebuild_without_indexes_sql(),
+      migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', null'),
+      migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', null'),
+      migrate_dimstart_sql(migration_spec)
+      ] + rebuild_most_indexes_sql().split($/)
   end
   
-  def migrate(migration_sql)
-    db.ex(migration_sql)
-    db.ex("vacuum memberfact");
-    db.ex("vacuum membersourceprev");
-    db.ex("vacuum transactionfact");
-    db.ex("vacuum transactionsourceprev");
-    db.ex("vacuum displaytext");
-    db.ex("vacuum memberfacthelper");
+  # migration_sql_ary: an array of sql statements to execute
+  # Raises an exception if a critical error occurred that prevented the migration from succeeding.
+  # Returns true on success, or an error string in the case of a recoverable error.
+  def migrate(migration_sql_ary)
+    begin
+      # This method needs to run with async_ex so that other ruby threads can run while the migration
+      # operates. However, async_ex blocks other threads (even though it shouldn't) when several SQL
+      # operations are passed in a single batch. This is the reason for use of arrays and for the
+      # splitting of long statements by line break -- so that large statements can be reduced to a
+      # series of smaller ones.
+      db.async_ex("BEGIN TRANSACTION");
     
-    db.ex("analyse memberfact");
-    db.ex("analyse membersourceprev");
-    db.ex("analyse transactionfact");
-    db.ex("analyse transactionsourceprev");
-    db.ex("analyse displaytext");
-    db.ex("analyse memberfacthelper");
+      migration_sql_ary.each { |sql| $stderr.puts sql; db.async_ex(sql) }
 
     # with lots of data memberfacthelper can be impossibly slow to rebuild
-    db.ex("select updatememberfacthelper();");
-    db.ex(rebuild_memberfacthelper_indexes_sql());
-    db.ex("vacuum memberfacthelper");
-    db.ex("analyse memberfacthelper");
+      db.async_ex("select updatememberfacthelper();");
+
+      rebuild_memberfacthelper_indexes_sql().split($/).each { |sql| $stderr.puts sql; db.async_ex(sql); }
+      
+      db.async_ex("COMMIT TRANSACTION");
+    rescue Exception=>e
+      $stderr.puts e
+      db.async_ex("ROLLBACK TRANSACTION");
+      raise
+    end
+
+    finalisation_statements = 
+      ["vacuum memberfact",
+       "vacuum membersourceprev",
+       "vacuum transactionfact",
+       "vacuum transactionsourceprev",
+       "vacuum displaytext",
+       "vacuum memberfacthelper",
+       
+       "analyse memberfact",
+       "analyse membersourceprev",
+       "analyse transactionfact",
+       "analyse transactionsourceprev",
+       "analyse displaytext",
+       "analyse memberfacthelper"]
+
+    current_statement = nil
+
+    begin
+      finalisation_statements.each do |sql| 
+        $stderr.puts sql
+        current_statement = sql
+        db.async_ex(sql)
+      end
+    rescue Exception=>e
+      return <<EOS
+There was an error while finalising the migration. SQL statement: '#{current_statement}'.
+Exception message: #{e.message}
+The migration succeeded, but the database may run with reduced performance until the following SQL has been executed:
+#{finalisation_statements.join($/)}
+EOS
+    end
+
+    true
   end
 end
