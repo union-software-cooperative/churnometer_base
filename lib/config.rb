@@ -198,6 +198,11 @@ class ConfigFile
     
     config_hash = YAML.load(yaml)
 
+    # This will be true in the case of an empty file.
+    if config_hash == false
+      config_hash = {}
+    end
+
     raise BadConfigDataFormatException.new("The config file definition must result in a hash, but the type is '#{config_hash.class}'", self) if !config_hash.kind_of?(Hash)
     
     @values = {}
@@ -277,7 +282,7 @@ class ConfigFileSet
       raise MissingConfigDataException.new(element_id)
     end
 
-    element.ensure_kindof(class_types)
+    element.ensure_kindof(*class_types)
   end
 
   # As for 'element', but raises a MissingConfigDataException if the element id isn't found.

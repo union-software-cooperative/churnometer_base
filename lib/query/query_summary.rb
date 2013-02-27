@@ -47,7 +47,7 @@ class QuerySummary < QueryFilter
     paying_db = db.quote(@app.member_paying_status_code)
     a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
     stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
-    waiver_db = db.sql_in(@app.waiver_statuses) 
+
 sql = <<-EOS
 	-- summary query
 	with nonstatusselections as

@@ -171,7 +171,7 @@ describe "Tables" do
   
   it "Can drill down into a member" do
     visit "/"
-    click_link "Summary"
+    page.find(:link, :text=>"Summary").click
 
     within 'table#table-summary tbody tr:nth-child(1)' do
       click_link "63"
@@ -268,7 +268,8 @@ describe "Tables" do
   
   
   def check_home_summary 
-    click_link "Summary"
+    page.find(:link, :text=>"Summary").click
+
     within 'table#table-summary tbody tr:nth-child(1)' do
       row_has "Construction", %w{55 -8 103 63 -46 17 120 -28 152 50380.59}
     end
@@ -286,12 +287,14 @@ describe "Tables" do
   end
   
   def drill_down_into_branch
-    click_link "Warehousing"
+    page.find(:link, :text=>"Warehousing").click
+
     within '#filters' do
       page.should have_content "Branch: Warehousing"
     end
     
-    click_link "Summary"
+    page.find(:link, :text=>"Summary").click
+
     within 'table#table-summary tbody tr:nth-child(2)' do
       row_has "Djura Elango", %w{53 -5 135 62 -31 31 140 -11 240 70204.88}
     end
@@ -309,13 +312,15 @@ describe "Tables" do
   end
   
   def drill_down_into_lead_organiser
-    click_link "Djura Elango"
+    first(:link, :text=>"Djura Elango").click
+
     within '#filters' do
       page.should have_content "Branch: Warehousing"
       page.should have_content "Lead Organiser: Djura Elango"
     end
     
-    click_link "Summary"
+    page.find(:link, :text=>"Summary").click
+
     within 'table#table-summary tbody tr:nth-child(1)' do
       row_has "Alexandrus Anzaldi", %w{1 0 10 2 -1 1 12 -1 16 6458.68}      
     end
@@ -333,13 +338,16 @@ describe "Tables" do
   end
   
   def drill_down_into_organiser
-    click_link "Laurie Magdoza" 
+    first(:link, :text=>"Laurie Magdoza").click
+
     within '#filters' do
       page.should have_content "Branch: Warehousing"
       page.should have_content "Lead Organiser: Djura Elango"
       page.should have_content "Organiser: Laurie Magdoza"
     end
-    click_link "Summary"
+
+    page.find(:link, :text=>"Summary").click
+
     within 'table#table-summary tbody tr:nth-child(8)' do
       row_has "Garner's Store", %w{5 -1 3 4 -1 3 0 0 6 1075.30}
     end
