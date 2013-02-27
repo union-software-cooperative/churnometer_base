@@ -78,7 +78,9 @@ class QueryDetail < QueryDetailBase
       'member_real_net' => 'where c.member_real_net<>0',
       'member_other_loss' => 'where c.member_other_loss<>0',
       'member_other_loss' => 'where c.member_other_loss<>0',
-
+      'member_gain_combined' => 'where c.member_gain_combined<>0',
+      'member_loss_combined' => 'where c.member_loss_combined<>0',
+      
       'waiver_real_gain' => 'where c.waiver_real_gain<>0',
       'waiver_real_loss' => 'where c.waiver_real_loss<>0',
       'waiver_real_gain_good' => 'where c.waiver_real_gain_good<>0',
@@ -250,7 +252,10 @@ sql = <<-EOS
 			, case when coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end::bigint stopped_to_paying
 			, case when coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end::bigint stopped_to_other			
 			
-			, net::bigint
+			, case when membergain <> 0 or membergainorange <> 0 then 1 else 0 end::bigint member_gain_combined
+      , case when memberloss <> 0 or memberlossorange <> 0 then -1 else 0 end::bigint member_loss_combined
+        
+      , net::bigint
 		from  
 			nonegations c
 		where
@@ -322,6 +327,8 @@ sql = <<-EOS
     , c.member_real_loss_nofee
     , c.member_real_gain_orange
     , c.member_real_loss_orange
+    , c.member_gain_combined
+    , c.member_loss_combined
     , c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
@@ -405,6 +412,8 @@ if with_trans
     , 0::bigint member_real_net
 		, 0::bigint member_other_gain
 		, 0::bigint member_other_loss
+		, 0::bigint member_gain_combined
+		, 0::bigint member_loss_combined
     , 0::bigint nonpaying_real_gain_good
 		, 0::bigint nonpaying_real_loss_bad
 		, 0::bigint nonpaying_real_gain_good
@@ -473,6 +482,8 @@ sql << <<-EOS
     , c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
+		, c.member_gain_combined
+		, c.member_loss_combined
     , c.nonpaying_real_gain_good
 		, c.nonpaying_real_loss_bad
 		, c.nonpaying_real_gain_good

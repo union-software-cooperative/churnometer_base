@@ -190,6 +190,10 @@ sql = <<-EOS
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
+		  , count(distinct case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (membergain <> 0 or membergainorange <> 0) then memberid else null end) member_gain_combined
+      , -count(distinct case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (memberloss <> 0 or memberlossorange <> 0) then memberid else null end) member_loss_combined
+      
+		
 		from 
 			nonegations c
 		group by 
@@ -316,6 +320,9 @@ sql << <<-EOS
       , 0 stopped_unchanged_gain
       , 0 external_gain
       , 0 external_loss
+      , 0 member_gain_combined
+      , 0 member_loss_combined
+      
       
       , coalesce(t.posted,0)::numeric(12,2) posted
 			, coalesce(t.undone,0)::numeric(12,2) unposted
@@ -430,11 +437,13 @@ protected
     , c.member_loss_fee::int as member_real_loss_fee
     , c.member_gain_orange::int as member_real_gain_orange
     , c.member_loss_orange::int as member_real_loss_orange
+    , c.member_gain_combined::int as member_gain_combined
+    , c.member_loss_combined::int as member_loss_combined
     , c.member_net::int as member_real_net
 		, c.member_other_gain::int
 		, c.member_other_loss::int
 		, c.member_end_count::int
-     
+		 
     , c.nonpaying_start_count::int
 		, c.nonpaying_gain_good::int as nonpaying_real_gain_good
 		, c.nonpaying_loss_good::int as nonpaying_real_loss_good
