@@ -17,7 +17,6 @@ gem 'nokogiri'
 group :development, :test do
   # For debugging
   gem 'ir_b'
-  gem 'debugger'
 end
 
 group :test do 
