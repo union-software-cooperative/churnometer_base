@@ -134,9 +134,10 @@ summary_data_tables:
             - row_header1
             - period_header
             - member_real_gain
-            - member_real_loss_orange
             - member_real_loss
             - member_real_net
+            - member_gain_combined
+            - member_loss_combined
             - member_end_count
             - paying_real_gain
             - paying_real_loss
@@ -411,12 +412,14 @@ column_names:
   member_real_loss: Exited members
   member_real_loss_nofee: Exited members (non-paying)
   member_real_loss_fee: Exited members (fee-paying)
-  member_real_gain_orange: Problem Retained members
-  member_real_loss_orange: New problem members
+  member_real_gain_orange: Retained members
+  member_real_loss_orange: Problem members
   member_other_gain: Members transferred in
   member_other_loss: Members transferred out 
   member_end_count: Members at end date
   member_real_net: Net difference in members
+  member_loss_combined: Problems and exited
+  member_gain_combined: New and retained
   nonpaying_start_count: Not-paying at start date
   nonpaying_real_gain_good: New non-paying members
   nonpaying_real_gain_bad: Paying members who entered cycle or got a waiver

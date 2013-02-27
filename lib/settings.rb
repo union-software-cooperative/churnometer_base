@@ -171,6 +171,8 @@ module Settings
          nonpaying_end_count
          stopped_start_count
          stopped_end_count
+         member_loss_combined
+         member_gain_combined
          }
      end
      
@@ -187,6 +189,8 @@ module Settings
          'member_real_loss',
          'member_real_loss_fee',
          'member_real_gain_fee',
+         'member_gain_combined',
+         'member_loss_combined',
          'stopped_real_gain',
          'waiver_real_loss_good'
        ].include?(column_name)
