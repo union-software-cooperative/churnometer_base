@@ -440,7 +440,6 @@ class ChurnDB
       'nonpaying_end_count',
       'stopped_start_count',
       'stopped_end_count'
-      
     ]
   end
 

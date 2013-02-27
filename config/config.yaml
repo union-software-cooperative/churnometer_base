@@ -46,7 +46,7 @@ dimensions:
   - id: locale
     name: Location
   - id: employer
-    name: Employer ID
+    name: Employer
   - id: industry
     name: Industry
   - id: pay_method
@@ -66,11 +66,13 @@ dimensions:
     roles:
       - staff
       - lead
+      - dev
   - id: arrears_cycle
     name: Stopped Paying - Cycle
     roles:
       - staff
       - lead
+      - dev
   - id: emptype
     name: Employment Type
   - id: branch
@@ -135,8 +137,7 @@ summary_data_tables:
             - member_real_loss_orange
             - member_real_loss
             - member_real_net
-            - member_real_gain_fee
-            - member_real_loss_fee
+            - member_end_count
             - paying_real_gain
             - paying_real_loss
             - paying_real_net
@@ -153,10 +154,10 @@ summary_data_tables:
             - paying_start_count
             - paying_real_gain
             - paying_real_loss
+            - paying_real_net
             - paying_other_gain
             - paying_other_loss
             - paying_end_count
-            - paying_real_net
     a1p:
         display_name: New Applications
         description: This data represents those members haven't yet paid since a new application has been received.  If the number of new non-paying applications is growing, this indicates a problem with admin and applications not being processed.  It is also worth nothing, a certain percentage of new applications may be consistently exited before payment is started.  This may need to be factored when setting recruitment targets.  NB if an application is processed and payment recieved on the same day, then it won't be counted in new applications.  This member will go straight to being counted as a new paying member. 
@@ -171,7 +172,6 @@ summary_data_tables:
             - a1p_other_gain
             - a1p_other_loss
             - a1p_end_count
-            - a1p_net
             - a1p_newjoin
             - a1p_rejoin
             - a1p_unchanged_gain
@@ -198,16 +198,14 @@ summary_data_tables:
           - row_header1 
           - period_header
           - waiver_start_count
-          - waiver_real_gain
           - waiver_real_gain_good
           - waiver_real_gain_bad
-          - waiver_real_loss
           - waiver_real_loss_good
           - waiver_real_loss_bad
+          - waiver_real_net
           - waiver_other_gain
           - waiver_other_loss
           - waiver_end_count
-          - waiver_net
     member:
         display_name: Members
         description:  This data represents all members.  It includes but is not limited to paying members, members on waiver, members in arrears and other union members on service agreement.  New members represents the green in the chart.  However a significant portion of new members may be gratis members - meaning the are not required to pay.    
@@ -220,10 +218,10 @@ summary_data_tables:
           - member_real_gain_fee
           - member_real_loss_nofee
           - member_real_loss_fee
+          - member_real_net
           - member_other_gain
           - member_other_loss
           - member_end_count
-          - member_real_net
           - member_real_loss_orange
           - member_real_gain_orange
     nonpaying:
@@ -379,8 +377,8 @@ column_names:
   stopped_other_loss: stopped paying transfers out
   stopped_to_paying: left stopped paying cycle (resumed paying)
   stopped_to_other: left stopped paying cycle (exited)
-  stopped_unchanged_gain: entered stopped paying cycle (pending resolution)
-  a1p_unchanged_gain: new applications (pending payment)
+  stopped_unchanged_gain: entered stopped paying cycle (still pending resolution today)
+  a1p_unchanged_gain: new applications (still pending payment today)
   contactdetail: current contact detail
   followupnotes: follow up notes
   payrollcontactdetail: payroll/hr contact
@@ -413,8 +411,8 @@ column_names:
   member_real_loss: Exited members
   member_real_loss_nofee: Exited members (non-paying)
   member_real_loss_fee: Exited members (fee-paying)
-  member_real_gain_orange: Retained members
-  member_real_loss_orange: Out-going members
+  member_real_gain_orange: Problem Retained members
+  member_real_loss_orange: Problem members
   member_other_gain: Members transferred in
   member_other_loss: Members transferred out 
   member_end_count: Members at end date
