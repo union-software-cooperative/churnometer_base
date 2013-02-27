@@ -412,7 +412,7 @@ column_names:
   member_real_loss_nofee: Exited members (non-paying)
   member_real_loss_fee: Exited members (fee-paying)
   member_real_gain_orange: Problem Retained members
-  member_real_loss_orange: Problem members
+  member_real_loss_orange: New problem members
   member_other_gain: Members transferred in
   member_other_loss: Members transferred out 
   member_end_count: Members at end date
