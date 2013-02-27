@@ -77,7 +77,7 @@ class QueryDetail < QueryDetailBase
       'member_real_loss_orange' => 'where c.member_real_loss_orange<>0',
       'member_real_net' => 'where c.member_real_net<>0',
       'member_other_loss' => 'where c.member_other_loss<>0',
-      'member_other_loss' => 'where c.member_other_loss<>0',
+      'member_other_gain' => 'where c.member_other_gain<>0',
       'member_gain_combined' => 'where c.member_gain_combined<>0',
       'member_loss_combined' => 'where c.member_loss_combined<>0',
       
