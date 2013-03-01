@@ -196,6 +196,10 @@ class QuerySummaryRunning < QueryFilter
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
+      , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (membergain <> 0 or membergainorange <> 0) then 1 else 0 end) member_gain_combined
+		  , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (memberloss <> 0 or memberlossorange <> 0) then -1 else 0 end) member_loss_combined
+			
+  
   from 
 			nonegations c 
 		group by 
@@ -315,6 +319,8 @@ sql << <<-EOS
       , 0 stopped_unchanged_gain
       , 0 external_gain
       , 0 external_loss
+      , 0 member_gain_combined
+      , 0 member_loss_combined
 
       , coalesce(t.posted,0)::numeric(12,2) posted
 			, coalesce(t.undone,0)::numeric(12,2) unposted
@@ -431,7 +437,7 @@ sql << <<-EOS
   		, c.member_other_gain
   		, c.member_other_loss
   		, c.running_member_end_count as member_end_count
-
+      
       , c.running_nonpaying_end_count - c.nonpaying_gain_bad - c.nonpaying_loss_bad - c.nonpaying_gain_good - c.nonpaying_loss_good - c.nonpaying_other_gain - c.nonpaying_other_loss as nonpaying_start_count
   		, c.nonpaying_gain_good as nonpaying_real_gain_good
   		, c.nonpaying_loss_good as nonpaying_real_loss_good
@@ -447,6 +453,9 @@ sql << <<-EOS
 			, c.other_other_loss 
 			, c.external_gain
 			, c.external_loss
+			, c.member_gain_combined
+  		, c.member_loss_combined
+  		
 			, c.net
 			, c.running_end_count end_count
 			, c.posted
@@ -540,6 +549,9 @@ sql << <<-EOS
 		, c.other_other_loss other_loss
 		, c.external_gain
 		, c.external_loss
+		, c.member_gain_combined::int
+  	, c.member_loss_combined::int
+  		
 		, c.net
 		, c.end_count::bigint
 		, (c.start_count + c.a1p_gain + c.a1p_loss + c.a1p_other_gain+ c.a1p_other_loss + c.paying_gain + c.paying_loss + c.paying_other_gain + c.paying_other_loss + c.other_other_gain + c.other_other_loss - c.end_count)::bigint  cross_check
