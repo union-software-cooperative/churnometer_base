@@ -569,6 +569,9 @@ class DatabaseManager
           duration = h.duration
           , _changeid = h._changeid
           , _changedate = h._changedate
+          , nextchangeid = h.nextchangeid
+          , nextchangedate = h.nextchangedate
+          , changeduration = h.changeduration
         from
           memberfacthelperquery h
         where
@@ -578,6 +581,9 @@ class DatabaseManager
             coalesce(memberfacthelper.duration,0) <> coalesce(h.duration,0)
             or coalesce(memberfacthelper._changeid,0) <> coalesce(h._changeid,0)
             or coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900') 
+            or coalesce(memberfacthelper.changeduration,0) <> coalesce(h.changeduration,0)
+            or coalesce(memberfacthelper.nextchangeid,0) <> coalesce(h.nextchangeid,0)
+            or coalesce(memberfacthelper.nextchangedate, '1/1/1900') <> coalesce(h.nextchangedate, '1/1/1900') 
           );
 
       end$BODY$
