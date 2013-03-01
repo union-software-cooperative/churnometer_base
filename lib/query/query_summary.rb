@@ -190,10 +190,10 @@ sql = <<-EOS
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
-		  , count(distinct case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (membergain <> 0 or membergainorange <> 0) then memberid else null end) member_gain_combined
-      , -count(distinct case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (memberloss <> 0 or memberlossorange <> 0) then memberid else null end) member_loss_combined
-      
-		
+		  , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (membergain <> 0 or membergainorange <> 0) then 1 else 0 end) member_gain_combined
+		  , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (memberloss <> 0 or memberlossorange <> 0) then -1 else 0 end) member_loss_combined
+			--, count(distinct case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (membergain <> 0 or membergainorange <> 0) then memberid else null end) member_gain_combined
+      --, -count(distinct case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (memberloss <> 0 or memberlossorange <> 0) then memberid else null end) member_loss_combined
 		from 
 			nonegations c
 		group by 
