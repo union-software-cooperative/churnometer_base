@@ -605,7 +605,7 @@ class DatabaseManager
         where 
           coalesce(mf.oldstatus,'') <> coalesce(mf.newstatus,'')
       )
-      , nextchange as (
+      , nextstatuschange as (
         select 
           c.changeid
           , n.changeid nextchangeid
@@ -614,7 +614,26 @@ class DatabaseManager
           , (coalesce(n.changedate::date, current_date) - c.changedate::date)::int nextduration
         from 
           mfnextstatuschange c
-        left join memberfact n on c.nextstatuschangeid = n.changeid
+          left join memberfact n on c.nextstatuschangeid = n.changeid
+      ), mfnextchange as
+      (
+        -- find the next status change for each statuschange
+        select 
+          lead(changeid)  over (partition by memberid order by changeid) nextchangeid
+          , mf.*
+        from 
+          memberfact mf
+      )
+      , nextchange as (
+        select 
+          c.changeid
+          , n.changeid nextchangeid
+          , coalesce(n.changedate::date, current_date) nextchangedate
+          , n.newstatus nextstatus
+          , (coalesce(n.changedate::date, current_date) - c.changedate::date)::int nextduration
+        from 
+          mfnextchange c
+          left join memberfact n on c.nextchangeid = n.changeid
       )
       select
         memberfact.changeid
@@ -744,11 +763,15 @@ class DatabaseManager
     REPEAT
 
     sql << <<-SQL
-        , nextchangeid _changeid
-        , nextchangedate _changedate
-        , nextduration duration
+        , nextstatuschange.nextchangeid _changeid
+        , nextstatuschange.nextchangedate _changedate
+        , nextstatuschange.nextduration duration
+        , nextchange.nextchangeid nextchangeid
+        , nextchange.nextchangedate nextchangedate
+        , nextchange.nextduration changeduration
       from 
         memberfact
+        left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
         left join nextchange on memberfact.changeid = nextchange.changeid
 
       UNION ALL
@@ -879,12 +902,17 @@ class DatabaseManager
     REPEAT
 
     sql << <<-SQL
-        , nextchangeid _changeid
-        , nextchangedate _changedate
-        , nextduration duration
+        , nextstatuschange.nextchangeid _changeid
+        , nextstatuschange.nextchangedate _changedate
+        , nextstatuschange.nextduration duration
+        , nextchange.nextchangeid nextchangeid
+        , nextchange.nextchangedate nextchangedate
+        , nextchange.nextduration changeduration
       from 
         memberfact
+       left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
        left join nextchange on memberfact.changeid = nextchange.changeid
+ 
     SQL
   end
   
@@ -1158,10 +1186,12 @@ class DatabaseManager
       drop index if exists "memberfacthelper_changeid_idx";
       drop index if exists "memberfacthelper_memberid_idx";
       drop index if exists "memberfacthelper_changedate_idx";
+      drop index if exists "memberfacthelper_nextchangedate_idx";
     
       CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_changedate_idx" ON "memberfacthelper" USING btree(changedate ASC NULLS LAST);
+      CREATE INDEX "memberfacthelper_nextchangedate_idx" ON "memberfacthelper" USING btree(nextchangedate ASC NULLS LAST);
     SQL
     
     dimensions.each { |d| sql << <<-REPEAT }
