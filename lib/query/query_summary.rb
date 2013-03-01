@@ -43,7 +43,7 @@ class QuerySummary < QueryFilter
     user_selections_filter = filter.include('status')
 
     end_date = @end_date + 1
-
+    
     paying_db = db.quote(@app.member_paying_status_code)
     a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
     stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
@@ -58,7 +58,11 @@ sql = <<-EOS
 		from
 			#{@source} 
 		where
-			changedate < #{db.sql_date(end_date)} -- we need to count every value since Churnobyls start to determine start_count.  But everything after enddate can be ignored.
+			(
+			  changedate < #{db.sql_date(end_date)} -- Everything after enddate can be ignored.
+			  and nextchangedate >= #{db.sql_date(@start_date)} -- all changes that ended after startdate
+			  and (changedate >= #{db.sql_date(@start_date)} or net = 1) -- all changes that occurred after startdate OR all after changes that occurred before startdate
+			)
 			#{sql_for_filter_terms(non_status_filter, true)}
 	)
 	, userselections as 
