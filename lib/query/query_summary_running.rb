@@ -477,7 +477,12 @@ sql << <<-EOS
 		, (c.period_header::varchar(20) || ' - ' || #{db.quote(@header2)} || ' ' || extract(#{db.quote(@header2)} from c.period_header)::varchar(2))::varchar(200) as period_header
 		, c.running_a1p_net::bigint
 		, c.running_paying_net::bigint
-		, c.running_net::bigint
+    , c.running_stopped_net::bigint
+    , c.running_waiver_net::bigint
+    , c.running_net::bigint
+    , c.running_member_net::bigint
+    , c.running_nonpaying_net::bigint
+    , c.running_net::bigint
 		, period_start::date
 		, period_end::date
 		, c.start_count::bigint

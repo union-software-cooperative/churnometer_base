@@ -15,11 +15,12 @@
 			direction: "horizontal",
 			labelcolumn: 0,
 			valuecolumn: 1,
-			linkcolumn: 2,
-            groupcolumn: -1,
-            duration: 2000,
+			othercolumn: 2,
+      linkcolumn: 3,
+      groupcolumn: -1,
+      duration: 2000,
 			showoriginal: false,
-			chartbgcolours: ["#336699", "#669933", "#339966"],
+			chartbgcolours: ["#336699", "#669933", "#339966", "#FF7D40"],
 			chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"],
 			chartpadding: 8,
 			chartheight: 500,
@@ -42,12 +43,19 @@
 		}
 				
 
-		function GetWaterfallOutput(labelArray, valueArray, linkArray, totalValue, smallestValue, largestValue, labelTextArray) {
+		function GetWaterfallOutput(labelArray, valueArray, linkArray, totalValue, smallestValue, largestValue, labelTextArray, otherArray) {
 			var output = "";
 			var colourIndex = 0;
 			var leftShim = 0;
-			var totalValue = (largestValue-smallestValue)
-			var shimAdjustment = RoundToTwoDecimalPlaces(100 / labelArray.length);
+			var totalValue = largestValue-smallestValue
+			
+			var bar_count = 0;
+			for (var i = 0; i < valueArray.length; i++)  {
+		    if (valueArray[i] != 0) bar_count++;
+		    if (otherArray[i] != 0) bar_count++;
+		  }
+		  
+			var shimAdjustment = RoundToTwoDecimalPlaces(100 / bar_count);
 			var widthAdjustment = shimAdjustment - 1;
 			
 			output += "<div style=\"height: " + config.chartheight + "px; position: relative;\">";
@@ -70,8 +78,11 @@
 			
 				var percent = RoundToTwoDecimalPlaces((positiveValue / totalValue) * 100);
 				var barHeight = RoundToTwoDecimalPlaces((positiveValue / totalValue) * 100);
+				var otherHeight = RoundToTwoDecimalPlaces((Math.abs(otherArray[i]) / totalValue) * 100);
 				
 				var bottomPosition = runningTotal - barHeight; // Negative column
+				var otherBottomPosition = runningTotal - otherHeight;
+				
 				if (isPositive) {
 					bottomPosition = runningTotal;
 				}
@@ -89,21 +100,34 @@
 				}  
 
 				bottomPosition += (100 - (largestValue/totalValue * 100));
+				otherBottomPosition += (100 - (largestValue/totalValue * 100));
 				
 				// Labels
 				var displayLabel = "";
 				if (config.showlabels) {
 					displayLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";white-space: nowrap;\">" + labelArray[i]   + "&nbsp;&nbsp;&nbsp;<strong>" + valueArray[i] +" </strong> </span>"
+					otherLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";white-space: nowrap;\">" + labelArray[i].replace("loss", "problems")   + "&nbsp;&nbsp;&nbsp;<strong>" + otherArray[i] +" </strong> </span>"
 					//displayLabel = "<span style=\"display: block; width: 100%; position: absolute; opacity:1; bottom: 0; text-align: center;  background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i] + "</span>"
 				}
 				
 				// Column
-                output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
-				output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
-                output += "</a>"
+        if (otherArray[i] != 0) {
+          output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
+          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + otherBottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: #FF7D40; background-color: #FF7D40; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + otherHeight + "\" title=\"" + labelTextArray[i].replace("loss", "problems") + ":  " + otherArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + otherLabel + "</div>"
+          output += "</a>"
+          
+          leftShim = leftShim + shimAdjustment;
+				}
 
-				leftShim = leftShim + shimAdjustment;
-				
+				if (valueArray[i] != 0) {
+          output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
+          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
+          output += "</a>"
+  
+          leftShim = leftShim + shimAdjustment;
+        }
+        				
+        
 				if (isPositive) {
 					runningTotal = runningTotal + barHeight;
 				} else {
@@ -142,8 +166,9 @@
 			var labelArray = new Array();
 			var labelTextArray = new Array();
 			var valueArray = new Array();
-            var linkArray = new Array();
-            var groupArray = new Array();
+      var otherArray = new Array();
+      var linkArray = new Array();
+      var groupArray = new Array();
 			
 			var totalValue = 0;
 			var largestValue = 0;
@@ -156,28 +181,41 @@
 					groupArray[groupArray.length] = $(values[i]).children("td").eq(config.groupcolumn).html();
 				}
 				var valueString = $(values[i]).children("td").eq(config.valuecolumn).text();
+				var otherString = $(values[i]).children("td").eq(config.othercolumn).text();
+
+        var valueAmount = 0
+        var otherAmount = 0 
+        
 				if (valueString.length > 0) {
-					var valueAmount = parseFloat(valueString, 10);
-					
-					if (valueAmount != 0 || i == (values.length - 1) /* include net, even if 0 */ ) {
-						
-						labelArray[labelArray.length] = $(values[i]).children("td").eq(config.labelcolumn).html();
-						labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
-						valueArray[valueArray.length] = valueAmount;
-                        linkArray[linkArray.length] = $(values[i]).children("td").eq(config.linkcolumn).text();
-                        totalValue = totalValue + valueAmount;
-						if (i != (values.length - 2)) { // don't include net in running totals
-							if (totalValue > largestValue) {
-								largestValue = totalValue;
-							}
-							// include smallest value in range
-							if (totalValue < smallestValue) {
-								smallestValue = totalValue;
-							}
-						}
-					//alert($(values[i]).children("td").eq(config.labelcolumn).html() + $(values[i]).children("td").eq(config.labelcolumn).text() + valueAmount)
-					}
+					valueAmount = parseFloat(valueString, 10);
 				}
+				
+				if (otherString.length > 0) {
+					otherAmount = parseFloat(otherString, 10);
+				}
+				
+        if (valueAmount != 0 || otherAmount !=0 || i == (values.length - 1) /* include net, even if 0 */ ) {
+          
+          valueArray[valueArray.length] = valueAmount;
+          otherArray[otherArray.length] = otherAmount;
+          
+          labelArray[labelArray.length] = $(values[i]).children("td").eq(config.labelcolumn).html();
+          labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
+          linkArray[linkArray.length] = $(values[i]).children("td").eq(config.linkcolumn).text();
+          
+          totalValue = totalValue + valueAmount;
+          
+          if (i != (values.length - 1)) { // don't include net in running totals
+            if (totalValue > largestValue) {
+              largestValue = totalValue;
+            }
+            // include smallest value in range
+            if (totalValue < smallestValue) {
+              smallestValue = totalValue;
+            }
+          }
+        //alert($(values[i]).children("td").eq(config.labelcolumn).html() + $(values[i]).children("td").eq(config.labelcolumn).text() + valueAmount)
+        }
 			}
 			//if (largestValue< -1 * smallestValue) largestValue = smallestValue * -1; 
 			
@@ -217,7 +255,7 @@
 
 						case 'vertical':
 							// Waterfall chart
-							output += GetWaterfallOutput(labelArray, valueArray, linkArray, totalValue, smallestValue, largestValue, labelTextArray);
+							output += GetWaterfallOutput(labelArray, valueArray, linkArray, totalValue, smallestValue, largestValue, labelTextArray, otherArray);
 							break;
 					}
 					break;
