@@ -134,8 +134,8 @@ summary_data_tables:
             - row_header1
             - period_header
             - member_real_gain_fee
-            - member_real_loss_orange
             - member_real_loss_fee
+            - member_real_loss_orange
             - member_end_count
             - member_gain_combined
             - member_loss_combined

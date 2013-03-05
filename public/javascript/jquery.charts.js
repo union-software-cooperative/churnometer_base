@@ -111,6 +111,15 @@
 				}
 				
 				// Column
+				
+				if (valueArray[i] != 0) {
+          output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
+          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
+          output += "</a>"
+  
+          leftShim = leftShim + shimAdjustment;
+        }
+        
         if (otherArray[i] != 0) {
           output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
           output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + otherBottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: #FF7D40; background-color: #FF7D40; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + otherHeight + "\" title=\"" + labelTextArray[i].replace("loss", "problems") + ":  " + otherArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + otherLabel + "</div>"
@@ -119,13 +128,6 @@
           leftShim = leftShim + shimAdjustment;
 				}
 
-				if (valueArray[i] != 0) {
-          output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
-          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
-          output += "</a>"
-  
-          leftShim = leftShim + shimAdjustment;
-        }
         				
         
 				if (isPositive) {
