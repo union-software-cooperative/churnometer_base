@@ -115,7 +115,7 @@ class ChurnPresenter
         result['transfers'] = 'Transfers'
     end
     
-    result['diags'] = 'Diagnostics'
+    #result['diags'] = 'Diagnostics'
     
     result
   end

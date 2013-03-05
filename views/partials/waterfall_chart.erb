@@ -2,25 +2,27 @@
 <div id="chart">
 	
 	<table id="waterfall">
-		<caption>Paying gain vs loss</caption>
+		<caption><%= model.title %></caption>
 		<thead>
 			<tr>
 				<th>Item</th>
 				<th>Change</th>
-	            <th>URL</th>
+	      <th>Other</th>
+	      <th>URL</th>
 			</tr>
-
 		</thead>
 		<tbody>
 			    <% model.waterfallItems.each do |i| %>
 	               <tr>
 	                    <td><%= i.name %> gain</td>
 	                    <td><%= i.gain %></td>
+	                    <td><%= i.other_gain %></td>
 	                    <td><%= i.link %></td>
 	                </tr>
 	                <tr>
 	                    <td><%= i.name %> loss</td>
 	                    <td><%= i.loss %></td>
+	                    <td><%= i.other_loss %></td>
 	                    <td><%= i.link %></td>
 	                </tr>
 	            <% end %>
