@@ -36,6 +36,8 @@ class QueryDetailStatic < QueryDetailBase
       'other' => 'where c.other<>0',
       'waiver' => 'where c.waiver<>0',
       'member' => 'where c.member<>0',
+      'membernofee' => 'where c.membernofee<>0',
+      'memberfee' => 'where c.memberfee<>0',
       'nonpaying' => 'where c.nonpaying<>0'
     }
   end
@@ -112,6 +114,8 @@ sql = <<-EOS
 			, case when coalesce(status, '') = #{stoppedpay_db} then 1 else 0 end::bigint stopped
 			, case when waivernet <> 0 then 1 else 0 end::bigint waiver
       , case when membernet <> 0 then 1 else 0 end::bigint member
+      , case when membernofeenet <> 0 then 1 else 0 end::bigint membernofee
+      , case when memberfeenet <> 0 then 1 else 0 end::bigint memberfee
       , case when nonpayingnet <> 0 then 1 else 0 end::bigint nonpaying
       , case when not (coalesce(status, '') = #{paying_db} or coalesce(status, '') = #{a1p_db} or coalesce(status, '') = #{stoppedpay_db} or waivernet <> 0) then 1 else 0 end::bigint other
 		from 
@@ -127,6 +131,8 @@ sql = <<-EOS
 		, c.stopped
 		, c.waiver
 		, c.member
+		, c.membernofee
+		, c.memberfee
 		, c.nonpaying
 		, c.other
 	from

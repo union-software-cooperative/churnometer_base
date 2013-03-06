@@ -144,6 +144,10 @@ module Settings
          member_real_net
      		 member_other_gain
      		 member_other_loss
+     		 member_nofee_other_gain
+     		 member_nofee_other_loss
+     		 member_fee_other_gain
+     		 member_fee_other_loss
      		 member_real_loss_orange
          member_real_gain_orange
      		 nonpaying_real_gain_good

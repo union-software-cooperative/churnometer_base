@@ -29,7 +29,7 @@ class ChurnPresenter_Graph
   
     @chart_config = chart_config
     @chart_config ||= {
-      :title => 'new members VS exited members (and problems)',
+      :title => 'new fee-paying members vs exited members (and problems)',
       :gain => 'member_real_gain_fee',
       :loss => 'member_real_loss_fee',
       :other_gain => nil,
