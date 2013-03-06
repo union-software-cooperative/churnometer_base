@@ -721,6 +721,29 @@ class DatabaseManager
         , case when 
             coalesce(oldstatus, '') = ANY (#{@member_db})
             then -1 else 0 end as membernet
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@waiver_db})
+            then -1 else 0 end as membernetnofee
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
+            then -1 else 0 end as membernetfee
+               
+        , 0 as othermembergain
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db})
+          then -1 else 0 end as othermemberloss
+        , 0 as othermembernofeegain
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@waiver_db})
+            and coalesce(newstatus, '') = ANY (#{@waiver_db})
+          then -1 else 0 end as othermembernofeeloss
+        , 0 as othermemberfeegain
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
+            and coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
+          then -1 else 0 end as othermemberfeeloss
+            
         , 0 membergainorange
         , case when 
               coalesce(oldstatus, '') = ANY (#{@green_db}) 
@@ -859,6 +882,30 @@ class DatabaseManager
         , case when 
             coalesce(newstatus, '') = ANY (#{@member_db})
             then 1 else 0 end as membernet
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@waiver_db})
+            then 1 else 0 end as membernetnofee
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
+            then 1 else 0 end as membernetfee
+            
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db})
+          then 1 else 0 end as othermembergain
+        , 0 as othermemberloss
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@waiver_db})
+            and coalesce(newstatus, '') = ANY (#{@waiver_db})
+          then 1 else 0 end as othermembernofeegain
+        , 0 as othermembernofeeloss
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
+            and coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
+          then 1 else 0 end as othermemberfeegain
+        , 0 as othermemberfeeloss
+        
+            
         , case when 
             coalesce(oldstatus, '') = ANY (#{@orange_db}) 
             and coalesce(newstatus, '') = ANY (#{@green_db})

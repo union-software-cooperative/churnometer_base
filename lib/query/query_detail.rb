@@ -78,6 +78,10 @@ class QueryDetail < QueryDetailBase
       'member_real_net' => 'where c.member_real_net<>0',
       'member_other_loss' => 'where c.member_other_loss<>0',
       'member_other_gain' => 'where c.member_other_gain<>0',
+      'member_nofee_other_loss' => 'where c.member_nofee_other_loss<>0',
+      'member_nofee_other_gain' => 'where c.member_nofee_other_gain<>0',
+      'member_fee_other_loss' => 'where c.member_fee_other_loss<>0',
+      'member_fee_other_gain' => 'where c.member_fee_other_gain<>0',
       'member_gain_combined' => 'where c.member_gain_combined<>0',
       'member_loss_combined' => 'where c.member_loss_combined<>0',
       
@@ -151,17 +155,31 @@ sql = <<-EOS
 			changedate >= #{db.sql_date(@start_date)} -- we are not calculating start_counts, so we dont need anything before this date
 			#{sql_for_filter_terms(user_selections_filter, true)}
 	)
+	, transfersin as
+	(
+		select changeid from userselections u group by changeid having sum(u.net) <> 0
+	)
+	, statuschanges as
+	(
+		select distinct changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or waivergain <> 0 or waivergain <> 0
+	)
 	, nonegations as
 	(
 		-- removes changes that make no difference to the results or represent gains and losses that cancel out
 		select
-			*
+			u1.*
+			, case when transfersin.changeid is not null then 1 else 0 end set_transfer
+			, case when transfersin.changeid is not null then false else true end internaltransfer
+			, case when statuschanges.changeid is not null then 1 else 0 end statuschange
+			, case when #{header1 == 'userid' ? '' : "u1.#{header1}delta <> 0" } then 1 else 0 end  group_transfer
 		from 
 			userselections u1
+			left join transfersin on u1.changeid = transfersin.changeid --and u1.net = transfersin.net
+			left join statuschanges on u1.changeid = statuschanges.changeid --and u1.net = statuschanges.net
 		where
-			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection 
-			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or waivergain <> 0 or waivergain <> 0) -- both sides (if in user selection) if one side is paying and there was a paying change 
- 			#{header1 == 'userid' ? '' : "or u1.#{db.quote_db(header1 + 'delta')} <> 0 -- unless the changes that cancel out but are transfers between grouped items" }
+			transfersin.changeid is not null
+			or statuschanges.changeid is not null
+			#{header1 == 'userid' ? '' : "or u1.#{header1}delta <> 0" }
  	)
 	, trans as
 	(
@@ -226,8 +244,23 @@ sql = <<-EOS
 			, case when coalesce(status, '') = #{stoppedpay_db} then otherloss else 0 end::bigint stopped_other_loss
 			, case when waivernet <> 0 then othergain else 0 end waiver_other_gain
       , case when waivernet <> 0 then otherloss else 0 end waiver_other_loss
+      
+      /*
       , case when membernet <> 0 then othergain else 0 end member_other_gain
       , case when membernet <> 0 then otherloss else 0 end member_other_loss
+      , othermembernofeegain member_nofee_other_gain
+      , othermembernofeeloss member_nofee_other_loss
+      , othermemberfeeloss member_fee_other_gain
+      , othermemberfeeloss member_fee_other_loss
+      */
+      
+      , case when (set_transfer = 1 or group_transfer = 1) then othergain else 0 end member_other_gain
+      , case when (set_transfer = 1 or group_transfer = 1) then otherloss else 0 end member_other_loss
+	    , case when (set_transfer = 1 or group_transfer = 1) then othermembernofeegain else 0 end member_nofee_other_gain
+      , case when (set_transfer = 1 or group_transfer = 1) then othermembernofeeloss else 0 end member_nofee_other_loss
+      , case when (set_transfer = 1 or group_transfer = 1) then othermemberfeegain else 0 end member_fee_other_gain
+      , case when (set_transfer = 1 or group_transfer = 1) then othermemberfeeloss else 0 end member_fee_other_loss
+      
       , case when not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db} or waivernet <> 0) then othergain else 0 end::bigint other_other_gain
   		, case when not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db} or waivernet <> 0) then otherloss else 0 end::bigint other_other_loss
       , othernonpayinggain nonpaying_other_gain
@@ -332,6 +365,10 @@ sql = <<-EOS
     , c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
+    , c.member_nofee_other_gain
+		, c.member_nofee_other_loss
+    , c.member_fee_other_gain
+		, c.member_fee_other_loss
     , c.nonpaying_real_gain_good
 		, c.nonpaying_real_gain_bad
     , c.nonpaying_real_loss_good
@@ -412,6 +449,10 @@ if with_trans
     , 0::bigint member_real_net
 		, 0::bigint member_other_gain
 		, 0::bigint member_other_loss
+		, 0::bigint member_nofee_other_gain
+		, 0::bigint member_nofee_other_loss
+		, 0::bigint member_fee_other_gain
+		, 0::bigint member_fee_other_loss
 		, 0::bigint member_gain_combined
 		, 0::bigint member_loss_combined
     , 0::bigint nonpaying_real_gain_good
@@ -482,6 +523,10 @@ sql << <<-EOS
     , c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
+		, c.member_nofee_other_gain
+		, c.member_nofee_other_loss
+		, c.member_fee_other_gain
+		, c.member_fee_other_loss
 		, c.member_gain_combined
 		, c.member_loss_combined
     , c.nonpaying_real_gain_good
