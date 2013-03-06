@@ -246,8 +246,19 @@ module Settings
          'changedate'
        ]
      end
+     
+     # put this here because it was needed by table.rb and graph.rb TODO fix
+      def drill_down_cell(row, column_name)
+        (@request.params['interval'] == 'none' ? drill_down_header(row, @app) : drill_down_interval(row))
+          .merge!( 
+            { 
+              'column' => column_name,
+              "group_by" => @request.params['group_by'] # this prevents the change to the group by option
+            } 
+          )
+      end
 
-     def tips
+    def tips
       result = {}
       
       # substitute any reference in the tooltip to {group_by} 

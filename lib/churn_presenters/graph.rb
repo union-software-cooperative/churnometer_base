@@ -59,7 +59,7 @@ class ChurnPresenter_Graph
   def waterfallItems
     a = Array.new
     @request.data.each do |row|
-      i = (Struct.new(:name, :gain, :loss, :other_gain, :other_loss, :link)).new
+      i = (Struct.new(:name, :gain, :loss, :other_gain, :other_loss, :name_link, :gain_link, :loss_link, :other_gain_link, :other_loss_link)).new
       i[:name] = row['row_header1']
       i[:gain] = 0
       i[:loss] = 0
@@ -71,7 +71,11 @@ class ChurnPresenter_Graph
       i[:other_gain] = row[@chart_config[:other_gain]] unless @chart_config[:other_gain].nil?
       i[:other_loss] = row[@chart_config[:other_loss]] unless @chart_config[:other_loss].nil?
       
-      i[:link] = build_url(drill_down_header(row, @app))
+      i[:name_link] = build_url(drill_down_header(row, @app))
+      i[:gain_link] = build_url(drill_down_cell(row, @chart_config[:gain])) unless @chart_config[:gain].nil?
+      i[:loss_link] = build_url(drill_down_cell(row, @chart_config[:loss])) unless @chart_config[:loss].nil?
+      i[:other_gain_link] = build_url(drill_down_cell(row, @chart_config[:other_gain])) unless @chart_config[:other_gain].nil?
+      i[:other_loss_link] = build_url(drill_down_cell(row, @chart_config[:other_loss])) unless @chart_config[:other_loss].nil?
       a << i
     end
     a
