@@ -18,7 +18,7 @@
 			othercolumn: 2,
       linkcolumn: 3,
       groupcolumn: -1,
-      duration: 2000,
+      duration: 0,
 			showoriginal: false,
 			chartbgcolours: ["#336699", "#669933", "#339966", "#FF7D40"],
 			chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"],
@@ -51,17 +51,21 @@
 			
 			var bar_count = 0;
 			for (var i = 0; i < valueArray.length; i++)  {
-		    if (valueArray[i] != 0) bar_count++;
-		    if (otherArray[i] != 0) bar_count++;
+		    if (valueArray[i] != 0 || otherArray[i] != 0) bar_count++;
 		  }
 		  
 			var shimAdjustment = RoundToTwoDecimalPlaces(100 / bar_count);
 			var widthAdjustment = shimAdjustment - 1;
+			var connectorWidth = (shimAdjustment * 2) - (shimAdjustment - widthAdjustment);
 			
 			output += "<div style=\"height: " + config.chartheight + "px; position: relative;\">";
 			
+			// net line
+			var zero_pos = (100 - (largestValue/totalValue * 100));
+			output += "<div class=\"" + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + zero_pos + "%; left: 0%; display: block; height: 2px; border-color: "+config.chartbgcolours[0]+"; background-color: "+config.chartbgcolours[0]+"; width: 99%; text-align: center;\" rel=\"0\"></div>"
+  
 			var runningTotal = 0;
-			
+			var lastLabel = ""; 
 			for (var i = 0; i < valueArray.length; i++) {
 				
 				var positiveValue = valueArray[i];
@@ -82,6 +86,7 @@
 				
 				var bottomPosition = runningTotal - barHeight; // Negative column
 				var otherBottomPosition = runningTotal - otherHeight;
+				var connectorPosition = runningTotal;
 				
 				if (isPositive) {
 					bottomPosition = runningTotal;
@@ -92,7 +97,7 @@
 					colourIndex = 0;
 					if (isPositive) {
 						//alert (barHeight);
-						bottomPosition = runningTotal - barHeight -1  ; /* I don't know why I need the -1 */
+						bottomPosition = runningTotal - barHeight ; /* Sometimes -1 is needed here to stop net from inverting*/
 					}
 					else {
 						bottomPosition = runningTotal;
@@ -101,32 +106,61 @@
 
 				bottomPosition += (100 - (largestValue/totalValue * 100));
 				otherBottomPosition += (100 - (largestValue/totalValue * 100));
+				connectorPosition = runningTotal + (100 - (largestValue/totalValue * 100));
+				
+				// fix rendering bug in safari and firefox that cause bar to jump to top when left/bottom approaches 0
+				if (Math.abs(bottomPosition) < 0.1 ) bottomPosition = 0.1;
+				if (Math.abs(otherBottomPosition) < 0.1) otherBottomPosition = 0.1;
+				if (Math.abs(connectorPosition) < 0.1) connectorPosition = 0.1;
+				
 				
 				// Labels
 				var displayLabel = "";
+				var netLabel = "";
+				
 				if (config.showlabels) {
-					displayLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";white-space: nowrap;\">" + labelArray[i]   + "&nbsp;&nbsp;&nbsp;<strong>" + valueArray[i] +" </strong> </span>"
-					otherLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";white-space: nowrap;\">" + labelArray[i].replace("loss", "problems")   + "&nbsp;&nbsp;&nbsp;<strong>" + otherArray[i] +" </strong> </span>"
-					//displayLabel = "<span style=\"display: block; width: 100%; position: absolute; opacity:1; bottom: 0; text-align: center;  background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";\">" + labelArray[i] + "</span>"
+				  if (i == (valueArray.length - 1)) {
+				    netLabel = valueArray[i];
+					}
+					displayLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";white-space: nowrap;\">" + labelArray[i].toUpperCase()   + "&nbsp;&nbsp;&nbsp;" + netLabel + "</strong> </span>"
+					valueLabel = labelArray[i].toLowerCase() + (isPositive ? " gain: " : " loss: ") + Math.abs(valueArray[i])
+					otherLabel = labelArray[i].toLowerCase() + " problems: " + Math.abs(otherArray[i])
 				}
 				
 				// Column
 				
-				if (valueArray[i] != 0) {
+				if (valueArray[i] != 0 || otherArray[i] != 0) {
+          
           output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
-          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + labelTextArray[i] + ":  " + valueArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + displayLabel + "</div>"
-          output += "</a>"
+          
+          // main colour
+          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + valueLabel + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span></div>"
   
-          leftShim = leftShim + shimAdjustment;
-        }
-        
-        if (otherArray[i] != 0) {
-          output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
-          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + otherBottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: #FF7D40; background-color: #FF7D40; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + otherHeight + "\" title=\"" + labelTextArray[i].replace("loss", "problems") + ":  " + otherArray[i] /* + " (" + percent + "%)" */ + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span>" + otherLabel + "</div>"
+          // other colour
+          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + otherBottomPosition + "%; left: " + (leftShim + 1) + "%; display: block; height: 0%; border-color: #FF7D40; background-color: #FF7D40; width: " + (widthAdjustment - 1) + "%; text-align: center;\" rel=\"" + otherHeight + "\" title=\"" + otherLabel + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span></div>"
+          
+          // connector
+          if (i > 0) {
+            output += "<div class=\"" + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + connectorPosition + "%; left: " + (leftShim - shimAdjustment) + "%; display: block; height: 2px; border-color: grey; background-color: grey; width: " + (connectorWidth) + "%; text-align: center;\" rel=\"0\"></div>"
+          }
+          
+          // label connector
+          if (lastLabel != labelArray[i]) {
+            output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: 0%; left: " + leftShim + "%; display: block; height: 0%; border-width: 5px; border-color: white; border-style:solid; border-left-width:15px; background-color: grey; width: 1px; text-align: center;\" rel=\"" +connectorPosition+"\"  title=\"" + labelArray[i] + "\"></div>"
+          }
+          
+          // label
+          if (lastLabel != labelArray[i]) {
+            output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: 0%; left: " + leftShim + "%; display: block; height: 0%; border-width: 5px; border-color: white; border-style:solid; border-left-width:15px; background-color: transparent; width: auto; text-align: center;\" rel=\"auto\" title=\"" + labelArray[i] + "\">" + displayLabel + "</div>"
+          }
+          
+          
           output += "</a>"
           
+           
           leftShim = leftShim + shimAdjustment;
-				}
+				  lastLabel = labelArray[i];
+        }
 
         				
         
@@ -135,6 +169,8 @@
 				} else {
 					runningTotal = runningTotal - barHeight;
 				}
+				
+				//if (i == 0) zero_pos = connectorPosition;
 			}
 			
 			output += "</div>";
