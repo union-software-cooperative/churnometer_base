@@ -8,7 +8,11 @@
 				<th>Item</th>
 				<th>Change</th>
 	      <th>Other</th>
-	      <th>URL</th>
+	      <th>Combined</th>
+	      <th>Name URL</th>
+	      <th>Change URL</th>
+	      <th>Other URL</th>
+	      <th>Combined URL</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -17,24 +21,32 @@
 	                    <td><%= i.name %></td>
 	                    <td><%= i.gain %></td>
 	                    <td><%= i.other_gain %></td>
+	                    <td><%= i.combined_gain %></td>
 	                    <td><%= i.name_link %></td>
 	                    <td><%= i.gain_link %></td>
 	                    <td><%= i.other_gain_link %></td>
+	                    <td><%= i.combined_gain_link %></td>
 	                </tr>
 	                <tr>
 	                    <td><%= i.name %></td>
 	                    <td><%= i.loss %></td>
 	                    <td><%= i.other_loss %></td>
+	                    <td><%= i.combined_loss %></td>
 	                    <td><%= i.name_link %></td>
 	                    <td><%= i.loss_link %></td>
 	                    <td><%= i.other_loss_link %></td>
+	                    <td><%= i.combined_loss_link %></td>
 	                </tr>
 	            <% end %>
 			<tr>
 				<td>Net</td>
 				<td><%= model.waterfallTotal %></td>
 				<td></td>
-		  	</tr>
+		  	<td></td>
+		  	<td></td>
+		  	<td></td>
+		  	<td></td>
+		  </tr>
 		</tbody>			
 	</table>
 </div>
