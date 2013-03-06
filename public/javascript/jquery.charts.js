@@ -17,6 +17,8 @@
 			valuecolumn: 1,
 			othercolumn: 2,
       linkcolumn: 3,
+      valuelinkcolumn: 4,
+      otherlinkcolumn: 5,
       groupcolumn: -1,
       duration: 0,
 			showoriginal: false,
@@ -43,7 +45,7 @@
 		}
 				
 
-		function GetWaterfallOutput(labelArray, valueArray, linkArray, totalValue, smallestValue, largestValue, labelTextArray, otherArray) {
+		function GetWaterfallOutput(labelArray, valueArray, linkArray, valueLinkArray, otherLinkArray, totalValue, smallestValue, largestValue, labelTextArray, otherArray) {
 			var output = "";
 			var colourIndex = 0;
 			var leftShim = 0;
@@ -131,13 +133,17 @@
 				
 				if (valueArray[i] != 0 || otherArray[i] != 0) {
           
-          output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
+          //output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
           
           // main colour
+          output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + valueLinkArray[i] + "\">"
           output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + bottomPosition + "%; left: " + leftShim + "%; display: block; height: 0%; border-color: " + config.chartbgcolours[colourIndex] + "; background-color: " + config.chartbgcolours[colourIndex] + "; width: " + widthAdjustment + "%; text-align: center;\" rel=\"" + barHeight + "\" title=\"" + valueLabel + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span></div>"
-  
+          output += "</a>"
+          
           // other colour
+          output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + otherLinkArray[i] + "\">"
           output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + otherBottomPosition + "%; left: " + (leftShim + 1) + "%; display: block; height: 0%; border-color: #FF7D40; background-color: #FF7D40; width: " + (widthAdjustment - 1) + "%; text-align: center;\" rel=\"" + otherHeight + "\" title=\"" + otherLabel + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span></div>"
+          output += "</a>"
           
           // connector
           if (i > 0) {
@@ -151,11 +157,13 @@
           
           // label
           if (lastLabel != labelArray[i]) {
+            output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + linkArray[i] + "\">"
             output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: 0%; left: " + leftShim + "%; display: block; height: 0%; border-width: 5px; border-color: white; border-style:solid; border-left-width:15px; background-color: transparent; width: auto; text-align: center;\" rel=\"auto\" title=\"" + labelArray[i] + "\">" + displayLabel + "</div>"
+            output += "</a>"
           }
           
           
-          output += "</a>"
+          //output += "</a>"
           
            
           leftShim = leftShim + shimAdjustment;
@@ -206,6 +214,8 @@
 			var valueArray = new Array();
       var otherArray = new Array();
       var linkArray = new Array();
+      var valueLinkArray = new Array();
+      var otherLinkArray = new Array();
       var groupArray = new Array();
 			
 			var totalValue = 0;
@@ -240,6 +250,8 @@
           labelArray[labelArray.length] = $(values[i]).children("td").eq(config.labelcolumn).html();
           labelTextArray[labelTextArray.length] = $(values[i]).children("td").eq(config.labelcolumn).text();
           linkArray[linkArray.length] = $(values[i]).children("td").eq(config.linkcolumn).text();
+          valueLinkArray[valueLinkArray.length] = $(values[i]).children("td").eq(config.valuelinkcolumn).text();
+          otherLinkArray[otherLinkArray.length] = $(values[i]).children("td").eq(config.otherlinkcolumn).text();
           
           totalValue = totalValue + valueAmount;
           
@@ -293,7 +305,7 @@
 
 						case 'vertical':
 							// Waterfall chart
-							output += GetWaterfallOutput(labelArray, valueArray, linkArray, totalValue, smallestValue, largestValue, labelTextArray, otherArray);
+							output += GetWaterfallOutput(labelArray, valueArray, linkArray, valueLinkArray, otherLinkArray, totalValue, smallestValue, largestValue, labelTextArray, otherArray);
 							break;
 					}
 					break;

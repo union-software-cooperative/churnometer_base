@@ -272,16 +272,6 @@ class ChurnPresenter_Table
       )
   end
   
-  def drill_down_cell(row, column_name)
-    (@request.params['interval'] == 'none' ? drill_down_header(row, @app) : drill_down_interval(row))
-      .merge!( 
-        { 
-          'column' => column_name,
-          "group_by" => @request.params['group_by'] # this prevents the change to the group by option
-        } 
-      )
-  end
-  
   def can_detail_cell?(column_name, value)
     (
       filter_columns.include? column_name
