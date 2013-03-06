@@ -29,11 +29,13 @@ class ChurnPresenter_Graph
   
     @chart_config = chart_config
     @chart_config ||= {
-      :title => 'new members vs new problems vs exited members',
+      :title => 'new members VS exited members (and problems)',
       :gain => 'member_real_gain_fee',
       :loss => 'member_real_loss_fee',
       :other_gain => nil,
       :other_loss => 'member_real_loss_orange',
+      :combined_gain => nil,
+      :combined_loss => 'member_loss_combined',
       :running_net => 'running_member_net'
     }
   end
@@ -59,23 +61,31 @@ class ChurnPresenter_Graph
   def waterfallItems
     a = Array.new
     @request.data.each do |row|
-      i = (Struct.new(:name, :gain, :loss, :other_gain, :other_loss, :name_link, :gain_link, :loss_link, :other_gain_link, :other_loss_link)).new
+      i = (Struct.new(:name, :gain, :loss, :other_gain, :combined_gain, :combined_loss, :other_loss, :name_link, :gain_link, :loss_link, :other_gain_link, :other_loss_link, :combined_gain_link, :combined_loss_link)).new
       i[:name] = row['row_header1']
       i[:gain] = 0
       i[:loss] = 0
       i[:other_gain] = 0
       i[:other_loss] = 0
+      i[:combined_gain] = 0
+      i[:combined_loss] = 0
       
       i[:gain] = row[@chart_config[:gain]] unless @chart_config[:gain].nil?
       i[:loss] = row[@chart_config[:loss]] unless @chart_config[:loss].nil?
       i[:other_gain] = row[@chart_config[:other_gain]] unless @chart_config[:other_gain].nil?
       i[:other_loss] = row[@chart_config[:other_loss]] unless @chart_config[:other_loss].nil?
+      i[:other_gain] = row[@chart_config[:other_gain]] unless @chart_config[:combined_gain].nil?
+      i[:other_loss] = row[@chart_config[:other_loss]] unless @chart_config[:combined_loss].nil?
+      i[:combined_gain] = row[@chart_config[:combined_gain]] unless @chart_config[:combined_gain].nil?
+      i[:combined_loss] = row[@chart_config[:combined_loss]] unless @chart_config[:combined_loss].nil?
       
       i[:name_link] = build_url(drill_down_header(row, @app))
       i[:gain_link] = build_url(drill_down_cell(row, @chart_config[:gain])) unless @chart_config[:gain].nil?
       i[:loss_link] = build_url(drill_down_cell(row, @chart_config[:loss])) unless @chart_config[:loss].nil?
       i[:other_gain_link] = build_url(drill_down_cell(row, @chart_config[:other_gain])) unless @chart_config[:other_gain].nil?
       i[:other_loss_link] = build_url(drill_down_cell(row, @chart_config[:other_loss])) unless @chart_config[:other_loss].nil?
+      i[:combined_gain_link] = build_url(drill_down_cell(row, @chart_config[:combined_gain])) unless @chart_config[:combined_gain].nil?
+      i[:combined_loss_link] = build_url(drill_down_cell(row, @chart_config[:combined_loss])) unless @chart_config[:combined_loss].nil?
       a << i
     end
     a
