@@ -1,4 +1,4 @@
-#  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
+  #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
 #  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
 #  lukerohde@gmail.com
 #
@@ -23,20 +23,28 @@ class ChurnPresenter_Graph
   include Settings
   include ChurnPresenter_Helpers
   
+  attr_reader :chart_config
+  
   def initialize(app, request, chart_config = nil)
     @request = request
     @app = app
   
     @chart_config = chart_config
     @chart_config ||= {
-      :title => 'new fee-paying members vs exited members (and problems)',
-      :gain => 'member_real_gain_fee',
-      :loss => 'member_real_loss_fee',
-      :other_gain => nil,
-      :other_loss => 'member_real_loss_orange',
-      :combined_gain => nil,
-      :combined_loss => 'member_loss_combined',
-      :running_net => 'running_member_net'
+      :title => 'Contributing members',
+      :description => "This chart shows the gain and loss of contributing members for the period.\n\n  Gains are divided between new members (green) and retained members (orange).  Retained members are those coming out of waiver or arrears.  Click the brown bar to get a combined list.  New non-contributing members, such as students, are not counted in gains until they start contributing (where they'll show as retained).    \n\n Losses are divided into exited members (red) and those who stopped contributing (orange). Only exited members who were contributing are shown in the red because non-contributing members were already counted when they stopped their contribution.\n\n If a member joins and resigns multiple times they'll be counted multiple times in the green and red, likewise in the orange if a member stops and starts their contribution multiple times.  This is so the separate counts from different periods add up when those periods are combined.   The retained members are included because problem members were needed and the report can't balance without both.",
+      :gain => 'green_real_gain_nonmember',
+      :loss => 'green_real_loss_nonmember',
+      :other_gain => 'green_real_gain_member',
+      :other_loss => 'green_real_loss_member',
+      :combined_gain => 'green_real_gain',
+      :combined_loss => 'green_real_loss',
+      :running_net => 'running_green_net',
+      :net_includes_other => true,
+      :gain_label => 'new',
+      :loss_label => 'exited',
+      :other_gain_label => 'retained',
+      :other_loss_label => 'problems'
     }
   end
     
@@ -91,10 +99,15 @@ class ChurnPresenter_Graph
     a
   end
   
+  def sum_other
+    @chart_config[:net_includes_other] || false
+  end
+  
   def waterfallTotal
     t = 0;
     @request.data.each do |row|
       t += row[@chart_config[:gain]].to_i + row[@chart_config[:loss]].to_i
+      t += row[@chart_config[:other_gain]].to_i + row[@chart_config[:other_loss]].to_i if @chart_config[:net_includes_other] == true
     end
     t
   end

@@ -29,33 +29,24 @@ class DatabaseManager
     @db = Db.new(app)
     @app = app
     
-    @paying_db = @db.quote(@app.member_paying_status_code)
-    @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
-    @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
-    @waiver_db = @db.sql_array(@app.waiver_statuses, 'varchar') # "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
-
     member_statuses = 
       [@app.member_paying_status_code, 
        @app.member_awaiting_first_payment_status_code,
        @app.member_stopped_paying_status_code] + @app.waiver_statuses
-
-    nonpaying_statuses = member_statuses - [@app.member_paying_status_code]
     
-    nonwaiver_statuses = 
-      [@app.member_paying_status_code, 
-       @app.member_awaiting_first_payment_status_code,
-       @app.member_stopped_paying_status_code]
+    nonwaiver_statuses = member_statuses - @app.waiver_statuses
     
-    green_statuses = 
-      [@app.member_paying_status_code, 
-       @app.member_awaiting_first_payment_status_code]
+    # TODO create configuration option for orange status so uses can arbitrarily decide
+    # What is a warning status and what is an okay status
+    orange_statuses = [@app.member_stopped_paying_status_code] + @app.waiver_statuses
+    green_statuses = member_statuses - orange_statuses 
        
-    orange_statuses = 
-      [@app.member_stopped_paying_status_code] + @app.waiver_statuses
-       
+    @paying_db = @db.quote(@app.member_paying_status_code)
+    @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
+    @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
+    @waiver_db = @db.sql_array(@app.waiver_statuses, 'varchar') # "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
     @member_db = @db.sql_array(member_statuses, 'varchar')
     @nonwaiver_db = @db.sql_array(nonwaiver_statuses, 'varchar')
-    @nonpaying_db = @db.sql_array(nonpaying_statuses, 'varchar')
     @green_db = @db.sql_array(green_statuses, 'varchar')
     @orange_db = @db.sql_array(orange_statuses, 'varchar')
   end
@@ -702,74 +693,8 @@ class DatabaseManager
             then -1 else 0 end as waiverlossbad
         , case when coalesce(oldstatus, '') = ANY (#{@waiver_db})
           then -1 else 0 end as waivernet
+          
         
-        , 0 as membergain
-        , 0 as membergainnofee
-        , 0 as membergainfee
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@member_db})
-            and (not coalesce(newstatus, '')  = ANY (#{@member_db}))
-            then -1 else 0 end as memberloss
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@waiver_db}) 
-            and (not coalesce(newstatus, '') = ANY (#{@member_db}))
-            then-1 else 0 end as memberlossnofee
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@nonwaiver_db}) 
-            and (not coalesce(newstatus, '')  = ANY (#{@member_db}))
-            then -1 else 0 end as memberlossfee
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@member_db})
-            then -1 else 0 end as membernet
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@waiver_db})
-            then -1 else 0 end as membernetnofee
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
-            then -1 else 0 end as membernetfee
-               
-        , 0 as othermembergain
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@member_db})
-            and coalesce(newstatus, '') = ANY (#{@member_db})
-          then -1 else 0 end as othermemberloss
-        , 0 as othermembernofeegain
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@waiver_db})
-            and coalesce(newstatus, '') = ANY (#{@waiver_db})
-          then -1 else 0 end as othermembernofeeloss
-        , 0 as othermemberfeegain
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
-            and coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
-          then -1 else 0 end as othermemberfeeloss
-            
-        , 0 membergainorange
-        , case when 
-              coalesce(oldstatus, '') = ANY (#{@green_db}) 
-              and coalesce(newstatus, '') = ANY (#{@orange_db})
-            then -1 else 0 end as memberlossorange
-        
-        , 0 as goodnonpayinggain
-        , 0 as badnonpayinggain
-        , case when 
-              coalesce(oldstatus, '') = ANY (#{@nonpaying_db}) 
-              and coalesce(newstatus, '') in (#{@paying_db})
-            then -1 else 0 end as goodnonpayingloss
-        , case when 
-              coalesce(oldstatus, '') = ANY (#{@nonpaying_db})
-              and not coalesce(newstatus, '') = ANY (#{@member_db})
-            then -1 else 0 end as badnonpayingloss
-        
-        , 0 as othernonpayinggain
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@nonpaying_db})
-            and coalesce(newstatus, '') = ANY (#{@nonpaying_db})
-          then -1 else 0 end as othernonpayingloss
-    
-        , case when coalesce(oldstatus, '') = ANY (#{@nonpaying_db})
-          then -1 else 0 end as nonpayingnet
-
         , 0 as othergain
         , case when 
             NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
@@ -783,6 +708,74 @@ class DatabaseManager
             AND NOT (coalesce(oldstatus, '') = #{@stopped_db})
             AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as othernet
+        
+        , 0 as membergain
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            and (not coalesce(newstatus, '')  = ANY (#{@member_db}))
+            then -1 else 0 end as memberloss
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            then -1 else 0 end as membernet
+        , 0 as othermembergain
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db})
+          then -1 else 0 end as othermemberloss
+        
+        -- orange members (user configurable but should be non fee paying)
+        , 0 as orangegain
+        , 0 as orangegain_nonmember
+        , 0 as orangegain_member
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and not coalesce(newstatus, '') = ANY (#{@orange_db})
+            then -1 else 0 end as orangeloss
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and not coalesce(newstatus, '') = ANY (#{@orange_db})
+            and not coalesce(newstatus, '') = ANY (#{@member_db}) -- was an orange member and not not a member (exited waiver or stopped)
+            then -1 else 0 end as orangeloss_nonmember
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and not coalesce(newstatus, '') = ANY (#{@orange_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db}) -- was an orange member and now green (retained member)
+            then -1 else 0 end as orangeloss_member
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            then -1 else 0 end as orangenet
+        , 0 as otherorangegain
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@orange_db})
+            and coalesce(oldstatus, '') = ANY (#{@orange_db})
+          then -1 else 0 end as otherorangeloss
+        
+        -- green members (member inversion of orange - fee paying)
+        , 0 as greengain
+        , 0 as greengain_nonmember
+        , 0 as greengain_member
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            and not coalesce(newstatus, '') = ANY (#{@green_db})
+            then -1 else 0 end as greenloss
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            and not coalesce(newstatus, '') = ANY (#{@green_db})
+            and not coalesce(newstatus, '') = ANY (#{@member_db}) -- green member now exited
+            then -1 else 0 end as greenloss_nonmember
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            and not coalesce(newstatus, '') = ANY (#{@green_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db}) -- green member now orange
+            then -1 else 0 end as greenloss_member
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            then -1 else 0 end as greennet
+        , 0 as othergreengain
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@green_db})
+            and coalesce(oldstatus, '') = ANY (#{@green_db})
+          then -1 else 0 end as othergreenloss
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
@@ -863,76 +856,6 @@ class DatabaseManager
         , 0 as waiverlossbad
         , case when coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivernet
-            
-        , case when 
-            (not coalesce(oldstatus, '') = ANY (#{@member_db}))
-            and (coalesce(newstatus, '') = ANY (#{@member_db}))
-            then 1 else 0 end as membergain
-        , case when 
-            (not coalesce(oldstatus, '') = ANY (#{@member_db}))
-            and (coalesce(newstatus, '') = ANY (#{@waiver_db}))
-          then 1 else 0 end as membergainnofee
-        , case when 
-            (not coalesce(oldstatus, '') = ANY (#{@member_db})) 
-            and (coalesce(newstatus, '') = ANY (#{@nonwaiver_db}))
-          then 1 else 0 end as membergainfee
-        , 0 as memberloss
-        , 0 as memberlossnofee
-        , 0 as memberlossfee
-        , case when 
-            coalesce(newstatus, '') = ANY (#{@member_db})
-            then 1 else 0 end as membernet
-        , case when 
-            coalesce(newstatus, '') = ANY (#{@waiver_db})
-            then 1 else 0 end as membernetnofee
-        , case when 
-            coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
-            then 1 else 0 end as membernetfee
-            
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@member_db})
-            and coalesce(newstatus, '') = ANY (#{@member_db})
-          then 1 else 0 end as othermembergain
-        , 0 as othermemberloss
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@waiver_db})
-            and coalesce(newstatus, '') = ANY (#{@waiver_db})
-          then 1 else 0 end as othermembernofeegain
-        , 0 as othermembernofeeloss
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
-            and coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
-          then 1 else 0 end as othermemberfeegain
-        , 0 as othermemberfeeloss
-        
-            
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@orange_db}) 
-            and coalesce(newstatus, '') = ANY (#{@green_db})
-            then 1 else 0 end as membergainorange
-        , 0 memberlossorange
-        
-        
-        , case when 
-              not coalesce(oldstatus, '') = ANY (#{@member_db}) 
-              and coalesce(newstatus, '') = ANY (#{@nonpaying_db})
-            then 1 else 0 end as goodnonpayinggain
-        , case when 
-              coalesce(oldstatus, '') in (#{@paying_db}) 
-              and coalesce(newstatus, '') = ANY (#{@nonpaying_db})
-            then 1 else 0 end as badnonpayinggain
-        , 0 as goodnonpayingloss
-        , 0 as badnonpayingloss
-        
-        , case when 
-            coalesce(oldstatus, '') = ANY (#{@nonpaying_db})
-            and coalesce(newstatus, '') = ANY (#{@nonpaying_db})
-          then 1 else 0 end as othernonpayinggain
-        , 0 as othernonpayingloss
-
-        , case when coalesce(newstatus, '') = ANY (#{@nonpaying_db})
-            then 1 else 0 end as nonpayingnet
-        
         , case when 
             NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
@@ -946,6 +869,76 @@ class DatabaseManager
             AND NOT (coalesce(newstatus, '') = #{@stopped_db})
             AND NOT (coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othernet
+        
+        -- member gain, loss, net, other_gain, other_loss    
+        , case when 
+            (not coalesce(oldstatus, '') = ANY (#{@member_db}))
+            and (coalesce(newstatus, '') = ANY (#{@member_db}))
+            then 1 else 0 end as membergain
+        , 0 as memberloss
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@member_db})
+            then 1 else 0 end as membernet
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db})
+          then 1 else 0 end as othermembergain
+        , 0 as othermemberloss
+        
+        -- orange members (user configurable but non fee paying)
+        , case when 
+            (not coalesce(oldstatus, '') = ANY (#{@orange_db}))
+            and (coalesce(newstatus, '') = ANY (#{@orange_db}))
+            then 1 else 0 end as orangegain
+        , case when 
+            not coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and coalesce(newstatus, '') = ANY (#{@orange_db})
+            and not coalesce(oldstatus, '') = ANY (#{@member_db}) -- wasn't a member and now orange (straight to waiver like students)
+            then 1 else 0 end as orangegain_nonmember
+        , case when 
+            not coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and coalesce(newstatus, '') = ANY (#{@orange_db})
+            and coalesce(oldstatus, '') = ANY (#{@member_db}) -- was a member (green) and now orange (problem)
+            then 1 else 0 end as orangegain_member
+        , 0 as orangeloss
+        , 0 as orangeloss_nonmember
+        , 0 as orangelossbad_member
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@orange_db})
+            then 1 else 0 end as orangenet
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and coalesce(newstatus, '') = ANY (#{@orange_db})
+          then 1 else 0 end as otherorangegain
+        , 0 as otherorangeloss
+        
+        -- green members (member inversion of orange - fee paying)
+        , case when 
+            (not coalesce(oldstatus, '') = ANY (#{@green_db}))
+            and (coalesce(newstatus, '') = ANY (#{@green_db}))
+            then 1 else 0 end as greengain
+        , case when 
+            not coalesce(oldstatus, '') = ANY (#{@green_db})
+            and coalesce(newstatus, '') = ANY (#{@green_db})
+            and not coalesce(oldstatus, '') = ANY (#{@member_db}) -- wasn't a member and now green (new join)
+            then 1 else 0 end as greengain_nonmember
+        , case when 
+            not coalesce(oldstatus, '') = ANY (#{@green_db})
+            and coalesce(newstatus, '') = ANY (#{@green_db})
+            and coalesce(oldstatus, '') = ANY (#{@member_db}) -- was a member (green) and now green (retained)
+            then 1 else 0 end as greengain_member
+        , 0 as greenloss
+        , 0 as greenloss_nonmember
+        , 0 as greenloss_member
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@green_db})
+            then 1 else 0 end as greennet
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            and coalesce(newstatus, '') = ANY (#{@green_db})
+          then 1 else 0 end as othergreengain
+        , 0 as othergreenloss
+        
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }

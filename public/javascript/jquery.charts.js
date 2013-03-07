@@ -34,7 +34,12 @@
 			showlabels: true,
 			showgrid: false,
 			gridlines: 8,
-            gridvalues: true
+      gridvalues: true, 
+      sum_other: false,
+      gain_label: "gain", 
+      loss_label: "loss",
+      other_gain_label: "other gain",
+      other_loss_label: "other loss"
 		};
 		
 		if (settings) {
@@ -75,46 +80,67 @@
 			var lastLabel = ""; 
 			for (var i = 0; i < valueArray.length; i++) {
 				
-				var positiveValue = valueArray[i];
-				var isPositive = true;
+				var isPositive = true
 				var colourIndex = 1;
 				
-				if (positiveValue < 0) {
-					positiveValue = positiveValue * -1;
-					isPositive = false;
-					if (config.chartbgcolours.length > 2) {
+				if (valueArray[i] < 0) {
+				  isPositive = false;
+				  if (config.chartbgcolours.length > 2) {
 						colourIndex = 2;
 					}
 				}
-			
+				var positiveValue = Math.abs(valueArray[i]);
+				
 				var percent = RoundToTwoDecimalPlaces((positiveValue / totalValue) * 100);
 				var barHeight = RoundToTwoDecimalPlaces((positiveValue / totalValue) * 100);
 				var otherHeight = RoundToTwoDecimalPlaces((Math.abs(otherArray[i]) / totalValue) * 100);
-				var combinedHeight = 1
-				var combinedWidth = widthAdjustment
-			  var combinedLeft = leftShim
+				var v = barHeight
+			  if (config.sum_other) v+=otherHeight
+				
+				var otherWidth = widthAdjustment - 1
+        var otherLeft = leftShim + 1
+        var combinedHeight = 1
+        var combinedWidth = widthAdjustment
+        var combinedLeft = leftShim
+        
+				if (config.sum_other) {
+				  var otherWidth = widthAdjustment
+				  var otherLeft = leftShim
+          var combinedHeight = barHeight + otherHeight
+          var combinedWidth = 1
+          var combinedLeft = leftShim + widthAdjustment - combinedWidth
+			  } 
 			  
-				var bottomPosition = runningTotal - barHeight; // Negative column
-				var otherBottomPosition = runningTotal - otherHeight;
-				var connectorPosition = runningTotal;
+				var bottomPosition = runningTotal - v ; // Negative column
+				var connectorPosition = runningTotal - v;
 				var combinedBottomPosition = runningTotal - combinedHeight;
+				if (config.sum_other) combinedBottomPosition;
+				
+				var otherBottomPosition = runningTotal - otherHeight;
 				
 				if (isPositive) {
 					bottomPosition = runningTotal;
+					combinedBottomPosition = runningTotal + barHeight - combinedHeight;
+					otherBottomPosition = runningTotal + barHeight - otherHeight;
+					if (config.sum_other) {
+					  otherBottomPosition = runningTotal + barHeight;
+					  combinedBottomPosition = runningTotal;
+					}
 				}
 				
+				// invert if net columns
 				if (i == (valueArray.length - 1)) {
-					// last column
 					colourIndex = 0;
 					if (isPositive) {
 						//alert (barHeight);
-						bottomPosition = runningTotal - barHeight ; /* Sometimes -1 is needed here to stop net from inverting*/
+						bottomPosition = runningTotal - v ; /* Sometimes -1 is needed here to stop net from inverting*/
 					}
 					else {
 						bottomPosition = runningTotal;
 					}
 				}  
 
+        // offset so position doesn't go below zero
 				bottomPosition += (100 - (largestValue/totalValue * 100));
 				otherBottomPosition += (100 - (largestValue/totalValue * 100));
 				connectorPosition = runningTotal + (100 - (largestValue/totalValue * 100));
@@ -135,9 +161,9 @@
 				    netLabel = valueArray[i];
 					}
 					displayLabel = "<span class=\"" + config.classmodifier + "title\" style=\"height: 2; display: block; position: absolute; opacity:0.9; bottom: 2; text-align: " + (isPositive ? "left" : "left") + "; -moz-transform-origin: left top; -webkit-transform-origin: left top; width:" + ((100 - bottomPosition) /100 * config.chartheight - 50) + "px; -webkit-transform: rotate(-90deg); -moz-transform: rotate(-90deg); background-color: " /* + config.chartbgcolours[colourIndex] */ + "transparent" + ";white-space: nowrap;\">" + labelArray[i].toUpperCase()   + "&nbsp;&nbsp;&nbsp;" + netLabel + "</strong> </span>"
-					valueLabel = labelArray[i].toLowerCase() + (isPositive ? " gain: " : " loss: ") + Math.abs(valueArray[i])
-					otherLabel = labelArray[i].toLowerCase() + " problems: " + Math.abs(otherArray[i])
-					combinedLabel = labelArray[i].toLowerCase() + " combined " + (isPositive ? " gain " : " loss ") + " and problems: " + Math.abs(combinedArray[i])
+					valueLabel = labelArray[i].toLowerCase() + " " + (isPositive ? config.gain_label : config.loss_label) + ": " + Math.abs(valueArray[i])
+					otherLabel = labelArray[i].toLowerCase() + " " + (isPositive ? config.other_gain_label : config.other_loss_label) + ": " + Math.abs(otherArray[i])
+					combinedLabel = labelArray[i].toLowerCase() + " " + (isPositive ? config.gain_label : config.loss_label) + " and "+ (isPositive ? config.other_gain_label : config.other_loss_label) + ": " + Math.abs(combinedArray[i])
 				}
 				
 				// Column
@@ -153,7 +179,7 @@
           
           // other colour
           output += "<a class=\"" + config.classmodifier + "link\" style=\"text-decoration:none;\" href=\"" + otherLinkArray[i] + "\">"
-          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + otherBottomPosition + "%; left: " + (leftShim + 1) + "%; display: block; height: 0%; border-color: " + config.othercolour + "; background-color: " + config.othercolour + "; width: " + (widthAdjustment - 1) + "%; text-align: center;\" rel=\"" + otherHeight + "\" title=\"" + otherLabel + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span></div>"
+          output += "<div class=\"" + config.classmodifier + "bar " + config.classmodifier + (isPositive?'pos':'neg') + "\" style=\"position: absolute; bottom: " + otherBottomPosition + "%; left: " + (otherLeft) + "%; display: block; height: 0%; border-color: " + config.othercolour + "; background-color: " + config.othercolour + "; width: " + (otherWidth) + "%; text-align: center;\" rel=\"" + otherHeight + "\" title=\"" + otherLabel + "\">" + "<span style=\"position:absolute;  " + (isPositive ? "left:" : "right:") + ": 0; " + (isPositive ? "top:-20;" : "bottom:-20") + "\">" + /* valueArray[i] + */ "</span></div>"
           output += "</a>"
           
           // combined colour
@@ -191,12 +217,11 @@
         				
         
 				if (isPositive) {
-					runningTotal = runningTotal + barHeight;
+					runningTotal = runningTotal + v;
 				} else {
-					runningTotal = runningTotal - barHeight;
+					runningTotal = runningTotal - v;
 				}
 				
-				//if (i == 0) zero_pos = connectorPosition;
 			}
 			
 			output += "</div>";
@@ -281,8 +306,13 @@
           otherLinkArray[otherLinkArray.length] = $(values[i]).children("td").eq(config.otherlinkcolumn).text();
           combinedLinkArray[combinedLinkArray.length] = $(values[i]).children("td").eq(config.combinedlinkcolumn).text();
           
-          totalValue = totalValue + valueAmount;
-          
+          if (config.sum_other) {
+            totalValue = totalValue + valueAmount + otherAmount;
+          } 
+          else
+          {
+            totalValue = totalValue + valueAmount
+          }
           if (i != (values.length - 1)) { // don't include net in running totals
             if (totalValue > largestValue) {
               largestValue = totalValue;
@@ -298,8 +328,7 @@
 			//if (largestValue< -1 * smallestValue) largestValue = smallestValue * -1; 
 			
 			// Containing division
-			var output = "<h3>" + caption + "</h3>" +
-				"<div class=\"" + config.classmodifier + "container\">" +
+			var output = "<div class=\"" + config.classmodifier + "container\">" +
 				"<div class=\"" + config.classmodifier + "label\">&nbsp;</div>";
 			
 			// Get output based on chart type
