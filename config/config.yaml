@@ -214,24 +214,32 @@ summary_data_tables:
           - row_header 
           - row_header1 
           - period_header
-          - member_fee_start_count
-          - member_real_gain_fee
-          - member_real_loss_fee
-          - member_fee_other_gain
-          - member_fee_other_loss
-          - member_fee_end_count
-          - member_fee_real_net
-          - member_nofee_other_gain
-          - member_nofee_other_loss
           - member_start_count
-          - member_real_gain_nofee
-          - member_real_loss_nofee
+          - member_real_gain
+          - member_real_loss
           - member_real_net
           - member_other_gain
           - member_other_loss
           - member_end_count
-          - member_real_loss_orange
-          - member_real_gain_orange
+    green:
+      display_name: Green
+      description:  This data represents all members.  It includes but is not limited to paying members, members on waiver, members in arrears and other union members on service agreement.  New members represents the green in the chart.  However a significant portion of new members may be gratis members - meaning the are not required to pay.    
+      query_columns:
+        - row_header 
+        - row_header1 
+        - period_header
+        - green_start_count
+        - green_real_gain
+        - green_real_gain_nonmember
+        - green_real_gain_member
+        - green_real_loss
+        - green_real_loss_nonmember
+        - green_real_loss_member
+        - green_real_net
+        - running_green_net
+        - green_other_gain
+        - green_other_loss
+        - green_end_count
     nonpaying:
       display_name: Non-Paying
       description:  This data represents the inverse of the Paying data.  It is all members that aren't paying, which includes those that should pay (new applications and arrears cycle members) and gratis members (waivers and service agreement members).  The key column is 'paying members who entered a cycle or got a waiver'.  This will be used for determining the orange in the chart.  Apart from that I don't think this data is very interesting. 
@@ -344,6 +352,7 @@ roles:
         summary_data_tables:
             - summary_dev
             - member
+            - green
             - paying
             - a1p
             - stopped
