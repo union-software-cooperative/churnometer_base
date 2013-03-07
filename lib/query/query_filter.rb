@@ -51,7 +51,8 @@ protected
             end
         	end
 
-        result = "coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(values, 'varchar')})"
+        #result = "coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(values, 'varchar')})"
+        result = "#{db().quote_db(term.db_column)} = any (#{db().sql_array(values, 'varchar')})"
         
         term_sqls << result
       end
@@ -67,7 +68,7 @@ protected
             end
         	end
 
-        result = "not coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(values, 'varchar')})"
+        result = "not #{db().quote_db(term.db_column)} = any (#{db().sql_array(values, 'varchar')})"
         
         term_sqls << result
       end
