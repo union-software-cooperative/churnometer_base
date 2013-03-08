@@ -66,25 +66,6 @@ class QueryDetail < QueryDetailBase
       'stopped_to_other' => 'where c.stopped_to_other<>0',
       'stopped_other_loss' => 'where c.stopped_other_loss<>0',
       'stopped_other_loss' => 'where c.stopped_other_loss<>0',
-      
-      'member_real_gain' => 'where c.member_real_gain<>0',
-      'member_real_loss' => 'where c.member_real_loss<>0',
-      'member_real_gain_nofee' => 'where c.member_real_gain_nofee<>0',
-      'member_real_gain_fee' => 'where c.member_real_gain_fee<>0',
-      'member_real_loss_nofee' => 'where c.member_real_loss_nofee<>0',
-      'member_real_loss_fee' => 'where c.member_real_loss_fee<>0',
-      'member_real_gain_orange' => 'where c.member_real_gain_orange<>0',
-      'member_real_loss_orange' => 'where c.member_real_loss_orange<>0',
-      'member_real_net' => 'where c.member_real_net<>0',
-      'member_other_loss' => 'where c.member_other_loss<>0',
-      'member_other_gain' => 'where c.member_other_gain<>0',
-      'member_nofee_other_loss' => 'where c.member_nofee_other_loss<>0',
-      'member_nofee_other_gain' => 'where c.member_nofee_other_gain<>0',
-      'member_fee_other_loss' => 'where c.member_fee_other_loss<>0',
-      'member_fee_other_gain' => 'where c.member_fee_other_gain<>0',
-      'member_gain_combined' => 'where c.member_gain_combined<>0',
-      'member_loss_combined' => 'where c.member_loss_combined<>0',
-      
       'waiver_real_gain' => 'where c.waiver_real_gain<>0',
       'waiver_real_loss' => 'where c.waiver_real_loss<>0',
       'waiver_real_gain_good' => 'where c.waiver_real_gain_good<>0',
@@ -94,17 +75,35 @@ class QueryDetail < QueryDetailBase
       'waiver_real_net' => 'where c.waiver_real_net<>0',
       'waiver_other_loss' => 'where c.waiver_other_loss<>0',
       'waiver_other_loss' => 'where c.waiver_other_loss<>0',
-
-      'nonpaying_real_gain_good' => 'where c.nonpaying_real_gain_good<>0',
-      'nonpaying_real_loss_good' => 'where c.nonpaying_real_loss_good<>0',
-      'nonpaying_real_gain_bad' => 'where c.nonpaying_real_gain_bad<>0',
-      'nonpaying_real_loss_bad' => 'where c.nonpaying_real_loss_bad<>0',
-      'nonpaying_real_net' => 'where c.nonpaying_real_net<>0',
-      'nonpaying_other_loss' => 'where c.nonpaying_other_loss<>0',
-      'nonpaying_other_loss' => 'where c.nonpaying_other_loss<>0',
-
       'other_gain' => 'where c.other_other_gain<>0',
       'other_loss' => 'where c.other_other_loss<>0',
+      
+      'member_real_gain' => 'where c.member_real_gain<>0',
+      'member_real_loss' => 'where c.member_real_loss<>0',
+      'member_real_net' => 'where c.member_real_net<>0',
+      'member_other_loss' => 'where c.member_other_loss<>0',
+      'member_other_gain' => 'where c.member_other_gain<>0',
+      
+      'green_real_gain' => 'where c.green_real_gain<>0',
+      'green_real_gain_nonmember' => 'where c.green_real_gain_nonmember<>0',
+      'green_real_loss_nonmember' => 'where c.green_real_loss_nonmember<>0',
+      'green_real_gain_member' => 'where c.green_real_gain_member<>0',
+      'green_real_loss_member' => 'where c.green_real_loss_member<>0',
+      'green_real_loss' => 'where c.green_real_loss<>0',
+      'green_real_net' => 'where c.green_real_net<>0',
+      'green_other_gain' => 'where c.green_other_gain<>0',
+      'green_other_loss' => 'where c.green_other_loss<>0',
+    
+      'orange_real_gain' => 'where c.orange_real_gain<>0',
+      'orange_real_gain_nonmember' => 'where corange_real_gain_nonmember.<>0',
+      'orange_real_loss_nonmember' => 'where c.orange_real_loss_nonmember<>0',
+      'orange_real_gain_member' => 'where c.orange_real_gain_member<>0',
+      'orange_real_loss_member' => 'where c.orange_real_loss_member<>0',
+      'orange_real_loss' => 'where c.orange_real_loss<>0',
+      'orange_real_net' => 'where c.orange_real_net<>0',
+      'orange_other_gain' => 'where c.orange_other_gain<>0',
+      'orange_other_loss' => 'where c.orange_other_loss<>0',
+
       'contributors' => 'where (c.posted<>0 or c.unposted<>0)',
       'income_net' => 'where (c.posted<>0 or c.unposted<>0)',
       'posted' => 'where c.posted<>0',
@@ -225,16 +224,21 @@ sql = <<-EOS
       , waiverlossbad::bigint waiver_real_loss_bad
       , membergain::bigint member_real_gain
       , memberloss::bigint member_real_loss
-      , membergainnofee::bigint member_real_gain_nofee
-      , membergainfee::bigint member_real_gain_fee
-      , memberlossnofee::bigint member_real_loss_nofee
-      , memberlossfee::bigint member_real_loss_fee
-      , membergainorange::bigint member_real_gain_orange
-      , memberlossorange::bigint member_real_loss_orange
-      , goodnonpayinggain::bigint nonpaying_real_gain_good
-      , badnonpayinggain::bigint nonpaying_real_gain_bad
-      , goodnonpayingloss::bigint nonpaying_real_loss_good
-      , badnonpayingloss::bigint nonpaying_real_loss_bad
+      
+      , greengain::bigint green_real_gain
+      , greenloss::bigint green_real_loss
+      , greengain_nonmember::bigint green_real_gain_nonmember
+      , greenloss_nonmember::bigint green_real_loss_nonmember
+      , greengain_member::bigint green_real_gain_member
+      , greenloss_member::bigint green_real_loss_member
+      
+      , orangegain::bigint orange_real_gain
+      , orangeloss::bigint orange_real_loss
+      , orangegain_nonmember::bigint orange_real_gain_nonmember
+      , orangeloss_nonmember::bigint orange_real_loss_nonmember
+      , orangegain_member::bigint orange_real_gain_member
+      , orangeloss_member::bigint orange_real_loss_member
+      
       
 			, case when coalesce(status, '') = #{a1p_db} then othergain else 0 end::bigint a1p_other_gain
 			, case when coalesce(status, '') = #{a1p_db} then otherloss else 0 end::bigint a1p_other_loss
@@ -244,35 +248,25 @@ sql = <<-EOS
 			, case when coalesce(status, '') = #{stoppedpay_db} then otherloss else 0 end::bigint stopped_other_loss
 			, case when waivernet <> 0 then othergain else 0 end waiver_other_gain
       , case when waivernet <> 0 then otherloss else 0 end waiver_other_loss
-      
-      /*
-      , case when membernet <> 0 then othergain else 0 end member_other_gain
-      , case when membernet <> 0 then otherloss else 0 end member_other_loss
-      , othermembernofeegain member_nofee_other_gain
-      , othermembernofeeloss member_nofee_other_loss
-      , othermemberfeeloss member_fee_other_gain
-      , othermemberfeeloss member_fee_other_loss
-      */
-      
-      , case when (set_transfer = 1 or group_transfer = 1) then othergain else 0 end member_other_gain
-      , case when (set_transfer = 1 or group_transfer = 1) then otherloss else 0 end member_other_loss
-	    , case when (set_transfer = 1 or group_transfer = 1) then othermembernofeegain else 0 end member_nofee_other_gain
-      , case when (set_transfer = 1 or group_transfer = 1) then othermembernofeeloss else 0 end member_nofee_other_loss
-      , case when (set_transfer = 1 or group_transfer = 1) then othermemberfeegain else 0 end member_fee_other_gain
-      , case when (set_transfer = 1 or group_transfer = 1) then othermemberfeeloss else 0 end member_fee_other_loss
-      
       , case when not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db} or waivernet <> 0) then othergain else 0 end::bigint other_other_gain
   		, case when not (status = #{paying_db} or status = #{a1p_db} or status = #{stoppedpay_db} or waivernet <> 0) then otherloss else 0 end::bigint other_other_loss
-      , othernonpayinggain nonpaying_other_gain
-			, othernonpayingloss nonpaying_other_loss
-    
+      , case when (set_transfer = 1 or group_transfer = 1) then othergain else 0 end member_other_gain
+      , case when (set_transfer = 1 or group_transfer = 1) then otherloss else 0 end member_other_loss
+	    , case when (set_transfer = 1 or group_transfer = 1) then othergreengain else 0 end green_other_gain
+      , case when (set_transfer = 1 or group_transfer = 1) then othergreenloss else 0 end green_other_loss
+	    , case when (set_transfer = 1 or group_transfer = 1) then otherorangegain else 0 end orange_other_gain
+      , case when (set_transfer = 1 or group_transfer = 1) then otherorangeloss else 0 end orange_other_loss
+     
+      
 			, (a1pgain+a1ploss)::bigint a1p_real_net
       , (payinggain+payingloss)::bigint paying_real_net
 			, (stoppedgain+stoppedloss)::bigint stopped_real_net
 			, (waivergain + waiverloss)::bigint waiver_real_net
-			, (membergain + memberloss)::bigint member_real_net
 			, (othergain+otherloss)::bigint other_real_net
-			, (goodnonpayinggain+goodnonpayingloss+badnonpayinggain+badnonpayingloss)::bigint nonpaying_real_net
+			, (membergain + memberloss)::bigint member_real_net
+			, (membergain + memberloss)::bigint green_real_net
+			, (membergain + memberloss)::bigint orange_real_net
+			, net::bigint
 			
 			-- odd columns
 			, case when _changeid is null then a1pgain else 0 end::bigint a1p_unchanged_gain
@@ -280,15 +274,9 @@ sql = <<-EOS
 			, case when coalesce(_status, '') <> '' then a1pgain else 0 end::bigint a1p_rejoin
 			, case when coalesce(_status, '') = #{paying_db} then a1ploss else 0 end::bigint a1p_to_paying
 			, case when coalesce(_status, '') <> #{paying_db} then a1ploss else 0 end::bigint a1p_to_other
-			  
 			, case when _changeid is null then stoppedgain else 0 end::bigint stopped_unchanged_gain
 			, case when coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end::bigint stopped_to_paying
 			, case when coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end::bigint stopped_to_other			
-			
-			, case when membergain <> 0 or membergainorange <> 0 then 1 else 0 end::bigint member_gain_combined
-      , case when memberloss <> 0 or memberlossorange <> 0 then -1 else 0 end::bigint member_loss_combined
-        
-      , net::bigint
 		from  
 			nonegations c
 		where
@@ -354,29 +342,31 @@ sql = <<-EOS
 		, c.waiver_other_loss
     , c.member_real_gain
 		, c.member_real_loss
-		, c.member_real_gain_fee
-		, c.member_real_gain_nofee
-    , c.member_real_loss_fee
-    , c.member_real_loss_nofee
-    , c.member_real_gain_orange
-    , c.member_real_loss_orange
-    , c.member_gain_combined
-    , c.member_loss_combined
-    , c.member_real_net
+		, c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
-    , c.member_nofee_other_gain
-		, c.member_nofee_other_loss
-    , c.member_fee_other_gain
-		, c.member_fee_other_loss
-    , c.nonpaying_real_gain_good
-		, c.nonpaying_real_gain_bad
-    , c.nonpaying_real_loss_good
-		, c.nonpaying_real_loss_bad
-    , c.nonpaying_real_net
-		, c.nonpaying_other_gain
-		, c.nonpaying_other_loss
-
+    
+    , c.green_real_gain
+		, c.green_real_gain_nonmember
+		, c.green_real_loss_nonmember
+		, c.green_real_gain_member
+		, c.green_real_loss_member
+		, c.green_real_loss
+		, c.green_real_net
+		, c.green_other_gain
+		, c.green_other_loss
+    
+    , c.orange_real_gain
+		, c.orange_real_gain_nonmember
+		, c.orange_real_loss_nonmember
+		, c.orange_real_gain_member
+		, c.orange_real_loss_member
+		, c.orange_real_loss
+		, c.orange_real_net
+		, c.orange_other_gain
+		, c.orange_other_loss
+    
+    
 EOS
 
 sql << if with_trans
@@ -427,8 +417,6 @@ if with_trans
 		, 0::bigint stopped_to_other
 		, 0::bigint stopped_other_loss
 		, 0::bigint stopped_other_gain
-		, 0::bigint other_other_gain
-		, 0::bigint other_other_loss
 		, 0::bigint waiver_real_gain
 		, 0::bigint waiver_real_loss
 		, 0::bigint waiver_real_gain_good
@@ -438,30 +426,34 @@ if with_trans
     , 0::bigint waiver_real_net
 		, 0::bigint waiver_other_gain
 		, 0::bigint waiver_other_loss
-    , 0::bigint member_real_gain
+    , 0::bigint other_other_gain
+		, 0::bigint other_other_loss
+		, 0::bigint member_real_gain
 		, 0::bigint member_real_loss
-    , 0::bigint member_real_gain_fee
-		, 0::bigint member_real_gain_nofee
-    , 0::bigint member_real_loss_fee
-    , 0::bigint member_real_loss_nofee
-		, 0::bigint member_real_gain_orange
-    , 0::bigint member_real_loss_orange
     , 0::bigint member_real_net
 		, 0::bigint member_other_gain
 		, 0::bigint member_other_loss
-		, 0::bigint member_nofee_other_gain
-		, 0::bigint member_nofee_other_loss
-		, 0::bigint member_fee_other_gain
-		, 0::bigint member_fee_other_loss
-		, 0::bigint member_gain_combined
-		, 0::bigint member_loss_combined
-    , 0::bigint nonpaying_real_gain_good
-		, 0::bigint nonpaying_real_loss_bad
-		, 0::bigint nonpaying_real_gain_good
-		, 0::bigint nonpaying_real_loss_bad
-    , 0::bigint nonpaying_real_net
-		, 0::bigint nonpaying_other_gain
-		, 0::bigint nonpaying_other_loss
+		
+		, 0::bigint green_real_gain
+		, 0::bigint green_real_loss
+    , 0::bigint green_real_gain_nonmember
+		, 0::bigint green_real_loss_nonmember
+    , 0::bigint green_real_gain_member
+		, 0::bigint green_real_loss_member
+    , 0::bigint green_real_net
+		, 0::bigint green_other_gain
+		, 0::bigint green_other_loss
+		
+		, 0::bigint orange_real_gain
+		, 0::bigint orange_real_loss
+    , 0::bigint orange_real_gain_nonmember
+		, 0::bigint orange_real_loss_nonmember
+    , 0::bigint orange_real_gain_member
+		, 0::bigint orange_real_loss_member
+    , 0::bigint orange_real_net
+		, 0::bigint orange_other_gain
+		, 0::bigint orange_other_loss
+		
 		, t.posted::numeric posted
 		, t.unposted::numeric unposted
 	from
@@ -501,8 +493,6 @@ sql << <<-EOS
 		, c.stopped_to_other
 		, c.stopped_other_loss
 		, c.stopped_other_gain
-		, c.other_other_gain other_gain
-		, c.other_other_loss other_loss
 		, c.waiver_real_gain
 		, c.waiver_real_loss
 		, c.waiver_real_gain_good
@@ -512,30 +502,34 @@ sql << <<-EOS
     , c.waiver_real_net
 		, c.waiver_other_gain
 		, c.waiver_other_loss
-    , c.member_real_gain
+    , c.other_other_gain other_gain
+		, c.other_other_loss other_loss
+		, c.member_real_gain
 		, c.member_real_loss
-		, c.member_real_gain_fee
-		, c.member_real_gain_nofee
-    , c.member_real_loss_fee
-    , c.member_real_loss_nofee
-    , c.member_real_gain_orange
-    , c.member_real_loss_orange
-    , c.member_real_net
+		, c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
-		, c.member_nofee_other_gain
-		, c.member_nofee_other_loss
-		, c.member_fee_other_gain
-		, c.member_fee_other_loss
-		, c.member_gain_combined
-		, c.member_loss_combined
-    , c.nonpaying_real_gain_good
-		, c.nonpaying_real_loss_bad
-		, c.nonpaying_real_gain_good
-		, c.nonpaying_real_loss_bad
-    , c.nonpaying_real_net
-		, c.nonpaying_other_gain
-		, c.nonpaying_other_loss
+		
+		, c.green_real_gain
+		, c.green_real_loss
+		, c.green_real_gain_nonmember
+		, c.green_real_loss_nonmember
+		, c.green_real_gain_member
+		, c.green_real_loss_member
+		, c.green_real_net
+		, c.green_other_gain
+		, c.green_other_loss
+		
+		, c.orange_real_gain
+		, c.orange_real_loss
+		, c.orange_real_gain_nonmember
+		, c.orange_real_loss_nonmember
+		, c.orange_real_gain_member
+		, c.orange_real_loss_member
+		, c.orange_real_net
+		, c.orange_other_gain
+		, c.orange_other_loss
+		
 		, c.posted
 		, c.unposted
 	from

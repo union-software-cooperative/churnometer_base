@@ -177,6 +177,26 @@ module Settings
          stopped_end_count
          member_loss_combined
          member_gain_combined
+         
+         green_real_gain
+         green_real_gain_nonmember
+         green_real_loss_nonmember
+         green_real_gain_member
+         green_real_loss_member
+         green_real_loss
+         green_real_net
+         green_other_gain
+         green_other_loss
+    
+         orange_real_gain
+         orange_real_gain_nonmember
+         orange_real_loss_nonmember
+         orange_real_gain_member
+         orange_real_loss_member
+         orange_real_loss
+         orange_real_net
+         orange_other_gain
+         orange_other_loss
          }
      end
      
@@ -196,7 +216,10 @@ module Settings
          'member_gain_combined',
          'member_loss_combined',
          'stopped_real_gain',
-         'waiver_real_loss_good'
+         'waiver_real_loss_good',
+         'green_real_gain_nonmember',
+         'green_real_gain_member',
+         'green_real_loss',
        ].include?(column_name)
      end
      
@@ -235,8 +258,9 @@ module Settings
            'member_end_count',
            'waiver_start_count',
            'waiver_end_count',
-           'nonpaying_start_count',
-           'nonpaying_end_count'
+           'green_end_count',
+           'green_start_count',
+           'running_green_net'
          ]
        end
 
