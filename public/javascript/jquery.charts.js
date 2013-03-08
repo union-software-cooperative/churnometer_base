@@ -83,7 +83,7 @@
 				var isPositive = true
 				var colourIndex = 1;
 				
-				if (valueArray[i] < 0) {
+				if ((valueArray[i] + otherArray[i]) < 0) {
 				  isPositive = false;
 				  if (config.chartbgcolours.length > 2) {
 						colourIndex = 2;
