@@ -524,7 +524,11 @@ protected
 			|| ( case when 0 <> c.waiver_start_count + c.waiver_gain + c.waiver_loss + c.waiver_other_gain + c.waiver_other_loss - c.waiver_end_count then ' waiver' else '' end)
 			|| ( case when 0 <> c.orange_start_count + c.orange_gain + c.orange_loss + c.orange_other_gain + c.orange_other_loss - c.orange_end_count then ' orange' else '' end)
 			|| ( case when 0 <> c.green_start_count + c.green_gain + c.green_loss + c.green_other_gain + c.green_other_loss - c.green_end_count then ' green' else '' end)
-			as cross_check
+			|| ( case when 0 <> c.a1p_start_count + c.paying_start_count + c.stopped_start_count + c.waiver_start_count - c.member_start_count then ' start count' else '' end)
+      || ( case when 0 <> c.a1p_end_count + c.paying_end_count + c.stopped_end_count + c.waiver_end_count - c.member_end_count then ' end count' else '' end)
+      || ( case when 0 <> c.green_start_count + c.orange_start_count - c.member_start_count then ' contributor start count' else '' end)
+      || ( case when 0 <> c.green_end_count + c.orange_end_count - c.member_end_count then ' contributor end count' else '' end)
+      as cross_check
 		, c.posted
 		, c.unposted
 		, c.income_net
