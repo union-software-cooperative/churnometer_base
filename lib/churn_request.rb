@@ -100,7 +100,7 @@ class ChurnRequest
   
   def cross_check(data)
     warning = ""
-    if has_data? && @type = :summary
+    if has_data? && @type == :summary
       data.each do |row|
         if row['cross_check'] != ""
           warning += "#{row['cross_check']} cross check failed for #{row['row_header1']}<br\>"
