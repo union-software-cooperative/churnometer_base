@@ -128,20 +128,22 @@ summary_data_tables:
             - annualisedavgcontribution
     summary_dev:
         display_name: Summary
-        description:  This data is a selection of key columns from the other data tabs.
+        description:  This data shows contributor gain and loss.  Contributors are members who are paying or expected to pay without problem (excludes non-contributing members such as students and those on waivers or in arrears).  This data also shows member counts at the end date.  Total membership is paying members + applications pending payment + stopped paying (arrears) + waivers.
         query_columns:
             - row_header
             - row_header1
             - period_header
-            - member_real_gain_fee
-            - member_real_loss_fee
-            - member_real_loss_orange
+            - green_real_gain_nonmember
+            - green_real_gain_member
+            - green_real_loss
+            - green_real_net
+            - running_green_net
+            - green_end_count
+            - paying_end_count
+            - a1p_end_count
+            - stopped_end_count
+            - waiver_end_count
             - member_end_count
-            - member_gain_combined
-            - member_loss_combined
-            - paying_real_gain
-            - paying_real_loss
-            - paying_real_net
             - contributors
             - income_net
             - annualisedavgcontribution
@@ -352,7 +354,6 @@ roles:
         summary_data_tables:
             - summary_dev
             - member
-            - green
             - paying
             - a1p
             - stopped
@@ -445,6 +446,18 @@ column_names:
   nonpaying_other_loss: Not-paying transferred out
   nonpaying_end_count: Not-paying at end date
   nonpaying_net: Net difference in members that aren't paying
+  green_start_count: Contributors at start date
+  green_real_gain: New and retained contributors
+  green_real_gain_nonmember: New contributors
+  green_real_gain_member: Retained contributors
+  green_real_loss: Stopped and exited contributors
+  green_real_loss_nonmember: Exited contributors
+  green_real_loss_member: Stopped contributors
+  green_real_net: Contributor net
+  running_green_net: Running contributor net
+  green_other_gain: Contributors transferred in
+  green_other_loss: Contributors transferred out
+  green_end_count: Contributors at end date
 column_descriptions:
   paying_start_count: The number of members who had made at least one payment and had no problem with their payment at the start of the period.
   paying_end_count: The number of members who had made at least one payment and had no problem with their payment at the end of the period.  '{paying_end_count}' is equal to '{paying_start_count}' plus '{paying_real_gain}' minus '{paying_real_loss}' plus '{paying_other_gain}' minus '{paying_other_loss}'.
@@ -483,8 +496,11 @@ column_descriptions:
   lateness: The remittance status of each employer with at least one OOP member attached. The next due date is determined from the '{paidto}' plus the average duration between payments (multipled by the number of unposted payments) plus half this average duration to allow for processing.
   paidto: The date up to which money has been posted.  The employer may have paid past this date but unposted payment don't count toward the '{paidto}' because the '{paidto}' is determined during payment posting.
   paymenttype: Code representing either out of pay, direct debit, credit card or personal (invoice)
-
-    
+  green_real_gain_nonmember:  New contributors are new members that should contribute i.e. new  student and other union members aren't counted.   
+  green_real_gain_member: Retained contributors are members who weren't paying (in arrears, waiver etc) that should now contributor without problem.
+  green_real_loss:  These losses are exited contributors and contributors going on waiver or entering arrears.
+  green_end_count: Contributors at the end date (paying and new applications pending payment)
+  waiver_end_count: Members at the end date who are not required to pay  
     
         
     
