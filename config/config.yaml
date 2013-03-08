@@ -128,7 +128,7 @@ summary_data_tables:
             - annualisedavgcontribution
     summary_dev:
         display_name: Summary
-        description:  This data shows contributor gain and loss.  Contributors are members who are paying or expected to pay without problem (excludes non-contributing members such as students and those on waivers or in arrears).  This data also shows member counts at the end date.  Total membership is paying members + applications pending payment + stopped paying (arrears) + waivers.
+        description:  This data shows contributor gain and loss as shown in the chart.  Contributors are members who are paying or expected to pay without problem (excludes non-contributing members such as students and those on waivers or in arrears).  This data also shows member counts at the end date.  Total membership is paying members + applications pending payment + stopped paying (arrears) + waivers.
         query_columns:
             - row_header
             - row_header1
@@ -194,8 +194,8 @@ summary_data_tables:
           - stopped_end_count
           - stopped_unchanged_gain
     waiver:
-        display_name: Waivers etc
-        description:  This data represents all members who are not expected to pay.  It includes all students, other union members on service agreement, members on maternity leave etc...  Growing this pool of members doesn't necessarily improve the union's bottom line.   
+        display_name: Non-contributing
+        description:  This data represents all members who are not expected to pay directly to the union.  It includes all students, other union members on service agreement, members on maternity leave etc...  Growing this pool of members doesn't necessarily improve the union's bottom line.   
         query_columns:
           - row_header 
           - row_header1 
@@ -211,7 +211,7 @@ summary_data_tables:
           - waiver_end_count
     member:
         display_name: Members
-        description:  This data represents all members.  It includes but is not limited to paying members, members on waiver, members in arrears and other union members on service agreement.  New members represents the green in the chart.  However a significant portion of new members may be gratis members - meaning the are not required to pay.    
+        description:  This data represents all members, including non-contributing members such as students, members on waivers or under service agreement.     
         query_columns:
           - row_header 
           - row_header1 
