@@ -95,7 +95,7 @@ class QueryDetail < QueryDetailBase
       'green_other_loss' => 'where c.green_other_loss<>0',
     
       'orange_real_gain' => 'where c.orange_real_gain<>0',
-      'orange_real_gain_nonmember' => 'where corange_real_gain_nonmember.<>0',
+      'orange_real_gain_nonmember' => 'where c.orange_real_gain_nonmember<>0',
       'orange_real_loss_nonmember' => 'where c.orange_real_loss_nonmember<>0',
       'orange_real_gain_member' => 'where c.orange_real_gain_member<>0',
       'orange_real_loss_member' => 'where c.orange_real_loss_member<>0',
