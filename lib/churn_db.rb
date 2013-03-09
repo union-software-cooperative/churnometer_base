@@ -439,7 +439,11 @@ class ChurnDB
    		'nonpaying_start_count',
       'nonpaying_end_count',
       'stopped_start_count',
-      'stopped_end_count'
+      'stopped_end_count',
+      'green_start_count',
+      'orange_start_count',
+      'green_end_count',
+      'orange_end_count'
     ]
   end
 
