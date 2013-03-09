@@ -264,8 +264,8 @@ sql = <<-EOS
 			, (waivergain + waiverloss)::bigint waiver_real_net
 			, (othergain+otherloss)::bigint other_real_net
 			, (membergain + memberloss)::bigint member_real_net
-			, (membergain + memberloss)::bigint green_real_net
-			, (membergain + memberloss)::bigint orange_real_net
+			, (greengain + greenloss)::bigint green_real_net
+			, (orangegain + orangeloss)::bigint orange_real_net
 			, net::bigint
 			
 			-- odd columns
