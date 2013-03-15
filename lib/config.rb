@@ -134,7 +134,7 @@ class ConfigElement
   end
 
   def has_children?
-    @value.kind_of?(Hash)
+    @value.kind_of?(Hash) || @value.kind_of?(Array)
   end
 
   # Returns one of the child ConfigElements of this element.
@@ -254,7 +254,7 @@ class ConfigFileSet
       nil
     else
       if e.has_children?
-        raise BadConfigDataFormatException.new("The element '#{element_id}' has children. It must be accessed via the 'element' method.", self)
+        raise BadConfigDataFormatException.new(e, "The element '#{element_id}' has children. It must be accessed via the 'element' method.")
       end
 
       e.value

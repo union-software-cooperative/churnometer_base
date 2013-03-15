@@ -28,6 +28,9 @@ waiver_statuses:
   - emp unkn
   - mid career
   - nofee
+green_member_statuses:
+  - a1p
+  - paying
 dimensions:
   - id: lead
     name: Lead
