@@ -93,6 +93,7 @@ class ChurnometerApp
     application_start_date()
     config().ensure_kindof('waiver_statuses', Array, NilClass)
     validate_email()
+    config().ensure_kindof('green_member_statuses', Array, NilClass)
   end
 
   # A ConfigFileSet instance.
@@ -216,6 +217,25 @@ class ChurnometerApp
 
   def member_stopped_paying_status_code
     config().get_mandatory('member_stopped_paying_status_code').value
+  end
+
+  # Returns a list of every valid status code that a member can be assigned.
+  def all_member_statuses
+    result = [member_paying_status_code(), 
+              member_awaiting_first_payment_status_code(),
+              member_stopped_paying_status_code()]
+    result = result | waiver_statuses()
+    result = result | green_member_statuses()
+    result
+  end
+
+  # Returns the statuses that are used to construct the green bar in the waterfall chart.
+  def green_member_statuses
+    if config().element('green_member_statuses').value.nil? == false
+      config().element('green_member_statuses').value.collect { |e| e.value }
+    else
+      [member_paying_status_code, member_awaiting_first_payment_status_code]
+    end
   end
 
   # The dimension that expresses work site or company information.

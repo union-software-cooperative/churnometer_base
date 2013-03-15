@@ -29,18 +29,13 @@ class DatabaseManager
     @db = Db.new(app)
     @app = app
     
-    member_statuses = 
-      [@app.member_paying_status_code, 
-       @app.member_awaiting_first_payment_status_code,
-       @app.member_stopped_paying_status_code] + @app.waiver_statuses
+    member_statuses = @app.all_member_statuses
     
     nonwaiver_statuses = member_statuses - @app.waiver_statuses
     
-    # TODO create configuration option for orange status so uses can arbitrarily decide
-    # What is a warning status and what is an okay status
-    orange_statuses = [@app.member_stopped_paying_status_code] + @app.waiver_statuses
-    green_statuses = member_statuses - orange_statuses 
-       
+    green_statuses = @app.green_member_statuses
+    orange_statuses = member_statuses - green_statuses
+
     @paying_db = @db.quote(@app.member_paying_status_code)
     @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
     @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
