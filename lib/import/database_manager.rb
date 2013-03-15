@@ -902,7 +902,7 @@ class DatabaseManager
             then 1 else 0 end as orangegain_member
         , 0 as orangeloss
         , 0 as orangeloss_nonmember
-        , 0 as orangelossbad_member
+        , 0 as orangeloss_member
         , case when 
             coalesce(newstatus, '') = ANY (#{@orange_db})
             then 1 else 0 end as orangenet
