@@ -7,7 +7,7 @@ select
 		when rtrim(ltrim(coalesce(exitcode, ''))) <> ''	then lower(rtrim(ltrim(coalesce(exitcode, ''))))
 	else 
 		case when 
-			coalesce(members.signal8, 0) > 0 --OR payers.timecreated < DATEADD(y,-42,getdate())
+			(coalesce(members.signal8, 0) > 0 and coalesce(mainlanguage, '') <> '13') OR (coalesce(members.signal8, 0) = 6 and coalesce(mainlanguage, '') = '13')--OR payers.timecreated < DATEADD(y,-42,getdate())
 		then 'stopped' 
 		else 
 			case when payers.memberid is null /* not ever paid */ OR payers.timecreated < members.DateCreated /* or last paid before they were reinstated */
@@ -45,6 +45,7 @@ select
 	, lower(rtrim(ltrim(members.mainlanguage))) as arrears_cycle
 	, lower(rtrim(ltrim(members.EWBNo))) as emptype -- fulltime, partTime, casual
 	, 'asuqld' as branch
+	, lower(rtrim(ltrim(employers.employergroup))) as employer_group
 from
 	members
 	left join employers on members.employer = employers.employerid
@@ -60,5 +61,5 @@ from
 			memberid
 	) as payers on members.memberid = payers.memberid
 where
-	members.memberid <> 0
+	members.memberid <> 0 and employers.employerid not in (0,1) -- just to remove 2 employers who should have no members
 
