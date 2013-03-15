@@ -120,17 +120,21 @@ class ConfigElement
 
   # Raises a BadConfigDataFormatException if the ConfigElement's value isn't one of the given class
   # types, as determined by 'kind_of?'
+  # Returns this element's value.
   def ensure_kindof(*class_types)
     if !class_types.any?{ |kindof| @value.kind_of?(kindof) }
       raise BadConfigDataFormatException.new(self, "Element is of type '#{@value.class}', but it needs to be of type '#{class_types.join(' or ')}'.")
     end
+    @value
   end
 
   # Raises a MissingConfigDataException if the ConfigElement is a hash that doesn't contain the given
   # hash key.
   # It's an error to call this on ConfigElement instances whose values are of types other than Hash.
+  # Returns the key's value.
   def ensure_hashkey(key)
     raise MissingConfigDataException.new(key, self) if !@value.has_key?(key)
+    @value[key]
   end
 
   def has_children?

@@ -94,6 +94,9 @@ class ChurnometerApp
     config().ensure_kindof('waiver_statuses', Array, NilClass)
     validate_email()
     config().ensure_kindof('green_member_statuses', Array, NilClass)
+
+    # Construction will raise an exception if there's an issue.
+    WaterfallChartConfig.from_config_element(config().get_mandatory('waterfall_chart_config'))
   end
 
   # A ConfigFileSet instance.
@@ -236,6 +239,12 @@ class ChurnometerApp
     else
       [member_paying_status_code, member_awaiting_first_payment_status_code]
     end
+  end
+
+  # Returns a hash defining the user's desired configuration for the waterfall chart if given, or
+  # a default chart configuration.
+  def waterfall_chart_config
+    WaterfallChartConfig.from_config_element(config().element('waterfall_chart_config'))
   end
 
   # The dimension that expresses work site or company information.
