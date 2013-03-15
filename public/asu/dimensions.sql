@@ -45,4 +45,3 @@ union all
 select 'col24', ''
 union all 
 select 'col25', ''
-
