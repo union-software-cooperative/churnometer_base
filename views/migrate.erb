@@ -20,8 +20,17 @@
 <h3>Restructure Data</h3>
 
 <% if @yaml_spec.nil? %>
-  <h4>No migration required</h4>
-  <!-- should be possible to reach this block -->
+	<% if @memberfacthelper_migration_required %>
+	  <h4>"memberfacthelper" migration required</h4>
+		<section id="data">
+			<form method="post">
+				<input type="submit" name="action" value="migrate and restart">
+			</form>
+		</section>
+	<% else %>
+	  <h4>No migration required</h4>
+	  <!-- should be possible to reach this block -->
+	<% end %>
 <% else %>
   <h4>Please confirm the changes that will be made</h4>
   <h4>To rename a reporting dimension replace OLDID: DELETE and NEWID: CREATE with OLDID: NEWID</h4>

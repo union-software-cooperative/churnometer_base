@@ -19,6 +19,8 @@ require './lib/settings'
 require 'time'
 require 'pg'
 
+# This class should abstract database calls at as high a level as possible.
+# Currently, the target database is postgresql.
 class Db
 
   attr_reader :host
@@ -44,8 +46,9 @@ class Db
       :user =>      element['user'].value,
       :password =>  @dbpass
     )
-    
-    end
+
+    ensure_app_state_table()
+  end
 
   def close_db
     @conn.finish() if !@conn.nil?
@@ -125,6 +128,33 @@ class Db
   # query string.
   def sql_date(time)
     quote(time.strftime(DateFormatDB))
+  end
+
+  # Writes a piece of application state to the database. 'value' is converted to a string.
+  def set_app_state(key, value)
+    result = ex("update appstate set value = #{quote(value)} where key = #{quote(key)}")
+
+    if result.cmd_tuples == 0
+      ex("insert into appstate (key, value) values (#{quote(key)}, #{quote(value)})")
+    end
+  end
+
+  # Returns nil if no state has yet been defined for the given key.
+  def get_app_state(key)
+    result = ex("select value from appstate where key = #{quote(key)}")
+    if result.ntuples == 0
+      nil
+    else
+      result.values[0][0]
+    end
+  end
+
+protected
+  def ensure_app_state_table
+    sql = <<SQL
+create table if not exists appstate (key varchar, value varchar)
+SQL
+    ex(sql)
   end
 end
 
