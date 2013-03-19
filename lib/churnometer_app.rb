@@ -16,6 +16,7 @@
 #  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
 
 require './lib/dimension'
+require './lib/waterfall_chart_config'
 
 class ChurnometerApp
   # A Dimensions instance containing both custom and inbuilt dimensions.

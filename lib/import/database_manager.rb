@@ -179,14 +179,15 @@ class DatabaseManager
     SQL
   end
   
+  def rebuild_memberfacthelper_sql_ary()
+    ["drop view if exists memberfacthelperquery cascade;",
+     memberfacthelperquery_sql(),
+     memberfacthelper_sql(),
+     updatememberfacthelper_sql()] + rebuild_memberfacthelper_indexes_sql().split($/)
+  end
+
   def rebuild_memberfacthelper_sql()
-    <<-SQL
-      drop view if exists memberfacthelperquery cascade;
-      #{memberfacthelperquery_sql};
-      #{memberfacthelper_sql}
-      #{updatememberfacthelper_sql}
-      #{rebuild_memberfacthelper_indexes_sql}
-    SQL
+    rebuild_memberfacthelper_sql_ary.join($/)
   end
   
   def rebuild()
@@ -1403,6 +1404,12 @@ class DatabaseManager
     end
     sql
   end
+
+  # Returns true if the use of the config of the 'app' passed to this instance would necessitate a
+  # database migration because of a change in the way that the memberfacthelper is generated.
+  def memberfacthelper_migration_required?
+    @db.get_app_state('memberfacthelperquery_source') != memberfacthelperquery_sql()
+  end
   
   def migration_yaml_spec
     m = {}
@@ -1518,7 +1525,7 @@ class DatabaseManager
   # migration_sql_ary: an array of sql statements to execute
   # Raises an exception if a critical error occurred that prevented the migration from succeeding.
   # Returns true on success, or an error string in the case of a recoverable error.
-  def migrate(migration_sql_ary)
+  def migrate(migration_sql_ary, update_memberfacthelper_and_indexes = true)
     begin
       # This method needs to run with async_ex so that other ruby threads can run while the migration
       # operates. However, async_ex blocks other threads (even though it shouldn't) when several SQL
@@ -1530,9 +1537,10 @@ class DatabaseManager
       migration_sql_ary.each { |sql| $stderr.puts sql; db.async_ex(sql) }
 
     # with lots of data memberfacthelper can be impossibly slow to rebuild
-      db.async_ex("select updatememberfacthelper();");
-
-      rebuild_memberfacthelper_indexes_sql().split($/).each { |sql| $stderr.puts sql; db.async_ex(sql); }
+      if update_memberfacthelper_and_indexes
+        db.async_ex("select updatememberfacthelper();");
+        rebuild_memberfacthelper_indexes_sql().split($/).each { |sql| $stderr.puts sql; db.async_ex(sql); }
+      end
       
       db.async_ex("COMMIT TRANSACTION");
     rescue Exception=>e
@@ -1540,6 +1548,8 @@ class DatabaseManager
       db.async_ex("ROLLBACK TRANSACTION");
       raise
     end
+
+    db.set_app_state('memberfacthelperquery_source', memberfacthelperquery_sql())
 
     finalisation_statements = 
       ["vacuum memberfact",

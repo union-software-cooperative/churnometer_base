@@ -426,12 +426,18 @@ class Churnobyl < Sinatra::Base
         testConfig.validate
         dbm = DatabaseManager.new(testConfig)
         @yaml_spec = dbm.migration_yaml_spec
-        if @yaml_spec.nil?
+        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
           File.open("config/config.yaml", 'w') do |f|
             f.write @config
           end
         else
-          session[:flash] = "Need to restructure data before saving config/config.yaml"
+          flash_text = "Need to restructure data before saving config/config.yaml"
+
+          if dbm.memberfacthelper_migration_required?
+            flash_text += " (memberfacthelper requires update)"
+          end
+
+          session[:flash] = flash_text
           session[:new_config] = params['config']
           redirect :migrate
         end
@@ -466,6 +472,7 @@ class Churnobyl < Sinatra::Base
     
     # get the proposed migration, and return it to the user to allow intervention
     @yaml_spec = dbm.migration_yaml_spec
+    @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required?
     erb :migrate
   end
   
@@ -477,17 +484,27 @@ class Churnobyl < Sinatra::Base
     @yaml_spec = params['yaml_spec']
     @config = session[:new_config]
     if @config.nil?
-      session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
+      session[:flash] = "Can't migrate without new config.  Make sure cookies are enabled."
       redirect :config 
     end
+
+    need_full_migration = @yaml_spec.nil? == false
 
     # attempt migration using user supplied spec
     begin 
       new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
+
       dbm = DatabaseManager.new(new_config)
-      migration_spec = dbm.parse_migration(@yaml_spec)
+
+      migration_sql =
+        if need_full_migration
+          migration_spec = dbm.parse_migration(@yaml_spec)
       
-      migration_sql = dbm.migrate_sql(migration_spec)
+          dbm.migrate_sql(migration_spec)
+        else
+          dbm.rebuild_memberfacthelper_sql_ary
+        end
+
       raise "User specified script only" if params['script_only'] == 'true'
 
       stream do |io|
@@ -509,7 +526,7 @@ class Churnobyl < Sinatra::Base
         migrate_result = true
 
         begin
-          migrate_result = dbm.migrate(migration_sql) # this can take some serious time
+          migrate_result = dbm.migrate(migration_sql, need_full_migration == true) # this can take some serious time
         rescue StandardError => err
           error = err.message + ". Diagnostic sql: #{migration_sql.join($/)}"
         rescue Psych::SyntaxError => err
