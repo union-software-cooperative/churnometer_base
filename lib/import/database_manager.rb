@@ -1411,9 +1411,8 @@ class DatabaseManager
     @db.get_app_state('memberfacthelperquery_source') != memberfacthelperquery_sql()
   end
   
-  def migration_yaml_spec
+  def migration_spec_all
     m = {}
-    result = nil
     
     # retreive current db schema, action = delete by default
     columns = db.ex("select column_name from information_schema.columns where table_name='membersourceprev';")
@@ -1432,8 +1431,17 @@ class DatabaseManager
         m[d.column_base_name] = 'CREATE' if d.column_base_name != 'userid'
       end
     end
-        
-    result = m.to_yaml() if (m.count{ |k,v| v == 'DELETE' || v == 'CREATE' } > 0)
+
+    m
+  end
+
+  def migration_yaml_spec
+    all = migration_spec_all()
+    if (all.count{ |k,v| v == 'DELETE' || v == 'CREATE' } > 0)
+      all.to_yaml
+    else
+      nil
+    end
   end
   
   def parse_migration(yaml_spec)
@@ -1458,18 +1466,19 @@ class DatabaseManager
   def migrate_nuw_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
-    <<-SQL
-      -- nuw migration
-      #{rebuild_from_scratch_without_indexes_sql()}
-      -- start of nuw data migration
-      #{migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', statusstaffid') }
-      #{migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', newstatusstaffid') }
-      #{migrate_nuw_transactionfact_sql()}
-      #{migrate_nuw_transactionsourceprev_sql()}
-      #{migrate_nuw_displaytext_sql()}
-      #{migrate_dimstart_sql(migration_spec)}
-      #{rebuild_most_indexes_sql()}
-      insert into dimstart (dimension, startdate)  select 'userid', '2012-04-27' where not exists (select 1 from dimstart where dimension = 'userid');
+    [ '-- nuw migration',
+      rebuild_from_scratch_without_indexes_sql(),
+      '-- start of nuw data migration',
+      migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', statusstaffid'),
+      migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', newstatusstaffid'),
+      migrate_nuw_transactionfact_sql(),
+      migrate_nuw_transactionsourceprev_sql(),
+      migrate_nuw_displaytext_sql(),
+      migrate_dimstart_sql(migration_spec)
+    ] + rebuild_most_indexes_sql().split($/) +
+    [
+      <<-SQL
+			insert into dimstart (dimension, startdate)  select 'userid', '2012-04-27' where not exists (select 1 from dimstart where dimension = 'userid');
       update displaytext set attribute = 'userid' where attribute = 'statusstaffid';
       
       update memberfacthelper set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
@@ -1492,22 +1501,21 @@ class DatabaseManager
         d.attribute = 'memberid';
       
       create index memberid_detail_id_idx on memberid_detail (id);
-          
     SQL
+      ]
   end
   
     def migrate_asu_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
-    <<-SQL
-      -- asu migration
-      #{migrate_rebuild_without_indexes_sql()}
-      -- start of migration
-      #{migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', null') }
-      #{migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', null') }
-      #{migrate_dimstart_sql(migration_spec)}
-      #{rebuild_most_indexes_sql()}
-    SQL
+    [
+      '-- asu migration',
+      migrate_rebuild_without_indexes_sql(),
+      '-- start of migration',
+      migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', null'),
+      migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', null'),
+      migrate_dimstart_sql(migration_spec)
+    ] + rebuild_most_indexes_sql().split($/)
   end
   
   # Returns an array of sql statements.
@@ -1516,8 +1524,8 @@ class DatabaseManager
     
 #      -- regular migration
       [migrate_rebuild_without_indexes_sql(),
-      migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', null'),
-      migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', null'),
+      migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', userid'),
+      migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', userid'),
       migrate_dimstart_sql(migration_spec)
       ] + rebuild_most_indexes_sql().split($/)
   end
