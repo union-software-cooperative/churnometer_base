@@ -59,11 +59,32 @@ class ChurnometerApp
     if site_config_io.nil?
       yaml = YAML.load_file(site_config_filename())
       if yaml != false && yaml['use_regression_config'] == true
-        site_config_io = File.new('./spec/config/config_regression.yaml')
+        @regression_config_override = true
+        site_config_io = File.new(regression_config_filename())
       end
     end
-    
+
+    @config_stream_override = 
+      !@regression_config_override && site_config_io.nil? == false || config_io.nil? == false
+
     reload_config(site_config_io, config_io)
+  end
+
+  # If the "use_regression_config" option is set, then returns the regression config. Otherwise,
+  # returns the regular config filename.
+  # If a stream has been used to override the main config, then nil is returned.
+  def active_master_config_filename
+    if @config_stream_override
+      nil
+    elsif @regression_config_override
+      regression_config_filename()
+    else
+      config_filename()
+    end
+  end
+
+  def regression_config_filename
+    './spec/config/config_regression.yaml'
   end
 
   # Uses the given IO instance to reinitialise config data from a yaml definition.

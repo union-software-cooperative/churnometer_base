@@ -402,15 +402,17 @@ class Churnobyl < Sinatra::Base
     
     @flash = session[:flash]
     session[:flash] = nil
-    
+
+    filename = app().active_master_config_filename
+
     @config = ""
-    File.open("config/config.yaml", 'r') do |f|
+    File.open(filename, 'r') do |f|
       while line=f.gets
         @config+=line
       end
     end
     
-    erb :config
+    erb :config, :locals => {:filename => filename}
   end
   
   post '/config' do
@@ -418,6 +420,9 @@ class Churnobyl < Sinatra::Base
     
     @flash = nil
     @config = params['config']
+
+    filename = app().active_master_config_filename
+
     begin
       
       if ! (@config.nil? || @config.empty?) 
@@ -427,11 +432,11 @@ class Churnobyl < Sinatra::Base
         dbm = DatabaseManager.new(testConfig)
         @yaml_spec = dbm.migration_yaml_spec
         if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
-          File.open("config/config.yaml", 'w') do |f|
+          File.open(filename, 'w') do |f|
             f.write @config
           end
         else
-          flash_text = "Need to restructure data before saving config/config.yaml"
+          flash_text = "Need to restructure data before saving #{filename}"
 
           if dbm.memberfacthelper_migration_required?
             flash_text += " (memberfacthelper requires update)"
@@ -445,14 +450,14 @@ class Churnobyl < Sinatra::Base
         raise "empty config!"
       end
     rescue StandardError => err
-      @flash = "Failed to save config/config.yaml: " + err.message
+      @flash = "Failed to save #{filename}: " + err.message
     rescue Psych::SyntaxError => err
-      @flash = "Failed to save config/config.yaml: " + err.message
+      @flash = "Failed to save #{filename}: " + err.message
     end
     
-    return erb :config if !@flash.nil?
+    return erb :config, :locals => {:filename => filename} if !@flash.nil?
     
-    session[:flash] = "Successfully saved config/config.yaml "
+    session[:flash] = "Successfully saved #{filename}"
     redirect '/restart?redirect=/config'
   end
 
@@ -551,16 +556,16 @@ class Churnobyl < Sinatra::Base
           
           # If we made it this far, save the new config
           begin
-            File.open("config/config.yaml", 'w') do |f|
+            File.open(app().active_master_config_filename, 'w') do |f|
               f.write @config
             end
           rescue StandardError => err
-            error = "Successfully migrated database but failed to save config/config.yaml: " + err.message
+            error = "Successfully migrated database but failed to save #{app().active_master_config_filename}: " + err.message
           end
           
           if !error.nil?
             io << "<div>An error occurred while writing the config file: <pre>#{h(error).gsub('\n', '</br>')}</pre></div>"
-            io << "<div>Please save the following config data before leaving this page:</div>"
+            io << "<div>Please record (copy and paste) the following config data before leaving this page:</div>"
             io << "<pre>#{h @config}</pre>"
             io << "<a href='/migrate'>Back to config page.</a>"
           else
