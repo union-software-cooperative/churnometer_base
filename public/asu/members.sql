@@ -56,6 +56,7 @@ end as status
 , lower(rtrim(ltrim(employers.employername))) as employer_name
 , lower(rtrim(ltrim(employers.division))) as division
 , lower(rtrim(ltrim(employers.sector))) as sector
+, lower(rtrim(ltrim(sex))) as sex
 
 -- hsr status
 , case 
