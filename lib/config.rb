@@ -120,21 +120,25 @@ class ConfigElement
 
   # Raises a BadConfigDataFormatException if the ConfigElement's value isn't one of the given class
   # types, as determined by 'kind_of?'
+  # Returns this element's value.
   def ensure_kindof(*class_types)
     if !class_types.any?{ |kindof| @value.kind_of?(kindof) }
       raise BadConfigDataFormatException.new(self, "Element is of type '#{@value.class}', but it needs to be of type '#{class_types.join(' or ')}'.")
     end
+    @value
   end
 
   # Raises a MissingConfigDataException if the ConfigElement is a hash that doesn't contain the given
   # hash key.
   # It's an error to call this on ConfigElement instances whose values are of types other than Hash.
+  # Returns the key's value.
   def ensure_hashkey(key)
     raise MissingConfigDataException.new(key, self) if !@value.has_key?(key)
+    @value[key]
   end
 
   def has_children?
-    @value.kind_of?(Hash)
+    @value.kind_of?(Hash) || @value.kind_of?(Array)
   end
 
   # Returns one of the child ConfigElements of this element.
@@ -254,7 +258,7 @@ class ConfigFileSet
       nil
     else
       if e.has_children?
-        raise BadConfigDataFormatException.new("The element '#{element_id}' has children. It must be accessed via the 'element' method.", self)
+        raise BadConfigDataFormatException.new(e, "The element '#{element_id}' has children. It must be accessed via the 'element' method.")
       end
 
       e.value

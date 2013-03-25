@@ -402,15 +402,17 @@ class Churnobyl < Sinatra::Base
     
     @flash = session[:flash]
     session[:flash] = nil
-    
+
+    filename = app().active_master_config_filename
+
     @config = ""
-    File.open("config/config.yaml", 'r') do |f|
+    File.open(filename, 'r') do |f|
       while line=f.gets
         @config+=line
       end
     end
     
-    erb :config
+    erb :config, :locals => {:filename => filename}
   end
   
   post '/config' do
@@ -418,6 +420,9 @@ class Churnobyl < Sinatra::Base
     
     @flash = nil
     @config = params['config']
+
+    filename = app().active_master_config_filename
+
     begin
       
       if ! (@config.nil? || @config.empty?) 
@@ -426,12 +431,18 @@ class Churnobyl < Sinatra::Base
         testConfig.validate
         dbm = DatabaseManager.new(testConfig)
         @yaml_spec = dbm.migration_yaml_spec
-        if @yaml_spec.nil?
-          File.open("config/config.yaml", 'w') do |f|
+        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
+          File.open(filename, 'w') do |f|
             f.write @config
           end
         else
-          session[:flash] = "Need to restructure data before saving config/config.yaml"
+          flash_text = "Need to restructure data before saving #{filename}"
+
+          if dbm.memberfacthelper_migration_required?
+            flash_text += " (memberfacthelper requires update)"
+          end
+
+          session[:flash] = flash_text
           session[:new_config] = params['config']
           redirect :migrate
         end
@@ -439,14 +450,14 @@ class Churnobyl < Sinatra::Base
         raise "empty config!"
       end
     rescue StandardError => err
-      @flash = "Failed to save config/config.yaml: " + err.message
+      @flash = "Failed to save #{filename}: " + err.message
     rescue Psych::SyntaxError => err
-      @flash = "Failed to save config/config.yaml: " + err.message
+      @flash = "Failed to save #{filename}: " + err.message
     end
     
-    return erb :config if !@flash.nil?
+    return erb :config, :locals => {:filename => filename} if !@flash.nil?
     
-    session[:flash] = "Successfully saved config/config.yaml "
+    session[:flash] = "Successfully saved #{filename}"
     redirect '/restart?redirect=/config'
   end
 
@@ -466,6 +477,7 @@ class Churnobyl < Sinatra::Base
     
     # get the proposed migration, and return it to the user to allow intervention
     @yaml_spec = dbm.migration_yaml_spec
+    @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required?
     erb :migrate
   end
   
@@ -477,84 +489,97 @@ class Churnobyl < Sinatra::Base
     @yaml_spec = params['yaml_spec']
     @config = session[:new_config]
     if @config.nil?
-      session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
+      session[:flash] = "Can't migrate without new config.  Make sure cookies are enabled."
       redirect :config 
     end
+
+    need_full_migration = @yaml_spec.nil? == false
 
     # attempt migration using user supplied spec
     begin 
       new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
+
       dbm = DatabaseManager.new(new_config)
-      migration_spec = dbm.parse_migration(@yaml_spec)
+
+      migration_sql =
+        if need_full_migration
+          migration_spec = dbm.parse_migration(@yaml_spec)
       
-      migration_sql = dbm.migrate_sql(migration_spec)
-      raise "User specified script only" if params['script_only'] == 'true'
-
-      stream do |io|
-        thread = nil
-        error = nil
-
-        io << "<html><head><title>Churnometer migration in progress.</title></head><body>"
-
-        thread = Thread.new do
-
-            io << "<div><span>Please wait</span></span>"
-          begin
-            io << " . "
-            sleep 1
-          end while !Thread.current[:finished]
-          io << "</span>"
-        end.run
-
-        migrate_result = true
-
-        begin
-          migrate_result = dbm.migrate(migration_sql) # this can take some serious time
-        rescue StandardError => err
-          error = err.message + ". Diagnostic sql: #{migration_sql.join($/)}"
-        rescue Psych::SyntaxError => err
-          error = err.message
-        ensure
-          thread[:finished] = true if !thread.nil?
-        end
-
-        io << "</div>"
-
-        if migrate_result != true
-          io << "<div>A non-fatal error occurred during the migration:</div>"
-          io << "<pre>#{h(migrate_result).gsub('\n', '</br>')}</pre>"
-        end
-
-        if !error.nil?
-          io << "<div>The migration failed with the following error:</div>"
-          io << "<pre>#{h(error).gsub('\n', '</br>')}</pre>"
-          io << "<div><a href='/migrate'>Back to migration page.</a></div>"
+          dbm.migrate_sql(migration_spec)
         else
-        	io << "<div>Migration successful.</div>\n"
-          
-          # If we made it this far, save the new config
-          begin
-            File.open("config/config.yaml", 'w') do |f|
-              f.write @config
-            end
-          rescue StandardError => err
-            error = "Successfully migrated database but failed to save config/config.yaml: " + err.message
-          end
-          
-          if !error.nil?
-            io << "<div>An error occurred while writing the config file: <pre>#{h(error).gsub('\n', '</br>')}</pre></div>"
-            io << "<div>Please save the following config data before leaving this page:</div>"
-            io << "<pre>#{h @config}</pre>"
-            io << "<a href='/migrate'>Back to config page.</a>"
-          else
-            io << "<div>Successfully restructured database and saved config/config.yaml</div>"
-            io << "<div>The server must be restarted now.</div>"
-            io << "<div><a href='/restart?redirect=/config'>Click here to restart server.</a></div>"
-          end
+          dbm.rebuild_memberfacthelper_sql_ary
         end
 
-        io << "</body></html>"
-      end
+      #migration_sql = dbm.migrate_asu_sql(dbm.parse_migration(dbm.migration_spec_all.to_yaml))
+
+      if params['script_only'] == 'true'
+        "<html><head><pre>User specified script only\n\n#{migration_sql.join($/)}</pre></head></html>"
+      else
+        stream do |io|
+          thread = nil
+          error = nil
+
+          io << "<html><head><title>Churnometer migration in progress.</title></head><body>"
+
+          thread = Thread.new do
+            io << "<div><span>Please wait</span></span>"
+            begin
+              io << " . "
+              sleep 1
+            end while !Thread.current[:finished]
+            io << "</span>"
+          end.run
+
+          migrate_result = true
+
+          begin
+            migrate_result = dbm.migrate(migration_sql, need_full_migration == true) # this can take some serious time
+          rescue StandardError => err
+            error = err.message + ". Diagnostic sql: #{migration_sql.join($/)}"
+          rescue Psych::SyntaxError => err
+            error = err.message
+          ensure
+            thread[:finished] = true if !thread.nil?
+          end
+
+          io << "</div>"
+
+          if migrate_result != true
+            io << "<div>A non-fatal error occurred during the migration:</div>"
+            io << "<pre>#{h(migrate_result).gsub('\n', '</br>')}</pre>"
+          end
+
+          if !error.nil?
+            io << "<div>The migration failed with the following error:</div>"
+            io << "<pre>#{h(error).gsub('\n', '</br>')}</pre>"
+            io << "<div><a href='/migrate'>Back to migration page.</a></div>"
+          else
+            io << "<div>Migration successful.</div>\n"
+            
+            # If we made it this far, save the new config
+            begin
+              File.open(app().active_master_config_filename, 'w') do |f|
+                f.write @config
+              end
+            rescue StandardError => err
+              error = "Successfully migrated database but failed to save #{app().active_master_config_filename}: " + err.message
+            end
+            
+            if !error.nil?
+              io << "<div>An error occurred while writing the config file: <pre>#{h(error).gsub('\n', '</br>')}</pre></div>"
+              io << "<div>Please record (copy and paste) the following config data before leaving this page:</div>"
+              io << "<pre>#{h @config}</pre>"
+              io << "<a href='/migrate'>Back to config page.</a>"
+            else
+              io << "<div>Successfully restructured database and saved config/config.yaml</div>"
+              io << "<div>The server must be restarted now.</div>"
+              io << "<div><a href='/restart?redirect=/config'>Click here to restart server.</a></div>"
+            end
+          end
+
+          io << "</body></html>"
+        end
+	    end
     end
   end
 
