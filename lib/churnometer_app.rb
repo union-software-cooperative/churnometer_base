@@ -16,6 +16,7 @@
 #  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
 
 require './lib/dimension'
+require './lib/waterfall_chart_config'
 
 class ChurnometerApp
   # A Dimensions instance containing both custom and inbuilt dimensions.
@@ -58,11 +59,32 @@ class ChurnometerApp
     if site_config_io.nil?
       yaml = YAML.load_file(site_config_filename())
       if yaml != false && yaml['use_regression_config'] == true
-        site_config_io = File.new('./spec/config/config_regression.yaml')
+        @regression_config_override = true
+        site_config_io = File.new(regression_config_filename())
       end
     end
-    
+
+    @config_stream_override = 
+      !@regression_config_override && site_config_io.nil? == false || config_io.nil? == false
+
     reload_config(site_config_io, config_io)
+  end
+
+  # If the "use_regression_config" option is set, then returns the regression config. Otherwise,
+  # returns the regular config filename.
+  # If a stream has been used to override the main config, then nil is returned.
+  def active_master_config_filename
+    if @config_stream_override
+      nil
+    elsif @regression_config_override
+      regression_config_filename()
+    else
+      config_filename()
+    end
+  end
+
+  def regression_config_filename
+    './spec/config/config_regression.yaml'
   end
 
   # Uses the given IO instance to reinitialise config data from a yaml definition.
@@ -93,6 +115,10 @@ class ChurnometerApp
     application_start_date()
     config().ensure_kindof('waiver_statuses', Array, NilClass)
     validate_email()
+    config().ensure_kindof('green_member_statuses', Array, NilClass)
+
+    # Construction will raise an exception if there's an issue.
+    WaterfallChartConfig.from_config_element(config().get_mandatory('waterfall_chart_config'))
   end
 
   # A ConfigFileSet instance.
@@ -216,6 +242,31 @@ class ChurnometerApp
 
   def member_stopped_paying_status_code
     config().get_mandatory('member_stopped_paying_status_code').value
+  end
+
+  # Returns a list of every valid status code that a member can be assigned.
+  def all_member_statuses
+    result = [member_paying_status_code(), 
+              member_awaiting_first_payment_status_code(),
+              member_stopped_paying_status_code()]
+    result = result | waiver_statuses()
+    result = result | green_member_statuses()
+    result
+  end
+
+  # Returns the statuses that are used to construct the green bar in the waterfall chart.
+  def green_member_statuses
+    if config().element('green_member_statuses').value.nil? == false
+      config().element('green_member_statuses').value.collect { |e| e.value }
+    else
+      [member_paying_status_code, member_awaiting_first_payment_status_code]
+    end
+  end
+
+  # Returns a hash defining the user's desired configuration for the waterfall chart if given, or
+  # a default chart configuration.
+  def waterfall_chart_config
+    WaterfallChartConfig.from_config_element(config().element('waterfall_chart_config'))
   end
 
   # The dimension that expresses work site or company information.
