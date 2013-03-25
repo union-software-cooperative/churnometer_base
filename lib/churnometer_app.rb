@@ -233,15 +233,21 @@ class ChurnometerApp
   end
 
   def member_paying_status_code
-    config().get_mandatory('member_paying_status_code').value
+    element = config().get_mandatory('member_paying_status_code')
+    element.ensure_kindof(String)
+    element.value
   end
 
   def member_awaiting_first_payment_status_code
-    config().get_mandatory('member_awaiting_first_payment_status_code').value
+    element = config().get_mandatory('member_awaiting_first_payment_status_code')
+    element.ensure_kindof(String)
+    element.value
   end
 
   def member_stopped_paying_status_code
-    config().get_mandatory('member_stopped_paying_status_code').value
+    element = config().get_mandatory('member_stopped_paying_status_code')
+    element.ensure_kindof(String)
+    element.value
   end
 
   # Returns a list of every valid status code that a member can be assigned.
@@ -250,7 +256,7 @@ class ChurnometerApp
               member_awaiting_first_payment_status_code(),
               member_stopped_paying_status_code()]
     result = result | waiver_statuses()
-    result = result | green_member_statuses()
+    #result = result | green_member_statuses()
     result
   end
 

@@ -2,9 +2,9 @@ application_start_date: 2011-8-14
 use_new_query_generation_method: true
 work_site_dimension_id: companyid
 default_groupby_dimension_id: branchid
-member_paying_status_code: 1
-member_awaiting_first_payment_status_code: 14
-member_stopped_paying_status_code: 11
+member_paying_status_code: '1'
+member_awaiting_first_payment_status_code: '14'
+member_stopped_paying_status_code: '11'
 waiver_statuses:
   - '5'
   - '10'
@@ -458,3 +458,4 @@ waterfall_chart_config:
   loss_label: exited
   other_gain_label: retained
   other_loss_label: problems
+                
