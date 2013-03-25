@@ -32,71 +32,45 @@ green_member_statuses:
   - a1p
   - paying
 dimensions:
-  - id: lead
-    name: Lead
-  - id: org
-    name: Organiser
-  - id: region
-    name: Region
-  - id: division
-    name: Division
-  - id: section
-    name: Section
-  - id: department
-    name: Department
-  - id: floor
-    name: Floor
+  - id: branch
+    name: Branch
+  - id: organiser
+    name: Organiser (Servicing)
+  - id: organiser2
+    name: Organiser (Growth)
   - id: locale
     name: Location
-  - id: employer
+  - id: employer_name
     name: Employer
-  - id: industry
-    name: Industry
+  - id: division
+    name: Division
+  - id: sector
+    name: Sector
+  - id: hsr
+    name: HSR
+  - id: delegate
+    name: Delegate
   - id: pay_method
     name: Pay Method
-  - id: charge_scale
-    name: Charge Scale
+  - id: delegate_training_intermediate
+    name: Delegate Training (int)
+  - id: delegate_training_advanced
+    name: Delegate Training (adv)
   - id: age_group
     name: Age Group
   - id: gender
     name: Gender
-  - id: supporter_type
-    name: Supporter Type
+  - id: recruiter
+    name: Recruiter
   - id: union_role
     name: Union Role
-  - id: signal8
-    name: Stopped Paying - Follow up
-    roles:
-      - staff
-      - lead
-      - dev
-  - id: arrears_cycle
-    name: Stopped Paying - Cycle
-    roles:
-      - staff
-      - lead
-      - dev
-  - id: emptype
-    name: Employment Type
-  - id: branch
-    name: ASU
-  - id: employer_group
-    name: Employer Group
 drilldown_order:
-  branch: lead
-  lead: org
+  branch: org
+  division: sector
   org: employer
+  org2: employer
   employer: locale
   locale: department 
-  department: section
-  industry: employer
-  pay_method: charge_scale
-  charge_scale: pay_method
-  signal8: pay_method
-  arrears_cycle: signal8
-  emptype: pay_method
-  gender: union_role
-  union_role: gender
 summary_data_tables:
     summary:
         display_name: Summary
