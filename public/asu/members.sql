@@ -15,29 +15,46 @@ with training_periods_map as
         unionrole = 'DELE' 
         and getdate() >= startdate and (enddate is null or enddate < getdate())
 )
+, q as
+(
+
 select
 
 members.memberid
 , 
 case 
---    when ChargeScale = 'life' then 'life'
-    when employer.industry = 'NON' then 'nonvoter'
-    when PayMethod = 'stop' then lower(rtrim(ltrim(coalesce(members.status, 'nofee'))))
+    when employers.division = 'NON' then 'nonvoter'
+	/* exited */
     when rtrim(ltrim(coalesce(exitcode, ''))) <> '' then lower(rtrim(ltrim(coalesce(exitcode, ''))))
+	/* stopped paying */
+    when members.paymethod = 'STOP'
+	  or members.directdebitcycle = 'DE' /* de = direct debit declined */
+	  then 'stop'
+	/* member is on waiver if 'status' is anything other than 'financial' or 'workcover' */
+    when rtrim(ltrim(coalesce(members.status, ''))) <> '' 
+	  and members.status <> 'FINAN'
+	  and members.status <> 'WORK'
+	  then lower(rtrim(ltrim(coalesce(members.status, ''))))
 else 
-    case when payers.memberid is null /* not ever paid */ OR payers.timecreated < members.DateCreated /* or last paid before they were reinstated */
-    /* don't count people who are resigned, then reinstated immediately as a1p - they are probably dd people making their last payment */
-    then case when datediff(d,dateexited,DateCreated) <= 21 then 'paying' else 'a1p' end
+    case when payers.memberid is null /* not ever paid */ 
+      OR payers.timecreated < members.DateCreated /* or last paid before they were reinstated */
+    then 
+	  /* don't count people who are resigned, then reinstated immediately as a1p - 
+         they are probably dd people making their last payment */
+	  case when datediff(d,dateexited,DateCreated) <= 21 
+	    then 'paying' 
+	    else 'a1p' 
+	  end
     else 'paying'
     end
 end as status
 
 , lower(rtrim(ltrim(employers.unionbranch))) as branch
-, lower(rtrim(ltrim(employers.organiser))) as servicing_org
-, lower(rtrim(ltrim(employers.organiser2 ))) as campaign_org
+, lower(rtrim(ltrim(employers.organiser))) as organiser
+, lower(rtrim(ltrim(employers.organiser2))) as organiser2
 , lower(rtrim(ltrim(members.location))) as locale -- location is a postgres reserved word
 , lower(rtrim(ltrim(employers.employername))) as employer_name
-, lower(rtrim(ltrim(employers.division))) as industry
+, lower(rtrim(ltrim(employers.division))) as division
 , lower(rtrim(ltrim(employers.sector))) as sector
 
 -- hsr status
@@ -81,7 +98,7 @@ end as status
 
 -- prd status
 , case
-  when members.paymethod in ('PENDING', 'PRD', 'STOP', 'PRM') then
+  when members.paymethod in ('PENDING', 'PRD', 'STOP', 'PRM') then /* PRM = casual payroll */
       'prd'
   else
       lower(rtrim(ltrim(members.paymethod)))
@@ -125,20 +142,20 @@ end as status
 -- age group
 , case
     when members.dateofbirth is null then null
-    when datediff(yy , members.dateofbirth, getdate()) < 25  then 'under 25'
-    when datediff(yy , members.dateofbirth, getdate()) < 35  then 'under 35'
-    when datediff(yy , members.dateofbirth, getdate()) < 45  then 'under 45'    
-    when datediff(yy , members.dateofbirth, getdate()) < 55  then 'under 55'
-    when datediff(yy , members.dateofbirth, getdate()) < 65  then 'under 65'
-    when datediff(yy , members.dateofbirth, getdate()) < 75  then 'under 75'
-    when datediff(yy , members.dateofbirth, getdate()) < 85  then 'under 85'
-    when datediff(yy , members.dateofbirth, getdate()) < 95  then 'under 95'
-    when datediff(yy , members.dateofbirth, getdate()) >= 95  then '95 and older'
+    when datediff(yy, members.dateofbirth, getdate()) < 25  then 'under 25'
+    when datediff(yy, members.dateofbirth, getdate()) < 35  then 'under 35'
+    when datediff(yy, members.dateofbirth, getdate()) < 45  then 'under 45'    
+    when datediff(yy, members.dateofbirth, getdate()) < 55  then 'under 55'
+    when datediff(yy, members.dateofbirth, getdate()) < 65  then 'under 65'
+    when datediff(yy, members.dateofbirth, getdate()) < 75  then 'under 75'
+    when datediff(yy, members.dateofbirth, getdate()) < 85  then 'under 85'
+    when datediff(yy, members.dateofbirth, getdate()) < 95  then 'under 95'
+    when datediff(yy, members.dateofbirth, getdate()) >= 95  then '95 and older'
 end as age_group
 
 -- Signals 3, 4 and 8 specify different recruiting entities. Only one of each signal should be set at one time, otherwise they are placed in the 'multiple assignment' category
 , case
-  when members.signal3 <> 0 and members.signal4 <> 0 or members.signal4 <> 0 and members.signal8 <> 0 or members.signal3 <> 0 and members.signal8 <> 0 then 'multiple assignment'
+  when members.signal3 <> 0 and members.signal4 <> 0 or members.signal4 <> 0 and members.signal8 <> 0 or members.signal3 <> 0 and members.signal8 <> 0 then 'error'
   when members.signal3 = 1 then '3_1'
   when members.signal3 = 2 then '3_2'
   when members.signal3 = 3 then '3_3'
@@ -177,4 +194,7 @@ from
             memberid
     ) as payers on members.memberid = payers.memberid
 where
-    members.memberid <> 0 and employers.employerid not in (0,1) -- just to remove 2 employers who should have no members
+    members.memberid <> 0 and employers.employerid <> 0
+
+)
+select * from q
