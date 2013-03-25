@@ -1,38 +1,79 @@
-<h2 class="print_only">Graph</h2>
+<h3 id="waterfalltitle"><%= model.title %></h3>
+<div id="waterfall_tip" class="tooltip">
+  <pre><%=h model.chart_config[:description] %></pre>
+</div>
+
+<script type="text/javascript">
+	$("#waterfalltitle").tooltip({
+		tip: '#waterfall_tip',
+		position: 'top center',
+		delay: 0,
+		relative: true
+	});
+</script>
+
+
 <div id="chart">
-	
-	<table id="waterfall">
-		<caption>Paying gain vs loss</caption>
+  <table id="waterfall">
+		<caption id="waterfall_caption"><%= model.title %></caption>  
 		<thead>
 			<tr>
 				<th>Item</th>
 				<th>Change</th>
-	            <th>URL</th>
+	      <th>Other</th>
+	      <th>Combined</th>
+	      <th>Name URL</th>
+	      <th>Change URL</th>
+	      <th>Other URL</th>
+	      <th>Combined URL</th>
 			</tr>
-
 		</thead>
 		<tbody>
 			    <% model.waterfallItems.each do |i| %>
 	               <tr>
-	                    <td><%= i.name %> gain</td>
+	                    <td><%= i.name %></td>
 	                    <td><%= i.gain %></td>
-	                    <td><%= i.link %></td>
+	                    <td><%= i.other_gain %></td>
+	                    <td><%= i.combined_gain %></td>
+	                    <td><%= i.name_link %></td>
+	                    <td><%= i.gain_link %></td>
+	                    <td><%= i.other_gain_link %></td>
+	                    <td><%= i.combined_gain_link %></td>
 	                </tr>
 	                <tr>
-	                    <td><%= i.name %> loss</td>
+	                    <td><%= i.name %></td>
 	                    <td><%= i.loss %></td>
-	                    <td><%= i.link %></td>
+	                    <td><%= i.other_loss %></td>
+	                    <td><%= i.combined_loss %></td>
+	                    <td><%= i.name_link %></td>
+	                    <td><%= i.loss_link %></td>
+	                    <td><%= i.other_loss_link %></td>
+	                    <td><%= i.combined_loss_link %></td>
 	                </tr>
 	            <% end %>
 			<tr>
 				<td>Net</td>
 				<td><%= model.waterfallTotal %></td>
 				<td></td>
-		  	</tr>
+		  	<td></td>
+		  	<td></td>
+		  	<td></td>
+		  	<td></td>
+		  </tr>
 		</tbody>			
 	</table>
 </div>
 
+	
 <script type="text/javascript">
-    $("#waterfall").charts({ charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#336699", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
+    $("#waterfall").charts({ sum_other: <%= model.sum_other %>, gain_label: "<%= model.chart_config[:gain_label] %>", other_gain_label: "<%= model.chart_config[:other_gain_label] %>", loss_label: "<%= model.chart_config[:loss_label] %>", other_loss_label: "<%= model.chart_config[:other_loss_label] %>", charttype: "waterfall", direction: "vertical", labelcolumn: 0, valuecolumn: 1, chartbgcolours: ["#336699", "#669933", "993333"], chartfgcolours: ["#FFFFFF", "#FFFFFF", "#FFFFFF"] });
+    
+    $("#waterfalltitle").tooltip({
+		  tip: '#waterfalltip',
+		  position: 'center right',
+		  offset: [10, 10],
+		  delay: 0,
+		  relative: true
+	  });	
+
 </script>

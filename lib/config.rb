@@ -166,7 +166,9 @@ class ConfigFile
   attr_reader :filename
 
   # file: A stream or the filename of the config file
-  def initialize(file)
+  # file_description: If a filename was not given for 'file', then this parameter must describe
+  #		the source of the config data.
+  def initialize(file, file_description=nil)
     
     @io = 
       if file.is_a?(String)
@@ -182,7 +184,8 @@ class ConfigFile
 
         File.new(@filename)
       else
-        @filename = file.class()
+        raise "file_description must be provided if not supplying a filename." if file_description.nil?
+        @filename = file_description
         file
       end
 
@@ -194,6 +197,11 @@ class ConfigFile
     yaml.gsub!("\t", '    ')
     
     config_hash = YAML.load(yaml)
+
+    # This will be true in the case of an empty file.
+    if config_hash == false
+      config_hash = {}
+    end
 
     raise BadConfigDataFormatException.new("The config file definition must result in a hash, but the type is '#{config_hash.class}'", self) if !config_hash.kind_of?(Hash)
     
@@ -215,6 +223,10 @@ class ConfigFile
   def has_element?(element_id)
     @values.has_key?(element_id)
   end
+
+  def to_s
+    @filename
+  end
 end
 
 # Compiles a single set of queryable config data from multiple config files.
@@ -225,7 +237,7 @@ class ConfigFileSet
   end
 
   def add(config_file)
-    @config_files << config_file
+    @config_files.insert(0, config_file)
   end
   
   def filenames
@@ -259,6 +271,18 @@ class ConfigFileSet
     end
     
     nil
+  end
+
+  # Gets the first element of the given id from the file set, and throws an exception if it's missing
+  # or not of the required type.
+  def ensure_kindof(element_id, *class_types)
+    element = element(element_id)
+
+    if element.nil?
+      raise MissingConfigDataException.new(element_id)
+    end
+
+    element.ensure_kindof(*class_types)
   end
 
   # As for 'element', but raises a MissingConfigDataException if the element id isn't found.

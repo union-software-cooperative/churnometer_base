@@ -95,6 +95,10 @@ class Churnobyl < Sinatra::Base
     true
   end
 
+  def testing?
+    false
+  end
+
   # Returns the single ChurnometerApp instance used throughout the app's execution, across requests.
   def self.server_lifetime_churnometer_app
     # The instance is created lazily, so several threads may attempt to create it at the same time if
@@ -133,8 +137,8 @@ class Churnobyl < Sinatra::Base
       @error = env['sinatra.error']
       if app().email_on_error?
         Pony.mail({
-                    :to   => app().config.element('email_errors').value['to'].value,
-                    :from => app().config.element('email_errors').value['from'].value,
+                    :to   => app().email_on_error_from,
+                    :from => app().email_on_error_to,
                     :subject => "[Error] #{@error.message}",
                     :body => erb(:'errors/error_email', layout: false)
                   })
@@ -157,12 +161,13 @@ class Churnobyl < Sinatra::Base
   
   after '/' do
     log
-    @cr.close_db() if !@cr.nil? 
+    @cr.close_db() if !@cr.nil?
+    @cr = nil if testing?
   end
   
   after '/import' do
     log
-    @ip.close_db() if !ip.nil?
+    @ip.close_db() unless @ip.nil?
   end
 
   def log
@@ -182,7 +187,7 @@ class Churnobyl < Sinatra::Base
 
   get '/' do
     if reload_config_on_every_request?
-      app().reload_config(self.class.churnometer_app_config_io(), self.class.churnometer_app_config_io_desc())
+      app().reload_config(self.class.churnometer_app_site_config_io(), self.class.churnometer_app_config_io())
     end
 
     if allow_http_caching?
@@ -270,7 +275,7 @@ class Churnobyl < Sinatra::Base
     
     @model = ip()
     file = "backup_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
-    path = "backup/backup.zip"
+    path = "tmp/backup.zip"
     @model.backup(path)
     send_file(path, :disposition => 'attachment', :filename => file)
     @model.close_db()
@@ -423,7 +428,7 @@ class Churnobyl < Sinatra::Base
         @yaml_spec = dbm.migration_yaml_spec
         if @yaml_spec.nil?
           File.open("config/config.yaml", 'w') do |f|
-            f.puts @config
+            f.write @config
           end
         else
           session[:flash] = "Need to restructure data before saving config/config.yaml"
@@ -475,39 +480,82 @@ class Churnobyl < Sinatra::Base
       session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
       redirect :config 
     end
-    
+
     # attempt migration using user supplied spec
     begin 
       new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
       dbm = DatabaseManager.new(new_config)
       migration_spec = dbm.parse_migration(@yaml_spec)
       
-      migration_sql = dbm.migrate_nuw_sql(migration_spec)
+      migration_sql = dbm.migrate_sql(migration_spec)
       raise "User specified script only" if params['script_only'] == 'true'
-      
-      dbm.migrate(migration_sql) # this can take some serious time
-    rescue StandardError => err
-      @flash = "Failed to migrate: " + err.message + " <br/> see below for diagnostic sql"
-      @diag_sql = migration_sql
-    rescue Psych::SyntaxError => err
-      @flash = "Failed to migrate: " + err.message
-    end
-    
-    return erb :migrate if !@flash.nil? # problem migrating
-    session[:config] = nil
-    
-    # If we made it this far, save the new config
-    begin
-      File.open("config/config.yaml", 'w') do |f|
-        f.puts @config
+
+      stream do |io|
+        thread = nil
+        error = nil
+
+        io << "<html><head><title>Churnometer migration in progress.</title></head><body>"
+
+        thread = Thread.new do
+
+            io << "<div><span>Please wait</span></span>"
+          begin
+            io << " . "
+            sleep 1
+          end while !Thread.current[:finished]
+          io << "</span>"
+        end.run
+
+        migrate_result = true
+
+        begin
+          migrate_result = dbm.migrate(migration_sql) # this can take some serious time
+        rescue StandardError => err
+          error = err.message + ". Diagnostic sql: #{migration_sql.join($/)}"
+        rescue Psych::SyntaxError => err
+          error = err.message
+        ensure
+          thread[:finished] = true if !thread.nil?
+        end
+
+        io << "</div>"
+
+        if migrate_result != true
+          io << "<div>A non-fatal error occurred during the migration:</div>"
+          io << "<pre>#{h(migrate_result).gsub('\n', '</br>')}</pre>"
+        end
+
+        if !error.nil?
+          io << "<div>The migration failed with the following error:</div>"
+          io << "<pre>#{h(error).gsub('\n', '</br>')}</pre>"
+          io << "<div><a href='/migrate'>Back to migration page.</a></div>"
+        else
+        	io << "<div>Migration successful.</div>\n"
+          
+          # If we made it this far, save the new config
+          begin
+            File.open("config/config.yaml", 'w') do |f|
+              f.write @config
+            end
+          rescue StandardError => err
+            error = "Successfully migrated database but failed to save config/config.yaml: " + err.message
+          end
+          
+          if !error.nil?
+            io << "<div>An error occurred while writing the config file: <pre>#{h(error).gsub('\n', '</br>')}</pre></div>"
+            io << "<div>Please save the following config data before leaving this page:</div>"
+            io << "<pre>#{h @config}</pre>"
+            io << "<a href='/migrate'>Back to config page.</a>"
+          else
+            io << "<div>Successfully restructured database and saved config/config.yaml</div>"
+            io << "<div>The server must be restarted now.</div>"
+            io << "<div><a href='/restart?redirect=/config'>Click here to restart server.</a></div>"
+          end
+        end
+
+        io << "</body></html>"
       end
-    rescue StandardError => err
-      @flash = "This is bad.  Successfully migrated database but to save config/config.yaml: " + err.message
     end
-    
-    return erb :config if !@flash.nil? # problem saving config, should be able to render from @config
-    session[:flash] = "Successfully restructed database and saved config/config.yaml"
-    redirect '/restart?redirect=/config'
   end
 
   get '/scss/:name.css' do |name|
