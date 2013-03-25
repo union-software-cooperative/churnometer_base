@@ -6,10 +6,13 @@ member_paying_status_code: 1
 member_awaiting_first_payment_status_code: 14
 member_stopped_paying_status_code: 11
 waiver_statuses:
-  - 5
-  - 10
-  - 8
-  - 16
+  - '5'
+  - '10'
+  - '8'
+  - '16'
+green_member_statuses:
+  - '14'
+  - '1'
 dimensions:
   - id: branchid
     name: Branch
