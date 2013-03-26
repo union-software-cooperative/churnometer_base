@@ -40,12 +40,14 @@ dimensions:
     name: Organiser (Growth)
   - id: locale
     name: Location
-  - id: employer_name
+  - id: employer
     name: Employer
   - id: division
     name: Division
   - id: sector
     name: Sector
+  - id: sex
+    name: Gender
   - id: hsr
     name: HSR
   - id: delegate
@@ -58,19 +60,15 @@ dimensions:
     name: Delegate Training (adv)
   - id: age_group
     name: Age Group
-  - id: gender
-    name: Gender
   - id: recruiter
     name: Recruiter
-  - id: union_role
-    name: Union Role
 drilldown_order:
-  branch: org
+  branch: organiser
+  organiser: employer
+  organiser2: employer
+  branch: organiser
   division: sector
-  org: employer
-  org2: employer
   employer: locale
-  locale: department 
 summary_data_tables:
     summary:
         display_name: Summary
@@ -336,6 +334,7 @@ roles:
          - organiser
          - financial
     dev:
+        admin: true
         password: dev
         show_transactions: true
         show_target_calculation: true
@@ -530,3 +529,4 @@ waterfall_chart_config:
   other_gain_label: retained
   other_loss_label: problems
         
+                
