@@ -10,6 +10,10 @@ waiver_statuses:
   - '10'
   - '8'
   - '16'
+  - '18'
+  - '20'
+  - '21'
+  - '22'
 green_member_statuses:
   - '14'
   - '1'
@@ -458,4 +462,4 @@ waterfall_chart_config:
   loss_label: exited
   other_gain_label: retained
   other_loss_label: problems
-                
+                    
