@@ -40,7 +40,7 @@ just_backup = false ' only does the backup
 '* SECTION: Configuration
 '******************************************************************************
 ' Churnometer
-data_path = "C:\Users\freechange\Desktop\"    ' This is where you put this script and SQL files
+data_path = "C:\Users\freechange\Desktop\churn"    ' This is where you put this script and SQL files
 url = "http://10.0.0.5:3000/import"    ' This is where you want the data uploaded
 logfilename = data_path & "\"    & "churn_export.log"    ' This is where you want the log file to save
 curl_path = data_path ' This is where curl.exe is

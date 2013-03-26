@@ -53,7 +53,10 @@ end as status
 , lower(rtrim(ltrim(employers.organiser))) as organiser
 , lower(rtrim(ltrim(employers.organiser2))) as organiser2
 , lower(rtrim(ltrim(members.location))) as locale -- location is a postgres reserved word
-, lower(rtrim(ltrim(employers.employername))) as employer_name
+
+/* note: some employer names have tabs in them */
+, members.employer as employer
+
 , lower(rtrim(ltrim(employers.division))) as division
 , lower(rtrim(ltrim(employers.sector))) as sector
 , lower(rtrim(ltrim(sex))) as sex
