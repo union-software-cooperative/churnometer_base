@@ -5,6 +5,7 @@ default_groupby_dimension_id: branch
 member_paying_status_code: paying
 member_awaiting_first_payment_status_code: a1p
 member_stopped_paying_status_code: stopped
+database_import_encoding: windows-1252
 waiver_statuses:
   - waiv
   - skl
@@ -315,24 +316,6 @@ roles:
          - member_summary
          - organiser
          - financial
-    dev:
-        admin: true
-        password: dev
-        show_transactions: true
-        show_target_calculation: true
-        summary_data_tables:
-          - summary_leader
-          - member
-          - paying
-          - a1p
-          - stopped
-          - waiver
-          - green
-          - orange
-        detail_data_tables:
-            - member_summary
-            - organiser
-            - financial
 column_names:
   a1p_real_gain: new applications (total)
   a1p_to_other: applications exited w/out payment
