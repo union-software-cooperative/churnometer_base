@@ -1099,6 +1099,7 @@ class DatabaseManager
           transactionSource t 
         where 
           not id in (select id from transactionSourcePrev)
+					and t.memberid in (select memberid from memberfact)
           
         union all
         
