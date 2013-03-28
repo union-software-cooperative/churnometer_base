@@ -1,7 +1,7 @@
 with delegate_training_text as (
-  select 'within six months' as id, 'Within six months' as description
-  union all select 'within one year' as id, 'Within one year' as description
-  union all select 'within two years' as id, 'Within two years' as description
+  select 'within six months' as id, '0-6 months' as description
+  union all select 'within one year' as id, '6 months to 1 year' as description
+  union all select 'within two years' as id, '1 year to 2 years' as description
   union all select 'more than two years' as id, 'More than two years' as description
 ),
 q as 
@@ -51,6 +51,7 @@ from
 	where
 		Code not in (select Code from Exits)
 		and Code not in ('PAYING', 'STOPPED', 'A1P')
+
 /* member names */
 	union all 
 	select
@@ -61,6 +62,7 @@ from
 		members
 	where
 		MemberID <> 0
+
 /* branch */
 	union all
 	select 
@@ -69,6 +71,7 @@ from
 		, d.description as displaytext
 	from
 		unionbranch d
+
 /* organiser */
 	union all
 	select 
@@ -77,6 +80,7 @@ from
 		, o.description as displaytext
 	from
 		organisers o
+
 /* organiser2 */
 	union all
 	select 
@@ -85,6 +89,7 @@ from
 		, o.description as displaytext
 	from
 		organisers o
+
 /* locale */
 	union all
 	select	
@@ -93,6 +98,7 @@ from
 		, d.description as displaytext
 	from
 		Locations d
+
 /* employer */
 	union all
 	select distinct
@@ -101,6 +107,7 @@ from
 		, d.employername as displaytext
 	from
 		employers d
+
 /* division */
 	union all 
 	select 
@@ -108,7 +115,8 @@ from
 		, cast(d.code as varchar(max)) as id
 		, d.description as displaytext
 	from
-		WorkDivisions d
+		Divisions d
+
 /* sector */
 	union all
 	select 
@@ -117,6 +125,7 @@ from
 		, d.description as displaytext
 	from
 		Sectors d
+
 /* sex */
    	union all
 	select
@@ -128,6 +137,7 @@ from
 		'sex' as attribute
 		, 'F' as id
 		, 'Female' as description
+
 /* hsr */
    	union all
 	select
@@ -139,6 +149,7 @@ from
 		'hsr' as attribute
 		, 'hsr deputy' as id
 		, 'Deputy HSR' as description
+
 /* delegate */
    	union all
 	select
@@ -150,6 +161,7 @@ from
 		'delegate' as attribute
 		, '' as id
 		, 'Non-delegate' as description
+
 /* pay_method */
 	union all
 	select	
@@ -158,62 +170,51 @@ from
 		, d.description as displaytext
 	from
 		PayMethods d
+
 /* delegate training intermediate */
    union all 
    select * from 
    	  (select 'delegate_training_intermediate' as attribute) a 
 	  cross join delegate_training_text
+
 /* delegate training advanced */
    union all 
    select * from 
       (select 'delegate_training_advanced' as attribute) a
 	  cross join delegate_training_text
+
 /* age group */
 	union all	
 	select	
 		'age_group'
-		, 'under 25'
+		, 'under25'
 		, 'Under 25'
 	union all	
 	select	
 		'age_group'
-		, 'under 35'
-		, 'Under 35'
+		, '25-35'
+		, '25-35'
 	union all	
 	select	
 		'age_group'
-		, 'under 45'
-		, 'Under 45'
+		, '36-45'
+		, '36-45'
 	union all	
 	select	
 		'age_group'
-		, 'under 55'
-		, 'Under 55'
+		, '46-55'
+		, '46-55'
 	union all	
 	select	
 		'age_group'
-		, 'under 65'
-		, 'Under 65'
+		, '56-65'
+		, '56-65'
 	union all	
 	select	
 		'age_group'
-		, 'under 75'
-		, 'Under 75'
-	union all	
-	select	
-		'age_group'
-		, 'under 85'
-		, 'Under 85'
-	union all
-	select
-		'age_group'
-		, 'under 95'
-		, 'under 95'
-	union all	
-	select	
-		'age_group'
-		, '95 and older'
-		, '95 and older'
+		, 'over65'
+		, 'Over 65'
+
 /* recruiter (taken from asuvic signal charts document) */
    union all select 'recruiter', '3_1', 'GT Vic - signal 3 red'
    union all select 'recruiter', '3_2', 'GT Vic - Adam Rodwell'

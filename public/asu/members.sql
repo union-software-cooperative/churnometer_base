@@ -146,18 +146,15 @@ end as status
 -- age group
 , case
     when members.dateofbirth is null then null
-    when datediff(yy, members.dateofbirth, getdate()) < 25  then 'under 25'
-    when datediff(yy, members.dateofbirth, getdate()) < 35  then 'under 35'
-    when datediff(yy, members.dateofbirth, getdate()) < 45  then 'under 45'    
-    when datediff(yy, members.dateofbirth, getdate()) < 55  then 'under 55'
-    when datediff(yy, members.dateofbirth, getdate()) < 65  then 'under 65'
-    when datediff(yy, members.dateofbirth, getdate()) < 75  then 'under 75'
-    when datediff(yy, members.dateofbirth, getdate()) < 85  then 'under 85'
-    when datediff(yy, members.dateofbirth, getdate()) < 95  then 'under 95'
-    when datediff(yy, members.dateofbirth, getdate()) >= 95  then '95 and older'
+    when datediff(yy, members.dateofbirth, getdate()) < 25  then 'under25'
+    when datediff(yy, members.dateofbirth, getdate()) <= 35  then '25-35'
+    when datediff(yy, members.dateofbirth, getdate()) <= 45  then '36-45'
+    when datediff(yy, members.dateofbirth, getdate()) <= 55  then '46-55'
+    when datediff(yy, members.dateofbirth, getdate()) <= 65  then '56-65'
+    when datediff(yy, members.dateofbirth, getdate()) > 65  then 'over65'
 end as age_group
 
--- Signals 3, 4 and 8 specify different recruiting entities. Only one of each signal should be set at one time, otherwise they are placed in the 'multiple assignment' category
+-- Signals 3, 4 and 8 specify different recruiting entities. Only one of each signal should be set at one time, otherwise they are placed in the 'error' category (multiple assignment.)
 , case
   when members.signal3 <> 0 and members.signal4 <> 0 or members.signal4 <> 0 and members.signal8 <> 0 or members.signal3 <> 0 and members.signal8 <> 0 then 'error'
   when members.signal3 = 1 then '3_1'
