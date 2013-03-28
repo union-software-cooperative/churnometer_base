@@ -41,7 +41,7 @@ just_backup = false ' only does the backup
 '******************************************************************************
 ' Churnometer
 data_path = "C:\Users\freechange\Desktop\churn"    ' This is where you put this script and SQL files
-url = "http://10.0.0.5:3000/import"    ' This is where you want the data uploaded
+url = "http://10.0.0.5:3002/import"    ' This is where you want the data uploaded
 logfilename = data_path & "\"    & "churn_export.log"    ' This is where you want the log file to save
 curl_path = data_path ' This is where curl.exe is
 ' Database
@@ -58,7 +58,7 @@ expected_backup_size = (5 * 1024 * 1024)
 
 ' freechange mail
 fcmailserver = "mail.nuw.org.au"
-fcmailto = "david.beswick@freechange.com.au"
+fcmailto = "dbeswick@nuw.org.au"
 fcmailcc = ""
 fcmailfrom = "churnometer@asuvictas.com.au"
 
