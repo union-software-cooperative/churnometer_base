@@ -1,4 +1,4 @@
-application_start_date: 2012-12-4
+application_start_date: 2013-03-27
 use_new_query_generation_method: true
 work_site_dimension_id: employer
 default_groupby_dimension_id: branch
@@ -6,28 +6,10 @@ member_paying_status_code: paying
 member_awaiting_first_payment_status_code: a1p
 member_stopped_paying_status_code: stopped
 waiver_statuses:
-  - pat
-  - anbs
-  - assoc
-  - fhardship
-  - trainee
-  - fam
-  - half pay
-  - leave
-  - life
-  - lsl
-  - mat
-  - o/s
-  - pend
-  - res
-  - stu
-  - study
   - waiv
-  - work
-  - unemployed
-  - emp unkn
-  - mid career
-  - nofee
+  - skl
+  - parent
+  - leave
 green_member_statuses:
   - a1p
   - paying
@@ -529,4 +511,4 @@ waterfall_chart_config:
   other_gain_label: retained
   other_loss_label: problems
         
-                
+                                
