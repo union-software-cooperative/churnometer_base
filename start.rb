@@ -370,10 +370,14 @@ class Churnobyl < Sinatra::Base
         f.write(file.read)
       end
 
-      $stderr.puts `iconv -f latin1 -t utf-8 -o "#{full_filename}-utf8" "#{full_filename}"`
-      raise "Failed to convert file to utf-8." if $? != 0
-      File.delete(full_filename)
-      full_filename += "-utf8"
+      if app().database_import_encoding && app().database_import_encoding != 'utf-8'
+        iconv_filename = "#{full_filename}-utf8"
+        iconv_result = `iconv -f '#{app().database_import_encoding}' -t 'utf-8' -o "#{iconv_filename}" "#{full_filename}"`
+        $stderr.puts iconv_result
+        raise "Failed to convert file to utf-8: #{iconv_result}" if $? != 0
+        File.delete(full_filename)
+        full_filename += "-utf8"
+      end
 
       if filename.start_with?("members.txt") then
         @model.member_import(full_filename)
