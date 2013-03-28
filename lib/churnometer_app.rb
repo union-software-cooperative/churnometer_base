@@ -130,6 +130,10 @@ class ChurnometerApp
     @application_environment == :development
   end
 
+  def database_import_encoding
+    config()['database_import_encoding']
+  end
+
   def email_on_error?
     if config()['email_on_error'].nil?
       development? == false
