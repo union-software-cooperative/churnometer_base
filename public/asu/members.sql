@@ -29,7 +29,7 @@ case
 	/* stopped paying */
     when members.paymethod = 'STOP'
 	  or members.directdebitcycle = 'DE' /* de = direct debit declined */
-	  then 'stop'
+	  then 'stopped'
 	/* member is on waiver if 'status' is anything other than 'financial' or 'workcover' */
     when rtrim(ltrim(coalesce(members.status, ''))) <> '' 
 	  and members.status <> 'FINAN'
