@@ -31,8 +31,9 @@ class QueryDetailStaticFriendly < QueryDetailStatic
   end
 
   def query_string
-    friendly_generators = display_dimensions.collect do |dimension|
-      DetailFriendlyDimensionSQLGenerator.new(dimension, @churn_db)
+    #friendly_generators = display_dimensions.collect do |dimension|
+    friendly_generators = display_dimensions.reject{ |d| d.id == 'userid' }.collect do |dimension|
+       DetailFriendlyDimensionSQLGenerator.new(dimension, @churn_db)
     end
     
 		sql = <<-EOS
