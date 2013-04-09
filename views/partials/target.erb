@@ -1,6 +1,6 @@
 <div id="card_target">
 	<%= "We grew our paying members by #{model.growth}% p.a. over #{model.periods} #{model.period_desc}s" %><br/>
-	<%= "#{model.get_cards_in} applications brought in per #{model.period_desc}. " %>
+	<%= "#{model.get_cards_in} cards brought in per #{model.period_desc}. " %>
 	<%= "#{model.get_cards_in_target} needed to hold our ground. " %>
 	<%= "#{model.get_cards_in_growth_target} needed to grow 10% p.a." %>
 	<% if transfers %> 
@@ -10,7 +10,7 @@
         
 <div id="card_target_tip" class="tooltip">
 	The formulas to hold our ground and grow are calculated as follows:
-	<%= model.getmath_get_cards_in_target.gsub('cards', 'applications').gsub('CARDS', 'APPLICATIONS') %> 
+	<%= model.getmath_get_cards_in_target %> 
 </div>
 
 <script type="text/javascript">

@@ -1,13 +1,12 @@
 $line: 18px;
 
-$bg: #353535;
-
-$highlight-bg: #00AFA2;
-$highlight-fg: #DFDF00;
-$tab-active-bg: #353535;
+$bg: #B82B53;
+$highlight-bg: #7AB6CC;
+$highlight-fg: $bg;
+$tab-active-bg: #777;
 $tab-active-fg: ivory;
 $tab-inactive-bg: ivory;
-$tab-inactive-fg: #00AFA2;
+$tab-inactive-fg: #1C94C4;
 
 #nav {
   margin-top: $line;
