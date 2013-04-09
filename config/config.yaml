@@ -1,4 +1,4 @@
-application_start_date: 2011-8-14
+application_start_date: 2012-4-1
 use_new_query_generation_method: true
 work_site_dimension_id: companyid
 default_groupby_dimension_id: branchid
@@ -137,7 +137,7 @@ summary_data_tables:
             - paying_end_count
             - paying_real_net
     a1p:
-        display_name: New Applications
+        display_name: Pending Payment
         query_columns:
             - row_header
             - row_header1
@@ -167,6 +167,22 @@ summary_data_tables:
           - stopped_other_loss
           - stopped_end_count
           - stopped_unchanged_gain
+    waiver:
+        display_name: Non-Paying
+        description:  This data represents all members who are not expected to pay directly to the union.  It includes all students, other union members on service agreement, members on maternity leave etc...  Growing this pool of members doesn't necessarily improve the union's bottom line.
+        query_columns:
+          - row_header
+          - row_header1
+          - period_header
+          - waiver_start_count
+          - waiver_real_gain_good
+          - waiver_real_gain_bad
+          - waiver_real_loss_good
+          - waiver_real_loss_bad
+          - waiver_real_net
+          - waiver_other_gain
+          - waiver_other_loss
+          - waiver_end_count
     userid:
         display_name: Data Entry Changes
         query_columns:
@@ -233,6 +249,7 @@ roles:
             - paying
             - a1p
             - stopped
+            - waiver
         detail_data_tables:
             - member_summary
             - organiser
@@ -441,7 +458,7 @@ column_descriptions:
   orange_other_loss: Non contributing members transferred out
   orange_end_count: The number of members who weren't contributing at the end
 waterfall_chart_config:
-  title: Contributing members
+  title: Paying members
   description: |
                This chart shows the gain and loss of contributing members for the period.
 
@@ -450,16 +467,15 @@ waterfall_chart_config:
                Losses are divided into exited members (red) and those who stopped contributing (orange). Only exited members who were contributing are shown in the red because non-contributing members were already counted when they stopped their contribution.
 
                If a member joins and resigns multiple times they'll be counted multiple times in the green and red, likewise in the orange if a member stops and starts their contribution multiple times.  This is so the separate counts from different periods add up when those periods are combined.   The retained members are included because problem members were needed and the report can't balance without both.
-  gain: green_real_gain_nonmember
-  loss: green_real_loss_nonmember
-  other_gain: green_real_gain_member
-  other_loss: green_real_loss_member
-  combined_gain: green_real_gain
-  combined_loss: green_real_loss
-  running_net: running_green_net
-  net_includes_other: true
-  gain_label: new
-  loss_label: exited
+  gain: paying_real_gain
+  loss: paying_real_loss
+  other_gain:
+  other_loss: 
+  combined_gain: 
+  combined_loss: 
+  running_net: running_paying_net
+  net_includes_other: false
+  gain_label: paying gain
+  loss_label: paying loss
   other_gain_label: retained
   other_loss_label: problems
-                    
