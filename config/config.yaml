@@ -301,6 +301,7 @@ roles:
             - organiser
     churnometer:
       admin: true
+      password: Qwerty99
       show_transactions: true
       show_target_calculation: true
       summary_data_tables:
@@ -316,6 +317,21 @@ roles:
          - member_summary
          - organiser
          - financial
+    dev:
+      password: churnodev99
+      summary_data_tables:
+        - summary_dev
+        - paying
+        - a1p
+        - stopped
+        - waiver
+        - member
+        - green
+        - orange
+      detail_data_tables:
+        - member_summary
+        - organiser
+        - financial
 column_names:
   a1p_real_gain: new applications (total)
   a1p_to_other: applications exited w/out payment
