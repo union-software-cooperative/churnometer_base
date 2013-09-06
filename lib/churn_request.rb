@@ -31,6 +31,7 @@ class ChurnRequest
   attr_reader :cache_hit
   attr_reader :xml
   attr_reader :query_filterterms
+  attr_reader :interval
   
   include Settings
   
@@ -87,10 +88,28 @@ class ChurnRequest
       raise "Cannot load data - unknown query type (#{@type.to_s})"
     end
 
+    
     @data = db.ex(@sql)
+    @warnings += cross_check(@data)
     @cache_hit = db.cache_hit
   end
 
+  def has_data?
+    @data && @data.count > 0
+  end
+  
+  def cross_check(data)
+    warning = ""
+    if has_data? && @type == :summary
+      data.each do |row|
+        if row['cross_check'] != ""
+          warning += "#{row['cross_check']} cross check failed for #{row['row_header1']}<br\>"
+        end
+      end
+    end
+    warning
+  end 
+ 
   # When multiple parameters of the same name are passed in the query string, Sinatra only uses the last
   # one. To fix that, this method mirrors Sinatra's usual parsing but also makes arrays from 
   # duplicate parameter keys in the query string.
@@ -205,7 +224,7 @@ class ChurnRequest
     dim_start_id = @app.dimensions[params['group_by']].column_base_name
     dim_start_result = db.getdimstart(dim_start_id)
 
-    if dim_start_result.nil? || dim_start_result[0]['getdimstart'].nil?
+    if dim_start_result.nil? || dim_start_result.num_tuples == 0 || dim_start_result[0]['getdimstart'].nil?
       raise "Couldn't find an entry in the 'dimstart' table for the groupby dimension '#{params['group_by']}' (column is '#{dim_start_id}')"
     end
 

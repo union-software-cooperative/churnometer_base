@@ -31,22 +31,21 @@
 '******************************************************************************
 '* SECTION: Diagnostics
 '******************************************************************************
-debugging = false 'throw pop-up error messages instead of catching and logging
+debugging = false ' throw pop-up error messages instead of catching and logging
 silent = true ' suppress pop-up progress mesages
-clientsend = true ' send email notification to end-users
-just_backup = false ' only does the backup
+clientsend = true' send email notification to end-users
 
 '******************************************************************************
 '* SECTION: Configuration
 '******************************************************************************
 ' Churnometer
 data_path = "C:\Users\lucas.rohde\Desktop\churn_export"    ' This is where you put this script and SQL files
-url = "http://churnometer:asualwaysfresh@churnometer:3000/import"    ' This is where you want the data uploaded
+url = "http://user:@churnometer:3000/import"    ' This is where you want the data uploaded
 logfilename = data_path & "\"    & "churn_export.log"    ' This is where you want the log file to save
 curl_path = data_path ' This is where curl.exe is
 ' Database
-dbusername = "myreadonlyuser"
-dbpassword = "mypassword"
+dbusername = "sa"
+dbpassword = "TsuK@1tech"
 ' MS Access specific
 dbfile = ""    ' "M:\membership.mdb"' This is where your MSAccess database lives (leave blank for MSSQL)
 dbprovider = "Microsoft.ACE.OLEDB.12.0"    '"Microsoft.Jet.OLEDB.4.0"
@@ -286,11 +285,7 @@ private function backup(url, path) ' if it fails, returns path to log file, if i
 	' NB --insecure allows for the certificate to be self signed with an odd name
 	' But data will still be encrypted
 	Set WshShell = WScript.CreateObject("WScript.Shell")
-	cmd = "cmd /c "    & curl_path & "\curl.exe -o backup.zip --insecure -X GET --form scripted=true "    & replace(url, "import", "backup_download") & "    > "    & curl_log & "    2>&1"
-	
-	if just_backup then logfile.writeline cmd
-		
-	WshShell.Run cmd, 0, true
+	WshShell.Run "cmd /c "    & curl_path & "\curl.exe -o backup.zip --insecure -X GET --form scripted=true "    & replace(url, "import", "backup") & "    > "    & curl_log & "    2>&1", 0, true
 	if error_handler("           failed to execute curl to download backup ") then exit function  
 		
 	' Open curl's log file
@@ -521,7 +516,7 @@ set r = new regexp
 r.Pattern = ".+\.sql$"    ' matches anything ending in .sql
 r.IgnoreCase = true
 
-if not just_backup then 
+if 1 = 1 then 
 	' Iterate through each file
 	for each file in files
 		if r.test(file.name) then 	

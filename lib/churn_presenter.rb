@@ -68,6 +68,10 @@ class ChurnPresenter
     #       @warnings += "WARNING: #{ChurnDBDiskCache.cache_status} <br/>"
     #     end  
   end
+  
+  def has_data?
+    @request.has_data?
+  end
 
   # Properties
   
@@ -87,10 +91,6 @@ class ChurnPresenter
     end
     
     @request_group_names
-  end
-
-  def has_data?
-    @request.data && @request.data.count > 0
   end
 
   # Summary Display Methods

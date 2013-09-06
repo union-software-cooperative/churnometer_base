@@ -17,45 +17,55 @@
 
 require File.expand_path(File.dirname(__FILE__) + "/acceptance_helper")
 
+$testing_role = 'leadership'
 
-class AuthorizeOverride < Authorize
-  def role
-    app().roles.get_mandatory('leader')
-  end
+def test_app
+  Churnobyl.server_lifetime_churnometer_app
 end
-
-class ChurnRequestOverride < ChurnRequest
-  # Override ChurnDB dates
-  def query_defaults
-    super.rmerge({
-      'startDate' => '2012-04-05',
-      'endDate'   => '2012-04-26',
-    })
-  end
-end
-
-
-class Churnobyl
-
-  # Override authentication
-  def protected!
-  end
-  
-  def auth
-    @auth ||=  AuthorizeOverride.new Rack::Auth::Basic::Request.new(request.env)
-  end
-
-  def churn_request_class
-    ChurnRequestOverride
-  end
-end
-
 
 describe "admin" do
   
   before :each do
     # Don't send email when testing
     Pony.stub!(:mail)
+
+    class AuthorizeOverride < Authorize
+      def role
+        @app.roles.get_mandatory($testing_role)
+      end
+    end
+
+    class ChurnRequestOverride < ChurnRequest
+      # Override ChurnDB dates
+      def query_defaults
+        super.rmerge({
+                       'startDate' => '2012-04-05',
+                       'endDate'   => '2012-04-26',
+                     })
+      end
+    end
+
+    class Churnobyl
+      def self.churnometer_app_site_config_io
+        StringIO.new($regression_config_str)
+      end
+
+      def testing?
+        true
+      end
+
+      # Override authentication
+      def protected!
+      end
+      
+      def auth_class
+        AuthorizeOverride
+      end
+
+      def churn_request_class
+        ChurnRequestOverride
+      end
+    end
   end
   
   it "Leader can login" do
@@ -68,13 +78,11 @@ describe "admin" do
     page.should have_content("Running total") 
     page.should have_no_content "Error"
   end
-
-
   
   it "has a data entry group by option that works" do
     visit "/"
-    
-    page.should have_select('group_by', :options => ['Data Entry'])
+
+    page.should have_select('group_by', :with_options => ['Data Entry'])
     
     select "Data Entry", :from => "group_by"
     click_button "Refresh"
@@ -84,38 +92,41 @@ describe "admin" do
     page.should have_content("Group by") 
     page.should have_content("Running total") 
     page.should have_no_content "Error"
-    
-    click_link("Summary")
-    within 'table#table-summary thead' do
-      table_header_has "data entry", "total cards in", "cards in not followed up", "cards failed", "a1p started paying", "became stopped paying", "became stopped paying not followed up", "stopped paying followed up", "stopped paying resumed paying", "became rule59 not followed up", "transactions", "income posted", "income corrections"
+
+    page.should have_selector(:link, :text=>"Summary")
+    page.find(:link, :text=>"Summary").click
+
+    page.should have_css("table#table-summary thead")
+
+    within "table#table-summary thead" do
+      table_header_has
+      ['data entry',
+       'new applications (total)',
+      'applications exited w/out payment',
+      'paying at start date',
+      'started paying',
+      'ceased paying',
+      'paying net',
+      'paying at end date',
+      'left stopped paying cycle (exited)',
+      'unique contributors',
+      'income net']
     end
-    
-    drill_down_into_data_entry
-  end
-  
-  def drill_down_into_data_entry
-    within 'table#table-summary' do
-      click_link "Reception"
-    end
-    
-    page.should have_content("Start Date") 
-    page.should have_content("End Date") 
-    page.should have_content("Group by") 
-    page.should have_content("Running total") 
-    page.should have_no_content "Error"
-    
-    page.should have_content "Data Entry: Reception"
   end
   
   it "has a stopped paying table" do
     visit "/"
     
+    select "Branch", :from => "group_by"
+    click_button "Refresh"
+    
     click_link("Stopped")
     within 'table#table-stopped thead' do
-      table_header_has "branch", "stopped paying at start date", "became stopped paying", "became stopped paying not followed up", "stopped paying followed up", "stopped paying resumed paying", "stopped paying transfers in", "stopped paying transfers out", "stopped paying at end date", "became rule59 not followed up"
+      
+      table_header_has "branch", "stopped paying at start date", "entered stopped paying cycle", "entered stopped paying cycle (pending resolution)", "left stopped paying cycle (exited)", "left stopped paying cycle (resumed paying)", "stopped paying transfers in", "stopped paying transfers out", "stopped paying at end date"
     end
     within 'table#table-stopped tfoot' do
-      row_has "", %w{3335 196 179 -317 -20 0 0 3194 89}
+      row_has "", %w{24 	4 	1 	-1 	0 	0 	0 	27}
     end
   end
   
@@ -124,25 +135,11 @@ describe "admin" do
 
       click_link("Stopped")
       within('table#table-stopped tbody tr:nth-child(1)') do
-        click_link "94"
+        click_link "6"
       end
       within('table#table-membersummary tbody tr:nth-child(1)') do 
-        row_has "General Branch", "20 April 2012", "Taiwa, Lionel (NG053785)"
+        row_has "Construction", "19 March 2012", "Fanene, Edan (m45268)"
       end
-      
-      click_link("Follow up")
-      within 'table#table-followup thead' do
-        table_header_has "branch", "changedate", "memberid", "member", "current status", "follow up notes", "payment type", "current contact detail", "current site", "current employer", "payroll/hr contact", "current payment status", "new organiser"
-      end
-  end
-  
-  it "shows employer payment status" do
-    visit "/?column=&startDate=14+August+2011&endDate=26+April+2012&group_by=employerid&interval=none&f%5Bbranchid%5D=NG&f%5Blead%5D=afalconer&f%5Borg%5D=borders&lock%5Bcompanyid%5D="
-    
-    click_link("Remittance")
-    within 'table#table-remittance thead' do
-      table_header_has "employer", "a1p at end date", "paying at end date", "payment type", "current paid to date", "current payment status"
-    end
   end
   
   def row_has(*items)
@@ -155,7 +152,7 @@ describe "admin" do
   
   def table_header_has(*items)
     items.flatten.each_with_index do |item, i|
-      within "th:nth-child(#{i + 1})" do
+      within "th:nth-child(#{i + 1})" do |element|
         page.should have_content item
       end
     end
