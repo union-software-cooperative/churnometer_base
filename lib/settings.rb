@@ -48,7 +48,7 @@ module Settings
            app().member_paying_status_code,
            app().member_awaiting_first_payment_status_code,
            app().member_stopped_paying_status_code
-        ] # todo - get rid of this because exceptions are required for it when displaying filters
+        ] + app().waiver_statuses # todo - get rid of this because exceptions are required for it when displaying filters
       }
     }
   end
@@ -97,6 +97,7 @@ module Settings
          a1p_real_gain 
          a1p_unchanged_gain
          a1p_real_loss 
+         a1p_real_net
          a1p_other_gain 
          a1p_other_loss 
          paying_real_gain 
@@ -112,24 +113,92 @@ module Settings
          paying_real_net
          other_gain
          other_loss
-         a1p_end_count
-         a1p_start_count
-         paying_end_count
-         paying_start_count
-         stopped_start_count
          stopped_real_gain
          stopped_unchanged_gain
          stopped_real_loss
+         stopped_real_net
          stopped_to_paying
          stopped_to_other
          stopped_other_gain
-         stopped_end_count
          stopped_other_loss
          contributors
          income_net
          posted
          unposted
          transactions
+         waiver_real_gain
+     		 waiver_real_loss
+     		 waiver_real_gain_good
+      	 waiver_real_gain_bad
+         waiver_real_loss_good
+         waiver_real_loss_bad
+         waiver_real_net
+     		 waiver_other_gain
+     		 waiver_other_loss
+         member_real_gain
+     		 member_real_gain_nofee
+         member_real_gain_fee
+         member_real_loss
+     		 member_real_loss_nofee
+         member_real_loss_fee
+         member_real_net
+     		 member_other_gain
+     		 member_other_loss
+     		 member_nofee_other_gain
+     		 member_nofee_other_loss
+     		 member_fee_other_gain
+     		 member_fee_other_loss
+     		 member_real_loss_orange
+         member_real_gain_orange
+     		 nonpaying_real_gain_good
+     		 nonpaying_real_loss_good
+     		 nonpaying_real_gain_bad
+     		 nonpaying_real_loss_bad
+         nonpaying_real_net
+     		 nonpaying_other_gain
+     		 nonpaying_other_loss
+     		 a1p_end_count
+         a1p_start_count
+         paying_end_count
+         paying_start_count
+         stopped_start_count
+         stopped_end_count
+         a1p_end_count
+         a1p_start_count
+         paying_end_count
+         paying_start_count
+         waiver_start_count
+      	 waiver_end_count
+         member_start_count
+      	 member_end_count
+      	 nonpaying_start_count
+         nonpaying_end_count
+         stopped_start_count
+         stopped_end_count
+         member_loss_combined
+         member_gain_combined
+         green_start_count
+         green_end_count
+         orange_start_count
+         orange_end_count
+         green_real_gain
+         green_real_gain_nonmember
+         green_real_loss_nonmember
+         green_real_gain_member
+         green_real_loss_member
+         green_real_loss
+         green_real_net
+         green_other_gain
+         green_other_loss
+         orange_real_gain
+         orange_real_gain_nonmember
+         orange_real_loss_nonmember
+         orange_real_gain_member
+         orange_real_loss_member
+         orange_real_loss
+         orange_real_net
+         orange_other_gain
+         orange_other_loss
          }
      end
      
@@ -139,6 +208,26 @@ module Settings
          'running_paying_net',
          'a1p_real_gain',
          'transactions',
+         'a1p_unchanged_gain',
+         'stopped_unchanged_gain',
+         'member_real_gain',
+         'member_real_loss_orange',
+         'member_real_loss',
+         'member_real_loss_fee',
+         'member_real_gain_fee',
+         'member_gain_combined',
+         'member_loss_combined',
+         'stopped_real_gain',
+         'waiver_real_loss_good',
+         'green_real_gain_nonmember',
+         'green_real_gain_member',
+         'green_real_loss_nonmember',
+         'green_real_loss_member',
+         'green_real_loss',
+         'orange_real_gain_nonmember',
+         'orange_real_loss_nonmember',
+         'orange_real_gain_member',
+         'orange_real_loss_member',
        ].include?(column_name)
      end
      
@@ -172,7 +261,15 @@ module Settings
            'a1p_start_count',
            'a1p_end_count',
            'stopped_start_count',
-           'stopped_end_count'
+           'stopped_end_count',
+           'member_start_count',
+           'member_end_count',
+           'waiver_start_count',
+           'waiver_end_count',
+           'green_end_count',
+           'green_start_count',
+           'running_green_net',
+           'running_orange_net'
          ]
        end
 
@@ -186,8 +283,19 @@ module Settings
          'changedate'
        ]
      end
+     
+     # put this here because it was needed by table.rb and graph.rb TODO fix
+      def drill_down_cell(row, column_name)
+        (@request.params['interval'] == 'none' ? drill_down_header(row, @app) : drill_down_interval(row))
+          .merge!( 
+            { 
+              'column' => column_name,
+              "group_by" => @request.params['group_by'] # this prevents the change to the group by option
+            } 
+          )
+      end
 
-     def tips
+    def tips
       result = {}
       
       # substitute any reference in the tooltip to {group_by} 

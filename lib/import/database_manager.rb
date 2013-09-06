@@ -29,9 +29,25 @@ class DatabaseManager
     @db = Db.new(app)
     @app = app
     
+    member_statuses = @app.all_member_statuses
+    
+    nonwaiver_statuses = member_statuses - @app.waiver_statuses
+    
+    green_statuses = @app.green_member_statuses
+    orange_statuses = member_statuses - green_statuses
+
     @paying_db = @db.quote(@app.member_paying_status_code)
     @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
     @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
+    @waiver_db = @db.sql_array(@app.waiver_statuses, 'varchar') # "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
+    @member_db = @db.sql_array(member_statuses, 'varchar')
+    @nonwaiver_db = @db.sql_array(nonwaiver_statuses, 'varchar')
+    @green_db = @db.sql_array(green_statuses, 'varchar')
+    @orange_db = @db.sql_array(orange_statuses, 'varchar')
+  end
+
+  def close_db()
+    @db.close_db()
   end
 
   def dimensions
@@ -60,8 +76,9 @@ class DatabaseManager
       drop table if exists memberfacthelper_migration cascade;
       
       alter table memberfact rename to memberfact_migration;
+      alter sequence memberfact_changeid_seq rename to memberfact_migration_changeid_seq;
       alter table membersourceprev rename to membersourceprev_migration;
-      alter table memberfacthelper rename to memberfacthelper_migration;
+      alter table #{@app.memberfacthelper_table} rename to memberfacthelper_migration;
      
       #{rebuild_membersource_sql};
       #{rebuild_membersourceprev_sql};
@@ -107,7 +124,7 @@ class DatabaseManager
 
 	    alter table memberfact rename to memberfact_migration;
       alter table membersourceprev rename to membersourceprev_migration;
-      alter table memberfacthelper rename to memberfacthelper_migration;
+      alter table #{@app.memberfacthelper_table} rename to memberfacthelper_migration;
       
       #{memberfact_sql};
       #{rebuild_membersourceprev_sql};
@@ -133,24 +150,11 @@ class DatabaseManager
     SQL
   end
   
-  
-  def rebuild()
-    db.ex(rebuild_from_scratch_without_indexes_sql)
-    db.ex(rebuild_most_indexes_sql)
-    db.ex(rebuild_memberfacthelper_indexes_sql)
-    
-    # ANALYSE and VACUUM have to be run as separate database calls
-    str = <<-SQL
-      ANALYSE memberfact;
-      ANALYSE memberfact;
-      ANALYSE memberfacthelper;
-      ANALYSE transactionfact;
-      ANALYSE displaytext;
-      ANALYSE membersource;
-      ANALYSE membersourceprev;
-      ANALYSE transactionsource;
-      ANALYSE transactionsourceprev;
-      ANALYSE displaytextsource;
+  def rebuild_sql
+    <<-SQL
+      #{rebuild_from_scratch_without_indexes_sql}
+      #{rebuild_most_indexes_sql}
+      #{rebuild_memberfacthelper_indexes_sql}
       
       VACUUM memberfact;
       VACUUM memberfacthelper;
@@ -161,6 +165,58 @@ class DatabaseManager
       VACUUM transactionsource;
       VACUUM transactionsourceprev;
       VACUUM displaytextsource;
+
+      ANALYSE memberfact;
+      ANALYSE memberfact;
+      ANALYSE memberfacthelper;
+      ANALYSE transactionfact;
+      ANALYSE displaytext;
+      ANALYSE membersource;
+      ANALYSE membersourceprev;
+      ANALYSE transactionsource;
+      ANALYSE transactionsourceprev;
+      ANALYSE displaytextsource;
+    SQL
+  end
+  
+  def rebuild_memberfacthelper_sql_ary()
+    ["drop view if exists memberfacthelperquery cascade;",
+     memberfacthelperquery_sql(),
+     memberfacthelper_sql(),
+     updatememberfacthelper_sql()] + rebuild_memberfacthelper_indexes_sql().split($/)
+  end
+
+  def rebuild_memberfacthelper_sql()
+    rebuild_memberfacthelper_sql_ary.join($/)
+  end
+  
+  def rebuild()
+    db.ex(rebuild_from_scratch_without_indexes_sql)
+    db.ex(rebuild_most_indexes_sql)
+    db.ex(rebuild_memberfacthelper_indexes_sql)
+    
+    # ANALYSE and VACUUM have to be run as separate database calls
+    str = <<-SQL
+      VACUUM memberfact;
+      VACUUM memberfacthelper;
+      VACUUM transactionfact;
+      VACUUM displaytext;
+      VACUUM membersource;
+      VACUUM membersourceprev;
+      VACUUM transactionsource;
+      VACUUM transactionsourceprev;
+      VACUUM displaytextsource;
+
+      ANALYSE memberfact;
+      ANALYSE memberfact;
+      ANALYSE memberfacthelper;
+      ANALYSE transactionfact;
+      ANALYSE displaytext;
+      ANALYSE membersource;
+      ANALYSE membersourceprev;
+      ANALYSE transactionsource;
+      ANALYSE transactionsourceprev;
+      ANALYSE displaytextsource;
     SQL
     
     str.split("\n").each { |cmd| db.ex(cmd) }
@@ -478,12 +534,8 @@ class DatabaseManager
           where
             mf.memberid = h.memberid
             and (
-              oldstatus = #{@paying_db}
-              or oldstatus = #{@stopped_db}
-              or oldstatus = #{@a1p_db}
-              or newstatus = #{@paying_db}
-              or newstatus = #{@stopped_db}
-              or newstatus = #{@a1p_db}
+              oldstatus = ANY (#{@member_db})
+              or newstatus = ANY (#{@member_db})
             )
         )
         -- or have paid something since tracking begun
@@ -504,6 +556,9 @@ class DatabaseManager
           duration = h.duration
           , _changeid = h._changeid
           , _changedate = h._changedate
+          , nextchangeid = h.nextchangeid
+          , nextchangedate = h.nextchangedate
+          , changeduration = h.changeduration
         from
           memberfacthelperquery h
         where
@@ -513,6 +568,9 @@ class DatabaseManager
             coalesce(memberfacthelper.duration,0) <> coalesce(h.duration,0)
             or coalesce(memberfacthelper._changeid,0) <> coalesce(h._changeid,0)
             or coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900') 
+            or coalesce(memberfacthelper.changeduration,0) <> coalesce(h.changeduration,0)
+            or coalesce(memberfacthelper.nextchangeid,0) <> coalesce(h.nextchangeid,0)
+            or coalesce(memberfacthelper.nextchangedate, '1/1/1900') <> coalesce(h.nextchangedate, '1/1/1900') 
           );
 
       end$BODY$
@@ -540,7 +598,7 @@ class DatabaseManager
         where 
           coalesce(mf.oldstatus,'') <> coalesce(mf.newstatus,'')
       )
-      , nextchange as (
+      , nextstatuschange as (
         select 
           c.changeid
           , n.changeid nextchangeid
@@ -549,7 +607,26 @@ class DatabaseManager
           , (coalesce(n.changedate::date, current_date) - c.changedate::date)::int nextduration
         from 
           mfnextstatuschange c
-        left join memberfact n on c.nextstatuschangeid = n.changeid
+          left join memberfact n on c.nextstatuschangeid = n.changeid
+      ), mfnextchange as
+      (
+        -- find the next status change for each statuschange
+        select 
+          lead(changeid)  over (partition by memberid order by changeid) nextchangeid
+          , mf.*
+        from 
+          memberfact mf
+      )
+      , nextchange as (
+        select 
+          c.changeid
+          , n.changeid nextchangeid
+          , coalesce(n.changedate::date, current_date) nextchangedate
+          , n.newstatus nextstatus
+          , (coalesce(n.changedate::date, current_date) - c.changedate::date)::int nextduration
+        from 
+          mfnextchange c
+          left join memberfact n on c.nextchangeid = n.changeid
       )
       select
         memberfact.changeid
@@ -561,23 +638,140 @@ class DatabaseManager
         , 1 as loss
         , coalesce(oldstatus, '') as status
         , coalesce(newstatus, '') as _status
-        , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
+        , case when
+            (
+              (
+                coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
+                or coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
+              )
+              -- This assumes only one status code for paying, one code for stopped and one code for a1p
+              -- If there was more than one code for each of these we'd need a more verbose method for 
+              -- checking changes between these statii, like is used for waiver_db
+              and coalesce(oldstatus, '') <> coalesce(newstatus, '') -- when changing between a1p, paying and stopped
+            )
+            or
+            (
+              (
+                coalesce(oldstatus, '') = ANY (#{@waiver_db})
+                and not coalesce(newstatus, '') = ANY (#{@waiver_db})
+              )
+              or
+              (
+                not coalesce(oldstatus, '') = ANY (#{@waiver_db})
+                and coalesce(newstatus, '') = ANY (#{@waiver_db})
+              )
+            )
             then -1 else 0 end as statusdelta
         , 0 as a1pgain
         , case when coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db}
             then -1 else 0 end as a1ploss
+        , case when coalesce(oldstatus, '') = #{@a1p_db}
+          then -1 else 0 end as a1pnet
         , 0 as payinggain
         , case when coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db}
           then -1 else 0 end as payingloss
+        , case when coalesce(oldstatus, '') = #{@paying_db}
+          then -1 else 0 end as payingnet
         , 0 as stoppedgain
         , case when coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db}
             then -1 else 0 end as stoppedloss
+        , case when coalesce(oldstatus, '') = #{@stopped_db}
+          then -1 else 0 end as stoppednet
+
+        , 0 as waivergain
+        , 0 as waivergaingood
+        , 0 as waivergainbad
+        , case when coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@waiver_db})
+            then -1 else 0 end as waiverloss
+        , case when coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
+            then -1 else 0 end as waiverlossgood
+        , case when coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@member_db})
+            then -1 else 0 end as waiverlossbad
+        , case when coalesce(oldstatus, '') = ANY (#{@waiver_db})
+          then -1 else 0 end as waivernet
+          
+        
         , 0 as othergain
         , case when 
             NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
             AND NOT (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as otherloss
+        , case when 
+            NOT (coalesce(oldstatus, '') = #{@a1p_db})
+            AND NOT (coalesce(oldstatus, '') = #{@paying_db})
+            AND NOT (coalesce(oldstatus, '') = #{@stopped_db})
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}))
+            then -1 else 0 end as othernet
+        
+        , 0 as membergain
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            and (not coalesce(newstatus, '')  = ANY (#{@member_db}))
+            then -1 else 0 end as memberloss
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            then -1 else 0 end as membernet
+        , 0 as othermembergain
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db})
+          then -1 else 0 end as othermemberloss
+        
+        -- orange members (user configurable but should be non fee paying)
+        , 0 as orangegain
+        , 0 as orangegain_nonmember
+        , 0 as orangegain_member
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and not coalesce(newstatus, '') = ANY (#{@orange_db})
+            then -1 else 0 end as orangeloss
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and not coalesce(newstatus, '') = ANY (#{@orange_db})
+            and not coalesce(newstatus, '') = ANY (#{@member_db}) -- was an orange member and not not a member (exited waiver or stopped)
+            then -1 else 0 end as orangeloss_nonmember
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and not coalesce(newstatus, '') = ANY (#{@orange_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db}) -- was an orange member and now green (retained member)
+            then -1 else 0 end as orangeloss_member
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            then -1 else 0 end as orangenet
+        , 0 as otherorangegain
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@orange_db})
+            and coalesce(oldstatus, '') = ANY (#{@orange_db})
+          then -1 else 0 end as otherorangeloss
+        
+        -- green members (member inversion of orange - fee paying)
+        , 0 as greengain
+        , 0 as greengain_nonmember
+        , 0 as greengain_member
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            and not coalesce(newstatus, '') = ANY (#{@green_db})
+            then -1 else 0 end as greenloss
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            and not coalesce(newstatus, '') = ANY (#{@green_db})
+            and not coalesce(newstatus, '') = ANY (#{@member_db}) -- green member now exited
+            then -1 else 0 end as greenloss_nonmember
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            and not coalesce(newstatus, '') = ANY (#{@green_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db}) -- green member now orange
+            then -1 else 0 end as greenloss_member
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            then -1 else 0 end as greennet
+        , 0 as othergreengain
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@green_db})
+            and coalesce(oldstatus, '') = ANY (#{@green_db})
+          then -1 else 0 end as othergreenloss
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
@@ -587,11 +781,15 @@ class DatabaseManager
     REPEAT
 
     sql << <<-SQL
-        , nextchangeid _changeid
-        , nextchangedate _changedate
-        , nextduration duration
+        , nextstatuschange.nextchangeid _changeid
+        , nextstatuschange.nextchangedate _changedate
+        , nextstatuschange.nextduration duration
+        , nextchange.nextchangeid nextchangeid
+        , nextchange.nextchangedate nextchangedate
+        , nextchange.nextduration changeduration
       from 
         memberfact
+        left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
         left join nextchange on memberfact.changeid = nextchange.changeid
 
       UNION ALL
@@ -606,23 +804,137 @@ class DatabaseManager
         , 0 as loss
         , coalesce(newstatus, '') as status
         , coalesce(oldstatus, '') as _status
-        , case when coalesce(oldstatus, '') <> coalesce(newstatus, '')
-            then 1 else 0 end as statusdelta
+        , case when
+          (
+            (
+              coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
+              or coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
+            )
+            and coalesce(oldstatus, '') <> coalesce(newstatus, '') -- when changing between a1p, paying and stopped
+          )
+          or
+          (
+            (
+              coalesce(oldstatus, '') = ANY (#{@waiver_db})
+              and not coalesce(newstatus, '') = ANY (#{@waiver_db})
+            )
+            or
+            (
+              not coalesce(oldstatus, '') = ANY (#{@waiver_db})
+              and coalesce(newstatus, '') = ANY (#{@waiver_db})
+            )
+          )
+          then 1 else 0 end as statusdelta
         , case when coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db}
             then 1 else 0 end as a1pgain
         , 0 as a1ploss
+        , case when coalesce(newstatus, '') = #{@a1p_db}
+            then 1 else 0 end as a1pnet
         , case when coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db}
           then 1 else 0 end as payinggain
         , 0 as payingloss
+        , case when coalesce(newstatus, '') = #{@paying_db}
+          then 1 else 0 end as payingnet
         , case when coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db}
             then 1 else 0 end as stoppedgain
         , 0 as stoppedloss
+        , case when coalesce(newstatus, '') = #{@stopped_db}
+            then 1 else 0 end as stoppednet
+            
+        , case when not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
+            then 1 else 0 end as waivergain
+        , case when not coalesce(oldstatus, '') = ANY (#{@member_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
+            then 1 else 0 end as waivergaingood
+        , case when coalesce(oldstatus, '') = ANY (#{@nonwaiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db}) 
+            then 1 else 0 end as waivergainbad
+        , 0 as waiverloss
+        , 0 as waiverlossgood
+        , 0 as waiverlossbad
+        , case when coalesce(newstatus, '') = ANY (#{@waiver_db})
+            then 1 else 0 end as waivernet
         , case when 
             NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
             AND NOT (coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db})
+            AND NOT (not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othergain
         , 0 as otherloss
+        , case when 
+            NOT (coalesce(newstatus, '') = #{@a1p_db})
+            AND NOT (coalesce(newstatus, '') = #{@paying_db})
+            AND NOT (coalesce(newstatus, '') = #{@stopped_db})
+            AND NOT (coalesce(newstatus, '') = ANY (#{@waiver_db}))
+            then 1 else 0 end as othernet
+        
+        -- member gain, loss, net, other_gain, other_loss    
+        , case when 
+            (not coalesce(oldstatus, '') = ANY (#{@member_db}))
+            and (coalesce(newstatus, '') = ANY (#{@member_db}))
+            then 1 else 0 end as membergain
+        , 0 as memberloss
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@member_db})
+            then 1 else 0 end as membernet
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@member_db})
+            and coalesce(newstatus, '') = ANY (#{@member_db})
+          then 1 else 0 end as othermembergain
+        , 0 as othermemberloss
+        
+        -- orange members (user configurable but non fee paying)
+        , case when 
+            (not coalesce(oldstatus, '') = ANY (#{@orange_db}))
+            and (coalesce(newstatus, '') = ANY (#{@orange_db}))
+            then 1 else 0 end as orangegain
+        , case when 
+            not coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and coalesce(newstatus, '') = ANY (#{@orange_db})
+            and not coalesce(oldstatus, '') = ANY (#{@member_db}) -- wasn't a member and now orange (straight to waiver like students)
+            then 1 else 0 end as orangegain_nonmember
+        , case when 
+            not coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and coalesce(newstatus, '') = ANY (#{@orange_db})
+            and coalesce(oldstatus, '') = ANY (#{@member_db}) -- was a member (green) and now orange (problem)
+            then 1 else 0 end as orangegain_member
+        , 0 as orangeloss
+        , 0 as orangeloss_nonmember
+        , 0 as orangeloss_member
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@orange_db})
+            then 1 else 0 end as orangenet
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@orange_db})
+            and coalesce(newstatus, '') = ANY (#{@orange_db})
+          then 1 else 0 end as otherorangegain
+        , 0 as otherorangeloss
+        
+        -- green members (member inversion of orange - fee paying)
+        , case when 
+            (not coalesce(oldstatus, '') = ANY (#{@green_db}))
+            and (coalesce(newstatus, '') = ANY (#{@green_db}))
+            then 1 else 0 end as greengain
+        , case when 
+            not coalesce(oldstatus, '') = ANY (#{@green_db})
+            and coalesce(newstatus, '') = ANY (#{@green_db})
+            and not coalesce(oldstatus, '') = ANY (#{@member_db}) -- wasn't a member and now green (new join)
+            then 1 else 0 end as greengain_nonmember
+        , case when 
+            not coalesce(oldstatus, '') = ANY (#{@green_db})
+            and coalesce(newstatus, '') = ANY (#{@green_db})
+            and coalesce(oldstatus, '') = ANY (#{@member_db}) -- was a member (green) and now green (retained)
+            then 1 else 0 end as greengain_member
+        , 0 as greenloss
+        , 0 as greenloss_nonmember
+        , 0 as greenloss_member
+        , case when 
+            coalesce(newstatus, '') = ANY (#{@green_db})
+            then 1 else 0 end as greennet
+        , case when 
+            coalesce(oldstatus, '') = ANY (#{@green_db})
+            and coalesce(newstatus, '') = ANY (#{@green_db})
+          then 1 else 0 end as othergreengain
+        , 0 as othergreenloss
+        
     SQL
   
     dimensions.each { |d| sql << <<-REPEAT }
@@ -632,12 +944,17 @@ class DatabaseManager
     REPEAT
 
     sql << <<-SQL
-        , nextchangeid _changeid
-        , nextchangedate _changedate
-        , nextduration duration
+        , nextstatuschange.nextchangeid _changeid
+        , nextstatuschange.nextchangedate _changedate
+        , nextstatuschange.nextduration duration
+        , nextchange.nextchangeid nextchangeid
+        , nextchange.nextchangedate nextchangedate
+        , nextchange.nextduration changeduration
       from 
         memberfact
+       left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
        left join nextchange on memberfact.changeid = nextchange.changeid
+ 
     SQL
   end
   
@@ -653,12 +970,8 @@ class DatabaseManager
           where
             mf.memberid = h.memberid
             and (
-              oldstatus = #{@paying_db}
-              or oldstatus = #{@stopped_db}
-              or oldstatus = #{@a1p_db}
-              or newstatus = #{@paying_db}
-              or newstatus = #{@stopped_db}
-              or newstatus = #{@a1p_db}
+              oldstatus = ANY (#{@member_db})
+              or newstatus = ANY (#{@member_db})
             )
         )
         -- or have paid something since tracking begun
@@ -915,10 +1228,12 @@ class DatabaseManager
       drop index if exists "memberfacthelper_changeid_idx";
       drop index if exists "memberfacthelper_memberid_idx";
       drop index if exists "memberfacthelper_changedate_idx";
+      drop index if exists "memberfacthelper_nextchangedate_idx";
     
       CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_changedate_idx" ON "memberfacthelper" USING btree(changedate ASC NULLS LAST);
+      CREATE INDEX "memberfacthelper_nextchangedate_idx" ON "memberfacthelper" USING btree(nextchangedate ASC NULLS LAST);
     SQL
     
     dimensions.each { |d| sql << <<-REPEAT }
@@ -1089,10 +1404,15 @@ class DatabaseManager
     end
     sql
   end
+
+  # Returns true if the use of the config of the 'app' passed to this instance would necessitate a
+  # database migration because of a change in the way that the memberfacthelper is generated.
+  def memberfacthelper_migration_required?
+    @db.get_app_state('memberfacthelperquery_source') != memberfacthelperquery_sql()
+  end
   
-  def migration_yaml_spec
+  def migration_spec_all
     m = {}
-    result = nil
     
     # retreive current db schema, action = delete by default
     columns = db.ex("select column_name from information_schema.columns where table_name='membersourceprev';")
@@ -1111,8 +1431,17 @@ class DatabaseManager
         m[d.column_base_name] = 'CREATE' if d.column_base_name != 'userid'
       end
     end
-        
-    result = m.to_yaml() if (m.count{ |k,v| v == 'DELETE' || v == 'CREATE' } > 0)
+
+    m
+  end
+
+  def migration_yaml_spec
+    all = migration_spec_all()
+    if (all.count{ |k,v| v == 'DELETE' || v == 'CREATE' } > 0)
+      all.to_yaml
+    else
+      nil
+    end
   end
   
   def parse_migration(yaml_spec)
@@ -1137,18 +1466,19 @@ class DatabaseManager
   def migrate_nuw_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
-    <<-SQL
-      -- nuw migration
-      #{rebuild_from_scratch_without_indexes_sql()}
-      -- start of nuw data migration
-      #{migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', statusstaffid') }
-      #{migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', newstatusstaffid') }
-      #{migrate_nuw_transactionfact_sql()}
-      #{migrate_nuw_transactionsourceprev_sql()}
-      #{migrate_nuw_displaytext_sql()}
-      #{migrate_dimstart_sql(migration_spec)}
-      #{rebuild_most_indexes_sql()}
-      insert into dimstart (dimension, startdate)  select 'userid', '2012-04-27' where not exists (select 1 from dimstart where dimension = 'userid');
+    [ '-- nuw migration',
+      rebuild_from_scratch_without_indexes_sql(),
+      '-- start of nuw data migration',
+      migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', statusstaffid'),
+      migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', newstatusstaffid'),
+      migrate_nuw_transactionfact_sql(),
+      migrate_nuw_transactionsourceprev_sql(),
+      migrate_nuw_displaytext_sql(),
+      migrate_dimstart_sql(migration_spec)
+    ] + rebuild_most_indexes_sql().split($/) +
+    [
+      <<-SQL
+			insert into dimstart (dimension, startdate)  select 'userid', '2012-04-27' where not exists (select 1 from dimstart where dimension = 'userid');
       update displaytext set attribute = 'userid' where attribute = 'statusstaffid';
       
       update memberfacthelper set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
@@ -1171,58 +1501,96 @@ class DatabaseManager
         d.attribute = 'memberid';
       
       create index memberid_detail_id_idx on memberid_detail (id);
-          
     SQL
+      ]
   end
   
     def migrate_asu_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
-    <<-SQL
-      -- asu migration
-      #{migrate_rebuild_without_indexes_sql()}
-      -- start of migration
-      #{migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', null') }
-      #{migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', null') }
-      #{migrate_dimstart_sql(migration_spec)}
-      #{rebuild_most_indexes_sql()}
-    SQL
+    [
+      '-- asu migration',
+      migrate_rebuild_without_indexes_sql(),
+      '-- start of migration',
+      migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', null'),
+      migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', null'),
+      migrate_dimstart_sql(migration_spec)
+    ] + rebuild_most_indexes_sql().split($/)
   end
   
-  
+  # Returns an array of sql statements.
   def migrate_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     
-    <<-SQL
-      -- regular migration
-      #{migrate_rebuild_without_indexes_sql()}
-      #{migrate_membersourceprev_sql(mapping)}
-      #{migrate_memberfact_sql(mapping)}
-      #{migrate_dimstart_sql(migration_spec)}
-      #{rebuild_most_indexes_sql()}
-    SQL
+#      -- regular migration
+      [migrate_rebuild_without_indexes_sql(),
+      migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', userid'),
+      migrate_memberfact_sql(mapping).gsub(', userid --replace_me', ', userid'),
+      migrate_dimstart_sql(migration_spec)
+      ] + rebuild_most_indexes_sql().split($/)
   end
   
-  def migrate(migration_sql)
-    db.ex(migration_sql)
-    db.ex("vacuum memberfact");
-    db.ex("vacuum membersourceprev");
-    db.ex("vacuum transactionfact");
-    db.ex("vacuum transactionsourceprev");
-    db.ex("vacuum displaytext");
-    db.ex("vacuum memberfacthelper");
+  # migration_sql_ary: an array of sql statements to execute
+  # Raises an exception if a critical error occurred that prevented the migration from succeeding.
+  # Returns true on success, or an error string in the case of a recoverable error.
+  def migrate(migration_sql_ary, update_memberfacthelper_and_indexes = true)
+    begin
+      # This method needs to run with async_ex so that other ruby threads can run while the migration
+      # operates. However, async_ex blocks other threads (even though it shouldn't) when several SQL
+      # operations are passed in a single batch. This is the reason for use of arrays and for the
+      # splitting of long statements by line break -- so that large statements can be reduced to a
+      # series of smaller ones.
+      db.async_ex("BEGIN TRANSACTION");
     
-    db.ex("analyse memberfact");
-    db.ex("analyse membersourceprev");
-    db.ex("analyse transactionfact");
-    db.ex("analyse transactionsourceprev");
-    db.ex("analyse displaytext");
-    db.ex("analyse memberfacthelper");
+      migration_sql_ary.each { |sql| $stderr.puts sql; db.async_ex(sql) }
 
     # with lots of data memberfacthelper can be impossibly slow to rebuild
-    db.ex("select updatememberfacthelper();");
-    db.ex(rebuild_memberfacthelper_indexes_sql());
-    db.ex("vacuum memberfacthelper");
-    db.ex("analyse memberfacthelper");
+      if update_memberfacthelper_and_indexes
+        db.async_ex("select updatememberfacthelper();");
+        rebuild_memberfacthelper_indexes_sql().split($/).each { |sql| $stderr.puts sql; db.async_ex(sql); }
+      end
+      
+      db.async_ex("COMMIT TRANSACTION");
+    rescue Exception=>e
+      $stderr.puts e
+      db.async_ex("ROLLBACK TRANSACTION");
+      raise
+    end
+
+    db.set_app_state('memberfacthelperquery_source', memberfacthelperquery_sql())
+
+    finalisation_statements = 
+      ["vacuum memberfact",
+       "vacuum membersourceprev",
+       "vacuum transactionfact",
+       "vacuum transactionsourceprev",
+       "vacuum displaytext",
+       "vacuum memberfacthelper",
+       
+       "analyse memberfact",
+       "analyse membersourceprev",
+       "analyse transactionfact",
+       "analyse transactionsourceprev",
+       "analyse displaytext",
+       "analyse memberfacthelper"]
+
+    current_statement = nil
+
+    begin
+      finalisation_statements.each do |sql| 
+        $stderr.puts sql
+        current_statement = sql
+        db.async_ex(sql)
+      end
+    rescue Exception=>e
+      return <<EOS
+There was an error while finalising the migration. SQL statement: '#{current_statement}'.
+Exception message: #{e.message}
+The migration succeeded, but the database may run with reduced performance until the following SQL has been executed:
+#{finalisation_statements.join($/)}
+EOS
+    end
+
+    true
   end
 end
