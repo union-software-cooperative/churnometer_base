@@ -19,6 +19,8 @@ require './lib/settings'
 require 'time'
 require 'pg'
 
+# This class should abstract database calls at as high a level as possible.
+# Currently, the target database is postgresql.
 class Db
 
   attr_reader :host
@@ -44,17 +46,17 @@ class Db
       :user =>      element['user'].value,
       :password =>  @dbpass
     )
-    
-    end
+
+    ensure_app_state_table()
+  end
 
   def close_db
     @conn.finish() if !@conn.nil?
     @conn = nil
   end
 
-  def close_db
-    @conn.finish() if !@conn.nil?
-    @conn = nil
+  def transaction(&block)
+    @conn.transaction(&block)
   end
 
   def process_query_result(query_result)
@@ -77,7 +79,8 @@ class Db
     process_query_result(@conn.async_exec(sql))
   end
 
-  # Quotes the string as appropriate for insertion into an SQL query string.
+  # Quotes a string or boolean as appropriate for insertion into an SQL query string.
+  # dbeswick tbd: add a method that will quote any data type where possible.
   def quote(value)
     if value == true || value == false
       "#{value}"
@@ -95,16 +98,58 @@ class Db
   # Returns a string representing a literal array suitable for use in a query string. Individual elements
   # are quoted appropriately.
   # If 'type' is a string, then the return string also expresses a cast to the given sql data type.
+  # A type must be supplied if an empty array is given, or an exception is raised.
   def sql_array(array, type=nil)
+    raise "PostgreSQL requires empty arrays to have an explicit type when creating an empty array. You must supply a type." if array.empty? && type.nil?
+
     result = "ARRAY[#{array.collect{ |x| quote(x) }.join(', ')}]"
     result << "::#{type}[]" if type
     result
+  end
+
+  # Returns a comma separated, quoted list of elements suitable for use in an SQL 
+  # 'where <column> in' clause.
+  # Doesn't include surrounding brackets.
+  # Will raise an exception if an empty array is given, as IN clauses always require at least one
+  # element.
+  # Example: "select * from table where id in ( #{sql_in(my_array)} )"
+  # dbeswick tbd: support other data types such as DateTime objects.
+  def sql_in(array)
+    raise "Empty arrays can't be used as input to an SQL WHERE IN clause. IN clauses always require at least one value to be supplied." if array.empty?
+    array.collect { |element| quote(element) }.join(",")
   end
 
   # Returns the date portion of the given ruby Time object, formatted appropriately for use in a 
   # query string.
   def sql_date(time)
     quote(time.strftime(DateFormatDB))
+  end
+
+  # Writes a piece of application state to the database. 'value' is converted to a string.
+  def set_app_state(key, value)
+    result = ex("update appstate set value = #{quote(value)} where key = #{quote(key)}")
+
+    if result.cmd_tuples == 0
+      ex("insert into appstate (key, value) values (#{quote(key)}, #{quote(value)})")
+    end
+  end
+
+  # Returns nil if no state has yet been defined for the given key.
+  def get_app_state(key)
+    result = ex("select value from appstate where key = #{quote(key)}")
+    if result.ntuples == 0
+      nil
+    else
+      result.values[0][0]
+    end
+  end
+
+protected
+  def ensure_app_state_table
+    sql = <<SQL
+create table if not exists appstate (key varchar, value varchar)
+SQL
+    ex(sql)
   end
 end
 
@@ -141,6 +186,10 @@ class ChurnDB
     @db.close_db() if !@db.nil?
     @db = nil
   end
+
+  def transaction(&block)
+    @db.transaction(&block)
+  end
   
   def ex(sql)
     @cache_hit = false
@@ -153,7 +202,7 @@ class ChurnDB
   end  
 
   def fact_table
-    @fact_table ||= @app.config.get_mandatory('database')['facttable'].value
+    @fact_table ||= @app.memberfacthelper_table
   end
 
   def summary_sql(header1, start_date, end_date, transactions, site_constraint, filter_xml, filter_terms)
@@ -251,7 +300,7 @@ class ChurnDB
         member_date = filter_column.include?('start') ? start_date : (end_date+1)
         
         filter_column = filter_column.sub('_start_count', '').sub('_end_count', '')
-
+        
         if @app.use_new_query_generation_method?
           raise "FilterTerms instance must be supplied to use new query method." if filter_terms.nil?
 
@@ -379,7 +428,7 @@ class ChurnDB
   
   def get_display_text(dimension, id)
     raise "A Dimension instance must be supplied." if !dimension.kind_of?(Dimension)
-    t = "error!"
+    t = "#{id} !"
     
     if id == "unassigned" 
       t = "unassigned"
@@ -403,7 +452,23 @@ class ChurnDB
       'paying_end_count',
       'paying_start_count',
       'stopped_start_count',
-      'stopped_end_count'
+      'stopped_end_count',
+      'a1p_end_count',
+      'a1p_start_count',
+      'paying_end_count',
+      'paying_start_count',
+      'waiver_start_count',
+   	  'waiver_end_count',
+      'member_start_count',
+   	  'member_end_count',
+   	  'nonpaying_start_count',
+      'nonpaying_end_count',
+      'stopped_start_count',
+      'stopped_end_count',
+      'green_start_count',
+      'orange_start_count',
+      'green_end_count',
+      'orange_end_count'
     ]
   end
 

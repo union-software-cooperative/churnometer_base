@@ -16,6 +16,7 @@
 #  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
 
 require './lib/dimension'
+require './lib/waterfall_chart_config'
 
 class ChurnometerApp
   # A Dimensions instance containing both custom and inbuilt dimensions.
@@ -40,6 +41,8 @@ class ChurnometerApp
   # Descriptions of all possible summary tables (only used to get data entry dimension)
   attr_reader :summary_user_data_tables
   
+  attr_reader :waiver_statuses
+
   # application_environment: either ':production' or ':development'
   # config_io:  general config filename or stream.  If nil, will load general config 
   #   config from default path
@@ -49,8 +52,39 @@ class ChurnometerApp
   #	needed.
   def initialize(application_environment = :development, site_config_io = nil, config_io = nil)
     @application_environment = application_environment
-    
+
+    # Special case: force site_config file to the regression config if requested.
+    # This necessitates reading the site_config file before the main config processing logic.
+    # This isn't appropriate if an explicit site_config_io was given.
+    if site_config_io.nil?
+      yaml = YAML.load_file(site_config_filename())
+      if yaml != false && yaml['use_regression_config'] == true
+        @regression_config_override = true
+        site_config_io = File.new(regression_config_filename())
+      end
+    end
+
+    @config_stream_override = 
+      !@regression_config_override && site_config_io.nil? == false || config_io.nil? == false
+
     reload_config(site_config_io, config_io)
+  end
+
+  # If the "use_regression_config" option is set, then returns the regression config. Otherwise,
+  # returns the regular config filename.
+  # If a stream has been used to override the main config, then nil is returned.
+  def active_master_config_filename
+    if @config_stream_override
+      nil
+    elsif @regression_config_override
+      regression_config_filename()
+    else
+      config_filename()
+    end
+  end
+
+  def regression_config_filename
+    './spec/config/config_regression.yaml'
   end
 
   # Uses the given IO instance to reinitialise config data from a yaml definition.
@@ -69,12 +103,24 @@ class ChurnometerApp
     make_drilldown_order()
     make_col_names()
     make_col_desc()
+    make_waiver_statuses()
+    validate()
   end
   
+  # Config values can be validated at startup in this method. This provides a means of verifying parts
+  # of the config without waiting until they're first accessed.
+  # Can also be called by systems that modify config data to ensure that changes are valid.
+  # Throws an exception if any problem occurs.
   def validate
     application_start_date()
+    config().ensure_kindof('waiver_statuses', Array, NilClass)
+    validate_email()
+    config().ensure_kindof('green_member_statuses', Array, NilClass)
+
+    # Construction will raise an exception if there's an issue.
+    WaterfallChartConfig.from_config_element(config().get_mandatory('waterfall_chart_config'))
   end
-  
+
   # A ConfigFileSet instance.
   def config
     @config_file_set
@@ -92,11 +138,42 @@ class ChurnometerApp
     end
   end
 
+  # The address from which error emails are sent.
+  # Returns nil if email_on_error? is false (error emails disabled.)
+  def email_on_error_from
+    if email_on_error? == false
+      nil
+    else
+      config.element('email_errors').value['from'].value
+    end
+  end
+
+  # The address to which error emails are sent.
+  # Returns nil if email_on_error? is false (error emails disabled.)
+  def email_on_error_to
+    if email_on_error? == false
+      nil
+    else
+      config.element('email_errors').value['to'].value
+    end
+  end
+
   def growth_target_percentage
     if config()['growth_target_percentage'].nil?
       10
     else
       config()['growth_target_percentage'].to_i
+    end
+  end
+
+  # The name of the database table that contains the member facts.
+  def memberfacthelper_table
+    database = config().get_mandatory('database')
+
+    if database['facttable'].nil?
+      'memberfacthelper'
+    else
+      database['facttable'].value
     end
   end
 
@@ -110,15 +187,14 @@ class ChurnometerApp
   # This is the date we started tracking data.  
   # The user can't select before this date
   def application_start_date
-    result = config().element('application_start_date')
+    result = config().get_mandatory('application_start_date')
     result.ensure_kindof(Date)
     result.value
   end
-
   
   # ensure col_names is initialised before access
   def col_names
-    @col_names ||= make_col_names
+    @col_names ||= make_col_names()
   end
 
   # Returns a string containing the name of the Query class used to handle Chunometer's 'summary'
@@ -168,6 +244,31 @@ class ChurnometerApp
     config().get_mandatory('member_stopped_paying_status_code').value
   end
 
+  # Returns a list of every valid status code that a member can be assigned.
+  def all_member_statuses
+    result = [member_paying_status_code(), 
+              member_awaiting_first_payment_status_code(),
+              member_stopped_paying_status_code()]
+    result = result | waiver_statuses()
+    result = result | green_member_statuses()
+    result
+  end
+
+  # Returns the statuses that are used to construct the green bar in the waterfall chart.
+  def green_member_statuses
+    if config().element('green_member_statuses').value.nil? == false
+      config().element('green_member_statuses').value.collect { |e| e.value }
+    else
+      [member_paying_status_code, member_awaiting_first_payment_status_code]
+    end
+  end
+
+  # Returns a hash defining the user's desired configuration for the waterfall chart if given, or
+  # a default chart configuration.
+  def waterfall_chart_config
+    WaterfallChartConfig.from_config_element(config().element('waterfall_chart_config'))
+  end
+
   # The dimension that expresses work site or company information.
   def work_site_dimension
     dimensions().dimension_for_id_mandatory(config().get_mandatory('work_site_dimension_id').value)
@@ -190,51 +291,60 @@ protected
     @config_filename ||= "./config/config.yaml"
   end
 
-  def config_io
-    @config_io ||= File.new(config_filename())
-  end
-  
   def site_config_filename
     @site_config_filename ||= "./config/config_site.yaml"
-  end
-
-  def site_config_io
-    @site_config_io ||= File.new(site_config_filename())
   end
 
   # site_config: stream of filename to site specific config, with passwords etc...
   # config: stream or filename
   def make_config_file_set(site_config, config)
     @config_file_set = ConfigFileSet.new
-    
-    if !config.nil?
-      if @config.is_a?(String)
-        @config_filename = config # io stream will load from this file
-      else
-        @config_io = config
-        @config_filename = config.class() # so there isn't any confusion
-      end
-    end
-    
-    begin 
-      @config_file_set.add(ConfigFile.new(config_io()))
-    rescue
-      puts "Site config file '#{config_filename()}' missing, proceeding without general config."
+    config_io = nil
+    site_config_io = nil
+
+    config ||= config_filename()
+    site_config ||= site_config_filename()
+
+    if config.is_a?(String)
+      config_io = File.new(config)
+      @config_filename = config
+    else
+      config_io = config
+      # Ensure that later error messages report that the config was generated from a non-standard source
+      # if necessary.
+      @config_filename = 
+        if config_io.respond_to?(:path)
+          config_io.path
+        else
+          "unspecified source"
+        end
     end
 
-    if !site_config.nil?
-      if @site_config.is_a?(String)
-        @site_config_filename = site_config # io stream will load from this file
-      else
-        @site_config_io = site_config
-        @site_config_filename = site_config.class() # so there isn't any confusion
-      end
-    end
-    
-    begin
-      @config_file_set.add(ConfigFile.new(site_config_io()))
+    begin 
+      @config_file_set.add(ConfigFile.new(config_io, @config_filename))
     rescue ConfigFileMissingException
-      puts "Site config file '#{site_config_filename()}' missing, proceeding without site-specific config."
+      $stderr.puts "Config file '#{config_filename()}' missing, proceeding without general config."
+    end
+
+    if site_config.is_a?(String)
+      site_config_io = File.new(site_config)
+      @site_config_filename = site_config
+    else
+      site_config_io = site_config
+      # Ensure that later error messages report that the config was generated from a non-standard source
+      # if necessary.
+      @site_config_filename =
+        if site_config_io.respond_to?(:path)
+          site_config_io.path
+        else
+          "unspecified source"
+        end
+    end
+
+    begin
+      @config_file_set.add(ConfigFile.new(site_config_io, @site_config_filename))
+    rescue ConfigFileMissingException
+      $stderr.puts "Site config file '#{site_config_filename()}' missing, proceeding without site-specific config."
     end
   end
 
@@ -334,9 +444,29 @@ protected
     @col_descriptions
   end
   
-  
+  def make_waiver_statuses()
+    element = config().get_mandatory('waiver_statuses')
+    element.ensure_kindof(Array, NilClass)
 
-protected
+    @waiver_statuses = 
+      if element.value.nil?
+        []
+      else
+        element.value.collect do |element|
+        	element.ensure_kindof(String)
+        	element.value
+        end
+      end
+  end
+  
+  def validate_email
+    if email_on_error?
+      config().ensure_kindof('email_errors', Hash)
+      config().element('email_errors').value['to'].ensure_kindof(String)
+      config().element('email_errors').value['from'].ensure_kindof(String)
+    end
+  end
+
   # User data tables should be accessed via an AppRole instance when performing application logic for 
   # the user.
   #attr_accessor :summary_user_data_tables

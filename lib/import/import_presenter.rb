@@ -35,6 +35,7 @@ class ImportPresenter
   
   def close_db
     @db.close_db()
+    @dbm.close_db()
   end
   
   def dimensions
@@ -62,7 +63,7 @@ class ImportPresenter
   def diags
     <<-HTML
       <pre>
-        #{dbm.rebuild_sql};
+        #{dbm.rebuild_memberfacthelper_sql};
       </pre>
     HTML
   end
@@ -287,9 +288,9 @@ class ImportPresenter
   end
   
   def backup_command(file)
-    cmd = "pg_dump #{@db.dbname}  > backup/#{@db.dbname}_db_backup.sql"
+    cmd = "pg_dump #{@db.dbname}  > data_backup/#{@db.dbname}_db_backup.sql"
     cmd << "; rm -Rf #{file}"
-    cmd << "; zip -r #{file} . -x uploads/\* -x tmp/\* -x .sass-cache/\* -x tmp/\* "
+    cmd << "; zip -q -r #{file} . -x \"uploads\/*\" -x \"tmp\/*\" -x \".sass-cache\/*\"  "
   end
   
   # todo refactor to somewhere more sensible
@@ -301,7 +302,7 @@ class ImportPresenter
     cmd << "; mkdir #{file}"
     cmd << "; git clone #{source_repo} #{file}"
     cmd << "; cd #{file}"
-    cmd << "; zip -r ../../#{file}.zip ."
+    cmd << "; zip -q -r ../../#{file}.zip ."
   end
   
   def empty_cache

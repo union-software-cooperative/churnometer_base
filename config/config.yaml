@@ -5,6 +5,17 @@ default_groupby_dimension_id: branchid
 member_paying_status_code: 1
 member_awaiting_first_payment_status_code: 14
 member_stopped_paying_status_code: 11
+waiver_statuses:
+  - 22 
+  - 18
+  - 10
+  - 21
+  - 5
+  - 20
+  - 8
+green_member_statuses:
+  - 1
+  - 14
 dimensions:
   - id: branchid
     name: Branch
@@ -111,8 +122,30 @@ summary_data_tables:
             - contributors
             - income_net
             - annualisedavgcontribution
+    summary_dev:
+        display_name: Summary
+        description:  This data shows contributor gain and loss as shown in the chart.  Contributors are members who are paying or expected to pay without problem (excludes non-contributing members such as students and those on waivers or in arrears).  This data also shows member counts at the end date.  Total membership is paying members + applications pending payment + stopped paying (arrears) + waivers.
+        query_columns:
+            - row_header
+            - row_header1
+            - period_header
+            - green_real_gain_nonmember
+            - green_real_gain_member
+            - green_real_loss
+            - green_real_net
+            - running_green_net
+            - green_end_count
+            - paying_end_count
+            - a1p_end_count
+            - stopped_end_count
+            - waiver_end_count
+            - member_end_count
+            - contributors
+            - income_net
+            - annualisedavgcontribution
     paying:
         display_name: Paying
+        description: This data represents those members that are paying the union money.  For the union to grow, the number of paying members has to grow, as these are the only members that fund union activity.  Other union members on service agreement are not counted.  Gratis members such as students and those on waivers are not counted.  Members in an arrears cycle are not counted unless they pay by invoice.  Invoiced members in arrears will be counted until they are sent to the debt collector.
         query_columns:
             - row_header
             - row_header1
@@ -120,12 +153,13 @@ summary_data_tables:
             - paying_start_count
             - paying_real_gain
             - paying_real_loss
+            - paying_real_net
             - paying_other_gain
             - paying_other_loss
             - paying_end_count
-            - paying_real_net
     a1p:
         display_name: New Applications
+        description: This data represents those members haven't yet paid since a new application has been received.  If the number of new non-paying applications is growing, this indicates a problem with admin and applications not being processed.  It is also worth nothing, a certain percentage of new applications may be consistently exited before payment is started.  This may need to be factored when setting recruitment targets.  NB if an application is processed and payment recieved on the same day, then it won't be counted in new applications.  This member will go straight to being counted as a new paying member. 
         query_columns:
             - row_header
             - row_header1
@@ -134,15 +168,16 @@ summary_data_tables:
             - a1p_real_gain
             - a1p_to_paying
             - a1p_to_other
+            - a1p_net
             - a1p_other_gain
             - a1p_other_loss
             - a1p_end_count
-            - a1p_net
             - a1p_newjoin
             - a1p_rejoin
             - a1p_unchanged_gain
     stopped:
         display_name: Stopped Paying
+        description:  This data represents all members who have stopped paying.  
         query_columns:
           - row_header 
           - row_header1 
@@ -155,6 +190,70 @@ summary_data_tables:
           - stopped_other_loss
           - stopped_end_count
           - stopped_unchanged_gain
+    waiver:
+        display_name: Non Contributing
+        description:  This data represents all members who are not expected to pay directly to the union.  It includes members on maternity leave etc...  Growing this pool of members doesn't necessarily improve the union's bottom line.   
+        query_columns:
+          - row_header 
+          - row_header1 
+          - period_header
+          - waiver_start_count
+          - waiver_real_gain_good
+          - waiver_real_gain_bad
+          - waiver_real_loss_good
+          - waiver_real_loss_bad
+          - waiver_real_net
+          - waiver_other_gain
+          - waiver_other_loss
+          - waiver_end_count
+    member:
+        display_name: Members
+        description:  This data represents all members, including non-contributing members such as members on work cover or mat leave.     
+        query_columns:
+          - row_header 
+          - row_header1 
+          - period_header
+          - member_start_count
+          - member_real_gain
+          - member_real_loss
+          - member_real_net
+          - member_other_gain
+          - member_other_loss
+          - member_end_count
+    green:
+      display_name: Contributing
+      description:  This data represents all members expected to contribute.  This is members who are paying without problem or are new applications expected to pay.   
+      query_columns:
+        - row_header 
+        - row_header1 
+        - period_header
+        - green_start_count
+        - green_real_gain_nonmember
+        - green_real_loss_nonmember
+        - green_real_loss_member
+        - green_real_gain_member
+        - green_real_net
+        - running_green_net
+        - green_other_gain
+        - green_other_loss
+        - green_end_count
+    orange:
+      display_name: Non Contributing
+      description:  This data represents all members who are not expected to contribute without intervention.  These are all non-fee payment members such as members on waivers or stopped paying.
+      query_columns:
+        - row_header 
+        - row_header1 
+        - period_header
+        - orange_start_count
+        - orange_real_gain_nonmember
+        - orange_real_loss_nonmember
+        - orange_real_gain_member
+        - orange_real_loss_member
+        - orange_real_net
+        - running_orange_net
+        - orange_other_gain
+        - orange_other_loss
+        - orange_end_count
     userid:
         display_name: Data Entry Changes
         query_columns:
@@ -259,6 +358,23 @@ roles:
         detail_data_tables:
             - member_summary
             - organiser
+	dev:
+        password: dev
+        show_transactions: true
+        show_target_calculation: true
+        summary_data_tables:
+          - summary_leader
+          - member
+          - paying
+          - a1p
+          - stopped
+          - waiver
+          - green
+          - orange
+        detail_data_tables:
+            - member_summary
+            - organiser
+            - financial
     churnometer:
       admin: true
       show_transactions: true
@@ -322,6 +438,56 @@ column_names:
   oldorg: old organiser
   oldemployerid: old employer
   neworg: new organiser
+  waiver_start_count: Waivers at start date
+  waiver_real_gain: New waivers
+  waiver_real_gain_good: New waivers (new members)
+  waiver_real_gain_bad:  New waivers (paying members)
+  waiver_real_loss: Ended waivers
+  waiver_real_loss_good: Ended waivers (to pay again)
+  waiver_real_loss_bad: Ended waivers (exited)
+  waiver_other_gain: Waivers transferred in
+  waiver_other_loss: Waivers transferred out
+  waiver_end_count: Waivers at end date
+  waiver_net: Net difference in waivers
+  member_start_count: Members at start date
+  member_real_gain: New members
+  member_real_gain_nofee: New members (non-paying)
+  member_real_gain_fee: New members (fee-paying)
+  member_real_loss: Exited members
+  member_real_loss_nofee: Exited members (non-paying)
+  member_real_loss_fee: Exited members (fee-paying)
+  member_real_gain_orange: Retained members
+  member_real_loss_orange: Problem members
+  member_other_gain: Members transferred in
+  member_other_loss: Members transferred out 
+  member_end_count: Members at end date
+  member_real_net: Net difference in members
+  member_loss_combined: Problems and exited
+  member_gain_combined: New and retained
+  green_start_count: Contributors at start date
+  green_real_gain: New and retained contributors
+  green_real_gain_nonmember: New contributors
+  green_real_gain_member: Retained contributors
+  green_real_loss: Stopped and exited contributors
+  green_real_loss_nonmember: Exited contributors
+  green_real_loss_member: Members stopping contribution
+  green_real_net: Contributor net
+  running_green_net: Running contributor net
+  green_other_gain: Contributors transferred in
+  green_other_loss: Contributors transferred out
+  green_end_count: Contributors at end date
+  orange_start_count: Non-contributors at start date
+  orange_real_gain: New non-contributors
+  orange_real_gain_nonmember: New non-contributing members
+  orange_real_gain_member:  Members stopping contribution
+  orange_real_loss: Retained and exited non-contributors
+  orange_real_loss_nonmember: Exited non-contributors
+  orange_real_loss_member: Retained non-contributors
+  orange_real_net: Non-contributor net
+  running_orange_net: Running non-contributor net
+  orange_other_gain: Non-contributors transferred in
+  orange_other_loss: Non-contributors transferred out
+  orange_end_count: Non-contributors at end date
 column_descriptions:
   paying_real_net: The number of members whose status became 'paying' during the period minus those that lost the 'paying' status
   paying_end_count: The number of members with the 'paying' status at the end of the period.  '{paying_end_count}' is equal to '{paying_start_count}' plus '{paying_real_gain}' minus '{paying_real_loss}' plus '{paying_other_gain}' minus '{paying_other_loss}'.
@@ -360,7 +526,46 @@ column_descriptions:
   lateness: The remittance status of each employer with at least one OOP member attached. The next due date is determined from the '{paidto}' plus the average duration between payments (multipled by the number of unposted payments) plus half this average duration to allow for processing.
   paidto: The date up to which money has been posted.  The employer may have paid past this date but unposted payment don't count toward the '{paidto}' because the '{paidto}' is determined during payment posting.
   paymenttype: Code representing either out of pay, direct debit, credit card or personal (invoice)
-  
+  green_real_gain_nonmember:  New contributors are new members that should contribute i.e. new  student and other union members aren't counted.   
+  green_real_gain_member: Retained contributors are members who weren't paying (in arrears, waiver etc) that should now contributor without problem.
+  green_real_loss:  These losses are exited contributors and contributors going on waiver or entering arrears.
+  green_end_count: Contributors at the end date (paying and new applications pending payment)
+  waiver_end_count: Members at the end date who are not required to pay  
+  orange_start_count: The number of members who weren't contributing at the start
+  orange_start_count: The number of members who weren't contributing at the start
+  orange_real_gain: The number of new non-contributors
+  orange_real_gain_nonmember: The number of new members that went straight on waiver/non-fee
+  orange_real_gain_member: The number of contributing members that stopped contributing
+  orange_real_loss: The number of non-contributing members that started contributing or exited
+  orange_real_loss_nonmember: The number of non-contributing members that were exited
+  orange_real_loss_member: The number of non-contributing members that resumed contribution
+  orange_real_net: The net change in non-contributing members
+  running_orange_net: The cumulative net change in non-contributing members
+  orange_other_gain: Non contributing members transferred in
+  orange_other_loss: Non contributing members transferred out
+  orange_end_count: The number of members who weren't contributing at the end
+waterfall_chart_config:
+  title: Contributing members
+  description: |
+               This chart shows the gain and loss of contributing members for the period.
+
+               Gains are divided between new members (green) and retained members (orange).  Retained members are those coming out of waiver or arrears.  Click the brown bar to get a combined list.  New non-contributing members, such as students, are not counted in gains until they start contributing (where they'll show as retained).
+
+               Losses are divided into exited members (red) and those who stopped contributing (orange). Only exited members who were contributing are shown in the red because non-contributing members were already counted when they stopped their contribution.
+
+               If a member joins and resigns multiple times they'll be counted multiple times in the green and red, likewise in the orange if a member stops and starts their contribution multiple times.  This is so the separate counts from different periods add up when those periods are combined.   The retained members are included because problem members were needed and the report can't balance without both.
+  gain: green_real_gain_nonmember
+  loss: green_real_loss_nonmember
+  other_gain: green_real_gain_member
+  other_loss: green_real_loss_member
+  combined_gain: green_real_gain
+  combined_loss: green_real_loss
+  running_net: running_green_net
+  net_includes_other: true
+  gain_label: new
+  loss_label: exited
+  other_gain_label: retained
+  other_loss_label: problems
   
   
   

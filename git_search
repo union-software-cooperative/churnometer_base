@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd $1
+git rev-list --all | (
+  while read revision; do
+    git grep -F "$2" $revision
+  done
+)

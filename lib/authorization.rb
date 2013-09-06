@@ -27,7 +27,7 @@ module Authorization
   end
   
   def protected!
-    unless auth.authenticated?
+    unless auth.authenticated?  && !auth.admin?
       not_authorised
     end
   end
