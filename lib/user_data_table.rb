@@ -53,6 +53,10 @@ class UserDataTable
   # Churnometer main interface.
   attr_reader :display_name
 
+  # The description of the data table as displayed to the user. Currently displayed above the table in the
+  # Churnometer main interface.
+  attr_reader :description
+  
   # A list of column names that should be applied to the returned data. The valid column names are 
   # determined by the query that this UserDataTable is expected to apply to (summary or detail query.)
   attr_reader :column_names
@@ -68,13 +72,17 @@ class UserDataTable
       array_element.ensure_kindof(String)
       array_element.value
     end
+    
+    description = ""
+    description = config_element['description'].value unless config_element['description'].nil?
 
-    new(id, config_element['display_name'].value, query_columns)
+    new(id, config_element['display_name'].value, description, query_columns)
   end
 
-  def initialize(id, display_name, column_names)
+  def initialize(id, display_name, description, column_names)
     @id = id
     @display_name = display_name
+    @description = description
     @column_names = column_names
   end
 end

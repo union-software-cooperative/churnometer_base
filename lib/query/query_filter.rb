@@ -41,29 +41,34 @@ protected
 
     filter_terms.terms.each do |term|
       if !term.values.empty?
-        has_unassigned = term.values.include?('unassigned')
+        # Transform 'unassigned' term values to the empty string.
+        values = 
+          term.values.collect do |value|
+          	if value == 'unassigned'
+              ''
+            else
+              value
+            end
+        	end
 
-        result = "(coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(term.values, 'varchar')})"
-
-        if has_unassigned
-          result << " or (coalesce(#{db().quote_db(term.db_column)},'') = ''))"
-        else
-          result << ")"
-        end
+        #result = "coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(values, 'varchar')})"
+        result = "#{db().quote_db(term.db_column)} = any (#{db().sql_array(values, 'varchar')})"
         
         term_sqls << result
       end
 
       if !term.exclude_values.empty?
-        has_unassigned = term.values.include?('unassigned')
+        # Transform 'unassigned' term values to the empty string.
+        values = 
+          term.exclude_values.collect do |value|
+          	if value == 'unassigned'
+              ''
+            else
+              value
+            end
+        	end
 
-        result = "(not coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(term.exclude_values, 'varchar')})"
-
-        if has_unassigned
-          result << " or (not coalesce(#{db().quote_db(term.db_column)},'') = ''))"
-        else
-          result << ")"
-        end
+        result = "not #{db().quote_db(term.db_column)} = any (#{db().sql_array(values, 'varchar')})"
         
         term_sqls << result
       end

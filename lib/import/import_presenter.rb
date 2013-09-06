@@ -35,6 +35,7 @@ class ImportPresenter
   
   def close_db
     @db.close_db()
+    @dbm.close_db()
   end
   
   def dimensions
@@ -62,7 +63,7 @@ class ImportPresenter
   def diags
     <<-HTML
       <pre>
-        #{dbm.rebuild_sql};
+        #{dbm.rebuild_memberfacthelper_sql};
       </pre>
     HTML
   end

@@ -120,21 +120,25 @@ class ConfigElement
 
   # Raises a BadConfigDataFormatException if the ConfigElement's value isn't one of the given class
   # types, as determined by 'kind_of?'
+  # Returns this element's value.
   def ensure_kindof(*class_types)
     if !class_types.any?{ |kindof| @value.kind_of?(kindof) }
       raise BadConfigDataFormatException.new(self, "Element is of type '#{@value.class}', but it needs to be of type '#{class_types.join(' or ')}'.")
     end
+    @value
   end
 
   # Raises a MissingConfigDataException if the ConfigElement is a hash that doesn't contain the given
   # hash key.
   # It's an error to call this on ConfigElement instances whose values are of types other than Hash.
+  # Returns the key's value.
   def ensure_hashkey(key)
     raise MissingConfigDataException.new(key, self) if !@value.has_key?(key)
+    @value[key]
   end
 
   def has_children?
-    @value.kind_of?(Hash)
+    @value.kind_of?(Hash) || @value.kind_of?(Array)
   end
 
   # Returns one of the child ConfigElements of this element.
@@ -166,7 +170,9 @@ class ConfigFile
   attr_reader :filename
 
   # file: A stream or the filename of the config file
-  def initialize(file)
+  # file_description: If a filename was not given for 'file', then this parameter must describe
+  #		the source of the config data.
+  def initialize(file, file_description=nil)
     
     @io = 
       if file.is_a?(String)
@@ -182,7 +188,8 @@ class ConfigFile
 
         File.new(@filename)
       else
-        @filename = file.class()
+        raise "file_description must be provided if not supplying a filename." if file_description.nil?
+        @filename = file_description
         file
       end
 
@@ -194,6 +201,11 @@ class ConfigFile
     yaml.gsub!("\t", '    ')
     
     config_hash = YAML.load(yaml)
+
+    # This will be true in the case of an empty file.
+    if config_hash == false
+      config_hash = {}
+    end
 
     raise BadConfigDataFormatException.new("The config file definition must result in a hash, but the type is '#{config_hash.class}'", self) if !config_hash.kind_of?(Hash)
     
@@ -215,6 +227,10 @@ class ConfigFile
   def has_element?(element_id)
     @values.has_key?(element_id)
   end
+
+  def to_s
+    @filename
+  end
 end
 
 # Compiles a single set of queryable config data from multiple config files.
@@ -225,7 +241,7 @@ class ConfigFileSet
   end
 
   def add(config_file)
-    @config_files << config_file
+    @config_files.insert(0, config_file)
   end
   
   def filenames
@@ -242,7 +258,7 @@ class ConfigFileSet
       nil
     else
       if e.has_children?
-        raise BadConfigDataFormatException.new("The element '#{element_id}' has children. It must be accessed via the 'element' method.", self)
+        raise BadConfigDataFormatException.new(e, "The element '#{element_id}' has children. It must be accessed via the 'element' method.")
       end
 
       e.value
@@ -259,6 +275,18 @@ class ConfigFileSet
     end
     
     nil
+  end
+
+  # Gets the first element of the given id from the file set, and throws an exception if it's missing
+  # or not of the required type.
+  def ensure_kindof(element_id, *class_types)
+    element = element(element_id)
+
+    if element.nil?
+      raise MissingConfigDataException.new(element_id)
+    end
+
+    element.ensure_kindof(*class_types)
   end
 
   # As for 'element', but raises a MissingConfigDataException if the element id isn't found.
