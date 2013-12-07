@@ -24,12 +24,12 @@
                 <% model.transfers.each do |row| %>
                     <tr>
                         <td>
-                      			<a href="<%= model.build_url({"endDate" => Date.parse(row['changedate']).strftime(DateFormatDisplay), "startDate" => Date.parse(row['changedate']).strftime(DateFormatDisplay), "group_by" => "#{model.work_site_dimension_id}"})  %>" title="date of transfer">
+                      			<a href="<%= model.build_url({'period' => 'custom', "endDate" => Date.parse(row['changedate']).strftime(DateFormatDisplay), "startDate" => Date.parse(row['changedate']).strftime(DateFormatDisplay), "group_by" => "#{model.work_site_dimension_id}"})  %>" title="date of transfer">
 	                            <%= Date.parse(row['changedate']).strftime(DateFormatDisplay) %>
 	                        </a>
 					    </td>
 						<td>
-							<a href="<%= model.build_url({"endDate" => Date.parse(row['changedate']).strftime(DateFormatDisplay) } ) %>" title="<%= "#{Date.parse(model.start_date).strftime(DateFormatDisplay)} to #{(Date.parse(row['changedate'])-1).strftime(DateFormatDisplay)}" %>">
+							<a href="<%= model.build_url({'period' => 'custom', "endDate" => Date.parse(row['changedate']).strftime(DateFormatDisplay) } ) %>" title="<%= "#{Date.parse(model.start_date).strftime(DateFormatDisplay)} to #{(Date.parse(row['changedate'])-1).strftime(DateFormatDisplay)}" %>">
                         		[before]
 							</a>
 						</td>
@@ -40,7 +40,7 @@
                         	<%= row['transfer_out'] %>
                         </td>
                     	<td>
-	 						<a href="<%= model.build_url({"startDate" => (Date.parse(row['changedate'])+1).strftime(DateFormatDisplay) }) %>" title="<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(model.end_date).strftime(DateFormatDisplay)}" %>">
+	 						<a href="<%= model.build_url({'period' => 'custom', "startDate" => (Date.parse(row['changedate'])+1).strftime(DateFormatDisplay) }) %>" title="<%= "#{(Date.parse(row['changedate'])+1).strftime(DateFormatDisplay)} to #{Date.parse(model.end_date).strftime(DateFormatDisplay)}" %>">
 								[after]
 							</a>
 						</td>

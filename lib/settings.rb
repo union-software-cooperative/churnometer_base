@@ -43,6 +43,7 @@ module Settings
       'endDate' => end_date,
       'column' => '',
       'interval' => 'none',
+      'period' => 'this_week',
       Filter => {
         'status' => [
            app().member_paying_status_code,
