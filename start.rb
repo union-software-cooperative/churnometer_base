@@ -420,7 +420,7 @@ class Churnobyl < Sinatra::Base
     
     @flash = nil
     @config = params['config']
-
+    
     filename = app().active_master_config_filename
 
     begin
@@ -431,17 +431,14 @@ class Churnobyl < Sinatra::Base
         testConfig.validate
         dbm = DatabaseManager.new(testConfig)
         @yaml_spec = dbm.migration_yaml_spec
-        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
+        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false 
           File.open(filename, 'w') do |f|
             f.write @config
           end
         else
           flash_text = "Need to restructure data before saving #{filename}"
-
-          if dbm.memberfacthelper_migration_required?
-            flash_text += " (memberfacthelper requires update)"
-          end
-
+          flash_text += " (memberfacthelper requires update)" if dbm.memberfacthelper_migration_required?
+          
           session[:flash] = flash_text
           session[:new_config] = params['config']
           redirect :migrate
@@ -466,6 +463,7 @@ class Churnobyl < Sinatra::Base
     
     @flash = session[:flash]
     @config = session[:new_config]
+
     if @config.nil?
       session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
       redirect :config 
@@ -477,7 +475,7 @@ class Churnobyl < Sinatra::Base
     
     # get the proposed migration, and return it to the user to allow intervention
     @yaml_spec = dbm.migration_yaml_spec
-    @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required?
+    @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required? 
     erb :migrate
   end
   
@@ -488,6 +486,7 @@ class Churnobyl < Sinatra::Base
     session[:flash] = nil
     @yaml_spec = params['yaml_spec']
     @config = session[:new_config]
+
     if @config.nil?
       session[:flash] = "Can't migrate without new config.  Make sure cookies are enabled."
       redirect :config 
@@ -504,7 +503,8 @@ class Churnobyl < Sinatra::Base
       migration_sql =
         if need_full_migration
           migration_spec = dbm.parse_migration(@yaml_spec)
-      
+          
+          #dbm.migrate_nuw_sql(migration_spec) # use this line in place of the one below when migrating from NUW
           dbm.migrate_sql(migration_spec)
         else
           dbm.rebuild_memberfacthelper_sql_ary
