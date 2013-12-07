@@ -92,11 +92,7 @@ drilldown_order:
   hostemployerid: companyid
   employmenttypeid: companyid
   paymenttypeid: paymenttypeid
-  companyid: last_site_training_course
-  last_site_training_type: last_site_training_venue
-  last_site_training_venue: last_site_training_trainer
-  last_site_training_trainer: last_site_training_course
-  last_site_training_course: companyid
+  companyid: employerid
 summary_data_tables:
     summary:
         display_name: Summary
@@ -345,6 +341,7 @@ roles:
             - organiser
             - financial
     user:
+        password: password
         show_target_calculation: true
         summary_data_tables:
             - summary
@@ -365,7 +362,8 @@ roles:
         detail_data_tables:
             - member_summary
             - organiser
-	dev:
+    dev:
+        admin: true
         password: dev
         show_transactions: true
         show_target_calculation: true
@@ -646,3 +644,4 @@ waterfall_chart_config:
 
 
 
+                    

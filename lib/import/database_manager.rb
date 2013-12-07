@@ -352,6 +352,49 @@ class DatabaseManager
     SQL
   end
 
+  
+  def fix_out_of_sequence_changes_sql
+    sql = <<-SQL
+      with laggy as (
+        select changeid, lag(changeid) over (partition by memberid order by changedate) as lagid from memberfact 
+      )
+      update
+        memberfact
+      set
+        oldstatus = m2.newstatus
+    SQL
+
+    dimensions.each { |d| sql << <<-REPEAT }
+        , old#{d.column_base_name} = m2.new#{d.column_base_name}
+    REPEAT
+    
+    sql << <<-SQL
+      from
+        laggy
+        inner join memberfacttest m1 on laggy.changeid = m1.changeid
+        inner join memberfacttest m2 on laggy.lagid = m2.changeid
+      where
+        memberfact.changeid = m1.changeid;
+
+    SQL
+
+    sql << <<-SQL
+      select 
+        count(*)
+      from 
+        memberfact
+      where
+        coalesce(oldstatus,'') = coalesce(newstatus,'')
+    SQL
+
+    dimensions.each { |d| sql << <<-REPEAT }
+        and coalesce(old#{d.column_base_name},'') = coalesce(new#{d.column_base_name},'')
+    REPEAT
+    
+    sql
+  end
+
+
   def memberchangefromlastchange_sql
 
     sql = <<-SQL
@@ -1152,22 +1195,28 @@ class DatabaseManager
         update 
           displaytext 
         set
-          displaytext = d2.displaytext
+          id = case when lower(d2.attribute) in ('memberid', 'status') then d2.id else trim(lower(d2.id)) end
+          , displaytext = d2.displaytext
         from
          displaytextsource d2  
         where
-          displaytext.id = d2.id 
+          trim(lower(displaytext.id)) = trim(lower(d2.id)) 
           and displaytext.attribute = d2.attribute
-          and displaytext.displaytext <> d2.displaytext
+          and (
+            displaytext.displaytext <> d2.displaytext
+            or displaytext.id <> d2.id
+          )
         ;
         
-        insert into displaytext
+        insert into displaytext(attribute, id, displaytext)
         select
-          *
+          attribute
+	  , case when lower(attribute) in ('memberid', 'status') then id else trim(lower(id)) end
+          , displaytext
         from
          displaytextsource d
         where
-          not exists (select 1 from displaytext where attribute = d.attribute and id=d.id);
+          not exists (select 1 from displaytext where attribute = d.attribute and trim(lower(id))=trim(lower(d.id)));
         
         -- delete to make way for next import
         delete from displaytextsource;
@@ -1267,7 +1316,7 @@ class DatabaseManager
     SQL
     
     mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
-        , #{oldvalue}  
+        , trim(lower(#{oldvalue}::text))  
     REPEAT
     
     sql << <<-SQL
@@ -1308,8 +1357,8 @@ class DatabaseManager
     SQL
     
     mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
-        , old#{oldvalue}  
-        , new#{oldvalue}  
+        , trim(lower(old#{oldvalue}::text))  
+        , trim(lower(new#{oldvalue}::text))
     REPEAT
     
     sql << <<-SQL
@@ -1380,7 +1429,7 @@ class DatabaseManager
       )
       select
         attribute
-        , id
+        , case when lower(attribute) in ('memberid', 'status') then id else trim(lower(id)) end
         , displaytext
       from 
         displaytext_migration;
@@ -1485,6 +1534,7 @@ class DatabaseManager
       update memberfact set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
       update transactionfact set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
       
+      select updatememberfacthelper();
       drop table if exists memberid_detail;
       
       select 
