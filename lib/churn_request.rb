@@ -58,8 +58,15 @@ class ChurnRequest
     @interval = @params['interval'].to_s
     @filter_column = @params['column'].to_s
     @export_type = @params['export'].to_s
+    @period = @params['period'].to_s
+    if @period!='custom'
+      @params['startDate'] = period_start(@period).strftime(DateFormatDisplay)
+      @params['endDate'] = period_end(@period).strftime(DateFormatDisplay)
+    end
+    
     @start_date = Date.parse(@params['startDate'])
     @end_date = Date.parse(@params['endDate'])
+    
     @transactions = auth.role.allow_transactions?
     @site_constraint = @params['site_constraint'].to_s
     @xml = self.class.filter_xml parsed_params()[Filter], locks(@params['lock'])
@@ -93,6 +100,49 @@ class ChurnRequest
     @warnings += cross_check(@data)
     @cache_hit = db.cache_hit
   end
+
+  def period_start(period)
+    case period
+    when "today"
+      Date.today
+    when "yesterday"
+      Date.today - 1
+    when "this_week"
+      Date.today - Date.today.wday
+    when "last_week"
+      Date.today - Date.today.wday - 7
+    when "this_month"
+      Date.today - Date.today.mday + 1 
+    when "last_month"
+      (Date.today - Date.today.mday) - (Date.today - Date.today.mday).mday + 1 # cumbersome???
+    when "this_year"
+      Date.new(Date.today.year, 1, 1)
+    when "last_year"
+      Date.new(Date.today.year - 1, 1 , 1)
+    end
+  end
+  
+  def period_end(period)
+  case period
+    when "today"
+      Date.today
+    when "yesterday"
+      Date.today - 1
+    when "this_week"
+      Date.today
+    when "last_week"
+      Date.today - Date.today.wday - 1
+    when "this_month"
+      Date.today
+    when "last_month"
+      Date.today - Date.today.mday
+    when "this_year"
+      Date.today
+    when "last_year"
+        Date.new(Date.today.year - 1, 12, 31)  
+    end
+  end
+  
 
   def has_data?
     @data && @data.count > 0

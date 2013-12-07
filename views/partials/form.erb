@@ -2,10 +2,14 @@
 	 # View for the filtering controls.
 %>
 
-<section id="filter" class="form span-24">
+<section id="filter" class="form span-28">
 	<div class="form">
     <form action="/">
       <ul>
+        <li class="period form span-3">
+        		<label>Period</label>
+        		<%= model.output_period_selector(model['period']) %>
+        </li>
         <li class="datepicker form span-3">
           <label>Start Date</label>
           <input type="text" name="startDate" value="<%= model['startDate'] %>">
@@ -203,6 +207,13 @@
 		relative: true
 	});
 
+	function period_changed() {
+		if ($("#period").val()=="custom")
+			$(".datepicker").show();
+		else
+			$(".datepicker").hide();
+	}
+
 	function show_search() {
 		$(".search").show();
 		$(".search_button").hide();
@@ -221,7 +232,9 @@
 	var text_for_search_term_add_id = ''
 	
 	$(function() {
-		$("#search_term_add_text").val("")
+		$("#search_term_add_text").val("");
+		
+		period_changed();
 	
 		//<!--Prevent form submission on enter-->
 		//$("input,select").keypress(function(event) { return event.keyCode != 13; });

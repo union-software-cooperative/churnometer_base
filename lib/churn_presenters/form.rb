@@ -82,6 +82,27 @@ class ChurnPresenter_Form
     output << "</select>"
     output
   end
+  
+  def output_period_selector(selected_period_id)
+    selected = {}
+    selected[selected_period_id] = "selected='selected'"
+    
+    output = "<select id='period' name='period' onchange='period_changed()'>"
+    output << <<-HTML
+      <option value='today' #{selected['today']}>Today</option>
+      <option value='yesterday' #{selected['yesterday']}>Yesterday</option>
+      <option value='this_week' #{selected['this_week']}>This Week</option>
+      <option value='last_week' #{selected['last_week']}>Last Week</option>
+      <option value='this_month' #{selected['this_month']}>This Month</option>
+      <option value='last_month' #{selected['last_month']}>Last Month</option>
+      <option value='this_year' #{selected['this_year']}>This Year</option>
+      <option value='last_year' #{selected['last_year']}>Last Year</option>
+      <option value='custom' #{selected['custom']}>Custom...</option>
+    HTML
+    
+    output << "</select>"
+    output
+  end
 
   def output_filter_group_search_term_editor
     <<-EOS
