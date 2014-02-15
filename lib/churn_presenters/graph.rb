@@ -55,7 +55,7 @@ class ChurnPresenter_Graph
   def waterfallItems
     a = Array.new
     @request.data.each do |row|
-      i = (Struct.new(:name, :gain, :loss, :other_gain, :combined_gain, :combined_loss, :other_loss, :name_link, :gain_link, :loss_link, :other_gain_link, :other_loss_link, :combined_gain_link, :combined_loss_link)).new
+      i = (Struct.new(:name, :gain, :loss, :other_gain, :combined_gain, :combined_loss, :other_loss, :name_link, :gain_link, :loss_link, :other_gain_link, :other_loss_link, :combined_gain_link, :combined_loss_link, :net)).new
       i[:name] = row['row_header1']
       i[:gain] = 0
       i[:loss] = 0
@@ -68,10 +68,11 @@ class ChurnPresenter_Graph
       i[:loss] = row[@chart_config.loss] unless @chart_config.loss.nil?
       i[:other_gain] = row[@chart_config.other_gain] unless @chart_config.other_gain.nil?
       i[:other_loss] = row[@chart_config.other_loss] unless @chart_config.other_loss.nil?
-      i[:other_gain] = row[@chart_config.other_gain] unless @chart_config.combined_gain.nil?
-      i[:other_loss] = row[@chart_config.other_loss] unless @chart_config.combined_loss.nil?
+      i[:other_gain] = row[@chart_config.other_gain] unless @chart_config.combined_gain.nil? # this looks wrong/weird.  Should it be here?
+      i[:other_loss] = row[@chart_config.other_loss] unless @chart_config.combined_loss.nil? # this looks wrong/weird.  Should it be here?
       i[:combined_gain] = row[@chart_config.combined_gain] unless @chart_config.combined_gain.nil?
       i[:combined_loss] = row[@chart_config.combined_loss] unless @chart_config.combined_loss.nil?
+      i[:net] = (i[:gain].to_i + i[:other_gain].to_i + i[:loss].to_i + i[:other_loss].to_i).to_s
       
       i[:name_link] = build_url(drill_down_header(row, @app))
       i[:gain_link] = build_url(drill_down_cell(row, @chart_config.gain)) unless @chart_config.gain.nil?
@@ -117,6 +118,7 @@ class ChurnPresenter_Graph
 
           # construct the url to be used when user clicks to drill down
           url_parameters = { 
+            "period" => 'custom',
             "startDate" => intersection['period_start'], 
             "endDate" => intersection['period_end'], 
             "interval" => 'none', 

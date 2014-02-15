@@ -266,6 +266,7 @@ class ChurnPresenter_Table
     drill_down_header(row, @app)
       .merge!(
         {
+          'period' => 'custom', 
           'startDate' => row['period_start'], 
           'endDate' => row['period_end']
         }
