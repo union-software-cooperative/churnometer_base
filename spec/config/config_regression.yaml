@@ -1,18 +1,28 @@
-application_start_date: 2011-08-08
+hostos: ubuntu
+email_on_error: true
+email_errors:
+  to: dlbeswick@gmail.com
+  from: churnometer@local
 database:
-    host: localhost
-    port: 5432
-    dbname: churnometer_regression
-    user: churnuser
-    password: churnuser
-    facttable: memberfacthelper
-use_database_cache: false
+  host: localhost
+  port: 5432
+  dbname: churn_nuw
+  user: churnuser
+  password: churnuser
+  facttable: memberfacthelper
+demo: false
+use_new_query_generation_method: true 
+source_repo: REPLACEME_SOURCE_REPO
+application_start_date: 2011-8-14
 use_new_query_generation_method: true
 work_site_dimension_id: companyid
 default_groupby_dimension_id: branchid
 member_paying_status_code: 1
 member_awaiting_first_payment_status_code: 14
 member_stopped_paying_status_code: 11
+green_member_statuses:
+  - a1p
+  - paying
 waiver_statuses:
 dimensions:
   - id: branchid
@@ -31,10 +41,10 @@ dimensions:
     name: Agreement Expiry
   - id: del
     name: Delegate Training
-	roles: none
+    roles: none
   - id: hsr
     name: HSR Training
-	roles: none
+    roles: none
   - id: gender
     name: Gender
   - id: feegroupid
@@ -43,38 +53,56 @@ dimensions:
     name: State
   - id: nuwelectorate
     name: Electorate
-  - id: statusstaffid
-    name: Data Entry
-    roles: leadership
   - id: supportstaffid
     name: Support Staff
   - id: employerid
     name: Employer
   - id: hostemployerid
     name: Owner
-    roles: admin
+    roles: lead
   - id: employmenttypeid
     name: Employment Type
   - id: paymenttypeid
     name: Payment Type
+  - id: last_site_training_course
+    name: Last Course
+    roles: trainer
+  - id: last_site_training_type
+    name: Last Course Category
+    roles: trainer
+  - id: last_site_training_age
+    name: Training Age
+    roles: trainer
+  - id: last_site_training_trainer
+    name: Trainer
+    roles: trainer
+  - id: last_site_training_venue
+    name:  Training Venue
+    roles: trainer
+  - id: userid
+    name: Data Entry
 drilldown_order:
-	branchid: lead
-	industryid: companyid
-	lead: org
-	org: companyid
-	areaid: companyid
-	companyid: companyid
-	del: companyid
-    hsr: companyid
-	feegroupid: companyid
-	state: areaid
-	nuwelectorate: org
-	statusstaffid: companyid
-	supportstaffid: org
-	employerid: companyid
-	hostemployerid: companyid
-	employmenttypeid: companyid
-	paymenttypeid: paymenttypeid
+  branchid: lead
+  industryid: companyid
+  lead: org 
+  org: companyid
+  areaid: companyid 
+  companyid: companyid
+  del: companyid
+  hsr: companyid 
+  feegroupid: companyid
+  state: areaid
+  nuwelectorate: org
+  supportstaffid: org
+  employerid: companyid
+  hostemployerid: companyid
+  employmenttypeid: companyid
+  paymenttypeid: paymenttypeid
+  companyid: last_site_training_course
+  last_site_training_type: last_site_training_venue
+  last_site_training_venue: last_site_training_trainer
+  last_site_training_trainer: last_site_training_course
+  last_site_training_course: companyid
 summary_data_tables:
     summary:
         display_name: Summary
@@ -87,10 +115,9 @@ summary_data_tables:
             - paying_start_count
             - paying_real_gain
             - paying_real_loss
+            - paying_end_count
             - paying_real_net
             - running_paying_net
-            - paying_end_count
-            - stopped_to_other
     summary_leader:
         display_name: Summary
         query_columns:
@@ -102,12 +129,12 @@ summary_data_tables:
             - paying_start_count
             - paying_real_gain
             - paying_real_loss
+            - paying_end_count
             - paying_real_net
             - running_paying_net
-            - paying_end_count
-            - stopped_to_other
             - contributors
             - income_net
+            - annualisedavgcontribution
     paying:
         display_name: Paying
         query_columns:
@@ -120,38 +147,56 @@ summary_data_tables:
             - paying_other_gain
             - paying_other_loss
             - paying_end_count
-            - paying_net
+            - paying_real_net
     a1p:
-        display_name: A1p
+        display_name: New Applications
         query_columns:
             - row_header
             - row_header1
             - period_header
             - a1p_start_count
-            - a1p_newjoin
-            - a1p_rejoin
             - a1p_real_gain
-            - a1p_unchanged_gain
-            - a1p_to_other
             - a1p_to_paying
+            - a1p_to_other
             - a1p_other_gain
             - a1p_other_loss
             - a1p_end_count
-	        - a1p_net
+            - a1p_net
+            - a1p_newjoin
+            - a1p_rejoin
+            - a1p_unchanged_gain
     stopped:
-        display_name: Stopped
+        display_name: Stopped Paying
         query_columns:
-	        - row_header 
-	        - row_header1 
-	        - period_header
-	        - stopped_start_count
-	        - stopped_real_gain
-	        - stopped_unchanged_gain
-	        - stopped_to_other
-	        - stopped_to_paying
-	        - stopped_other_gain
-	        - stopped_other_loss
-	        - stopped_end_count
+          - row_header 
+          - row_header1 
+          - period_header
+          - stopped_start_count
+          - stopped_real_gain
+          - stopped_to_other
+          - stopped_to_paying
+          - stopped_other_gain
+          - stopped_other_loss
+          - stopped_end_count
+          - stopped_unchanged_gain
+    userid:
+        display_name: Data Entry Changes
+        query_columns:
+          - row_header 
+          - row_header1 
+          - period_header
+          - a1p_real_gain
+          - a1p_unchanged_gain
+          - a1p_to_other
+          - a1p_to_paying
+          - stopped_real_gain
+          - stopped_unchanged_gain
+          - stopped_to_other
+          - stopped_to_paying
+          - rule59_unchanged_gain
+          - transactions
+          - posted
+          - unposted
 detail_data_tables:
     member_summary:
         display_name: Member Summary
@@ -191,11 +236,8 @@ detail_data_tables:
             - posted
             - unposted
 roles:
-    admin:
-        admin: true
-        password: letmein
-    leadership:
-        password: fallout
+    lead:
+        password: growth
         show_transactions: true
         show_target_calculation: true
         summary_data_tables:
@@ -207,24 +249,54 @@ roles:
             - member_summary
             - organiser
             - financial
-	lead:
-        password: growth
+    staff:
+        password: followup
+        show_transactions: true
+        show_target_calculation: true
+        summary_data_tables:
+            - summary_leader
+            - paying
+            - a1p
+            - stopped
+        detail_data_tables:
+            - member_summary
+            - organiser
+            - financial
+    user:
         show_target_calculation: true
         summary_data_tables:
             - summary
             - paying
             - a1p
+            - stopped
         detail_data_tables:
             - member_summary
             - organiser
-    user:
+    trainer:
+        password: gogogo
+        show_target_calculation: true
         summary_data_tables:
             - summary
             - paying
             - a1p
+            - stopped
         detail_data_tables:
             - member_summary
             - organiser
+    dev:
+      admin: true
+      password: dev
+      show_transactions: true
+      show_target_calculation: true
+      summary_data_tables:
+        - summary_leader
+        - paying
+        - a1p
+        - stopped
+      detail_data_tables:
+         - member_summary
+         - organiser
+         - financial
 column_names:
   a1p_real_gain: new applications (total)
   a1p_to_other: applications failed
@@ -313,3 +385,26 @@ column_descriptions:
   lateness: The remittance status of each employer with at least one OOP member attached. The next due date is determined from the '{paidto}' plus the average duration between payments (multipled by the number of unposted payments) plus half this average duration to allow for processing.
   paidto: The date up to which money has been posted.  The employer may have paid past this date but unposted payment don't count toward the '{paidto}' because the '{paidto}' is determined during payment posting.
   paymenttype: Code representing either out of pay, direct debit, credit card or personal (invoice)
+waterfall_chart_config:
+  title: Contributing members
+  description: |
+               This chart shows the gain and loss of contributing members for the period.
+
+               Gains are divided between new members (green) and retained members (orange).  Retained members are those coming out of waiver or arrears.  Click the brown bar to get a combined list.  New non-contributing members, such as students, are not counted in gains until they start contributing (where they'll show as retained).
+
+               Losses are divided into exited members (red) and those who stopped contributing (orange). Only exited members who were contributing are shown in the red because non-contributing members were already counted when they stopped their contribution.
+
+               If a member joins and resigns multiple times they'll be counted multiple times in the green and red, likewise in the orange if a member stops and starts their contribution multiple times.  This is so the separate counts from different periods add up when those periods are combined.   The retained members are included because problem members were needed and the report can't balance without both.
+  gain: green_real_gain_nonmember
+  loss: green_real_loss_nonmember
+  other_gain: green_real_gain_member
+  other_loss: green_real_loss_member
+  combined_gain: green_real_gain
+  combined_loss: green_real_loss
+  running_net: running_green_net
+  net_includes_other: true
+  gain_label: new
+  loss_label: exited
+  other_gain_label: retained
+  other_loss_label: problems
+            

@@ -64,7 +64,7 @@ class ChurnRequest
     end
     
     @warnings = validate_params(@params)
-    
+        
     @start_date = Date.parse(@params['startDate'])
     @end_date = Date.parse(@params['endDate'])
     
