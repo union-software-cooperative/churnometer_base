@@ -63,7 +63,7 @@ class ImportPresenter
   def diags
     <<-HTML
       <pre>
-        #{dbm.rebuild_memberfacthelper_sql};
+        #{dbm.fix_out_of_sequence_changes_sql};
       </pre>
     HTML
   end
@@ -315,7 +315,7 @@ class ImportPresenter
       cmd = "killall ruby; thin start" # "killall ruby; thin start"
     else
       # Crudely assumes dbpass and #{@db.dbname} user pass is the same (that's how its configured)
-      cmd = "echo #{@db.dbpass} | sudo -S /etc/init.d/postgresql restart"
+      cmd = "echo \"#{@db.dbpass}\" | sudo -S /etc/init.d/postgresql restart"
       cmd << "; rm -f tmp/*.Marshal"
       cmd << "; /etc/init.d/thin restart & "
     end

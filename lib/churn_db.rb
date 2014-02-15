@@ -55,11 +55,6 @@ class Db
     @conn = nil
   end
 
-  def close_db
-    @conn.finish() if !@conn.nil?
-    @conn = nil
-  end
-
   def transaction(&block)
     @conn.transaction(&block)
   end
@@ -463,10 +458,10 @@ class ChurnDB
       'paying_end_count',
       'paying_start_count',
       'waiver_start_count',
-   		'waiver_end_count',
+   	  'waiver_end_count',
       'member_start_count',
-   		'member_end_count',
-   		'nonpaying_start_count',
+   	  'member_end_count',
+   	  'nonpaying_start_count',
       'nonpaying_end_count',
       'stopped_start_count',
       'stopped_end_count',
