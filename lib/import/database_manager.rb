@@ -1142,7 +1142,7 @@ class DatabaseManager
           transactionSource t 
         where 
           not id in (select id from transactionSourcePrev)
-					and t.memberid in (select memberid from memberfact)
+					and t.memberid in (select memberid from memberfact) -- TODO we really should handle transactions that have no member attached, rather than excluding them
           
         union all
         
