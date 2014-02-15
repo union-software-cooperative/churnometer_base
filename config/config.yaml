@@ -33,12 +33,13 @@ dimensions:
     name: Work Site
   - id: agreementexpiry
     name: Agreement Expiry
+    roles: dev
   - id: del
     name: Delegate Training
-    roles: none
+    roles: dev
   - id: hsr
     name: HSR Training
-    roles: none
+    roles: dev
   - id: gender
     name: Gender
   - id: feegroupid
@@ -75,6 +76,7 @@ dimensions:
     roles: trainer
   - id: userid
     name: Data Entry
+    roles: dev
 drilldown_order:
   branchid: lead
   industryid: companyid
