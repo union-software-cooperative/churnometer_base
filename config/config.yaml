@@ -158,7 +158,7 @@ summary_data_tables:
           - stopped_end_count
           - stopped_unchanged_gain
     waiver:
-        display_name: Non Contributing
+        display_name: Waiver
         description:  This data represents all members who are not expected to pay directly to the union.  It includes all students, other union members on service agreement, members on maternity leave etc...  Growing this pool of members doesn't necessarily improve the union's bottom line.   
         query_columns:
           - row_header 
@@ -290,7 +290,6 @@ roles:
             - financial
     user:
         password: user
-        show_target_calculation: true
         summary_data_tables:
             - summary
             - member
@@ -319,6 +318,8 @@ roles:
          - financial
     dev:
       password: churnodev99
+      show_target_calculation: true
+      show_transactions: true
       summary_data_tables:
         - summary_dev
         - paying
