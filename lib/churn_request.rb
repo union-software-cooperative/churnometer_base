@@ -51,7 +51,6 @@ class ChurnRequest
     @auth = auth
     @params = query_defaults.rmerge(params)
     @db = churndb
-    @warnings = validate_params(@params)
     
     # set private members
     @header1 = @params['group_by'].to_s
@@ -63,6 +62,8 @@ class ChurnRequest
       @params['startDate'] = period_start(@period).strftime(DateFormatDisplay)
       @params['endDate'] = period_end(@period).strftime(DateFormatDisplay)
     end
+    
+    @warnings = validate_params(@params)
     
     @start_date = Date.parse(@params['startDate'])
     @end_date = Date.parse(@params['endDate'])

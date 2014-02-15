@@ -40,8 +40,8 @@ just_backup = false ' only does the backup
 '* SECTION: Configuration
 '******************************************************************************
 ' Churnometer
-data_path = "C:\Users\lucas.rohde\Desktop\churn_export"    ' This is where you put this script and SQL files
-url = "http://churnometer:asualwaysfresh@churnometer:3000/import"    ' This is where you want the data uploaded
+data_path = "C:\Users\freechange\Desktop\churn"    ' This is where you put this script and SQL files
+url = "http://10.0.0.5:3002/import"    ' This is where you want the data uploaded
 logfilename = data_path & "\"    & "churn_export.log"    ' This is where you want the log file to save
 curl_path = data_path ' This is where curl.exe is
 ' Database
@@ -51,20 +51,20 @@ dbpassword = "mypassword"
 dbfile = ""    ' "M:\membership.mdb"' This is where your MSAccess database lives (leave blank for MSSQL)
 dbprovider = "Microsoft.ACE.OLEDB.12.0"    '"Microsoft.Jet.OLEDB.4.0"
 ' MS SQL specific
-dbserver = "TSUSQL2008"
+dbserver = "SERVER1"
 dbname = "membership"
 dbconnectionstring = "DRIVER=SQL Server;SERVER="    & dbserver & ";DATABASE="    & dbname & ";UID=sa;PWD="    & dbpassword & ";APP=churnometer_export;"
 expected_backup_size = (5 * 1024 * 1024)
 
 ' freechange mail
 fcmailserver = "mail.nuw.org.au"
-fcmailto = "lrohde@nuw.org.au"
+fcmailto = "dbeswick@nuw.org.au"
 fcmailcc = ""
-fcmailfrom = "churnometer@theservicesunion.com.au"
+fcmailfrom = "churnometer@asuvictas.com.au"
 
 ' client mail
-clientmailserver = "mail.theservicesunion.com.au"
-clientmailto = "Cary.Pollock@theservicesunion.com.au"
+clientmailserver = "mail.asuvictas.com.au"
+clientmailto = "david.beswick@freechange.com.au"
 clientmailcc = ""
 clientmailfrom = "churnometer@freechange.com.au"
 	
