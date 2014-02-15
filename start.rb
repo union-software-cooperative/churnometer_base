@@ -226,7 +226,7 @@ class Churnobyl < Sinatra::Base
   
   get "/import" do
     admin!
-    
+
     @flash = session[:flash]
     session[:flash] = nil
     
@@ -298,7 +298,7 @@ class Churnobyl < Sinatra::Base
   
   post "/import" do
     admin!
-    
+
     session[:flash] = nil
     @model = ip()
     
@@ -369,7 +369,16 @@ class Churnobyl < Sinatra::Base
       File.open(full_filename, "w") do |f|
         f.write(file.read)
       end
-      
+
+      if app().database_import_encoding && app().database_import_encoding != 'utf-8'
+        iconv_filename = "#{full_filename}-utf8"
+        iconv_result = `iconv -f '#{app().database_import_encoding}' -t 'utf-8' -o "#{iconv_filename}" "#{full_filename}"`
+        $stderr.puts iconv_result
+        raise "Failed to convert file to utf-8: #{iconv_result}" if $? != 0
+        File.delete(full_filename)
+        full_filename += "-utf8"
+      end
+
       if filename.start_with?("members.txt") then
         @model.member_import(full_filename)
       end
@@ -389,7 +398,10 @@ class Churnobyl < Sinatra::Base
     if session[:flash].nil?
       session[:flash] = "#{filename} was successfully uploaded"
     end
-    
+
+    # write flash to stderr in case something goes wrong with presenting the flash.
+    $stderr.puts session[:flash]
+
     if params['scripted']=='true'
       response.write session[:flash] # so CURL doesn't have to redirect to get
     else

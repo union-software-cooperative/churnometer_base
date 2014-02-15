@@ -1,100 +1,57 @@
-application_start_date: 2011-8-14
+application_start_date: 2013-03-27
 use_new_query_generation_method: true
-work_site_dimension_id: companyid
-default_groupby_dimension_id: branchid
-member_paying_status_code: '1'
-member_awaiting_first_payment_status_code: '14'
-member_stopped_paying_status_code: '11'
+work_site_dimension_id: employer
+default_groupby_dimension_id: branch
+member_paying_status_code: paying
+member_awaiting_first_payment_status_code: a1p
+member_stopped_paying_status_code: stopped
+database_import_encoding: windows-1252
 waiver_statuses:
-  - '22' 
-  - '18'
-  - '10'
-  - '21'
-  - '5'
-  - '20'
-  - '8'
-  - '16'
-  - '18'
+  - waiv
+  - skl
+  - parent
+  - leave
 green_member_statuses:
-  - '1'
-  - '14'
+  - a1p
+  - paying
 dimensions:
-  - id: branchid
+  - id: branch
     name: Branch
-  - id: industryid
-    name: Industry
-  - id: lead
-    name: Lead Organiser
-  - id: org
-    name: Organiser
-  - id: areaid
-    name: Area
-  - id: companyid
-    name: Work Site
-  - id: agreementexpiry
-    name: Agreement Expiry
-    roles: dev
-  - id: del
-    name: Delegate Training
-    roles: dev
-  - id: hsr
-    name: HSR Training
-    roles: dev
-  - id: gender
-    name: Gender
-  - id: feegroupid
-    name: Fee Group
-  - id: state
-    name: State
-  - id: nuwelectorate
-    name: Electorate
-  - id: supportstaffid
-    name: Support Staff
-  - id: employerid
+  - id: organiser
+    name: Organiser (Servicing)
+  - id: organiser2
+    name: Organiser (Growth)
+  - id: locale
+    name: Location
+  - id: employer
     name: Employer
-  - id: hostemployerid
-    name: Owner
-    roles: lead
-  - id: employmenttypeid
-    name: Employment Type
-  - id: paymenttypeid
-    name: Payment Type
-  - id: last_site_training_course
-    name: Last Course
-    roles: trainer
-  - id: last_site_training_type
-    name: Last Course Category
-    roles: trainer
-  - id: last_site_training_age
-    name: Training Age
-    roles: trainer
-  - id: last_site_training_trainer
-    name: Trainer
-    roles: trainer
-  - id: last_site_training_venue
-    name:  Training Venue
-    roles: trainer
-  - id: userid
-    name: Data Entry
-    roles: dev
+  - id: division
+    name: Division
+  - id: sector
+    name: Sector
+  - id: sex
+    name: Gender
+  - id: hsr
+    name: HSR
+  - id: delegate
+    name: Delegate
+  - id: pay_method
+    name: Pay Method
+  - id: delegate_training_intermediate
+    name: Delegate Training (int)
+  - id: delegate_training_advanced
+    name: Delegate Training (adv)
+  - id: age_group
+    name: Age Group
+  - id: recruiter
+    name: Recruiter
 drilldown_order:
-  branchid: lead
-  industryid: companyid
-  lead: org 
-  org: companyid
-  areaid: companyid 
-  companyid: companyid
-  del: companyid
-  hsr: companyid 
-  feegroupid: companyid
-  state: areaid
-  nuwelectorate: org
-  supportstaffid: org
-  employerid: companyid
-  hostemployerid: companyid
-  employmenttypeid: companyid
-  paymenttypeid: paymenttypeid
-  companyid: employerid
+  branch: organiser
+  organiser: employer
+  organiser2: employer
+  branch: organiser
+  division: sector
+  employer: locale
 summary_data_tables:
     summary:
         display_name: Summary
@@ -102,28 +59,34 @@ summary_data_tables:
             - row_header
             - row_header1
             - period_header
-            - a1p_real_gain
-            - a1p_to_other
-            - paying_start_count
-            - paying_real_gain
-            - paying_real_loss
+            - green_real_gain_nonmember
+            - green_real_gain_member
+            - green_real_loss
+            - green_real_net
+            - running_green_net
+            - green_end_count
             - paying_end_count
-            - paying_real_net
-            - running_paying_net
+            - a1p_end_count
+            - stopped_end_count
+            - waiver_end_count
+            - member_end_count
     summary_leader:
         display_name: Summary
         query_columns:
             - row_header
             - row_header1
             - period_header
-            - a1p_real_gain
-            - a1p_to_other
-            - paying_start_count
-            - paying_real_gain
-            - paying_real_loss
+            - green_real_gain_nonmember
+            - green_real_gain_member
+            - green_real_loss
+            - green_real_net
+            - running_green_net
+            - green_end_count
             - paying_end_count
-            - paying_real_net
-            - running_paying_net
+            - a1p_end_count
+            - stopped_end_count
+            - waiver_end_count
+            - member_end_count
             - contributors
             - income_net
             - annualisedavgcontribution
@@ -173,7 +136,6 @@ summary_data_tables:
             - a1p_real_gain
             - a1p_to_paying
             - a1p_to_other
-            - a1p_net
             - a1p_other_gain
             - a1p_other_loss
             - a1p_end_count
@@ -182,7 +144,7 @@ summary_data_tables:
             - a1p_unchanged_gain
     stopped:
         display_name: Stopped Paying
-        description:  This data represents all members who have stopped paying.  
+        description:  This data represents all members who are being chased for payment.  They are in an arrears cycle, if you group by arrears cycle (which may be hidden) you can see what stage of follow-up they are at.
         query_columns:
           - row_header 
           - row_header1 
@@ -196,8 +158,8 @@ summary_data_tables:
           - stopped_end_count
           - stopped_unchanged_gain
     waiver:
-        display_name: Non Contributing
-        description:  This data represents all members who are not expected to pay directly to the union.  It includes members on maternity leave etc...  Growing this pool of members doesn't necessarily improve the union's bottom line.   
+        display_name: Waiver
+        description:  This data represents all members who are not expected to pay directly to the union.  It includes all students, other union members on service agreement, members on maternity leave etc...  Growing this pool of members doesn't necessarily improve the union's bottom line.   
         query_columns:
           - row_header 
           - row_header1 
@@ -213,7 +175,7 @@ summary_data_tables:
           - waiver_end_count
     member:
         display_name: Members
-        description:  This data represents all members, including non-contributing members such as members on work cover or mat leave.     
+        description:  This data represents all members, including non-contributing members such as students, members on waivers or under service agreement.     
         query_columns:
           - row_header 
           - row_header1 
@@ -244,7 +206,7 @@ summary_data_tables:
         - green_end_count
     orange:
       display_name: Non Contributing
-      description:  This data represents all members who are not expected to contribute without intervention.  These are all non-fee payment members such as members on waivers or stopped paying.
+      description:  This data represents all members who are not expected to contribute without intervention.  These are all non-fee payment members such as members on waivers, in arrears or are other union members on service agreement.
       query_columns:
         - row_header 
         - row_header1 
@@ -259,24 +221,6 @@ summary_data_tables:
         - orange_other_gain
         - orange_other_loss
         - orange_end_count
-    userid:
-        display_name: Data Entry Changes
-        query_columns:
-          - row_header 
-          - row_header1 
-          - period_header
-          - a1p_real_gain
-          - a1p_unchanged_gain
-          - a1p_to_other
-          - a1p_to_paying
-          - stopped_real_gain
-          - stopped_unchanged_gain
-          - stopped_to_other
-          - stopped_to_paying
-          - rule59_unchanged_gain
-          - transactions
-          - posted
-          - unposted
 detail_data_tables:
     member_summary:
         display_name: Member Summary
@@ -322,9 +266,9 @@ roles:
         show_target_calculation: true
         summary_data_tables:
             - summary_leader
-            - paying
-            - a1p
-            - stopped
+            - member
+            - green
+            - orange
         detail_data_tables:
             - member_summary
             - organiser
@@ -335,7 +279,9 @@ roles:
         show_target_calculation: true
         summary_data_tables:
             - summary_leader
-            - paying
+            - member
+            - green
+            - orange
             - a1p
             - stopped
         detail_data_tables:
@@ -343,61 +289,52 @@ roles:
             - organiser
             - financial
     user:
-        password: password
-        show_target_calculation: true
+        password: user
         summary_data_tables:
             - summary
-            - paying
-            - a1p
-            - stopped
+            - member
+            - green
+            - orange
         detail_data_tables:
             - member_summary
             - organiser
-    trainer:
-        password: gogogo
-        show_target_calculation: true
-        summary_data_tables:
-            - summary
-            - paying
-            - a1p
-            - stopped
-        detail_data_tables:
-            - member_summary
-            - organiser
-    dev:
-        admin: true
-        password: dev
-        show_transactions: true
-        show_target_calculation: true
-        summary_data_tables:
-          - summary_leader
-          - member
-          - paying
-          - a1p
-          - stopped
-          - waiver
-          - green
-          - orange
-        detail_data_tables:
-            - member_summary
-            - organiser
-            - financial
     churnometer:
       admin: true
+      password: Qwerty99
       show_transactions: true
       show_target_calculation: true
       summary_data_tables:
         - summary_leader
+        - member
         - paying
         - a1p
         - stopped
+        - waiver
+        - green
+        - orange
       detail_data_tables:
          - member_summary
          - organiser
          - financial
+    dev:
+      password: churnodev99
+      show_target_calculation: true
+      show_transactions: true
+      summary_data_tables:
+        - summary_dev
+        - paying
+        - a1p
+        - stopped
+        - waiver
+        - member
+        - green
+        - orange
+      detail_data_tables:
+        - member_summary
+        - organiser
+        - financial
 column_names:
   a1p_real_gain: new applications (total)
-  a1p_to_other: applications failed
   a1p_to_other: applications exited w/out payment
   paying_start_count: paying at start date
   paying_real_gain: started paying
@@ -429,8 +366,8 @@ column_names:
   stopped_other_loss: stopped paying transfers out
   stopped_to_paying: left stopped paying cycle (resumed paying)
   stopped_to_other: left stopped paying cycle (exited)
-  stopped_unchanged_gain: entered stopped paying cycle (pending resolution)
-  a1p_unchanged_gain: new applications (pending payment)
+  stopped_unchanged_gain: entered stopped paying cycle (still pending resolution today)
+  a1p_unchanged_gain: new applications (still pending payment today)
   contactdetail: current contact detail
   followupnotes: follow up notes
   payrollcontactdetail: payroll/hr contact
@@ -496,39 +433,39 @@ column_names:
   orange_other_loss: Non-contributors transferred out
   orange_end_count: Non-contributors at end date
 column_descriptions:
-  paying_real_net: The number of members whose status became 'paying' during the period minus those that lost the 'paying' status
-  paying_end_count: The number of members with the 'paying' status at the end of the period.  '{paying_end_count}' is equal to '{paying_start_count}' plus '{paying_real_gain}' minus '{paying_real_loss}' plus '{paying_other_gain}' minus '{paying_other_loss}'.
-  a1p_real_gain: The number of people who became 'awaiting first payment' during the period.  Most of these are new joiners (see '{a1p_newjoin}') but some may have already been members or become 'awaiting first payment' for administrative reasons (see '{a1p_rejoin}') .
-  a1p_to_other: The number of 'awaiting first payment' members who were removed from the database during the period.
-  paying_start_count: The number of members with the 'paying' status at the beginning of the period.
-  paying_real_gain: The number of members whose status become 'paying' during the period.
-  paying_real_loss: The number of members whose status ceased to be 'paying' during the period.
-  income_net: The amount of money posted against members by support staff during the period (without regard to the period the payment was remitted for).
+  paying_start_count: The number of members who had made at least one payment and had no problem with their payment at the start of the period.
+  paying_end_count: The number of members who had made at least one payment and had no problem with their payment at the end of the period.  '{paying_end_count}' is equal to '{paying_start_count}' plus '{paying_real_gain}' minus '{paying_real_loss}' plus '{paying_other_gain}' minus '{paying_other_loss}'.
+  paying_real_gain: The number of members who made their first payment or rectified a payment problem during the period
+  paying_real_loss: The number of members who left the union or were found to have a problem with their payment during the period
+  paying_real_net: The net change in the number of paying members during period
+  income_net: The amount of money posted against members during the period (goes by data entry date with regard to the period the remittance was for).
   contributors: The number of unique members to have contributed dues during the period.
   running_paying_net: The running total of '{paying_real_net}'.  Be careful to sort by the row header then '{period_header}' (the default sort) otherwise this column won't make sense.
   period_header: The intervals dividing '{start_date}' and '{end_date}' as selected by the user.  Beware that if '{start_date}' or '{end_date}' don't align to standard interval boundaries, the first or last interval will be shorter in duration.
-  paying_other_gain: The number of paying members gained without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers.
-  paying_other_loss: The number of paying members lost without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers.
-  a1p_start_count: The number of members with the 'awaiting first payment' status at the beginning of the period.
-  a1p_end_count: The number of members with the 'awaiting first payment' status at the end of the period.
-  a1p_newjoin: The number of members who became 'awaiting first payment' during the period who have never been a member before.
-  a1p_rejoin: The number of members who became 'awaiting first payment' during the period who have been a member before.
-  a1p_to_paying: The number of members who stopped being 'awaiting first payment' during the period because they started paying.
-  a1p_other_gain: The number of 'awaiting first payment' members gained without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers.
-  a1p_other_loss: The number of 'awaiting first payment' members lost without involving a member status change and without affecting the union's bottom line.  e.g. transfers of sites between organisers.
-  posted: The amount of money posted to members during the period, including money reposted because of corrections (see '{unposted}').  NB corrections are applied to the period for which they money belongs in order to ensure historical consistency.
+  paying_other_gain: The number of paying members transferred to the {group_by} during the period without affecting the union's bottom line.  e.g. transfers of sites between organisers.
+  paying_other_loss: The number of paying members transferred out of the {group_by} during the period without affecting the union's bottom line.  e.g. transfers of sites between organisers.
+  a1p_start_count: The number of members who, prior to the start of the period, hadn't made their first payment since a the union an application (as indicated by datecreated)
+  a1p_end_count: The number of members who, prior to the end of the period, hadn't made their first payment since a giving the union an application (as indicated by datecreated) 
+  a1p_real_gain: The number of people for whom we processed a new application (as indicated by datecreate) during the period (without paying us the same day).  Most of these are new joiners (see '{a1p_newjoin}') but some may have already been members (see '{a1p_rejoin}').  NB Some member have their datecreated set when they are un-resigned in order to make a last payment - these people are excluded if datecreated is within 21 days of date exited.
+  a1p_to_other: The number of members with an application pending payment who exited during the period 
+  a1p_newjoin: The number of applications received during the period, from people who had not been a member before
+  a1p_rejoin: The number of applications received during the period, from people who had been a member before
+  a1p_to_paying: The number of members with a new application who started paying during the period.
+  a1p_other_gain: The number of members with a prior application pending payment, assigned to the {group_by} some point during this period.  e.g. transfers of sites between organisers.
+  a1p_other_loss: The number of members with an application pending payment, transfered away from the {group_by} at some point during the period.  e.g. transfers of sites between organisers.
+  posted: The amount of money posted to members during the period, including any money reposted because of corrections (see '{unposted}').  NB corrections are attributed to the period in which the data entry was made in order to ensure historical consistency.
   unposted: The amount of money deducted during the period, usually because of undoing a payment.  Be aware that when an undone payment is reposted, the amount will appear in '{posted}'.
   annualisedavgcontribution: The total amount of money posted during the period, divided by the number of unique contributors, scaled to make the period equivalent to a year.  NB If, for any reason, money isn't received for a large portion of members for a large portion of the period, this figure will be low.  e.g.  Members were redistributed (think area changes) or reclassified (think industry changes) mid way through the period.
-  stopped_start_count: The number of members with the stopped paying status at the start of the period.
-  stopped_end_count: The number of members with the stopped paying status at the end of the period.
-  stopped_real_gain: The number of members who changed to the stopped paying status during the period.
-  stopped_real_loss: The number of members who changed from the stopped paying status to something else during the period.
-  stopped_other_gain: The number of members with the stopped paying status who transfered into this group without changing status.
-  stopped_other_loss: The number of members with the stopped paying status who transfered out of this group without changing status.
-  stopped_unchanged_gain: The number of members who became stopped paying during the selected period and are still are stopped paying
-  a1p_unchanged_gain: The number of members who became awaiting first payment during the selected period and are still are awaiting first payment
-  stopped_to_paying: The number of 'stopped paying' members who resumed paying
-  stopped_to_other: The number of 'stopped paying' members who got a new status (other than paying) probably due to some follow up process.
+  stopped_start_count: The number of members who had a problem with their payment at the start of the period.
+  stopped_end_count: The number of members who had a problem with their payment at the end of the period.
+  stopped_real_gain: The number of members who were found to have a problem with their payment during the period.
+  stopped_real_loss: The number of members who were either exited or resolved their payment problem during the period.
+  stopped_other_gain: The number of members with an unresolved payment problem who were transferred to the {group_by}
+  stopped_other_loss: The number of members with an unresolved payment problem who were transferred away from the {group_by}
+  stopped_unchanged_gain: The number of members who were found to have a payment problem during the period which still hasn't been resolved 
+  a1p_unchanged_gain: The number of members who gave us an application during the period, but still haven't made their first payment (as of last import)
+  stopped_to_paying: The number of members who had a payment problem and resumed paying during the period
+  stopped_to_other: The number of members who had a payment problem and had some resolution during the period but didn't resume paying
   transactions: The number of individual transactions that were posted against members.  A out of pay payment will usually contain numerous transactions.
   lateness: The remittance status of each employer with at least one OOP member attached. The next due date is determined from the '{paidto}' plus the average duration between payments (multipled by the number of unposted payments) plus half this average duration to allow for processing.
   paidto: The date up to which money has been posted.  The employer may have paid past this date but unposted payment don't count toward the '{paidto}' because the '{paidto}' is determined during payment posting.
@@ -552,7 +489,7 @@ column_descriptions:
   orange_other_loss: Non contributing members transferred out
   orange_end_count: The number of members who weren't contributing at the end
 waterfall_chart_config:
-  title: Paying members
+  title: Contributing members
   description: |
                This chart shows the gain and loss of contributing members for the period.
 
@@ -561,89 +498,17 @@ waterfall_chart_config:
                Losses are divided into exited members (red) and those who stopped contributing (orange). Only exited members who were contributing are shown in the red because non-contributing members were already counted when they stopped their contribution.
 
                If a member joins and resigns multiple times they'll be counted multiple times in the green and red, likewise in the orange if a member stops and starts their contribution multiple times.  This is so the separate counts from different periods add up when those periods are combined.   The retained members are included because problem members were needed and the report can't balance without both.
-  gain: paying_real_gain
-  loss: paying_real_loss
-  other_gain:
-  other_loss: 
-  combined_gain: 
-  combined_loss: 
-  running_net: running_paying_net
-  net_includes_other: false
-  gain_label: paying gain
-  loss_label: paying loss
+  gain: green_real_gain_nonmember
+  loss: green_real_loss_nonmember
+  other_gain: green_real_gain_member
+  other_loss: green_real_loss_member
+  combined_gain: green_real_gain
+  combined_loss: green_real_loss
+  running_net: running_green_net
+  net_includes_other: true
+  gain_label: new
+  loss_label: exited
   other_gain_label: retained
   other_loss_label: problems
-#waterfall_chart_config:
-#  title: Contributing members
-#  description: |
-#               This chart shows the gain and loss of contributing members for the period.
-#
-#               Gains are divided between new members (green) and retained members (orange).  Retained members are those coming out of waiver or arrears.  Click the brown bar to get a combined list.  New non-contributing members, such as students, are not counted in gains until they start contributing (where they'll show as retained).
-#
-#               Losses are divided into exited members (red) and those who stopped contributing (orange). Only exited members who were contributing are shown in the red because non-contributing members were already counted when they stopped their contribution.
-#
-#               If a member joins and resigns multiple times they'll be counted multiple times in the green and red, likewise in the orange if a member stops and starts their contribution multiple times.  This is so the separate counts from different periods add up when those periods are combined.   The retained members are included because problem members were needed and the report can't balance without both.
-#  gain: green_real_gain_nonmember
-#  loss: green_real_loss_nonmember
-#  other_gain: green_real_gain_member
-#  other_loss: green_real_loss_member
-#  combined_gain: green_real_gain
-#  combined_loss: green_real_loss
-#  running_net: running_green_net
-#  net_includes_other: true
-#  gain_label: new
-#  loss_label: exited
-#  other_gain_label: retained
-#  other_loss_label: problems
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-    
-  
-    
-  
-    
-    
-    
-  
-    
-  
-  
-  
-  
         
-  
-  
-  
-    
-    
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-    
-    
-
-
-
-
-                    
+                                
