@@ -1,0 +1,30 @@
+#!/bin/bash
+
+mkdir archive
+mv *.imported archive/
+./batch_rename # get rid of the variable time portion of the name
+
+./reimport 2014-12-10
+./reimport 2014-12-11
+./reimport 2014-12-12
+./reimport 2014-12-15
+./reimport 2014-12-16
+./reimport 2014-12-17
+./reimport 2014-12-18
+./reimport 2014-12-19
+./reimport 2014-12-22
+./reimport 2014-12-23
+./reimport 2014-12-24
+./reimport 2015-01-06
+./reimport 2015-01-07
+./reimport 2015-01-08
+./reimport 2015-01-09
+./reimport 2015-01-12
+./reimport 2015-01-13
+./reimport 2015-01-14
+./reimport 2015-01-15
+./reimport 2015-01-16
+./reimport 2015-01-19
+./reimport 2015-01-20
+./reimport 2015-01-21
+./reimport 2015-01-22

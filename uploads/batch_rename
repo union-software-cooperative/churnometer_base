@@ -1,0 +1,5 @@
+#!/bin/bash
+# for f in *; do fn=`echo $f| sed 's/:/./g'`; mv $f $fn; done 
+ for f in transaction*; do fn=`echo $f| sed 's/_.*$//g'`; mv $f $fn; done
+ for f in member*; do fn=`echo $f| sed 's/_.*$//g'`; mv $f $fn; done
+ for f in displaytext.txt*; do fn=`echo $f| sed 's/_.*$//g'`; mv $f $fn; done
