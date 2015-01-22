@@ -367,7 +367,7 @@ class Churnobyl < Sinatra::Base
       full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
       
       File.open(full_filename, "w") do |f|
-        f.write(file.read)
+	f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
       end
 
       if app().database_import_encoding && app().database_import_encoding != 'utf-8'
