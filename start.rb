@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -38,23 +38,23 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 class Churnobyl < Sinatra::Base
   include Authorization
 
-     
+
   configure :production, :development do
     $logger = Logger.new('log/churnometer.log')
     enable :logging
 
     $logger = Logger.new('log/churnometer.log')
-    
+
     set :raise_errors, Proc.new { false }
     set :show_exceptions, false
 
     enable :sessions
     set :session_secret, "something" # I don't understand what this does but it lets my flash work
     use Rack::Session::Pool #  # rack::session::pool handles large cookies for temporary config configuration
-    
+
     set :churn_app_mutex, Monitor.new
   end
-  
+
   # Returns a ChurnometerApp instance.
   def app
     @churn_app ||= self.class.server_lifetime_churnometer_app
@@ -68,7 +68,7 @@ class Churnobyl < Sinatra::Base
       ChurnDB
     end
   end
-  
+
   def churn_db
     @churn_db ||= churn_db_class().new(app())
   end
@@ -82,7 +82,7 @@ class Churnobyl < Sinatra::Base
     @sql = @cr.sql # This is set for error message
     @cr
   end
-  
+
   def ip
     @ip  ||= ImportPresenter.new(app(), self.class.importer, ChurnDB.new(app())) # don't use the disk cache db for importing!
   end
@@ -113,25 +113,25 @@ class Churnobyl < Sinatra::Base
   def self.churnometer_app_config_io
     nil
   end
-  
+
   def self.churnometer_app_site_config_io
     nil
   end
 
   def self.importer()
     if @importer == nil
-      settings.churn_app_mutex.synchronize do 
+      settings.churn_app_mutex.synchronize do
         @importer = Importer.new(server_lifetime_churnometer_app)
       end
       @importer.run
       end
       @importer
   end
-  
+
   not_found do
     erb :'errors/not_found'
   end
- 
+
   error do
     begin
       @error = env['sinatra.error']
@@ -147,24 +147,24 @@ class Churnobyl < Sinatra::Base
     rescue StandardError => err
       return response.write "Error in error handler: #{err.message}"
     end
-  end 
+  end
 
   helpers do
     include Rack::Utils
     alias_method :h, :escape_html
   end
-  
+
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
     @start_time = Time.new
-  end  
-  
+  end
+
   after '/' do
     log
     @cr.close_db() if !@cr.nil?
     @cr = nil if testing?
   end
-  
+
   after '/import' do
     log
     @ip.close_db() unless @ip.nil?
@@ -181,7 +181,7 @@ class Churnobyl < Sinatra::Base
                 :body => erb(:'demo_email', layout: false)
               })
     end
-    
+
     $logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
   end
 
@@ -197,82 +197,82 @@ class Churnobyl < Sinatra::Base
     protected!
 
     presenter = ChurnPresenter.new(app(), cr)
-    
+
     presenter.warnings += "Your web browser, Internet Explorer, is not HTML5 compliant and will not function correctly" if request.env['HTTP_USER_AGENT'].downcase.index('msie')
     erb :index, :locals => { :model => presenter }
   end
 
   get '/export_table' do
     protected!
-    
+
     presenter = ChurnPresenter.new(app(), cr)
     table = presenter.tables[params['table']] if !params['table'].nil?
-    
+
     if !table.nil?
       path = table.to_excel
       send_file(path, :disposition => 'attachment', :filename => File.basename(path))
     else
       raise "Export failed. Table not found!"
     end
-  end  
-  
+  end
+
   get '/export_all' do
     protected!
-    
+
     presenter = ChurnPresenter.new(app(), cr)
     path = presenter.to_excel
     send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
-  
+
   get "/import" do
     admin!
 
     @flash = session[:flash]
     session[:flash] = nil
-    
+
     @model = ip()
-    
+
     if params['action'] == "diags"
       response.write @model.diags
       return
-    end 
-    
+    end
+
     #if params['action'] == "rebuild"
     #  @model.rebuild
-    #end 
-    
+    #end
+
     if params['scripted'] == 'true'
       if @model.importing?
         return response.write @model.import_status
-      else 
-	      state = ( @model.import_ready? ? "ready to import" : "data not staged" )
+      else
+        state = ( @model.import_ready? ? "ready to import" : "data not staged" )
         return response.write state + @model.importer_status
       end
     else
       erb :import
-    end 
+    end
   end
-  
+
   get "/source" do
     @model = ip()
     file = "source_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
     path = "tmp/source"
     @model.download_source(path)
-    send_file("#{path}.zip", :disposition => 'attachment', :filename => file)   
+    send_file("#{path}.zip", :disposition => 'attachment', :filename => file)
     @model.close_db()
   end
-  
+
   get "/backup" do
     admin!
-    
+
     @flash = session[:flash]
     session[:flash] = nil
     erb :backup
   end
-  
+
   get "/backup_download" do
     admin!
-    
+
     @model = ip()
     file = "backup_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
     path = "tmp/backup.zip"
@@ -280,39 +280,39 @@ class Churnobyl < Sinatra::Base
     send_file(path, :disposition => 'attachment', :filename => file)
     @model.close_db()
   end
-  
+
   get "/restart" do
     admin!
-    
+
     @flash = session[:flash]
     session[:flash] = nil
     erb :restart
   end
-  
+
   post "/restart" do
     admin!
-    
+
     @model = ip()
     @model.restart
   end
-  
+
   post "/import" do
     admin!
 
     session[:flash] = nil
     @model = ip()
-    
+
     if params['action'] == "reset"
       @model.reset
       session[:flash] = "Successfully emptied staging tables"
       redirect '/import'
-    end 
-    
+    end
+
     if params['action'] == "import"
-      if @model.import_ready? 
+      if @model.import_ready?
         @model.go(Time.parse(params['import_date']))
         session[:flash] = "Successfully commenced import of staged data"
-      
+
         if params['scripted'] == 'true'
           return response.write session[:flash]
         else
@@ -329,45 +329,45 @@ class Churnobyl < Sinatra::Base
       end
     end
 
-    
+
     if params['action'] == "empty_cache"
       begin
         @model.empty_cache()
       rescue StandardError => err
         raise err if ! (err.message == 'rm: tmp/*.Marshal: No such file or directory')
       end
-            
+
       session[:flash] = "Successfully emptied cache"
       if params['scripted'] == 'true'
         return response.write session[:flash]
       else
         redirect '/import'
       end
-    end  
-    
+    end
+
     #if params['action'] == "rebuild"
     #  @model.rebuild
     #  redirect '/import'
-    #end 
-    
+    #end
+
     if params['action'] == "diags"
       response.write @model.diags
       return
-    end 
-    
+    end
+
     if params['myfile'].nil?
       session[:flash]="No file uploaded"
       redirect '/import'
     end
-    
-    file = params['myfile'][:tempfile] 
+
+    file = params['myfile'][:tempfile]
     filename = params['myfile'][:filename]
-    
+
     begin
       full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
-      
+
       File.open(full_filename, "w") do |f|
-	f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
+  f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
       end
 
       if app().database_import_encoding && app().database_import_encoding != 'utf-8'
@@ -382,19 +382,19 @@ class Churnobyl < Sinatra::Base
       if filename.start_with?("members.txt") then
         @model.member_import(full_filename)
       end
-      
+
       if filename.start_with?("displaytext.txt") then
         @model.displaytext_import(full_filename)
       end
-      
+
       if filename.start_with?("transactions.txt") then
         @model.transaction_import(full_filename)
       end
-      
+
     rescue StandardError => err
       session[:flash] = "File upload failed: " + err.message
     end
-    
+
     if session[:flash].nil?
       session[:flash] = "#{filename} was successfully uploaded"
     end
@@ -409,9 +409,9 @@ class Churnobyl < Sinatra::Base
     end
   end
 
-  get '/config' do 
+  get '/config' do
     admin!
-    
+
     @flash = session[:flash]
     session[:flash] = nil
 
@@ -423,34 +423,34 @@ class Churnobyl < Sinatra::Base
         @config+=line
       end
     end
-    
+
     erb :config, :locals => {:filename => filename}
   end
-  
+
   post '/config' do
     admin!
-    
+
     @flash = nil
     @config = params['config']
-    
+
     filename = app().active_master_config_filename
 
     begin
-      
-      if ! (@config.nil? || @config.empty?) 
-        
+
+      if ! (@config.nil? || @config.empty?)
+
         testConfig = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
         testConfig.validate
         dbm = DatabaseManager.new(testConfig)
         @yaml_spec = dbm.migration_yaml_spec
-        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false 
+        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
           File.open(filename, 'w') do |f|
             f.write @config
           end
         else
           flash_text = "Need to restructure data before saving #{filename}"
           flash_text += " (memberfacthelper requires update)" if dbm.memberfacthelper_migration_required?
-          
+
           session[:flash] = flash_text
           session[:new_config] = params['config']
           redirect :migrate
@@ -463,37 +463,37 @@ class Churnobyl < Sinatra::Base
     rescue Psych::SyntaxError => err
       @flash = "Failed to save #{filename}: " + err.message
     end
-    
+
     return erb :config, :locals => {:filename => filename} if !@flash.nil?
-    
+
     session[:flash] = "Successfully saved #{filename}"
     redirect '/restart?redirect=/config'
   end
 
   get '/migrate' do
     admin!
-    
+
     @flash = session[:flash]
     @config = session[:new_config]
 
     if @config.nil?
       session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
-      redirect :config 
+      redirect :config
     end
-    
+
     # get new config and dimensions
     new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
     dbm = DatabaseManager.new(new_config)
-    
+
     # get the proposed migration, and return it to the user to allow intervention
     @yaml_spec = dbm.migration_yaml_spec
-    @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required? 
+    @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required?
     erb :migrate
   end
-  
+
   post '/migrate' do
     admin!
-    
+
     @flash = nil
     session[:flash] = nil
     @yaml_spec = params['yaml_spec']
@@ -501,13 +501,13 @@ class Churnobyl < Sinatra::Base
 
     if @config.nil?
       session[:flash] = "Can't migrate without new config.  Make sure cookies are enabled."
-      redirect :config 
+      redirect :config
     end
 
     need_full_migration = @yaml_spec.nil? == false
 
     # attempt migration using user supplied spec
-    begin 
+    begin
       new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
 
       dbm = DatabaseManager.new(new_config)
@@ -515,7 +515,7 @@ class Churnobyl < Sinatra::Base
       migration_sql =
         if need_full_migration
           migration_spec = dbm.parse_migration(@yaml_spec)
-          
+
           #dbm.migrate_nuw_sql(migration_spec) # use this line in place of the one below when migrating from NUW
           dbm.migrate_sql(migration_spec)
         else
@@ -567,7 +567,7 @@ class Churnobyl < Sinatra::Base
             io << "<div><a href='/migrate'>Back to migration page.</a></div>"
           else
             io << "<div>Migration successful.</div>\n"
-            
+
             # If we made it this far, save the new config
             begin
               File.open(app().active_master_config_filename, 'w') do |f|
@@ -576,7 +576,7 @@ class Churnobyl < Sinatra::Base
             rescue StandardError => err
               error = "Successfully migrated database but failed to save #{app().active_master_config_filename}: " + err.message
             end
-            
+
             if !error.nil?
               io << "<div>An error occurred while writing the config file: <pre>#{h(error).gsub('\n', '</br>')}</pre></div>"
               io << "<div>Please record (copy and paste) the following config data before leaving this page:</div>"
@@ -591,7 +591,7 @@ class Churnobyl < Sinatra::Base
 
           io << "</body></html>"
         end
-	    end
+      end
     end
   end
 
@@ -602,5 +602,5 @@ class Churnobyl < Sinatra::Base
   ServiceRequestHandlerAutocomplete.new(self)
 
   run! if app_file == $0
-  
+
 end
