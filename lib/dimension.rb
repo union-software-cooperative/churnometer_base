@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -87,14 +87,14 @@ class Dimensions
   # Otherwise a regular Dimension instance is returned.
   # Returns nil if no Dimension of the given base id is found.
   #
-  # tbd: these ids originate from configuration data. 
-  # Maybe find a more explicit way to refer to dimension deltas instead of using this naming 
+  # tbd: these ids originate from configuration data.
+  # Maybe find a more explicit way to refer to dimension deltas instead of using this naming
   # convention.
   def dimension_for_id_with_delta(id)
     return nil if id.empty?
 
     m = /(old|new|current)?(.+)/.match(id)
-    
+
     delta_part = m[1]
     id_part = m[2]
 
@@ -126,7 +126,7 @@ class Dimensions
 
   # Iterates through each Dimension instance held by the object.
   def each(&block)
-    @id_to_dimension.values.each(&block)  
+    @id_to_dimension.values.each(&block)
   end
 end
 
@@ -164,8 +164,8 @@ class Dimension < DimensionBase
   attr_reader :id
 
   # The 'delta' readers return DimensionDelta instances. These are used to refer to deltas that
-  # are returned from queries, i.e. changes in status or company. 
-  # The instances returned can be queried to retreive the database column names for the delta results, 
+  # are returned from queries, i.e. changes in status or company.
+  # The instances returned can be queried to retreive the database column names for the delta results,
   # i.e. oldcol0, newcol0, etc.
   attr_reader :delta_old
   attr_reader :delta_current
@@ -196,9 +196,9 @@ end
 # An example is oldstatus, newstatus as delta dimension for the status dimension.
 class DimensionDelta < DimensionBase
   # dimension: The master Dimension instance indicating the database dimension that this instance is a
-  #		delta of.
+  #    delta of.
   # delta_prefix: The string prepended to the database column name that forms the final column name
-  #		that can be used to refer to database query result columns.
+  #    that can be used to refer to database query result columns.
   def initialize(dimension, delta_prefix)
     @dimension = dimension
     @delta_prefix = delta_prefix
@@ -231,7 +231,7 @@ class DimensionUser < Dimension
     super(nil)
   end
 
-  # config_hash: mappings from index numbers to hashes defining Dimension columns. 
+  # config_hash: mappings from index numbers to hashes defining Dimension columns.
   # The hash format is defined by the Churnometer configuration file scheme.
   # app_roles: The AppRoles instance describing all available roles.
   def from_config_element(config_element, app_roles)
@@ -243,7 +243,7 @@ class DimensionUser < Dimension
     @name = config_element['name'].value
 
     # 'role' element should be 'none', 'all', or an array of role ids.
-    @allowed_roles = 
+    @allowed_roles =
       if config_element['roles'].nil? || config_element['roles'].value == 'all'
         # If no config element or the element value is 'all', then allow all roles.
         app_roles.dup
@@ -252,21 +252,21 @@ class DimensionUser < Dimension
           []
         else
           config_element['roles'].ensure_kindof(Array, String)
-          
-          elements = 
+
+          elements =
             if config_element['roles'].value.kind_of?(String)
               [config_element['roles']]
             else
               config_element['roles'].value
             end
-            
+
           elements.collect do |element|
-          	role = app_roles[element.value]
+            role = app_roles[element.value]
 
-          	raise BadConfigDataFormatException.new(element, "Role doesn't exist.") if role.nil?
+            raise BadConfigDataFormatException.new(element, "Role doesn't exist.") if role.nil?
 
-          	role
-        	end
+            role
+          end
         end
       end
   end

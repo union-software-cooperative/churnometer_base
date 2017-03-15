@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@ require 'open3.rb'
 
 class DatabaseManager
 
-  def db 
+  def db
     @db
   end
 
@@ -28,11 +28,11 @@ class DatabaseManager
     @dimensions = app.custom_dimensions
     @db = Db.new(app)
     @app = app
-    
+
     member_statuses = @app.all_member_statuses
-    
+
     nonwaiver_statuses = member_statuses - @app.waiver_statuses
-    
+
     green_statuses = @app.green_member_statuses
     orange_statuses = member_statuses - green_statuses
 
@@ -62,10 +62,10 @@ class DatabaseManager
     sql = <<-SQL
       drop table if exists importing cascade;
       select 0 as importing into importing;
-   
+
       drop function if exists insertmemberfact() cascade;
       drop function if exists updatememberfacthelper() cascade;
-      
+
       drop view if exists memberchangefromlastchange cascade;
       drop view if exists memberchangefrommembersourceprev cascade;
       drop view if exists lastchange cascade;
@@ -74,37 +74,37 @@ class DatabaseManager
       drop table if exists memberfact_migration cascade ;
       drop table if exists membersourceprev_migration cascade;
       drop table if exists memberfacthelper_migration cascade;
-      
+
       alter table memberfact rename to memberfact_migration;
       alter sequence memberfact_changeid_seq rename to memberfact_migration_changeid_seq;
       alter table membersourceprev rename to membersourceprev_migration;
       alter table #{@app.memberfacthelper_table} rename to memberfacthelper_migration;
-     
+
       #{rebuild_membersource_sql};
       #{rebuild_membersourceprev_sql};
       #{memberfact_sql};
-      
+
       #{lastchange_sql};
       #{memberchangefromlastchange_sql};
       #{memberchangefrommembersourceprev_sql};
       #{memberfacthelperquery_sql};
       #{memberfacthelper_sql}
-      
+
       #{updatememberfacthelper_sql};
       #{insertmemberfact_sql};
     SQL
   end
-  
+
   def rebuild_from_scratch_without_indexes_sql()
     sql = <<-SQL
       drop table if exists importing;
       select 0 as importing into importing;
-   
+
       drop function if exists inserttransactionfact() cascade;
       drop function if exists updatedisplaytext() cascade;
       drop function if exists insertmemberfact() cascade ;
       drop function if exists updatememberfacthelper() cascade;
-      
+
       drop view if exists memberchangefromlastchange cascade;
       drop view if exists memberchangefrommembersourceprev cascade;
       drop view if exists lastchange cascade;
@@ -113,49 +113,49 @@ class DatabaseManager
       drop table if exists memberfact_migration cascade;
       drop table if exists membersourceprev_migration cascade;
       drop table if exists memberfacthelper_migration cascade;
-      
+
       drop table if exists transactionfact_migration cascade;
       drop table if exists transactionsourceprev_migration cascade;
       drop table if exists displaytext_migration cascade;
-      
+
       alter table transactionfact rename to transactionfact_migration;
       alter table transactionsourceprev rename to transactionsourceprev_migration;
       alter table displaytext rename to displaytext_migration;
 
-	    alter table memberfact rename to memberfact_migration;
+      alter table memberfact rename to memberfact_migration;
       alter table membersourceprev rename to membersourceprev_migration;
       alter table #{@app.memberfacthelper_table} rename to memberfacthelper_migration;
-      
+
       #{memberfact_sql};
       #{rebuild_membersourceprev_sql};
       #{rebuild_membersource_sql};
-      
+
       #{displaytext_sql};
       #{rebuild_transactionsourceprev_sql};
       #{transactionfact_sql};
-      
+
       #{rebuild_displaytextsource_sql};
       #{rebuild_transactionsource_sql};
-      
+
       #{lastchange_sql};
       #{memberchangefromlastchange_sql};
       #{memberchangefrommembersourceprev_sql};
       #{memberfacthelperquery_sql};
       #{memberfacthelper_sql}
-      
+
       #{updatememberfacthelper_sql};
       #{insertmemberfact_sql};
       #{updatedisplaytext_sql};
-      #{inserttransactionfact_sql};      
+      #{inserttransactionfact_sql};
     SQL
   end
-  
+
   def rebuild_sql
     <<-SQL
       #{rebuild_from_scratch_without_indexes_sql}
       #{rebuild_most_indexes_sql}
       #{rebuild_memberfacthelper_indexes_sql}
-      
+
       VACUUM memberfact;
       VACUUM memberfacthelper;
       VACUUM transactionfact;
@@ -178,7 +178,7 @@ class DatabaseManager
       ANALYSE displaytextsource;
     SQL
   end
-  
+
   def rebuild_memberfacthelper_sql_ary()
     ["drop view if exists memberfacthelperquery cascade;",
      memberfacthelperquery_sql(),
@@ -189,12 +189,12 @@ class DatabaseManager
   def rebuild_memberfacthelper_sql()
     rebuild_memberfacthelper_sql_ary.join($/)
   end
-  
+
   def rebuild()
     db.ex(rebuild_from_scratch_without_indexes_sql)
     db.ex(rebuild_most_indexes_sql)
     db.ex(rebuild_memberfacthelper_indexes_sql)
-    
+
     # ANALYSE and VACUUM have to be run as separate database calls
     str = <<-SQL
       VACUUM memberfact;
@@ -218,28 +218,28 @@ class DatabaseManager
       ANALYSE transactionsourceprev;
       ANALYSE displaytextsource;
     SQL
-    
+
     str.split("\n").each { |cmd| db.ex(cmd) }
   end
-  
+
   def rebuild_displaytextsource_sql
     sql = <<-SQL
       drop table if exists displaytextsource cascade;
-      
+
       create table displaytextsource
       (
         attribute varchar(255) not null
         , id varchar(255) null
         , displaytext varchar(255) null
       );
-          
+
     SQL
   end
-  
+
   def rebuild_displaytextsource
     db.ex(rebuild_displaytextsource_sql)
   end
-  
+
   def displaytext_sql
     sql = <<-SQL
       create table displaytext
@@ -248,41 +248,43 @@ class DatabaseManager
         , id varchar(255) null
         , displaytext varchar(255) null
       );
-         
+
     SQL
   end
-  
+
   def displaytext
     db.ex(displaytext_sql)
   end
-  
+
   def membersource_sql
     sql = <<-SQL
-      create table membersource 
+      create table membersource
       (
-          memberid varchar(255) not null 
-          , userid varchar(255) null
-          , status varchar(255) not null
-    
+        memberid varchar(255) not null
+        , userid varchar(255) null
+        , status varchar(255) not null
+        -- this could also work? -kbuckley, 2017-03-15
+        -- , #{dimensions.map(&:column_base_name).join("varchar(255) null\n, ")} varchar(255) null
+      )
     SQL
-      
-    dimensions.each { |d| sql << <<-REPEAT } 
+
+    dimensions.each { |d| sql << <<-REPEAT }
         , #{d.column_base_name} varchar(255) null
     REPEAT
-    
+
     sql << <<-SQL
       )
-      
+
     SQL
   end
-  
+
   def rebuild_membersource_sql
     sql = <<-SQL
       drop table if exists membersource cascade;
       #{membersource_sql};
     SQL
   end
-  
+
   def empty_membersource
     db.ex("delete from membersource");
   end
@@ -290,11 +292,11 @@ class DatabaseManager
   def rebuild_membersource
     db.ex(rebuild_membersource_sql)
   end
-  
+
   def rebuild_membersourceprev_sql
     sql = rebuild_membersource_sql.gsub('membersource', 'membersourceprev')
   end
-  
+
   def rebuild_membersourceprev
     db.ex(rebuild_membersourceprev_sql)
   end
@@ -312,8 +314,8 @@ class DatabaseManager
     SQL
 
     dimensions.each { | d | sql << <<-REPEAT }
-        , old#{d.column_base_name} varchar(255) null
-        , new#{d.column_base_name} varchar(255) null
+      , old#{d.column_base_name} varchar(255) null
+      , new#{d.column_base_name} varchar(255) null
     REPEAT
 
     sql << <<-SQL
@@ -337,26 +339,26 @@ class DatabaseManager
     REPEAT
 
     sql << <<-SQL
-        from 
-          memberfact 
+        from
+          memberfact
         where (
           memberfact.changeid IN (
-            select 
-              max(memberfact.changeid) AS max 
-            from  
-              memberfact 
-            group by  
+            select
+              max(memberfact.changeid) AS max
+            from
+              memberfact
+            group by
               memberfact.memberid
           )
         );
     SQL
   end
 
-  
+
   def fix_out_of_sequence_changes_sql
     sql = <<-SQL
       with laggy as (
-        select changeid, lag(changeid) over (partition by memberid order by changedate) as lagid from memberfact 
+        select changeid, lag(changeid) over (partition by memberid order by changedate) as lagid from memberfact
       )
       update
         memberfact
@@ -367,7 +369,7 @@ class DatabaseManager
     dimensions.each { |d| sql << <<-REPEAT }
         , old#{d.column_base_name} = m2.new#{d.column_base_name}
     REPEAT
-    
+
     sql << <<-SQL
       from
         laggy
@@ -379,9 +381,9 @@ class DatabaseManager
     SQL
 
     sql << <<-SQL
-      select 
+      select
         count(*)
-      from 
+      from
         memberfact
       where
         coalesce(oldstatus,'') = coalesce(newstatus,'')
@@ -390,7 +392,7 @@ class DatabaseManager
     dimensions.each { |d| sql << <<-REPEAT }
         and coalesce(old#{d.column_base_name},'') = coalesce(new#{d.column_base_name},'')
     REPEAT
-    
+
     sql
   end
 
@@ -399,7 +401,7 @@ class DatabaseManager
 
     sql = <<-SQL
       -- find changes, adds and deletions in latest data
-      create or replace view memberchangefromlastchange as 
+      create or replace view memberchangefromlastchange as
       -- find members who've changed in latest data
       select
         now() as changedate
@@ -408,7 +410,7 @@ class DatabaseManager
         , trim(lower(old.status)) as oldstatus
         , trim(lower(new.status)) as newstatus
     SQL
-    
+
     dimensions.each { |d| sql << <<-REPEAT }
         , trim(lower(old.#{d.column_base_name})) as old#{d.column_base_name}
         , trim(lower(new.#{d.column_base_name})) as new#{d.column_base_name}
@@ -425,7 +427,7 @@ class DatabaseManager
     dimensions.each { |d| sql << <<-REPEAT }
         OR trim(lower(coalesce(old.#{d.column_base_name}, ''))) <> trim(lower(coalesce(new.#{d.column_base_name}, '')))
     REPEAT
-    
+
     sql << <<-SQL
       UNION ALL
       -- find members missing in latest data
@@ -454,7 +456,7 @@ class DatabaseManager
         )
         AND not (
           -- if all values for the member's last change are null
-          --, then the member has already been inserted as missing 
+          --, then the member has already been inserted as missing
           -- and doesn't need to be inserted again
           old.status is null
     SQL
@@ -492,7 +494,7 @@ class DatabaseManager
         )
     SQL
   end
-  
+
   def memberchangefrommembersourceprev_sql
     memberchangefromlastchange_sql.gsub('lastchange', 'membersourceprev')
   end
@@ -500,13 +502,13 @@ class DatabaseManager
   def insertmemberfact_sql
 
     sql = <<-SQL
-      CREATE OR REPLACE FUNCTION insertmemberfact(import_date timestamp) RETURNS void 
-	    AS $BODY$begin
+      CREATE OR REPLACE FUNCTION insertmemberfact(import_date timestamp) RETURNS void
+      AS $BODY$begin
 
         -- don't run the import if nothing is ready for comparison
-        if 0 = (select count(*) from membersource) then 
-	        return; 
-        end if;     
+        if 0 = (select count(*) from membersource) then
+          return;
+        end if;
 
         insert into memberfact (
           changedate
@@ -555,24 +557,24 @@ class DatabaseManager
   end
 
   def updatememberfacthelper_sql
-    <<-SQL 
-    CREATE OR REPLACE FUNCTION updatememberfacthelper() RETURNS void 
+    <<-SQL
+    CREATE OR REPLACE FUNCTION updatememberfacthelper() RETURNS void
       AS $BODY$begin
         -- update memberfacthelper with new facts (helper is designed for fast aggregration)
         insert into memberfacthelper
-        select 
-          * 
-        from 
+        select
+          *
+        from
           memberfacthelperquery h
-        where 
+        where
           -- only insert facts we haven't already inserted
           changeid not in (select changeid from memberfacthelper)
           and       (
-		    -- only include people who've been an interesting status
+        -- only include people who've been an interesting status
         exists (
           select
             1
-          from 
+          from
             memberfact mf
           where
             mf.memberid = h.memberid
@@ -591,7 +593,7 @@ class DatabaseManager
             tf.memberid = h.memberid
         )
       );
-    
+
         -- as new status changes happen, next status changes need to be updated
         update
           memberfacthelper
@@ -610,10 +612,10 @@ class DatabaseManager
           and (
             coalesce(memberfacthelper.duration,0) <> coalesce(h.duration,0)
             or coalesce(memberfacthelper._changeid,0) <> coalesce(h._changeid,0)
-            or coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900') 
+            or coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900')
             or coalesce(memberfacthelper.changeduration,0) <> coalesce(h.changeduration,0)
             or coalesce(memberfacthelper.nextchangeid,0) <> coalesce(h.nextchangeid,0)
-            or coalesce(memberfacthelper.nextchangedate, '1/1/1900') <> coalesce(h.nextchangedate, '1/1/1900') 
+            or coalesce(memberfacthelper.nextchangedate, '1/1/1900') <> coalesce(h.nextchangedate, '1/1/1900')
           );
 
       end$BODY$
@@ -633,48 +635,48 @@ class DatabaseManager
       with mfnextstatuschange as
       (
         -- find the next status change for each statuschange
-        select 
+        select
           lead(changeid)  over (partition by memberid order by changeid) nextstatuschangeid
           , mf.*
-        from 
+        from
           memberfact mf
-        where 
+        where
           coalesce(mf.oldstatus,'') <> coalesce(mf.newstatus,'')
       )
       , nextstatuschange as (
-        select 
+        select
           c.changeid
           , n.changeid nextchangeid
           , n.changedate nextchangedate
           , n.newstatus nextstatus
           , (coalesce(n.changedate::date, current_date) - c.changedate::date)::int nextduration
-        from 
+        from
           mfnextstatuschange c
           left join memberfact n on c.nextstatuschangeid = n.changeid
       ), mfnextchange as
       (
         -- find the next status change for each statuschange
-        select 
+        select
           lead(changeid)  over (partition by memberid order by changeid) nextchangeid
           , mf.*
-        from 
+        from
           memberfact mf
       )
       , nextchange as (
-        select 
+        select
           c.changeid
           , n.changeid nextchangeid
           , coalesce(n.changedate::date, current_date) nextchangedate
           , n.newstatus nextstatus
           , (coalesce(n.changedate::date, current_date) - c.changedate::date)::int nextduration
-        from 
+        from
           mfnextchange c
           left join memberfact n on c.nextchangeid = n.changeid
       )
       select
         memberfact.changeid
         , changedate
-        , memberid      
+        , memberid
         , userid
         , -1 as net
         , 0 as gain
@@ -688,7 +690,7 @@ class DatabaseManager
                 or coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
               )
               -- This assumes only one status code for paying, one code for stopped and one code for a1p
-              -- If there was more than one code for each of these we'd need a more verbose method for 
+              -- If there was more than one code for each of these we'd need a more verbose method for
               -- checking changes between these statii, like is used for waiver_db
               and coalesce(oldstatus, '') <> coalesce(newstatus, '') -- when changing between a1p, paying and stopped
             )
@@ -732,95 +734,95 @@ class DatabaseManager
             then -1 else 0 end as waiverlossbad
         , case when coalesce(oldstatus, '') = ANY (#{@waiver_db})
           then -1 else 0 end as waivernet
-          
-        
+
+
         , 0 as othergain
-        , case when 
+        , case when
             NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
             AND NOT (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
             AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as otherloss
-        , case when 
+        , case when
             NOT (coalesce(oldstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') = #{@paying_db})
             AND NOT (coalesce(oldstatus, '') = #{@stopped_db})
             AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as othernet
-        
+
         , 0 as membergain
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@member_db})
             and (not coalesce(newstatus, '')  = ANY (#{@member_db}))
             then -1 else 0 end as memberloss
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@member_db})
             then -1 else 0 end as membernet
         , 0 as othermembergain
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@member_db})
             and coalesce(newstatus, '') = ANY (#{@member_db})
           then -1 else 0 end as othermemberloss
-        
+
         -- orange members (user configurable but should be non fee paying)
         , 0 as orangegain
         , 0 as orangegain_nonmember
         , 0 as orangegain_member
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@orange_db})
             and not coalesce(newstatus, '') = ANY (#{@orange_db})
             then -1 else 0 end as orangeloss
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@orange_db})
             and not coalesce(newstatus, '') = ANY (#{@orange_db})
             and not coalesce(newstatus, '') = ANY (#{@member_db}) -- was an orange member and not not a member (exited waiver or stopped)
             then -1 else 0 end as orangeloss_nonmember
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@orange_db})
             and not coalesce(newstatus, '') = ANY (#{@orange_db})
             and coalesce(newstatus, '') = ANY (#{@member_db}) -- was an orange member and now green (retained member)
             then -1 else 0 end as orangeloss_member
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@orange_db})
             then -1 else 0 end as orangenet
         , 0 as otherorangegain
-        , case when 
+        , case when
             coalesce(newstatus, '') = ANY (#{@orange_db})
             and coalesce(oldstatus, '') = ANY (#{@orange_db})
           then -1 else 0 end as otherorangeloss
-        
+
         -- green members (member inversion of orange - fee paying)
         , 0 as greengain
         , 0 as greengain_nonmember
         , 0 as greengain_member
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@green_db})
             and not coalesce(newstatus, '') = ANY (#{@green_db})
             then -1 else 0 end as greenloss
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@green_db})
             and not coalesce(newstatus, '') = ANY (#{@green_db})
             and not coalesce(newstatus, '') = ANY (#{@member_db}) -- green member now exited
             then -1 else 0 end as greenloss_nonmember
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@green_db})
             and not coalesce(newstatus, '') = ANY (#{@green_db})
             and coalesce(newstatus, '') = ANY (#{@member_db}) -- green member now orange
             then -1 else 0 end as greenloss_member
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@green_db})
             then -1 else 0 end as greennet
         , 0 as othergreengain
-        , case when 
+        , case when
             coalesce(newstatus, '') = ANY (#{@green_db})
             and coalesce(oldstatus, '') = ANY (#{@green_db})
           then -1 else 0 end as othergreenloss
     SQL
-  
+
     dimensions.each { |d| sql << <<-REPEAT }
           , coalesce(old#{d.column_base_name}, '') #{d.column_base_name}
           , case when coalesce(old#{d.column_base_name}, '') <> coalesce(new#{d.column_base_name}, '')
-              then -1 else 0 end as #{d.column_base_name}delta 
+              then -1 else 0 end as #{d.column_base_name}delta
     REPEAT
 
     sql << <<-SQL
@@ -830,7 +832,7 @@ class DatabaseManager
         , nextchange.nextchangeid nextchangeid
         , nextchange.nextchangedate nextchangedate
         , nextchange.nextduration changeduration
-      from 
+      from
         memberfact
         left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
         left join nextchange on memberfact.changeid = nextchange.changeid
@@ -883,58 +885,58 @@ class DatabaseManager
         , 0 as stoppedloss
         , case when coalesce(newstatus, '') = #{@stopped_db}
             then 1 else 0 end as stoppednet
-            
+
         , case when not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivergain
         , case when not coalesce(oldstatus, '') = ANY (#{@member_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivergaingood
-        , case when coalesce(oldstatus, '') = ANY (#{@nonwaiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db}) 
+        , case when coalesce(oldstatus, '') = ANY (#{@nonwaiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivergainbad
         , 0 as waiverloss
         , 0 as waiverlossgood
         , 0 as waiverlossbad
         , case when coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivernet
-        , case when 
+        , case when
             NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
             AND NOT (coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db})
             AND NOT (not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othergain
         , 0 as otherloss
-        , case when 
+        , case when
             NOT (coalesce(newstatus, '') = #{@a1p_db})
             AND NOT (coalesce(newstatus, '') = #{@paying_db})
             AND NOT (coalesce(newstatus, '') = #{@stopped_db})
             AND NOT (coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othernet
-        
-        -- member gain, loss, net, other_gain, other_loss    
-        , case when 
+
+        -- member gain, loss, net, other_gain, other_loss
+        , case when
             (not coalesce(oldstatus, '') = ANY (#{@member_db}))
             and (coalesce(newstatus, '') = ANY (#{@member_db}))
             then 1 else 0 end as membergain
         , 0 as memberloss
-        , case when 
+        , case when
             coalesce(newstatus, '') = ANY (#{@member_db})
             then 1 else 0 end as membernet
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@member_db})
             and coalesce(newstatus, '') = ANY (#{@member_db})
           then 1 else 0 end as othermembergain
         , 0 as othermemberloss
-        
+
         -- orange members (user configurable but non fee paying)
-        , case when 
+        , case when
             (not coalesce(oldstatus, '') = ANY (#{@orange_db}))
             and (coalesce(newstatus, '') = ANY (#{@orange_db}))
             then 1 else 0 end as orangegain
-        , case when 
+        , case when
             not coalesce(oldstatus, '') = ANY (#{@orange_db})
             and coalesce(newstatus, '') = ANY (#{@orange_db})
             and not coalesce(oldstatus, '') = ANY (#{@member_db}) -- wasn't a member and now orange (straight to waiver like students)
             then 1 else 0 end as orangegain_nonmember
-        , case when 
+        , case when
             not coalesce(oldstatus, '') = ANY (#{@orange_db})
             and coalesce(newstatus, '') = ANY (#{@orange_db})
             and coalesce(oldstatus, '') = ANY (#{@member_db}) -- was a member (green) and now orange (problem)
@@ -942,26 +944,26 @@ class DatabaseManager
         , 0 as orangeloss
         , 0 as orangeloss_nonmember
         , 0 as orangeloss_member
-        , case when 
+        , case when
             coalesce(newstatus, '') = ANY (#{@orange_db})
             then 1 else 0 end as orangenet
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@orange_db})
             and coalesce(newstatus, '') = ANY (#{@orange_db})
           then 1 else 0 end as otherorangegain
         , 0 as otherorangeloss
-        
+
         -- green members (member inversion of orange - fee paying)
-        , case when 
+        , case when
             (not coalesce(oldstatus, '') = ANY (#{@green_db}))
             and (coalesce(newstatus, '') = ANY (#{@green_db}))
             then 1 else 0 end as greengain
-        , case when 
+        , case when
             not coalesce(oldstatus, '') = ANY (#{@green_db})
             and coalesce(newstatus, '') = ANY (#{@green_db})
             and not coalesce(oldstatus, '') = ANY (#{@member_db}) -- wasn't a member and now green (new join)
             then 1 else 0 end as greengain_nonmember
-        , case when 
+        , case when
             not coalesce(oldstatus, '') = ANY (#{@green_db})
             and coalesce(newstatus, '') = ANY (#{@green_db})
             and coalesce(oldstatus, '') = ANY (#{@member_db}) -- was a member (green) and now green (retained)
@@ -969,21 +971,21 @@ class DatabaseManager
         , 0 as greenloss
         , 0 as greenloss_nonmember
         , 0 as greenloss_member
-        , case when 
+        , case when
             coalesce(newstatus, '') = ANY (#{@green_db})
             then 1 else 0 end as greennet
-        , case when 
+        , case when
             coalesce(oldstatus, '') = ANY (#{@green_db})
             and coalesce(newstatus, '') = ANY (#{@green_db})
           then 1 else 0 end as othergreengain
         , 0 as othergreenloss
-        
+
     SQL
-  
+
     dimensions.each { |d| sql << <<-REPEAT }
           , coalesce(new#{d.column_base_name}, '') #{d.column_base_name}
           , case when coalesce(old#{d.column_base_name}, '') <> coalesce(new#{d.column_base_name}, '')
-              then 1 else 0 end as #{d.column_base_name}delta 
+              then 1 else 0 end as #{d.column_base_name}delta
     REPEAT
 
     sql << <<-SQL
@@ -993,22 +995,22 @@ class DatabaseManager
         , nextchange.nextchangeid nextchangeid
         , nextchange.nextchangedate nextchangedate
         , nextchange.nextduration changeduration
-      from 
+      from
         memberfact
        left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
        left join nextchange on memberfact.changeid = nextchange.changeid
- 
+
     SQL
   end
-  
+
   def memberfacthelper_subset_sql
     <<-SQL
       (
-		    -- only include people who've been an interesting status
+        -- only include people who've been an interesting status
         exists (
           select
             1
-          from 
+          from
             memberfact mf
           where
             mf.memberid = h.memberid
@@ -1029,20 +1031,20 @@ class DatabaseManager
       )
     SQL
   end
-  
+
   def memberfacthelper_sql
     sql = <<-SQL
       drop table if exists memberfacthelper cascade;
-      create table memberfacthelper as 
-      select 
-        * 
-      from 
+      create table memberfacthelper as
+      select
+        *
+      from
         memberfacthelperquery h
-      where 
+      where
         #{memberfacthelper_subset_sql};
     SQL
   end
-  
+
   def transactionfact_sql
     <<-SQL
       create table transactionfact
@@ -1056,11 +1058,11 @@ class DatabaseManager
       );
     SQL
   end
-  
+
   def transactionfact
     db.ex(transactionfact_sql)
   end
-  
+
   def transactionsource_sql
     sql = <<-SQL
       create table transactionsource
@@ -1073,81 +1075,81 @@ class DatabaseManager
       );
     SQL
   end
-  
+
   def rebuild_transactionsource_sql
     sql = <<-SQL
       drop table if exists transactionsource cascade;
-      
+
       #{transactionsource_sql}
     SQL
   end
-  
+
   def rebuild_transactionsource
     db.ex(rebuild_transactionsource_sql)
   end
-  
+
    def transactionsourceprev_sql
     transactionsource_sql.gsub("transactionsource", "transactionsourceprev")
   end
-  
+
   def transactionsourceprev
     db.ex(transactionsourceprev_sql)
   end
-  
+
   def rebuild_transactionsourceprev_sql
     rebuild_transactionsource_sql.gsub("transactionsource", "transactionsourceprev")
   end
-  
+
   def rebuild_transactionsourceprev
     db.ex(transactionsourceprev_sql)
   end
-  
+
   def inserttransactionfact_sql
     <<-SQL
-      CREATE OR REPLACE FUNCTION inserttransactionfact(import_date timestamp) RETURNS void 
-	    AS $BODY$begin
-        
+      CREATE OR REPLACE FUNCTION inserttransactionfact(import_date timestamp) RETURNS void
+      AS $BODY$begin
+
         -- don't run the import if nothing has been imported for comparison
-        if 0 = (select count(*) from transactionsource) then 
+        if 0 = (select count(*) from transactionsource) then
           return;
-        end if;  
-        
-        insert into 
+        end if;
+
+        insert into
           transactionfact (
               id
               , creationdate
               , memberid
-              , userid 
+              , userid
               , amount
               , changeid
             )
-            
+
         -- insert any transactions that have appeared since last comparison
-        select 
+        select
           t.id
-          , import_date 
+          , import_date
           , t.memberid
           , t.userid
           , t.amount
           , (
             -- assign dimensions of latest change to the transaction
-            select 
-              max(changeid) changeid 
-            from 
-              memberfact m 
-            where 
+            select
+              max(changeid) changeid
+            from
+              memberfact m
+            where
               m.memberid = t.memberid
           ) changeid
-        from 
-          transactionSource t 
-        where 
+        from
+          transactionSource t
+        where
           not id in (select id from transactionSourcePrev)
-					and t.memberid in (select memberid from memberfact) -- TODO we really should handle transactions that have no member attached, rather than excluding them
-          
+          and t.memberid in (select memberid from memberfact) -- TODO we really should handle transactions that have no member attached, rather than excluding them
+
         union all
-        
+
         -- insert negations for any transactions that have been deleted since last comparison
-        select 
+        select
           t.id
           , import_date
           , t.memberid
@@ -1155,24 +1157,24 @@ class DatabaseManager
           , 0::money-t.amount
           , (
             -- assign dimensions of deleted transaction to the negated transaction
-            select 
+            select
               max(changeid) changeid
             from
               transactionfact
             where
               transactionfact.id = t.id
           ) changeid
-        from 
-          transactionSourcePrev t 
-        where 
-          not id in (select id from transactionSource)  
+        from
+          transactionSourcePrev t
+        where
+          not id in (select id from transactionSource)
         ;
-        
+
         -- finalise import, so running this again won't do anything
         delete from transactionSourcePrev;
         insert into transactionSourcePrev select * from transactionSource;
         delete from transactionSource;
-        
+
       end;$BODY$
         LANGUAGE plpgsql
         COST 100
@@ -1181,47 +1183,47 @@ class DatabaseManager
         VOLATILE;
     SQL
   end
-  
+
   def updatedisplaytext_sql
     sql = <<-SQL
-      CREATE OR REPLACE FUNCTION public.updatedisplaytext() RETURNS void 
+      CREATE OR REPLACE FUNCTION public.updatedisplaytext() RETURNS void
         AS $BODY$
       begin
         -- don't run the import if nothing is ready for comparison
-        if 0 = (select count(*) from displaytextsource) then 
+        if 0 = (select count(*) from displaytextsource) then
           return;
         end if;
-        
-        
-        update 
-          displaytext 
+
+
+        update
+          displaytext
         set
           id = case when lower(d2.attribute) in ('memberid', 'status') then d2.id else trim(lower(d2.id)) end
           , displaytext = d2.displaytext
         from
-         displaytextsource d2  
+         displaytextsource d2
         where
-          trim(lower(displaytext.id)) = trim(lower(d2.id)) 
+          trim(lower(displaytext.id)) = trim(lower(d2.id))
           and displaytext.attribute = d2.attribute
           and (
             displaytext.displaytext <> d2.displaytext
             or displaytext.id <> d2.id
           )
         ;
-        
+
         insert into displaytext(attribute, id, displaytext)
         select
           attribute
-	  , case when lower(attribute) in ('memberid', 'status') then id else trim(lower(id)) end
+    , case when lower(attribute) in ('memberid', 'status') then id else trim(lower(id)) end
           , displaytext
         from
          displaytextsource d
         where
           not exists (select 1 from displaytext where attribute = d.attribute and trim(lower(id))=trim(lower(d.id)));
-        
+
         -- delete to make way for next import
         delete from displaytextsource;
-      end 
+      end
       $BODY$
         LANGUAGE plpgsql
         COST 100
@@ -1230,27 +1232,27 @@ class DatabaseManager
         VOLATILE;
     SQL
   end
-  
+
   def insertdisplaytext
     db.ex(insertdisplaytext_sql)
   end
-  
+
   def rebuild_most_indexes_sql()
-    sql = <<-SQL 
+    sql = <<-SQL
       drop index if exists "displaytext_attribute_idx";
-	    drop index if exists "displaytext_id_idx";
+      drop index if exists "displaytext_id_idx";
       drop index if exists "displaytext_attribute_id_idx";
 
       drop index if exists "memberfact_changeid_idx";
       drop index if exists "memberfact_memberid_idx";
       drop index if exists "memberfact_oldstatus_idx";
       drop index if exists "memberfact_newstatus_idx";
-      
+
       drop index if exists "transactionfact_memberid_idx";
       drop index if exists "transactionfact_changeid_idx";
     SQL
-    
-    
+
+
     sql << <<-SQL
       CREATE INDEX "displaytext_attribute_idx" ON "displaytext" USING btree(attribute ASC NULLS LAST);
       CREATE INDEX "displaytext_id_idx" ON "displaytext" USING btree(id ASC NULLS LAST);
@@ -1261,53 +1263,53 @@ class DatabaseManager
       CREATE INDEX "memberfact_memberid_idx" ON "memberfact" USING btree(memberid ASC NULLS LAST);
       CREATE INDEX "memberfact_oldstatus_idx" ON "memberfact" USING btree(oldstatus ASC NULLS LAST);
       CREATE INDEX "memberfact_newstatus_idx" ON "memberfact" USING btree(newstatus ASC NULLS LAST);
-    
-      
+
+
       CREATE INDEX "transactionfact_memberid_idx" ON "transactionfact" USING btree(memberid ASC NULLS LAST);
       CREATE INDEX "transactionfact_changeid_idx" ON "transactionfact" USING btree(changeid ASC NULLS LAST);
     SQL
   end
-  
+
   def rebuild_memberfacthelper_indexes_sql()
-    sql = "" 
+    sql = ""
     dimensions.each { |d| sql << <<-REPEAT }
       drop index if exists "memberfacthelper_#{d.column_base_name}_idx" ;
     REPEAT
-  
+
     sql << <<-SQL
       drop index if exists "memberfacthelper_changeid_idx";
       drop index if exists "memberfacthelper_memberid_idx";
       drop index if exists "memberfacthelper_changedate_idx";
       drop index if exists "memberfacthelper_nextchangedate_idx";
-    
+
       CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_changedate_idx" ON "memberfacthelper" USING btree(changedate ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_nextchangedate_idx" ON "memberfacthelper" USING btree(nextchangedate ASC NULLS LAST);
     SQL
-    
+
     dimensions.each { |d| sql << <<-REPEAT }
       CREATE INDEX "memberfacthelper_#{d.column_base_name}_idx" ON "memberfacthelper" USING btree(#{d.column_base_name} ASC NULLS LAST);
     REPEAT
-  
+
     sql
   end
-  
+
   def migrate_membersourceprev_sql(mapping)
-    
+
     sql = <<-SQL
-    
+
       insert into membersourceprev
       (
         memberid
         , userid
         , status
     SQL
-    
+
     mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
-        , #{newvalue}  
+        , #{newvalue}
     REPEAT
-    
+
     sql << <<-SQL
       )
       select
@@ -1315,22 +1317,22 @@ class DatabaseManager
         , userid --replace_me
         , status
     SQL
-    
+
     mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
-        , trim(lower(#{oldvalue}::text))  
+        , trim(lower(#{oldvalue}::text))
     REPEAT
-    
+
     sql << <<-SQL
       from
         membersourceprev_migration;
     SQL
   end
-  
-    
+
+
   def migrate_memberfact_sql(mapping)
-    
+
     sql = <<-SQL
-    
+
       insert into memberfact
       (
         changeid
@@ -1340,12 +1342,12 @@ class DatabaseManager
         , oldstatus
         , newstatus
     SQL
-    
+
     mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
-        , old#{newvalue}  
-        , new#{newvalue}  
+        , old#{newvalue}
+        , new#{newvalue}
     REPEAT
-    
+
     sql << <<-SQL
       )
       select
@@ -1356,24 +1358,24 @@ class DatabaseManager
         , oldstatus
         , newstatus
     SQL
-    
+
     mapping.each { | oldvalue, newvalue | sql << <<-REPEAT }
-        , trim(lower(old#{oldvalue}::text))  
+        , trim(lower(old#{oldvalue}::text))
         , trim(lower(new#{oldvalue}::text))
     REPEAT
-    
+
     sql << <<-SQL
       from
         memberfact_migration;
-        
+
       SELECT setval('memberfact_changeid_seq', (SELECT MAX(changeid) FROM memberfact));
     SQL
   end
-  
+
   # ASU to NUW back-porting migration
   def migrate_nuw_transactionfact_sql
     <<-SQL
-    
+
       insert into transactionfact
       (
         id
@@ -1383,22 +1385,22 @@ class DatabaseManager
         , amount
         , changeid
       )
-      select 
+      select
         transactionid
         , creationdate
         , memberid
         , staffid
         , coalesce(amount,0::money)
         , changeid
-      from 
+      from
         transactionfact_migration;
     SQL
   end
-  
+
   # ASU to NUW back-porting migration
   def migrate_nuw_transactionsourceprev_sql
     <<-SQL
-    
+
       insert into transactionsourceprev
       (
         id
@@ -1407,21 +1409,21 @@ class DatabaseManager
         , userid
         , amount
       )
-      select 
+      select
         transactionid
         , creationdate
         , memberid
         , staffid
         , coalesce(amount,0::money)
-      from 
+      from
         transactionsourceprev_migration;
     SQL
   end
-  
+
   # ASU to NUW back-porting migration
   def migrate_nuw_displaytext_sql
     <<-SQL
-    
+
       insert into displaytext
       (
         attribute
@@ -1432,15 +1434,15 @@ class DatabaseManager
         attribute
         , case when lower(attribute) in ('memberid', 'status') then id else trim(lower(id)) end
         , displaytext
-      from 
+      from
         displaytext_migration;
     SQL
   end
-  
-  
+
+
   def migrate_dimstart_sql(migration_spec)
     sql = ""
-    
+
     migration_spec.each do | k, v |
       case v.to_s
       when "CREATE"
@@ -1448,8 +1450,8 @@ class DatabaseManager
       when "DELETE"
         sql << "delete from dimstart where dimension = '#{k.to_s}'; \n" ;
       else
-        sql << "update dimstart set dimension = '#{v.to_s}' where dimension = '#{k.to_s}'; \n" if (k.to_s != v.to_s); 
-        sql << "update displaytext set attribute = '#{v.to_s}' where attribute = '#{k.to_s}'; \n" if (k.to_s != v.to_s); 
+        sql << "update dimstart set dimension = '#{v.to_s}' where dimension = '#{k.to_s}'; \n" if (k.to_s != v.to_s);
+        sql << "update displaytext set attribute = '#{v.to_s}' where attribute = '#{k.to_s}'; \n" if (k.to_s != v.to_s);
       end
     end
     sql
@@ -1460,10 +1462,10 @@ class DatabaseManager
   def memberfacthelper_migration_required?
     @db.get_app_state('memberfacthelperquery_source') != memberfacthelperquery_sql()
   end
-  
+
   def migration_spec_all
     m = {}
-    
+
     # retreive current db schema, action = delete by default
     columns = db.ex("select column_name from information_schema.columns where table_name='membersourceprev';")
     columns.each do |row|
@@ -1471,12 +1473,12 @@ class DatabaseManager
         m[row['column_name']] = 'DELETE'
       end
     end
-      
+
     # match dimensions to db columns, if a dimensions isn't in db list, create it
     # any unmatched db columns, will remain deleted
     dimensions().each do | d |
       if m.has_key?(d.column_base_name)
-        m[d.column_base_name] = d.column_base_name 
+        m[d.column_base_name] = d.column_base_name
       else
         m[d.column_base_name] = 'CREATE' if d.column_base_name != 'userid'
       end
@@ -1493,29 +1495,29 @@ class DatabaseManager
       nil
     end
   end
-  
+
   def parse_migration(yaml_spec)
     migration_spec = YAML.load(yaml_spec)
-    
+
     # make sure columns being mapped are present in both db and config
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
     dimension_names = dimensions.collect { |d| d.column_base_name }
-    
+
     column_data = db.ex("select column_name from information_schema.columns where table_name='membersourceprev' and column_name <> 'userid';")
     columns = column_data.collect { |row| row['column_name'] }
-    
+
     mapping.each do |k,v|
       raise "Reporting dimension #{v} not found in config/config.yaml" if !dimension_names.include?(v)
       raise "Reporting dimension #{k} not found in database" if !columns.include?(k)
     end
-    
+
     migration_spec
   end
-   
+
   # ASU to NUW specific migration (replaced below!)
   def migrate_nuw_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
-    
+
     [ '-- nuw migration',
       rebuild_from_scratch_without_indexes_sql(),
       '-- start of nuw data migration',
@@ -1528,37 +1530,37 @@ class DatabaseManager
     ] + rebuild_most_indexes_sql().split($/) +
     [
       <<-SQL
-			insert into dimstart (dimension, startdate)  select 'userid', '2012-04-27' where not exists (select 1 from dimstart where dimension = 'userid');
+      insert into dimstart (dimension, startdate)  select 'userid', '2012-04-27' where not exists (select 1 from dimstart where dimension = 'userid');
       update displaytext set attribute = 'userid' where attribute = 'statusstaffid';
-      
+
       update memberfacthelper set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
       update memberfact set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
       update transactionfact set userid = lower(userid) where coalesce(userid,'') <> coalesce(lower(userid),'');
-      
+
       select updatememberfacthelper();
       drop table if exists memberid_detail;
-      
-      select 
+
+      select
         d.id
         , displaytext
         , contactdetail
-        , followupnotes 
-      into 
+        , followupnotes
+      into
         memberid_detail
-      from 
+      from
         displaytext d left join membersourceprev_migration m on trim(d.id) = trim(m.memberid)
-      
+
       where
         d.attribute = 'memberid';
-      
+
       create index memberid_detail_id_idx on memberid_detail (id);
     SQL
       ]
   end
-  
+
     def migrate_asu_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
-    
+
     [
       '-- asu migration',
       migrate_rebuild_without_indexes_sql(),
@@ -1568,11 +1570,11 @@ class DatabaseManager
       migrate_dimstart_sql(migration_spec)
     ] + rebuild_most_indexes_sql().split($/)
   end
-  
+
   # Returns an array of sql statements.
   def migrate_sql(migration_spec)
     mapping = migration_spec.select{ |k,v| v.to_s != "DELETE" && v.to_s != "CREATE"}
-    
+
 #      -- regular migration
       [migrate_rebuild_without_indexes_sql(),
       migrate_membersourceprev_sql(mapping).gsub(', userid --replace_me', ', userid'),
@@ -1580,7 +1582,7 @@ class DatabaseManager
       migrate_dimstart_sql(migration_spec)
       ] + rebuild_most_indexes_sql().split($/)
   end
-  
+
   # migration_sql_ary: an array of sql statements to execute
   # Raises an exception if a critical error occurred that prevented the migration from succeeding.
   # Returns true on success, or an error string in the case of a recoverable error.
@@ -1592,7 +1594,7 @@ class DatabaseManager
       # splitting of long statements by line break -- so that large statements can be reduced to a
       # series of smaller ones.
       db.async_ex("BEGIN TRANSACTION");
-    
+
       migration_sql_ary.each { |sql| $stderr.puts sql; db.async_ex(sql) }
 
     # with lots of data memberfacthelper can be impossibly slow to rebuild
@@ -1600,7 +1602,7 @@ class DatabaseManager
         db.async_ex("select updatememberfacthelper();");
         rebuild_memberfacthelper_indexes_sql().split($/).each { |sql| $stderr.puts sql; db.async_ex(sql); }
       end
-      
+
       db.async_ex("COMMIT TRANSACTION");
     rescue Exception=>e
       $stderr.puts e
@@ -1610,14 +1612,14 @@ class DatabaseManager
 
     db.set_app_state('memberfacthelperquery_source', memberfacthelperquery_sql())
 
-    finalisation_statements = 
+    finalisation_statements =
       ["vacuum memberfact",
        "vacuum membersourceprev",
        "vacuum transactionfact",
        "vacuum transactionsourceprev",
        "vacuum displaytext",
        "vacuum memberfacthelper",
-       
+
        "analyse memberfact",
        "analyse membersourceprev",
        "analyse transactionfact",
@@ -1628,7 +1630,7 @@ class DatabaseManager
     current_statement = nil
 
     begin
-      finalisation_statements.each do |sql| 
+      finalisation_statements.each do |sql|
         $stderr.puts sql
         current_statement = sql
         db.async_ex(sql)
