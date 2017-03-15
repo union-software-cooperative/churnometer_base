@@ -288,9 +288,11 @@ class ImportPresenter
   end
   
   def backup_command(file)
-    cmd = "pg_dump #{@db.dbname}  > data_backup/#{@db.dbname}_db_backup.sql"
+    data_file = "backup/#{@db.dbname}_db_backup.sql"
+    cmd = "pg_dump #{@db.dbname} > #{data_file}"
     cmd << "; rm -Rf #{file}"
-    cmd << "; zip -q -r #{file} . -x \"uploads\/*\" -x \"tmp\/*\" -x \".sass-cache\/*\"  "
+    cmd << "; zip -q -r #{file} . -x \"backup\/backup.zip\" -x \"uploads\/*\" -x \"tmp\/*\" -x \".sass-cache\/*\"  "
+    cmd << "; rm #{data_file}"
   end
   
   # todo refactor to somewhere more sensible

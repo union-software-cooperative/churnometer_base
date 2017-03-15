@@ -1,4 +1,5 @@
 #~/bin/bash
+date
 echo "Uploading $1 displaytext"
 curl -u "churnometer:goatG)@T" -X POST --form myfile=@"./displaytext.txt.$1" http://localhost:4000/import
 echo "Uploading $1 members"
