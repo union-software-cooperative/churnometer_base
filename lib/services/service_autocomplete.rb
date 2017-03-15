@@ -54,7 +54,7 @@ protected
 
     json_to_db_column_mapping().each do |json_column, db_column|
       db_value = db_row_hash[db_column]
-
+      
       if db_value.nil?
         raise "Database column '#{db_column}' for json result column '#{json_column}' wasn't returned in the query result."
       end

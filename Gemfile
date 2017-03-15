@@ -14,6 +14,9 @@ gem 'thin'
 gem 'nokogiri'
 #gem 'rack-auth-kerberos'
 
+gem 'pry'
+gem 'pry-debugger'
+gem 'debugger'
 group :development, :test do
   # For debugging
   gem 'ir_b'

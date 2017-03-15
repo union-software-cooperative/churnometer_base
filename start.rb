@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
 
-#require 'debugger'
+require 'pry'
 require 'rubygems'
 require 'sinatra/base'
 require 'bundler/setup'
@@ -275,7 +275,7 @@ class Churnobyl < Sinatra::Base
     
     @model = ip()
     file = "backup_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
-    path = "tmp/backup.zip"
+    path = "backup/backup.zip"
     @model.backup(path)
     send_file(path, :disposition => 'attachment', :filename => file)
     @model.close_db()
