@@ -1158,7 +1158,7 @@ class DatabaseManager
           , (
             -- assign dimensions of deleted transaction to the negated transaction
             select
-              changeid
+              max(changeid) changeid
             from
               transactionfact
             where

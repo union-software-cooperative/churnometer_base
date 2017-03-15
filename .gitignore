@@ -4,8 +4,13 @@ TODOS.txt
 log
 doc
 config/config_site.yaml
+lib/services/service_dd_retention*
+lib/services/service_nsw_joins.rb
+*.old
+*.orig
+*.bak
 uploads/*
 backup/*
-.sass_cache
-.sass_cache/*
+.sass-cache/*
 .DS_Store
+._.*
