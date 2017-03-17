@@ -26,7 +26,6 @@ require 'uri'
 require 'money'
 require "addressable/uri"
 require 'pony'
-require 'ir_b'
 require 'monitor' # used for managing potentially recursive mutexes on Class singletons
 
 Dir["./lib/*.rb"].each { |f| require f }

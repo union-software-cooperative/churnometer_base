@@ -20,9 +20,10 @@ require 'json'
 
 class ServiceRequestHandlerAutocomplete
   def initialize(churnobyl_app_class)
-    services = { 
+  # TODO make these services configuration or enumerate a directory  
+  services = { 
       'displaytext' => ServiceAutocompleteDisplaytext,
-      'nswjoins' => ServiceNSWJoins,
+      #'nswjoins' => ServiceNSWJoins,
       'ddretention' => ServiceDDRetention,
       'ddretentionmembers' =>ServiceDDRetentionMembers
     }

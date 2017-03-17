@@ -10,18 +10,11 @@ gem 'ruby-ole'
 gem 'money', '3.7.1'
 gem 'addressable'
 gem 'pony'
-gem 'thin'
+gem 'puma'
 gem 'nokogiri'
 #gem 'rack-auth-kerberos'
 
-gem 'pry'
-gem 'pry-debugger'
-gem 'debugger'
-group :development, :test do
-  # For debugging
-  gem 'ir_b'
-  gem 'debugger'
-end
+gem 'pry-byebug'
 
 group :test do 
   gem 'rspec'
