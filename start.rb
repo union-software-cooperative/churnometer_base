@@ -208,8 +208,12 @@ class Churnobyl < Sinatra::Base
     table = presenter.tables[params['table']] if !params['table'].nil?
 
     if !table.nil?
-      path = table.to_excel
-      send_file(path, :disposition => 'attachment', :filename => File.basename(path))
+      case params['format']
+      when 'csv' then send_file(table.to_csv, :disposition => 'attachment', :filename => File.basename(path))
+      when 'json' then response.write(table.to_json)
+      when 'xls', nil then send_file(table.to_excel, :disposition => 'attachment', :filename => File.basename(path))
+      else raise("Export failed. Invalid format!")
+      end
     else
       raise "Export failed. Table not found!"
     end
@@ -366,7 +370,7 @@ class Churnobyl < Sinatra::Base
       full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
 
       File.open(full_filename, "w") do |f|
-  f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
+        f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
       end
 
       if app().database_import_encoding && app().database_import_encoding != 'utf-8'

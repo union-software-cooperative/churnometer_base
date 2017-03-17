@@ -1,0 +1,23 @@
+#~/bin/bash
+date
+echo "Uploading $1 displaytext"
+curl -u "churnometer:goatG)@T" -X POST --form myfile=@"./displaytext.txt.$1" http://localhost:4000/import
+echo "Uploading $1 members"
+curl -u "churnometer:goatG)@T" -X POST --form myfile=@"./members.txt.$1" http://localhost:4000/import
+echo "Uploading $1 transactions"
+curl -u "churnometer:goatG)@T" -X POST --form myfile=@"./transactions.txt.$1" http://localhost:4000/import
+echo "starting import"
+curl -u "churnometer:goatG)@T" -X POST --form import_date="$1 01:00:00" http://localhost:4000/import?action=import
+
+sleep 1
+while [ 1 ]
+do
+  curl -u "churnometer:goatG)@T" -X GET http://localhost:4000/import > curl.log
+
+  if grep "Importing..." curl.log
+  then
+    sleep 10
+  else
+    exit
+  fi
+done
