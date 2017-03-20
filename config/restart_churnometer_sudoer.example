@@ -1,0 +1,7 @@
+REPLACEME_CHURN_USER ALL=NOPASSWD: /bin/systemctl restart churnometer
+REPLACEME_CHURN_USER ALL=NOPASSWD: /bin/systemctl status churnometer
+REPLACEME_CHURN_USER ALL=NOPASSWD: /bin/systemctl restart postgresql
+%sudo ALL=NOPASSWD: /bin/systemctl stop churnometer
+%sudo ALL=NOPASSWD: /bin/systemctl start churnometer
+%sudo ALL=NOPASSWD: /bin/systemctl restart churnometer
+%sudo ALL=NOPASSWD: /bin/systemctl status churnometer

@@ -36,6 +36,7 @@ class ImportPresenter
   def close_db
     @db.close_db()
     @dbm.close_db()
+    @importer.close_db()
   end
 
   def dimensions
@@ -69,7 +70,7 @@ class ImportPresenter
   end
 
   def importing?
-    @importer.state == :running
+    @importer.state == 'running'
   end
 
   def load_staging_counts
@@ -291,7 +292,7 @@ class ImportPresenter
     data_file = "backup/#{@db.dbname}_db_backup.sql"
     cmd = "pg_dump #{@db.dbname} > #{data_file}"
     cmd << "; rm -Rf #{file}"
-    cmd << "; zip -q -r #{file} . -x \"backup\/backup.zip\" -x \"uploads\/*\" -x \"tmp\/*\" -x \".sass-cache\/*\"  "
+    cmd << "; zip -q -r #{file} . -x \"backup\/backup.zip\" -x \"uploads\/*\" -x \"tmp\/*\" -x \".sass-cache\/*\"  -x \"pids\/*\" "
     cmd << "; rm #{data_file}"
   end
 
@@ -316,10 +317,10 @@ class ImportPresenter
     if @app.config['host_os'].to_s == "osx"
       cmd = "killall ruby; thin start" # "killall ruby; thin start"
     else
-      # Crudely assumes dbpass and #{@db.dbname} user pass is the same (that's how its configured)
-      cmd = "echo \"#{@db.dbpass}\" | sudo -S /etc/init.d/postgresql restart"
+      # requires passwordless sudo for postgresql and thin - see install script
+      cmd = "sudo systemctl restart postgresql"
       cmd << "; rm -f tmp/*.Marshal"
-      cmd << "; /etc/init.d/thin restart & "
+      cmd << "; sudo systemctl restart churnometer & "
     end
     exec(cmd) # terminates current thin session, so nothing will be executed after this
   end

@@ -44,8 +44,9 @@ class Churnobyl < Sinatra::Base
 
     $logger = Logger.new('log/churnometer.log')
 
-    set :raise_errors, Proc.new { false }
-    set :show_exceptions, false
+    # remarked because this doesn't do anything
+    #set :raise_errors, Proc.new { false }
+    #set :show_exceptions, false
 
     enable :sessions
     set :session_secret, "something" # I don't understand what this does but it lets my flash work
@@ -83,7 +84,7 @@ class Churnobyl < Sinatra::Base
   end
 
   def ip
-    @ip  ||= ImportPresenter.new(app(), self.class.importer, ChurnDB.new(app())) # don't use the disk cache db for importing!
+    @ip = ImportPresenter.new(app(), self.class.importer, ChurnDB.new(app())) # don't use the disk cache db for importing!
   end
 
   def reload_config_on_every_request?
@@ -118,13 +119,8 @@ class Churnobyl < Sinatra::Base
   end
 
   def self.importer()
-    if @importer == nil
-      settings.churn_app_mutex.synchronize do
-        @importer = Importer.new(server_lifetime_churnometer_app)
-      end
-      @importer.run
-      end
-      @importer
+    #@importer ||= Importer.new(server_lifetime_churnometer_app)
+    @importer = Importer.new(server_lifetime_churnometer_app)
   end
 
   not_found do
@@ -134,14 +130,14 @@ class Churnobyl < Sinatra::Base
   error do
     begin
       @error = env['sinatra.error']
-      if app().email_on_error?
-        Pony.mail({
-                    :to   => app().email_on_error_from,
-                    :from => app().email_on_error_to,
-                    :subject => "[Error] #{@error.message}",
-                    :body => erb(:'errors/error_email', layout: false)
-                  })
-      end
+      # #if app().email_on_error?
+      #   Pony.mail({
+      #               :to   => app().email_on_error_from,
+      #               :from => app().email_on_error_to,
+      #               :subject => "[Error] #{@error.message}",
+      #               :body => erb(:'errors/error_email', layout: false)
+      #             })
+      # end
       erb :'errors/error'
     rescue StandardError => err
       return response.write "Error in error handler: #{err.message}"
@@ -301,7 +297,7 @@ class Churnobyl < Sinatra::Base
 
   post "/import" do
     admin!
-
+    puts 'HERE'
     session[:flash] = nil
     @model = ip()
 
@@ -603,6 +599,7 @@ class Churnobyl < Sinatra::Base
   end
 
   ServiceRequestHandlerAutocomplete.new(self)
+
 
   run! if app_file == $0
 

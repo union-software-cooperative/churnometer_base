@@ -99,6 +99,7 @@ class DatabaseManager
     sql = <<-SQL
       drop table if exists importing;
       select 0 as importing into importing;
+      create table if not exists appstate (key varchar, value varchar);
 
       drop function if exists inserttransactionfact() cascade;
       drop function if exists updatedisplaytext() cascade;
@@ -1067,13 +1068,16 @@ class DatabaseManager
     sql = <<-SQL
       create table transactionsource
       (
-        id varchar(255) not null
+        id varchar(255) not null primary key
         , creationdate timestamp not null
         , memberid varchar(255) not null
         , userid varchar(255) not null
         , amount money not null
       );
+
+      create index idx_transactionsource_memberid on transactionsource(memberid);
     SQL
+
   end
 
   def rebuild_transactionsource_sql
@@ -1142,19 +1146,20 @@ class DatabaseManager
           ) changeid
         from
           transactionSource t
+          left join transactionSourcePrev p on t.id = p.id
         where
-          not id in (select id from transactionSourcePrev)
+          p.id is null
           and t.memberid in (select memberid from memberfact) -- TODO we really should handle transactions that have no member attached, rather than excluding them
 
         union all
 
         -- insert negations for any transactions that have been deleted since last comparison
         select
-          t.id
+          p.id
           , import_date
-          , t.memberid
-          , t.userid
-          , 0::money-t.amount
+          , p.memberid
+          , p.userid
+          , 0::money-p.amount
           , (
             -- assign dimensions of deleted transaction to the negated transaction
             select
@@ -1162,18 +1167,20 @@ class DatabaseManager
             from
               transactionfact
             where
-              transactionfact.id = t.id
+              transactionfact.id = p.id
           ) changeid
         from
-          transactionSourcePrev t
+          transactionSourcePrev p
+          left join transactionSource t on p.id = t.id
         where
-          not id in (select id from transactionSource)
+          t.id is null
         ;
 
         -- finalise import, so running this again won't do anything
         delete from transactionSourcePrev;
         insert into transactionSourcePrev select * from transactionSource;
         delete from transactionSource;
+        analyse transactionsourceprev;
 
       end;$BODY$
         LANGUAGE plpgsql

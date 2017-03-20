@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisation's turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -22,16 +22,16 @@ REPO="git@github.com:lukerohde/churnometer_base.git"
 PRODUCTION_BRANCH="master"
 DB_REPO="git@github.com:lukerohde/churnometer_data.git"
 
-PG_PATH="/etc/postgresql/9.1/main"
+PG_PATH="/etc/postgresql/9.5/main"
 CHURN_USER="churnometer"
-CHURN_PASS="mypassword"
+CHURN_PASS="goatGO@T"
 WWW_PATH="/opt/churnometer"
 
 pwdir=$(pwd)
 
 function confirm_config
 {
-  while [[ "$CONFIRMED" != "Y" && "$CONFIRMED" != "y" ]] ; do  
+  while [[ "$CONFIRMED" != "Y" && "$CONFIRMED" != "y" ]] ; do
     echo "***********************************************************************"
     echo "* CONFIRM CONFIG"
     echo "*"
@@ -40,25 +40,25 @@ function confirm_config
     echo "Database and application user: $CHURN_USER"
     echo "Database and application user's password: $CHURN_PASS"
     echo "Installation directory for application source: $WWW_PATH"
-    echo "Directory of Postgres 9.1 configuration (will be overwritten!!!): $PG_PATH"
+    echo "Directory of Postgres 9.5 configuration (will be overwritten!!!): $PG_PATH"
     echo "Source download repository: $REPO"
     echo "Branch in source download repository: $PRODUCTION_BRANCH"
-    if [[ ! ${DB_FILE} ]] ; then 
+    if [[ ! ${DB_FILE} ]] ; then
       echo "You haven't specified a database backup file that exists.  Demo data download repository: $DB_REPO"
-    else 
+    else
       echo "DB backup file to restore from: $DB_FILE"
     fi
 
     read -e -i "Y" -p "Is this configuration correct [Y/N]? " CONFIRMED
-  
-    if  [[ $CONFIRMED != "Y" && $CONFIRMED != "y" ]] ; then 
+
+    if  [[ $CONFIRMED != "Y" && $CONFIRMED != "y" ]] ; then
       read -e -i "$CHURN_USER" -p "Please enter a username for the database and webservice: " CHURN_USER
       read -e -i "$CHURN_PASS" -p "Please enter a password for user $CHURN_USER: " CHURN_PASS
       read -e -i "$WWW_PATH" -p "Please enter a path to install the application: " WWW_PATH
       read -e -i "$PG_PATH" -p "Please confirm the path to your postgres configuration (only tested with 9.1 and will overwrite!): " PG_PATH
       read -e -i "$REPO" -p "Please confirm the repository from which you to download the source: " REPO
       read -e -i "$PRODUCTION_BRANCH" -p "Please confirm the branch of $REPO: " PRODUCTION_BRANCH
-      if [[ ! ${DB_FILE} ]] ; then 
+      if [[ ! ${DB_FILE} ]] ; then
         read -e -i "$DB_REPO" -p "Please confirm the repository from which to download the demo data: " DB_REPO
       fi
     fi
@@ -75,7 +75,21 @@ function install
 
   sudo apt-get update
 
-  sudo apt-get -y install ruby1.9.1 postgresql libpq-dev git ruby1.9.1-dev build-essential sendmail libxml2-dev libxslt-dev nginx zip 
+  sudo apt-get -y install postgresql libpq-dev git build-essential sendmail libxml2-dev libxslt-dev nginx zip libreadline-dev
+
+  sudo su - $CHURN_USER <<EOF
+    git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+    git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+    echo 'PATH="/home/$CHURN_USER/.rbenv/bin:/home/$CHURN_USER/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.profile
+    echo 'export PATH="/home/$CHURN_USER/.rbenv/bin:/home/$CHURN_USER/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
+    echo 'eval "\$(rbenv init -)"' >> ~/.bashrc
+    echo '[[ -r ~/.bashrc ]] && . ~/.bashrc' >> .bash_profile
+EOF
+
+
+  sudo su - $CHURN_USER -c 'rbenv install 2.3.3'
+  sudo su - $CHURN_USER -c 'rbenv global 2.3.3'
+  sudo su - $CHURN_USER -c 'rbenv exec ruby -v'
 }
 
 function churn_user
@@ -85,14 +99,14 @@ function churn_user
   echo "*"
   echo "*"
   echo "***********************************************************************"
-  
+
   sudo useradd -d /home/$CHURN_USER -m $CHURN_USER # -p option for setting password doesn't work
   sudo bash -c "echo \"$CHURN_USER:$CHURN_PASS\" | chpasswd" # set password
   sudo usermod -s /bin/bash $CHURN_USER # set up bash shell
   sudo usermod -a -G sudo $CHURN_USER # allow sudo
   sudo bash -c "echo AllowUsers $CHURN_USER >> /etc/ssh/sshd_config" # allow ssh
   sudo /etc/init.d/ssh restart
-    
+
   sudo -u $CHURN_USER ssh-keygen -t rsa -b 4096 -f /home/$CHURN_USER/.ssh/id_rsa -N ""
   echo -e "\n\nCopy this key to https://github.com/account/ssh"
   echo -e "- To download the source you'll need to be a collaborator on $REPO (if it isn't public)"
@@ -112,21 +126,21 @@ function source_config
   echo "*"
   echo "*"
   echo "***********************************************************************"
-  
+
   sudo -u $CHURN_USER /etc/init.d/thin stop # stop thin before tmp/pids are deleted (in case of reinstall)
   sudo rm -Rf $WWW_PATH
   sudo mkdir $WWW_PATH
   sudo chown $CHURN_USER $WWW_PATH
- 
+
   sudo -u $CHURN_USER rm /home/$CHURN_USER/www
   sudo -u $CHURN_USER ln -s $WWW_PATH /home/$CHURN_USER/www
-  
+
   cd $WWW_PATH
   sudo -u $CHURN_USER git clone $REPO $WWW_PATH
   sudo -u $CHURN_USER git checkout $PRODUCTION_BRANCH
 
   sudo -u $CHURN_USER cp config/config_site.yaml.example config/config_site.yaml
-  
+
   sudo -u $CHURN_USER bash -c " \
     sed \"s|REPLACEME_CHURN_USER|$CHURN_USER|g\" $WWW_PATH/config/config_site.yaml.example \
     | sed \"s|REPLACEME_CHURN_PASS|$CHURN_PASS|g\" \
@@ -134,7 +148,7 @@ function source_config
     > $WWW_PATH/config/config_site.yaml"
 
   sudo -u $CHURN_USER vim config/config_site.yaml
-  sudo -u $CHURN_USER mkdir $WWW_PATH/uploads
+  #sudo -u $CHURN_USER mkdir $WWW_PATH/uploads
   sudo -u $CHURN_USER mkdir $WWW_PATH/tmp
   sudo -u $CHURN_USER mkdir $WWW_PATH/log
   sudo -u $CHURN_USER mkdir $WWW_PATH/backup
@@ -143,25 +157,30 @@ function source_config
   sudo git config --system user.name "$USER"
 }
 
-function db_config 
+function db_config
 {
   echo "***********************************************************************"
   echo "* CONFIGURING POSTGRESQL DATABASE"
   echo "*"
   echo "*"
   echo "***********************************************************************"
+  if [ -f ${PG_PATH}/postgresql.conf.bak ] ; then
+    read -e -i "Y" -p "Overwrite ${PG_PATH}/postgresql.conf.bak with current config [Y/N]? " CONFIRMED
+    if  [[ $CONFIRMED != "Y" && $CONFIRMED != "y" ]] ; then
+      sudo bash -c "mv ${PG_PATH}/postgresql.conf ${PG_PATH}/postgresql.conf.bak"
+    fi
+  fi
 
-  sudo bash -c "mv ${PG_PATH}/postgresql.conf ${PG_PATH}/postgresql.conf.bak"
-  sudo bash -c "cp ${WWW_PATH}/config/postgresql.conf.91example ${PG_PATH}/postgresql.conf"
-  sudo bash -c "echo -e '\n #Churnometer user for application access'  >> ${PG_PATH}/pg_hba.conf"
-  sudo bash -c "echo -e 'local\tall\t\tchurnometer\t\t\t\tpeer' >> ${PG_PATH}/pg_hba.conf"
-  
-#http://www.postgresql.org/docs/8.2/static/kernel-resources.html
-  sudo sysctl -w kernel.shmmax=671088640
-  sudo sysctl -w kernel.shmall=10485760
-  sudo bash -c "echo kernel.shmmax=671088640 | tee -a /etc/sysctl.conf"
-  sudo bash -c "echo kernel.shmall=10485760 | tee -a /etc/sysctl.conf"
- 
+  sudo bash -c "cp ${WWW_PATH}/config/postgresql.conf.95example ${PG_PATH}/postgresql.conf"
+  sudo bash -c "echo -e '\n #remote admin access'  >> ${PG_PATH}/pg_hba.conf"
+  sudo bash -c "echo -e 'hostssl\tall\t\tall\t\t\t0.0.0.0/0\tmd5' >> ${PG_PATH}/pg_hba.conf"
+#https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
+#https://www.postgresql.org/docs/9.5/static/kernel-resources.html
+  sudo sysctl -w kernel.shmmax=1073741824
+  sudo sysctl -w kernel.shmall=262144
+  sudo bash -c "echo kernel.shmmax=1073741824 | tee -a /etc/sysctl.conf"
+  sudo bash -c "echo kernel.shmall=262144 | tee -a /etc/sysctl.conf"
+
   sudo bash -c "echo PGDATESTYLE=european >> /etc/environment" #I'm not sure I want to keep this but it interprets dates as dd/mm/yyyy
   sudo /etc/init.d/postgresql restart
 }
@@ -173,21 +192,21 @@ function db_import
   echo "*"
   echo "*"
   echo "***********************************************************************"
-  
-  if [[ ! ${DB_FILE} ]] ; then 
-    DB_FILE="/home/$CHURN_USER/churnometer_temp/sql/churnometer_base.sql"    
-    if [[ ! -f ${DB_FILE} ]] ; then 
+
+  if [[ ! ${DB_FILE} ]] ; then
+    DB_FILE="/home/$CHURN_USER/churnometer_temp/sql/churnometer_base.sql"
+    if [[ ! -f ${DB_FILE} ]] ; then
       sudo -u $CHURN_USER git clone $DB_REPO /home/$CHURN_USER/churnometer_temp/
     fi
   fi
 
-  sudo -u postgres psql -c "create user churnuser with password '${CHURN_PASS}'"
+  #sudo -u postgres psql -c "create user churnuser with password '${CHURN_PASS}'"
   sudo -u postgres psql -c "create user ${CHURN_USER} with password '${CHURN_PASS}'"
   sudo -u postgres psql -c "drop database churnometer"
   sudo -u postgres psql -c "create database churnometer"
   cd $pwdir # incase a relative path was specified to database
   sudo -u postgres psql churnometer < $DB_FILE
-  sudo -u postgres psql -c "grant churnuser to churnometer"
+  #sudo -u postgres psql -c "grant churnuser to churnometer"
 }
 
 function ruby_config
@@ -197,10 +216,11 @@ function ruby_config
   echo "*"
   echo "*"
   echo "***********************************************************************"
-  
-  cd $WWW_PATH
-  sudo gem install bundler
-  sudo bundle install
+  sudo su - $CHURN_USER <<EOF
+    cd $WWW_PATH
+    rbenv exec gem install bundler
+    rbenv exec bundle install
+EOF
 }
 
 function daemonise
@@ -210,9 +230,9 @@ function daemonise
   echo "*"
   echo "*"
   echo "***********************************************************************"
-  
+
   #sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" $WWW_PATH/install/daemon \
-  #| sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" > ~/daemon.tmp  
+  #| sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" > ~/daemon.tmp
 
   #sudo mv ~/daemon.tmp /etc/init.d/churnometer
   #sudo chmod 755 /etc/init.d/churnometer
@@ -221,25 +241,38 @@ function daemonise
   #sudo update-rc.d churnometer defaults
   #sudo /etc/init.d/churnometer restart
 
-  sudo thin install
-  sudo update-rc.d -f thin defaults
-  
-  sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
-    $WWW_PATH/config/thin_site.yml.example \
-    > ~/thin.yml.tmp
+  #sudo thin install
+  #sudo update-rc.d -f thin defaults
 
-  sudo mv ~/thin.yml.tmp /etc/thin/churnometer_production.yml
-  
+  #sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
+  #  $WWW_PATH/config/thin_site.yml.example \
+  #  > ~/thin.yml.tmp
+
+  #sudo mv ~/thin.yml.tmp /etc/thin/churnometer_production.yml
+
+  sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" $WWW_PATH/config/churnometer.service.example \
+  | sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" > ~/churnometer.service.tmp
+
+  sudo cp ~/churnometer.service.tmp /etc/systemd/system/churnometer.service
+
   sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
     $WWW_PATH/config/nginx_site.conf.example \
-    > ~/nginx.conf.tmp  
-  
-  sudo mv ~/nginx.conf.tmp /etc/nginx/sites-available/churnometer_production.conf
-  sudo ln -s /etc/nginx/sites-available/churnometer_production.conf \
-    /etc/nginx/sites-enabled/churnometer_production.conf
- 
-  sudo -u $CHURN_USER /etc/init.d/thin restart
+    > ~/nginx.conf.tmp
+
+  sudo mv ~/nginx.conf.tmp /etc/nginx/sites-available/churnometer.conf
+  sudo ln -s /etc/nginx/sites-available/churnometer.conf \
+    /etc/nginx/sites-enabled/churnometer.conf
+
+  sudo rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+  sudo systemctl start churnometer
+  sudo systemctl daemon-reload
   sudo /etc/init.d/nginx restart
+
+  # allow churn user to restart churnometer service without password
+  sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" \
+    $WWW_PATH/config/restart_churnometer_sudoer.example \
+    > ~/restart_churnometer_sudoer.tmp
+  sudo mv ~/restart_churnometer_sudoer.tmp /etc/sudoers.d/restart_churnometer
 }
 
 function samba
@@ -249,21 +282,13 @@ function samba
   echo "*"
   echo "*"
   echo "***********************************************************************"
-  
-  sudo apt-get install samba samba-common python-glade2 system-config-samba
-  sudo mv /etc/samba/smb.conf /etc/samba/smb.conf.bak 
-  
-  sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" $WWW_PATH/config/smb.conf.example \
-    | sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
-    > ~/smb.conf.tmp
-    
-  sudo mv ~/smb.conf.tmp /etc/samba/smb.conf 
+
   sudo bash -c "(echo $CHURN_PASS; echo $CHURN_PASS) | smbpasswd -s -a $CHURN_USER"
-  
+
   sudo /etc/init.d/smbd restart
 }
 
-case $1 in 
+case $1 in
   just-software)
     confirm_config
     install
@@ -312,4 +337,11 @@ case $1 in
     exit 1
     ;;
 esac
-
+#  Churnometer - A dashboard for exploring a membership organisation's turn-over/churn
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
+#  lukerohde@gmail.com
+#
+#  Churnometer is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.

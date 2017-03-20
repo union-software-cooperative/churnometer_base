@@ -1,7 +1,5 @@
 upstream churnometer {
-        server 0.0.0.0:3000;
-	server 0.0.0.0:3001;
-	server 0.0.0.0:3002;
+	server unix:///opt/churnometer/pids/puma.sock fail_timeout=0;
 }
 
 server {
