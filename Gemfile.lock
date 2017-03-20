@@ -2,6 +2,7 @@ GEM
   remote: http://rubygems.org/
   specs:
     addressable (2.3.3)
+    backports (3.6.8)
     byebug (9.0.6)
     capybara (1.1.2)
       mime-types (>= 1.16)
@@ -40,8 +41,8 @@ GEM
       byebug (~> 9.0)
       pry (~> 0.10)
     puma (3.8.2)
-    rack (1.4.1)
-    rack-protection (1.2.0)
+    rack (1.6.5)
+    rack-protection (1.5.3)
       rack
     rack-test (0.6.1)
       rack (>= 1.0)
@@ -63,14 +64,21 @@ GEM
       websocket (~> 1.0.4)
     shotgun (0.9)
       rack (>= 1.0)
-    sinatra (1.3.3)
-      rack (~> 1.3, >= 1.3.6)
-      rack-protection (~> 1.2)
-      tilt (~> 1.3, >= 1.3.3)
+    sinatra (1.4.8)
+      rack (~> 1.5)
+      rack-protection (~> 1.4)
+      tilt (>= 1.3, < 3)
+    sinatra-contrib (1.4.7)
+      backports (>= 2.0)
+      multi_json
+      rack-protection
+      rack-test
+      sinatra (~> 1.4.0)
+      tilt (>= 1.3, < 3)
     slop (3.6.0)
     spreadsheet (0.7.3)
       ruby-ole (>= 1.0)
-    tilt (1.3.3)
+    tilt (2.0.6)
     treetop (1.4.10)
       polyglot
       polyglot (>= 0.3.1)
@@ -95,7 +103,8 @@ DEPENDENCIES
   ruby-ole
   sass
   shotgun
-  sinatra
+  sinatra (~> 1.4.0)
+  sinatra-contrib
   spreadsheet
   tilt
 

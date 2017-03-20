@@ -18,6 +18,8 @@
 require 'pry'
 require 'rubygems'
 require 'sinatra/base'
+require 'sinatra/reloader'
+require 'sinatra/json'
 require 'bundler/setup'
 require 'pg'
 require 'sass'
@@ -37,6 +39,9 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 class Churnobyl < Sinatra::Base
   include Authorization
 
+  configure :development do
+    register Sinatra::Reloader
+  end
 
   configure :production, :development do
     $logger = Logger.new('log/churnometer.log')
@@ -210,7 +215,7 @@ class Churnobyl < Sinatra::Base
     if !table.nil?
       case params['format']
       when 'csv' then send_file(table.to_csv, :disposition => 'attachment', :filename => File.basename(path))
-      when 'json' then response.write(table.to_json)
+      when 'json' then json(table.raw_data)
       when 'xls', nil then send_file(table.to_excel, :disposition => 'attachment', :filename => File.basename(path))
       else raise("Export failed. Invalid format!")
       end

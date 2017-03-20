@@ -231,11 +231,12 @@ class ChurnPresenter_Table
     @data.each { |row| yield row }
   end
 
-  def to_json
-    # array of objects, headers are keys
-    keys = @columns.map { |c| @column_id_to_header[c] || c }
+  def raw_data
+    @data
+  end
 
-    @data.map(&keys.method(:zip)).map(&:to_h)
+  def to_json
+    @data.to_json
   end
 
   def to_csv
