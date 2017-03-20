@@ -1,6 +1,7 @@
 source "http://rubygems.org"
 
-gem 'sinatra'
+gem 'sinatra', '~> 1.4.0'
+gem 'sinatra-contrib'
 gem 'pg'
 gem 'sass'
 gem 'spreadsheet'
@@ -16,7 +17,7 @@ gem 'nokogiri'
 
 gem 'pry-byebug'
 
-group :test do 
+group :test do
   gem 'rspec'
   gem 'capybara'
   gem 'launchy'
