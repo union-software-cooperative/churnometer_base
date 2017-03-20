@@ -29,6 +29,7 @@ require 'money'
 require "addressable/uri"
 require 'pony'
 require 'monitor' # used for managing potentially recursive mutexes on Class singletons
+require "sinatra/streaming"
 
 Dir["./lib/*.rb"].each { |f| require f }
 Dir["./lib/services/*.rb"].each { |f| require f }
@@ -300,9 +301,31 @@ class Churnobyl < Sinatra::Base
     @model.restart
   end
 
+  helpers Sinatra::Streaming
+
+  get "/regenerate_cache", provides: 'text/event-stream'  do
+    admin!
+
+    #TODO make this stream
+    stream do |out|
+      out.write "Cache regeneration started\n"
+      db = ChurnDBDiskCache.new(app())
+      Thread.new do
+        db.regenerate_cache(files_only: true, since: '2017-01-01')
+      end
+
+      begin
+        out.write ChurnDBDiskCache.regeneration_status + "\n"
+        out.flush
+        sleep 1
+      end while ChurnDBDiskCache.regeneration_status.start_with?('in progress')
+      out.write "Cache regeneration started\n"
+      out.flush
+    end
+  end
+
   post "/import" do
     admin!
-    puts 'HERE'
     session[:flash] = nil
     @model = ip()
 

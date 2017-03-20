@@ -564,7 +564,49 @@ class ChurnDBDiskCache < ChurnDB
      end
 
      result
-   end
+  end
+
+
+  # TODO Consider putting cache regeneration in its own class
+  def self.regeneration_status
+    @@regeneration_status
+  end
+
+  def self.regeneration_status=(status)
+    puts "cache regeneration #{status}"
+    @@regeneration_status = status
+  end
+
+  @@regeneration_status = "inactive"
+
+  # After import the cache can be invalid, and typically we delete the cache
+  # Instead lets recalcuate it.
+  def regenerate_cache(options = {})
+    working_cache = ChurnDBDiskCache.cache.clone
+
+    start_time = Time.now
+
+    if options[:files_only]
+      working_cache.delete_if { |sql, filename| !File.exist?(filename) }
+    end
+
+    if options[:since]
+      working_cache.delete_if { |sql, filename| File.mtime(filename) < Time.parse(options[:since]) }
+    end
+
+    i = 0
+    working_cache.each do |sql, filename|
+      ChurnDBDiskCache.regeneration_status = "in progress - #{i} of #{working_cache.length} calculations complete"
+      File.delete(filename)
+      self.ex(sql)
+      i+=1
+    end
+
+    mins = ((Time.now - start_time)/60).round(1)
+    ChurnDBDiskCache.regeneration_status = "inactive - finished #{working_cache.length} calculations in #{mins} minutes"
+  rescue StandardError => err
+    ChurnDBDiskCache.regeneration_status = "inactive - an error occurred: #{err.message}"
+  end
 
 private
 

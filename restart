@@ -1,3 +1,4 @@
 #!/bin/bash
 sudo systemctl restart churnometer
 sudo systemctl status churnometer
+tailf log/puma.stdout.log
