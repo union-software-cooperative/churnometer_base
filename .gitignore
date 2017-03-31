@@ -17,3 +17,4 @@ backup/*
 pids/*
 uploads/reimport
 uploads/batch_reimport
+config/config.yaml
