@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -34,9 +34,9 @@ class QueryDetailFriendly < QueryDetail
     friendly_generators = display_dimensions.reject{ |d| d.id == 'userid' }.collect do |dimension|
       DetailFriendlyDimensionSQLGenerator.new(dimension, @churn_db)
     end
-    
+
 		sql = <<-EOS
-with detail as  
+with detail as
 (
 	#{super}
 )
@@ -46,27 +46,31 @@ with detail as
 	c.memberid
 	, d2.displaytext AS currentstatus
 EOS
-		
+
 		sql << "\n, " + friendly_generators.collect{ |g| g.wherearetheynow_select_clause }.join("\n, ")
 # dbeswick: find out why these fields were not coalesced with new<column> as the others were in the
 # original sql.
 #	, d16.displaytext AS currentcompany
 #	, d4.displaytext AS currentbranch
 #	, d6.displaytext AS currentindustry
-	
+
 		sql << <<-EOS
 
-	from 
-		memberfact c
-		LEFT JOIN displaytext d2 ON d2.attribute::text = 'status'::text AND c.newstatus::character varying(20)::text = d2.id::text
-		LEFT JOIN displaytext d17 ON d17.attribute::text = 'memberid'::text AND c.memberid::character varying(20)::text = d17.id::text
+	from
+  -- change query to use membersourceprev rather than most recent change in memberfact
+  -- memberfact c
+  -- LEFT JOIN displaytext d2 ON d2.attribute::text = 'status'::text AND c.newstatus::character varying(20)::text = d2.id::text
+  membersourceprev c
+  LEFT JOIN displaytext d2 ON d2.attribute::text = 'status'::text AND LOWER(c.status::character varying(20)::text) = d2.id::text
+  LEFT JOIN displaytext d17 ON d17.attribute::text = 'memberid'::text AND LOWER(c.memberid::character varying(20)::text) = d17.id::text
 EOS
 
 		sql << "\n" + friendly_generators.collect{ |g| g.wherearetheynow_join_displaytext_clause }.join("\n")
 
 		sql << <<-EOS
-	where 
-		c.changeid in (select max(changeid) from memberfact m where m.memberid in (select detail.memberid from detail) group by m.memberid)
+	where
+		--c.changeid in (select max(changeid) from memberfact m where m.memberid in (select detail.memberid from detail) group by m.memberid)
+    c.memberid in (select memberid from detail)
 )
  SELECT
 	d.memberid
@@ -98,7 +102,7 @@ EOS
 		sql << "\n, " + friendly_generators.collect{ |g| g.final_select_clause }.join("\n, ")
 
 		sql << <<-EOS
--- dbeswick: find out why these dimensions were not coalesced with new<column> as the others were in the 
+-- dbeswick: find out why these dimensions were not coalesced with new<column> as the others were in the
 -- original sql.
 --	, d15.displaytext AS oldcompany
 --	, d16.displaytext AS newcompany
@@ -109,7 +113,7 @@ EOS
 	--, m.contactdetail::text
 	--, m.followupnotes::text
 	--, m.paymenttypeid::text
-	
+
    FROM detail d
    JOIN memberfact c ON d.changeid = c.changeid
    LEFT JOIN wherearetheynow n on c.memberid = n.memberid
@@ -123,9 +127,9 @@ EOS
 		sql << <<-EOS
    LEFT JOIN membersourceprev  m on c.memberid = m.memberid
 
-group by 
+group by
 	d.row_header
-	, c.changedate::date 
+	, c.changedate::date
 	, d.memberid
 	, d1.displaytext
 	, d2.displaytext

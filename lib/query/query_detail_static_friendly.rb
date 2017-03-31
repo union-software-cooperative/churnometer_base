@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -31,10 +31,10 @@ class QueryDetailStaticFriendly < QueryDetailStatic
   end
 
   def query_string
-    friendly_generators = display_dimensions.collect do |dimension|
+    friendly_generators = display_dimensions.reject{ |d| d.id == 'userid' }.collect do |dimension|
       DetailFriendlyDimensionSQLGenerator.new(dimension, @churn_db)
     end
-    
+
 		sql = <<-EOS
 with detail as
 (
@@ -55,17 +55,21 @@ EOS
 #	, d6.displaytext AS currentindustry
 
     sql << <<-EOS
-	from 
-		memberfact c
-		LEFT JOIN displaytext d2 ON d2.attribute::text = 'status'::text AND c.newstatus::character varying(20)::text = d2.id::text
-		LEFT JOIN displaytext d17 ON d17.attribute::text = 'memberid'::text AND c.memberid::character varying(20)::text = d17.id::text
+	from
+		-- change query to use membersourceprev rather than most recent change in memberfact
+    -- memberfact c
+    -- LEFT JOIN displaytext d2 ON d2.attribute::text = 'status'::text AND c.newstatus::character varying(20)::text = d2.id::text
+    membersourceprev c
+    LEFT JOIN displaytext d2 ON d2.attribute::text = 'status'::text AND LOWER(c.status::character varying(20)::text) = d2.id::text
+		LEFT JOIN displaytext d17 ON d17.attribute::text = 'memberid'::text AND LOWER(c.memberid::character varying(20)::text) = d17.id::text
 EOS
 
 		sql << "\n" + friendly_generators.collect{ |g| g.wherearetheynow_join_displaytext_clause }.join("\n")
 
     sql << <<-EOS
-	where 
-		c.changeid in (select max(changeid) from memberfact m where m.memberid in (select detail.memberid from detail) group by m.memberid)
+	where
+		--c.changeid in (select max(changeid) from memberfact m where m.memberid in (select detail.memberid from detail) group by m.memberid)
+    c.memberid in (select memberid from detail)
 )
  SELECT
 	d.memberid
@@ -84,7 +88,7 @@ EOS
 
 =begin
 
--- dbeswick: find out why these dimensions were not coalesced with new<column> as the others were in the 
+-- dbeswick: find out why these dimensions were not coalesced with new<column> as the others were in the
 -- original sql.
 --	, d15.displaytext AS oldcompany
 --	, d16.displaytext AS newcompany
@@ -108,7 +112,7 @@ EOS
 
     # order by the detail query's groupby dimension column (row header), then the member name and id.
     sql << <<-EOS
-	 order by 
+	 order by
  		row_header
  		, ((d17.displaytext || ' ('::text) || c.memberid::text) || ')'::text
 		EOS
@@ -116,4 +120,3 @@ EOS
     sql
   end
 end
-

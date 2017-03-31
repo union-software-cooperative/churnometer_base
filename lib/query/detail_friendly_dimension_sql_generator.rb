@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -42,12 +42,21 @@ class DetailFriendlyDimensionSQLGenerator
     'current' + @dimension.column_base_name
   end
 
+  # Change query to use membersourceprev rather than the most recent change in memberfact
+  # def wherearetheynow_select_clause
+  #   "coalesce(#{@db.db.quote_db(table_alias())}.displaytext, c.#{@db.db.quote_db(new_column_name())}::varchar(50)) as #{@db.db.quote_db(wherearetheynow_select_output_column())}"
+  # end
+  #
+  # def wherearetheynow_join_displaytext_clause
+  #   "LEFT JOIN displaytext #{@db.db.quote_db(table_alias())} ON #{@db.db.quote_db(table_alias())}.attribute::text = #{@db.db.quote(@dimension.column_base_name)}::text AND c.#{@db.db.quote_db(new_column_name())}::character varying(20)::text = #{@db.db.quote_db(table_alias())}.id::text"
+  # end
+
   def wherearetheynow_select_clause
-    "coalesce(#{@db.db.quote_db(table_alias())}.displaytext, c.#{@db.db.quote_db(new_column_name())}::varchar(50)) as #{@db.db.quote_db(wherearetheynow_select_output_column())}"
+    "coalesce(#{@db.db.quote_db(table_alias())}.displaytext, c.#{@db.db.quote_db(@dimension.column_base_name)}::varchar(50)) as #{@db.db.quote_db(wherearetheynow_select_output_column())}"
   end
 
   def wherearetheynow_join_displaytext_clause
-    "LEFT JOIN displaytext #{@db.db.quote_db(table_alias())} ON #{@db.db.quote_db(table_alias())}.attribute::text = #{@db.db.quote(@dimension.column_base_name)}::text AND c.#{@db.db.quote_db(new_column_name())}::character varying(20)::text = #{@db.db.quote_db(table_alias())}.id::text"
+    "LEFT JOIN displaytext #{@db.db.quote_db(table_alias())} ON #{@db.db.quote_db(table_alias())}.attribute::text = #{@db.db.quote(@dimension.column_base_name)}::text AND LOWER(c.#{@db.db.quote_db(@dimension.column_base_name)}::character varying(20)::text) = #{@db.db.quote_db(table_alias())}.id::text"
   end
 
   def final_select_clause

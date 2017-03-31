@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -43,7 +43,7 @@ class QuerySummary < QueryFilter
     user_selections_filter = filter.include('status')
 
     end_date = @end_date + 1
-    
+
     paying_db = db.quote(@app.member_paying_status_code)
     a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
     stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
@@ -53,10 +53,10 @@ sql = <<-EOS
 	with nonstatusselections as
 	(
 		-- finds all changes matching user criteria
-		select 
-			* 
+		select
+			*
 		from
-			#{@source} 
+			#{@source}
 		where
 			(
 			  changedate < #{db.sql_date(end_date)} -- Everything after enddate can be ignored.
@@ -65,7 +65,7 @@ sql = <<-EOS
 			)
 			#{sql_for_filter_terms(non_status_filter, true)}
 	)
-	, userselections as 
+	, userselections as
 	(
 		select
 			*
@@ -90,8 +90,8 @@ sql = <<-EOS
 			, case when transfersin.changeid is not null then 1 else 0 end set_transfer
 			, case when transfersin.changeid is not null then false else true end internaltransfer
 			, case when statuschanges.changeid is not null then 1 else 0 end statuschange
-			, case when #{header1 == 'userid' ? '' : "u1.#{header1}delta <> 0" } then 1 else 0 end  group_transfer
-		from 
+			, case when #{header1 == 'userid' ? '1=0' : "u1.#{header1}delta <> 0" } then 1 else 0 end  group_transfer
+		from
 			userselections u1
 			left join transfersin on u1.changeid = transfersin.changeid --and u1.net = transfersin.net
 			left join statuschanges on u1.changeid = statuschanges.changeid --and u1.net = statuschanges.net
@@ -106,17 +106,17 @@ sql = <<-EOS
 		-- removes changes that make no difference to the results or represent gains and losses that cancel out
 		select
 			*, case when u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) then false else true end internalTransfer
-		from 
+		from
 			userselections u1
 		where
-			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection 
-			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain<>0 or stoppedloss<>0 or waivergain <> 0 or waiverloss <> 0) -- both sides (if in user selection) if one side is an interesting status and there was a status change 
+			u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection
+			or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain<>0 or stoppedloss<>0 or waivergain <> 0 or waiverloss <> 0) -- both sides (if in user selection) if one side is an interesting status and there was a status change
  			#{header1 == 'userid' ? '' : "or u1.#{header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items" }
  	)
  	*/
 	, trans as
 	(
-		select 
+		select
 			case when coalesce(#{trans_header1}::varchar(200),'') = '' then 'unassigned' else #{trans_header1}::varchar(200) end row_header1
 		, sum(case when amount::numeric > 0.0 then amount::numeric else 0.0 end) posted
 		, sum(case when amount::numeric < 0.0 then amount::numeric else 0.0 end) undone
@@ -139,7 +139,7 @@ sql = <<-EOS
 	, counts as
 	(
 		-- sum changes, if status doesnt change, then the change is a transfer
-		select 
+		select
 			case when coalesce(#{header1}::varchar(200),'') = '' then 'unassigned' else #{header1}::varchar(200) end row_header1
 			--, date_trunc('week', changedate)::date row_header2
 			, sum(case when changedate < #{db.sql_date(@start_date)} then net else 0 end) as start_count
@@ -151,7 +151,7 @@ sql = <<-EOS
       , sum(case when changedate < #{db.sql_date(@start_date)} then membernet else 0 end) as member_start_count
       , sum(case when changedate < #{db.sql_date(@start_date)} then greennet else 0 end) as green_start_count
       , sum(case when changedate < #{db.sql_date(@start_date)} then orangenet else 0 end) as orange_start_count
-      
+
       /* SHARED BETWEEEN SUMMARY AND RUNNING SUMMARY - TODO REFACTOR */
 	    , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then a1pgain else 0 end) a1p_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then a1ploss else 0 end) a1p_loss
@@ -181,7 +181,7 @@ sql = <<-EOS
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then orangeloss_nonmember else 0 end) orange_loss_nonmember
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then orangegain_member else 0 end) orange_gain_member
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then orangeloss_member else 0 end) orange_loss_member
-			
+
       , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{a1p_db} then othergain else 0 end) a1p_other_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{a1p_db} then otherloss else 0 end) a1p_other_loss
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = #{paying_db} then othergain else 0 end) paying_other_gain
@@ -198,7 +198,7 @@ sql = <<-EOS
       , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (set_transfer = 1 or group_transfer = 1) then othergreenloss else 0 end) green_other_loss
 	    , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (set_transfer = 1 or group_transfer = 1) then otherorangegain else 0 end) orange_other_gain
       , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (set_transfer = 1 or group_transfer = 1) then otherorangeloss else 0 end) orange_other_loss
-	    
+
 			, sum(a1pnet) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
 			, sum(payingnet) as paying_end_count
 			, sum(stoppednet) as stopped_end_count
@@ -208,7 +208,7 @@ sql = <<-EOS
       , sum(greennet) as green_end_count
       , sum(orangenet) as orange_end_count
       , sum(net) as end_count
-      
+
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then a1pgain+a1ploss else 0 end) a1p_net
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then payinggain+payingloss else 0 end) paying_net
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedgain+stoppedloss else 0 end) stopped_net
@@ -218,24 +218,24 @@ sql = <<-EOS
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then greengain + greenloss else 0 end) green_net
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then orangegain + orangeloss else 0 end) orange_net
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then coalesce(c.net,0) else 0 end) net
-      
+
       -- Odd non standard columns
       , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then a1pgain else 0 end) a1p_unchanged_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') = '' then a1pgain else 0 end) a1p_newjoin
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') <>'' then a1pgain else 0 end) a1p_rejoin			
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') <>'' then a1pgain else 0 end) a1p_rejoin
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then a1ploss else 0 end) a1p_to_paying
-			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then a1ploss else 0 end) a1p_to_other			
+			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then a1ploss else 0 end) a1p_to_other
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end) stopped_to_paying
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end) stopped_to_other
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
 			, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
 		/* EO SHARED BETWEEEN SUMMARY AND RUNNING SUMMARY - TODO REFACTOR */
-	    
-		from 
+
+		from
 			nonegations c
-		group by 
-			case when coalesce(#{header1}::varchar(200),'') = '' then 'unassigned' else #{header1}::varchar(200) end 
+		group by
+			case when coalesce(#{header1}::varchar(200),'') = '' then 'unassigned' else #{header1}::varchar(200) end
 	)
 	, withtrans as
 	(
@@ -243,8 +243,8 @@ sql = <<-EOS
 			c.*
 EOS
 
-sql << 
-  if @with_trans 
+sql <<
+  if @with_trans
 <<-EOS
 			, coalesce(t.posted,0)::numeric(12,2) posted
 			, coalesce(t.undone,0)::numeric(12,2) unposted
@@ -257,7 +257,7 @@ EOS
 <<-EOS
 		, 0::numeric posted
 			, 0::numeric unposted
-			, 0::numeric income_net 
+			, 0::numeric income_net
 			, 0::int contributors
 			, 0::int transactions
 			, 0::numeric annualizedAvgContribution
@@ -287,7 +287,7 @@ sql << <<-EOS
 			, 0::int member_start_count
 			, 0::int green_start_count
 			, 0::int orange_start_count
-			
+
       , 0 a1p_gain
       , 0 a1p_loss
       , 0 paying_gain
@@ -316,7 +316,7 @@ sql << <<-EOS
 			, 0 orange_loss_nonmember
 			, 0 orange_gain_member
 			, 0 orange_loss_member
-			
+
 			, 0 a1p_other_gain
 			, 0 a1p_other_loss
 			, 0 paying_other_gain
@@ -333,7 +333,7 @@ sql << <<-EOS
 			, 0 green_other_loss
       , 0 orange_other_gain
 			, 0 orange_other_loss
-      			
+
 			, 0 a1p_end_count
 			, 0 paying_end_count
 			, 0 stopped_end_count
@@ -343,7 +343,7 @@ sql << <<-EOS
       , 0 green_end_count
       , 0 orange_end_count
       , 0 end_count
-      
+
       , 0 a1p_net
 			, 0 paying_net
 			, 0 stopped_net
@@ -353,7 +353,7 @@ sql << <<-EOS
 			, 0 green_net
 			, 0 orange_net
 			, 0 net
-			
+
       -- odd columns
       , 0 a1p_unchanged_gain
 			, 0 a1p_newjoin
@@ -365,8 +365,8 @@ sql << <<-EOS
       , 0 stopped_unchanged_gain
       , 0 external_gain
       , 0 external_loss
-      
-      
+
+
       , coalesce(t.posted,0)::numeric(12,2) posted
 			, coalesce(t.undone,0)::numeric(12,2) unposted
 			, income_net
@@ -386,8 +386,8 @@ EOS
 
 	sql << sql_final_select_outputs()
 
-sql << <<-EOS		
-	from 
+sql << <<-EOS
+	from
 		withtrans c
 		left join displaytext d1 on d1.attribute = '#{header1}' and d1.id = c.row_header1
 EOS
@@ -420,13 +420,13 @@ EOS
 protected
 	def sql_final_select_outputs
     <<-EOS
-	select 
+	select
 		coalesce(d1.displaytext, c.row_header1)::varchar(200) row_header1 -- c.row_header
 		--, c.row_header2::varchar(200) row_header2
 		, c.row_header1::varchar(200) row_header1_id
 		--, ''::varchar(20) row_header2_id
 		, c.start_count::int
-		
+
 		, c.a1p_start_count::int
 		, c.a1p_gain::int as a1p_real_gain
 		, c.a1p_unchanged_gain::int
@@ -439,7 +439,7 @@ protected
 		, c.a1p_other_gain::int
 		, c.a1p_other_loss::int
 		, c.a1p_end_count::int
-		
+
 		, c.paying_start_count::int
 		, c.paying_gain::int as paying_real_gain
 		, c.paying_loss::int as paying_real_loss
@@ -458,7 +458,7 @@ protected
 		, c.stopped_other_gain::int
 		, c.stopped_other_loss::int
 		, c.stopped_end_count::int
-		
+
 		, c.waiver_start_count::int
 		, c.waiver_gain::int as waiver_real_gain
 		, c.waiver_loss::int as waiver_real_loss
@@ -470,7 +470,7 @@ protected
 		, c.waiver_other_gain::int
 		, c.waiver_other_loss::int
 		, c.waiver_end_count::int
-		
+
 		, c.member_start_count::int
 		, c.member_gain::int as member_real_gain
 		, c.member_loss::int as member_real_loss
@@ -478,7 +478,7 @@ protected
 		, c.member_other_gain::int
 		, c.member_other_loss::int
 		, c.member_end_count::int
-		
+
 		, c.green_start_count::int
 		, c.green_gain::int as green_real_gain
 		, c.green_gain_nonmember::int as green_real_gain_nonmember
@@ -490,7 +490,7 @@ protected
 		, c.green_other_gain::int
 		, c.green_other_loss::int
 		, c.green_end_count::int
-		
+
 		, c.orange_start_count::int
 		, c.orange_gain::int as orange_real_gain
 		, c.orange_gain_nonmember::int as orange_real_gain_nonmember
@@ -502,7 +502,7 @@ protected
 		, c.orange_other_gain::int
 		, c.orange_other_loss::int
 		, c.orange_end_count::int
-		
+
 -- dbeswick: other_other_gain/loss is returned as other_gain/loss in the SQL function.
 		, c.other_start_count::int
 		, c.other_gain::int other_real_gain
@@ -511,7 +511,7 @@ protected
 		, c.other_other_gain::int other_gain
 		, c.other_other_loss::int other_loss
 		, c.other_end_count::int
-		
+
 		, c.external_gain::int
 		, c.external_loss::int
 		, c.net::int
@@ -534,7 +534,7 @@ protected
 		, c.income_net
 		, c.contributors::int
 		, c.transactions::int
--- dbeswick: note spelling inconsistency in below column caused by differing name in original SQL 
+-- dbeswick: note spelling inconsistency in below column caused by differing name in original SQL
 -- function definition as opposed to column name.
 		, c.annualizedavgcontribution annualisedavgcontribution
 EOS
