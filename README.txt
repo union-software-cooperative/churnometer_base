@@ -17,6 +17,10 @@
 
 This file is located in the root directory of the source code - /README.txt 
 
+INSTALLATION - ON UBUNTU 16.04
+
+We recently updated the install script below for 16.04. We switched to using postgresql 9.6 part way and haven't updated installer.  We haven't tested it end to end on a clean 16.04 box.
+
 INSTALLATION - ON UBUNTU 12.04 & 12.10
 
 We've been developing on osx and ubuntu, and only written installation script for Ubuntu server 12.04 which also seems to work on 12.10.  
