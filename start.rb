@@ -213,7 +213,7 @@ class Churnobyl < Sinatra::Base
       case params['format']
       when 'csv' then send_file(table.to_csv, :disposition => 'attachment', :filename => File.basename(path))
       when 'json' then json(table.raw_data)
-      when 'xls', nil then send_file(table.to_excel, :disposition => 'attachment', :filename => File.basename(path))
+      when 'xls', nil then send_file(table.to_excel, :disposition => 'attachment', :filename => File.basename(table.to_excel))
       else raise("Export failed. Invalid format!")
       end
     else
