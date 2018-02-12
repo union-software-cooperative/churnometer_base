@@ -56,7 +56,10 @@ class ChurnPresenter_Target
      @request.data.each { | row | @paying_real_gain += row['paying_real_gain'].to_i } 
      
      @a1p_to_paying = 0 
-     @request.data.each { | row | @a1p_to_paying += row['a1p_to_paying'].to_i } 
+     @request.data.each { | row | @a1p_to_paying += row['a1p_to_paying'].to_i }
+
+     @paying_net = 0
+     @request.data.each { | row | @paying_net += row['paying_real_net'].to_i } 
      
      #cards_in
      @cards_in = 0
@@ -77,7 +80,7 @@ class ChurnPresenter_Target
      @annual_turn_over = (Float(@real_losses) / Float(@days_duration) * 365.25) / (Float(@paying_start_total + @paying_end_total) / 2.0)
      
      #turn over would be different at 10% growth
-     @growth = Float(@paying_start_total) * 0.1 / 365.25 * Float(@days_duration) # very crude growth calculation - But I don't think CAGR makes sense, the formula would be # growth = (((10% + 1) ^ (duration/365.25) * start) - start) 
+     @growth = Float(@paying_start_total) * growth_target / 365.25 * Float(@days_duration) # very crude growth calculation - But I don't think CAGR makes sense, the formula would be # growth = (((10% + 1) ^ (duration/365.25) * start) - start) 
      @real_losses_with_growth = @turn_over * (( Float(@paying_start_total + @paying_start_total + @growth)) / 2.0)  
      
      #cards_hold
@@ -110,6 +113,10 @@ class ChurnPresenter_Target
     @period_desc
   end
   
+  def growth_target
+    0.06 #GrowthTarget # see lib/settings.rb 
+  end
+ 
   def growth
     end_count = (@paying_start_total - @stopped + @paying_real_gain).to_f
     years = @days_duration.to_f / 365.25
@@ -122,6 +129,14 @@ class ChurnPresenter_Target
     
     g = 0 if g.to_s == "NaN"
     g
+  end
+
+  def get_paying_net
+    @paying_net
+  end
+
+  def get_real_losses
+    @real_losses
   end
 
   def get_cards_in_growth_target
@@ -150,7 +165,7 @@ class ChurnPresenter_Target
           CARDS_NEEDED_TO_GROW_PER_#{@period_desc.upcase} (#{@cards_grow_per_period.round(1)}) = cards_need_to_grow (#{@cards_grow_display}) / days_duration (#{@days_duration.round(0)}) * #{@period} 
           cards_needed_to_grow (#{@cards_grow_display}) = (losses_from_larger_patch (#{@real_losses_with_growth.round(0)}) + desired_growth_for_period (#{@growth.round(0)})) / rough_conversion_rate (#{(@conversion_rate * 100).round(1)}%)
           losses_from_larger_patch (#{@real_losses_with_growth.round(0) }) = turn_over (#{(@turn_over * 100).round(1)}%) * (( start_count (#{@paying_start_total.round(0)}) + start_count (#{@paying_start_total.round(0)}) + desired_growth_for_period (#{@growth.round(0)}) ) / 2)
-          desired_growth_for_period (#{@growth.round(0)}) = start_count (#{@paying_start_total.round(0)}) * 10% / 365.25 * days_duration (#{@days_duration.round(0)})
+          desired_growth_for_period (#{@growth.round(0)}) = start_count (#{@paying_start_total.round(0)}) * #{growth_target*100}% / 365.25 * days_duration (#{@days_duration.round(0)})
           turn_over (#{(@turn_over * 100).round(1)}%) = losses (#{@real_losses.round(0)}) / ((start_count (#{@paying_start_total.round(0)}) + end_count (#{@paying_end_total.round(0)})) / 2 ) - http://en.wikipedia.org/wiki/Turnover_(employment)
           
           annual_turn_over = #{(@annual_turn_over * 100).round(1)}% 

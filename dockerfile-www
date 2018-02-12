@@ -1,0 +1,13 @@
+FROM ruby:2.3.3
+
+RUN apt-get update
+RUN apt-get -y install postgresql-client libpq-dev git build-essential sendmail libxml2-dev libxslt-dev zip libreadline-dev
+
+ENV APP /app
+RUN mkdir $APP
+WORKDIR $APP
+COPY . $APP
+RUN mkdir -p $APP/tmp
+RUN mkdir -p $APP/log
+RUN mkdir -p $APP/backup
+RUN mkdir -p $APP/pids

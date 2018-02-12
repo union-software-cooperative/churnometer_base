@@ -1,0 +1,6 @@
+#!/bin/sh
+echo "Bundling gems"
+bundle check || bundle install --jobs 4 --retry 3
+
+echo "Starting shotgun"
+bundle exec shotgun -p 9292 -o 0.0.0.0

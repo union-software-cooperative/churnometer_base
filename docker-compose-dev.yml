@@ -1,0 +1,37 @@
+version: "2"
+services:
+  db:
+    environment:
+      - PGDATA=/pgdata
+    volumes_from:
+      - pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../churnometer130218.sql.gz:/seed.sql.gz
+  www:
+    environment:
+      - BUNDLE_PATH=/bundle
+      - GEM_HOME=/bundle
+    volumes_from:
+      - bundle_ubuntu_2.3.3
+    volumes:
+      - churnometer-www-sync:/app:nocopy # sync source into app, need to run docker-sync
+      - ../churnometer130218.sql.gz:/app/config/seed.sql.gz
+    links:
+      - db
+    ports:
+      - "9292:9292"
+    command: ./docker-command-dev
+  bundle_ubuntu_2.3.3:
+    image: busybox
+    volumes:
+      - /bundle
+  pgdata:
+    image: busybox
+    volumes:
+      - /pgdata
+# that the important thing
+volumes:
+  churnometer-www-sync:
+    external: true

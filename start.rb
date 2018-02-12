@@ -221,6 +221,15 @@ class Churnobyl < Sinatra::Base
     end
   end
 
+  get '/export_target' do
+    protected!
+    presenter = ChurnPresenter.new(app(), cr)
+    target = presenter.target
+
+    result = { growth: target.growth, periods: target.periods, period_desc: target.period_desc, cards_in: target.get_cards_in, cards_in_target: target.get_cards_in_target, cards_in_growth_target: target.get_cards_in_growth_target, real_loss: target.get_real_losses, paying_net: target.get_paying_net }
+    json(result)
+  end
+
   get '/export_all' do
     protected!
 

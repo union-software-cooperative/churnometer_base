@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #  Churnometer - A dashboard for exploring a membership organisation's turn-over/churn
 #  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
@@ -15,17 +17,18 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
 
-#!/bin/bash
+
 
 DB_FILE="$2"
 REPO="git@github.com:lukerohde/churnometer_base.git"
 PRODUCTION_BRANCH="master"
 DB_REPO="git@github.com:lukerohde/churnometer_data.git"
 
-PG_PATH="/etc/postgresql/9.5/main"
-CHURN_USER="churnometer"
-CHURN_PASS="goatGO@T"
-WWW_PATH="/opt/churnometer"
+WWW_PATH="${APP_PATH-/opt/churnometer}"
+CHURN_USER="${CHURN_USER-churnometer}"
+CHURN_PASS="${CHURN_PASS-password}"
+PG_VERSION="${PG_VERSION-9.6}"
+PG_PATH="/etc/postgresql/${PG_VERSION}/main"
 
 pwdir=$(pwd)
 
@@ -40,7 +43,7 @@ function confirm_config
     echo "Database and application user: $CHURN_USER"
     echo "Database and application user's password: $CHURN_PASS"
     echo "Installation directory for application source: $WWW_PATH"
-    echo "Directory of Postgres 9.5 configuration (will be overwritten!!!): $PG_PATH"
+    echo "Directory of Postgres ${PG_VERSION} configuration (will be overwritten!!!): $PG_PATH"
     echo "Source download repository: $REPO"
     echo "Branch in source download repository: $PRODUCTION_BRANCH"
     if [[ ! ${DB_FILE} ]] ; then
@@ -76,20 +79,6 @@ function install
   sudo apt-get update
 
   sudo apt-get -y install postgresql libpq-dev git build-essential sendmail libxml2-dev libxslt-dev nginx zip libreadline-dev
-
-  sudo su - $CHURN_USER <<EOF
-    git clone https://github.com/rbenv/rbenv.git ~/.rbenv
-    git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
-    echo 'PATH="/home/$CHURN_USER/.rbenv/bin:/home/$CHURN_USER/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.profile
-    echo 'export PATH="/home/$CHURN_USER/.rbenv/bin:/home/$CHURN_USER/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
-    echo 'eval "\$(rbenv init -)"' >> ~/.bashrc
-    echo '[[ -r ~/.bashrc ]] && . ~/.bashrc' >> .bash_profile
-EOF
-
-
-  sudo su - $CHURN_USER -c 'rbenv install 2.3.3'
-  sudo su - $CHURN_USER -c 'rbenv global 2.3.3'
-  sudo su - $CHURN_USER -c 'rbenv exec ruby -v'
 }
 
 function churn_user
@@ -157,6 +146,7 @@ function source_config
   sudo git config --system user.name "$USER"
 }
 
+
 function db_config
 {
   echo "***********************************************************************"
@@ -171,11 +161,11 @@ function db_config
     fi
   fi
 
-  sudo bash -c "cp ${WWW_PATH}/config/postgresql.conf.95example ${PG_PATH}/postgresql.conf"
+  sudo bash -c "cp ${WWW_PATH}/config/postgresql.conf.${PG_VERSION}.example ${PG_PATH}/postgresql.conf"
   sudo bash -c "echo -e '\n #remote admin access'  >> ${PG_PATH}/pg_hba.conf"
   sudo bash -c "echo -e 'hostssl\tall\t\tall\t\t\t0.0.0.0/0\tmd5' >> ${PG_PATH}/pg_hba.conf"
 #https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
-#https://www.postgresql.org/docs/9.5/static/kernel-resources.html
+#https://www.postgresql.org/docs/9.6/static/kernel-resources.html
   sudo sysctl -w kernel.shmmax=1073741824
   sudo sysctl -w kernel.shmall=262144
   sudo bash -c "echo kernel.shmmax=1073741824 | tee -a /etc/sysctl.conf"
@@ -200,17 +190,34 @@ function db_import
     fi
   fi
 
-  #sudo -u postgres psql -c "create user churnuser with password '${CHURN_PASS}'"
   sudo -u postgres psql -c "create user ${CHURN_USER} with password '${CHURN_PASS}'"
   sudo -u postgres psql -c "drop database churnometer"
   sudo -u postgres psql -c "create database churnometer"
   cd $pwdir # incase a relative path was specified to database
   sudo -u postgres psql churnometer < $DB_FILE
-  #sudo -u postgres psql -c "grant churnuser to churnometer"
 }
 
 function ruby_config
 {
+  echo "***********************************************************************"
+  echo "* INSTALLING RUBY"
+  echo "*"
+  echo "*"
+  echo "***********************************************************************"
+
+  sudo su - $CHURN_USER <<EOF
+    git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+    git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+    echo 'PATH="/home/$CHURN_USER/.rbenv/bin:/home/$CHURN_USER/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.profile
+    echo 'export PATH="/home/$CHURN_USER/.rbenv/bin:/home/$CHURN_USER/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
+    echo 'eval "\$(rbenv init -)"' >> ~/.bashrc
+    echo '[[ -r ~/.bashrc ]] && . ~/.bashrc' >> .bash_profile
+EOF
+
+  sudo su - $CHURN_USER -c 'rbenv install 2.3.3'
+  sudo su - $CHURN_USER -c 'rbenv global 2.3.3'
+  sudo su - $CHURN_USER -c 'rbenv exec ruby -v'
+
   echo "***********************************************************************"
   echo "* INSTALLING GEMS"
   echo "*"
@@ -230,25 +237,6 @@ function daemonise
   echo "*"
   echo "*"
   echo "***********************************************************************"
-
-  #sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" $WWW_PATH/install/daemon \
-  #| sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" > ~/daemon.tmp
-
-  #sudo mv ~/daemon.tmp /etc/init.d/churnometer
-  #sudo chmod 755 /etc/init.d/churnometer
-
-  #sudo update-rc.d -f churnometer remove
-  #sudo update-rc.d churnometer defaults
-  #sudo /etc/init.d/churnometer restart
-
-  #sudo thin install
-  #sudo update-rc.d -f thin defaults
-
-  #sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" \
-  #  $WWW_PATH/config/thin_site.yml.example \
-  #  > ~/thin.yml.tmp
-
-  #sudo mv ~/thin.yml.tmp /etc/thin/churnometer_production.yml
 
   sed "s|REPLACEME_WWW_PATH|$WWW_PATH|g" $WWW_PATH/config/churnometer.service.example \
   | sed "s|REPLACEME_CHURN_USER|$CHURN_USER|g" > ~/churnometer.service.tmp

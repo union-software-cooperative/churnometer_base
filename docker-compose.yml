@@ -1,0 +1,20 @@
+# This is our production compose file - not changed for docker-sync or similar
+
+version: "2"
+services:
+  db:
+    env_file:
+      - ./docker.env
+    build:
+      context: .
+      dockerfile: dockerfile-db
+    restart: always
+  www:
+    env_file:
+      - ./docker.env
+    build:
+      context: .
+      dockerfile: dockerfile-www
+    command: ./docker-command
+    links:
+      - db

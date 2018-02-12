@@ -4,8 +4,6 @@ TODOS.txt
 log
 doc
 config/config_site.yaml
-lib/services/service_dd_retention*
-lib/services/service_nsw_joins.rb
 *.old
 *.orig
 *.bak
@@ -18,3 +16,6 @@ pids/*
 uploads/reimport
 uploads/batch_reimport
 config/config.yaml
+docker.env
+config/seed.sql
+.docker-sync
