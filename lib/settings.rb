@@ -26,6 +26,7 @@ DateFormatDisplay = "%e %B %Y"
 DateFormatPicker = "'d MM yy'"
 DateFormatDB = "%Y-%m-%d"
 MaxMemberList = 500
+GrowthTarget = 0.05
 
 module Settings
   # Return the ChurnometerApp instance
