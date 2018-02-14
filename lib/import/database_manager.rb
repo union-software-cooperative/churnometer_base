@@ -265,18 +265,18 @@ class DatabaseManager
         , userid varchar(255) null
         , status varchar(255) not null
         -- this could also work? -kbuckley, 2017-03-15
-        -- , #{dimensions.map(&:column_base_name).join("varchar(255) null\n, ")} varchar(255) null
+        , #{dimensions.map(&:column_base_name).join(" varchar(255) null\n        , ")} varchar(255) null
       )
     SQL
 
-    dimensions.each { |d| sql << <<-REPEAT }
-        , #{d.column_base_name} varchar(255) null
-    REPEAT
-
-    sql << <<-SQL
-      )
-
-    SQL
+    # dimensions.each { |d| sql << <<-REPEAT }
+    #     , #{d.column_base_name} varchar(255) null
+    # REPEAT
+    #
+    # sql << <<-SQL
+    #   )
+    #
+    # SQL
   end
 
   def rebuild_membersource_sql

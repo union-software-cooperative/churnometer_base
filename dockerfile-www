@@ -10,4 +10,4 @@ COPY . $APP
 RUN mkdir -p $APP/tmp
 RUN mkdir -p $APP/log
 RUN mkdir -p $APP/backup
-RUN mkdir -p $APP/pids
+RUN mkdir -p $APP/pids  
