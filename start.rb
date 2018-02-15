@@ -45,11 +45,12 @@ class Churnobyl < Sinatra::Base
   end
 
   configure :production, :development do
-    $logger = Logger.new('log/churnometer.log')
+    #enable :logging
+    #$logger = Logger.new('log/churnometer.log')
     enable :logging
-
-    $logger = Logger.new('log/churnometer.log')
-
+    file = File.new("#{settings.root}/log/#{settings.environment}.log", 'a+')
+    file.sync = true
+    use Rack::CommonLogger, file
     # remarked because this doesn't do anything
     #set :raise_errors, Proc.new { false }
     #set :show_exceptions, false
@@ -183,7 +184,7 @@ class Churnobyl < Sinatra::Base
               })
     end
 
-    $logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
+    logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
   end
 
   get '/' do
@@ -525,6 +526,27 @@ class Churnobyl < Sinatra::Base
     @yaml_spec = dbm.migration_yaml_spec
     @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required?
     erb :migrate
+  end
+
+  get '/backdate' do
+    admin!
+
+    @dimensions = (params['dimensions']||"").split(',')
+    @back_to = Date.parse(params['back_to']) rescue nil
+
+    if @dimensions == []
+      session[:flash] = "you must provide a comma separated set of 'dimensions'"
+      redirect :config
+    end
+
+    if @back_to.nil?
+      session[:flash] = "you must provide a 'back_to' date to backdate to"
+      redirect :config
+    end
+
+    # get new config and dimensions
+    dbm = DatabaseManager.new(app())
+    dbm.backdate_sql(@dimensions, @back_to)
   end
 
   post '/migrate' do

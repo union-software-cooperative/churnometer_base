@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -31,9 +31,9 @@ class QueryDetail < QueryDetailBase
   # True if filtering by the given filter column must always require transactions to be disabled.
   def non_transaction_filter_column?(filter_column_name)
     ['contributors',
-     'transactions', 
-     'income_net', 
-     'posted', 
+     'transactions',
+     'income_net',
+     'posted',
      'unposted'].include?(filter_column_name.downcase) == false
   end
 
@@ -64,7 +64,7 @@ class QueryDetail < QueryDetailBase
       'stopped_real_net' => 'where c.stopped_real_net<>0',
       'stopped_to_paying' => 'where c.stopped_to_paying<>0',
       'stopped_to_other' => 'where c.stopped_to_other<>0',
-      'stopped_other_loss' => 'where c.stopped_other_loss<>0',
+      'stopped_other_gain' => 'where c.stopped_other_gain<>0',
       'stopped_other_loss' => 'where c.stopped_other_loss<>0',
       'waiver_real_gain' => 'where c.waiver_real_gain<>0',
       'waiver_real_loss' => 'where c.waiver_real_loss<>0',
@@ -73,17 +73,17 @@ class QueryDetail < QueryDetailBase
       'waiver_real_loss_good' => 'where c.waiver_real_loss_good<>0',
       'waiver_real_loss_bad' => 'where c.waiver_real_loss_bad<>0',
       'waiver_real_net' => 'where c.waiver_real_net<>0',
-      'waiver_other_loss' => 'where c.waiver_other_loss<>0',
+      'waiver_other_gain' => 'where c.waiver_other_gain<>0',
       'waiver_other_loss' => 'where c.waiver_other_loss<>0',
       'other_gain' => 'where c.other_other_gain<>0',
       'other_loss' => 'where c.other_other_loss<>0',
-      
+
       'member_real_gain' => 'where c.member_real_gain<>0',
       'member_real_loss' => 'where c.member_real_loss<>0',
       'member_real_net' => 'where c.member_real_net<>0',
       'member_other_loss' => 'where c.member_other_loss<>0',
       'member_other_gain' => 'where c.member_other_gain<>0',
-      
+
       'green_real_gain' => 'where c.green_real_gain<>0',
       'green_real_gain_nonmember' => 'where c.green_real_gain_nonmember<>0',
       'green_real_loss_nonmember' => 'where c.green_real_loss_nonmember<>0',
@@ -93,7 +93,7 @@ class QueryDetail < QueryDetailBase
       'green_real_net' => 'where c.green_real_net<>0',
       'green_other_gain' => 'where c.green_other_gain<>0',
       'green_other_loss' => 'where c.green_other_loss<>0',
-    
+
       'orange_real_gain' => 'where c.orange_real_gain<>0',
       'orange_real_gain_nonmember' => 'where c.orange_real_gain_nonmember<>0',
       'orange_real_loss_nonmember' => 'where c.orange_real_loss_nonmember<>0',
@@ -123,7 +123,7 @@ class QueryDetail < QueryDetailBase
     user_selections_filter = filter.include('status')
 
     #with_trans = @with_trans && non_transaction_filter_column?(@filter_column) == false
-    with_trans = @with_trans 
+    with_trans = @with_trans
 
     end_date = @end_date + 1
 
@@ -131,20 +131,20 @@ class QueryDetail < QueryDetailBase
     a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
     stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
 
-sql = <<-EOS	
+sql = <<-EOS
 	-- detail query
 	with nonstatusselections as
 	(
 		-- finds all changes matching user criteria
-		select 
-			* 
-		from 
+		select
+			*
+		from
 			#{@source}
 		where
 			changedate < #{db.sql_date(end_date)} -- we need to count every value since Churnobyls start to determine start_count.  But everything after enddate can be ignored.
 			#{sql_for_filter_terms(non_status_filter, true)}
 	)
-	, userselections as 
+	, userselections as
 	(
 		select
 			*
@@ -171,7 +171,7 @@ sql = <<-EOS
 			, case when transfersin.changeid is not null then false else true end internaltransfer
 			, case when statuschanges.changeid is not null then 1 else 0 end statuschange
 			, case when #{header1 == 'userid' ? '' : "u1.#{header1}delta <> 0" } then 1 else 0 end  group_transfer
-		from 
+		from
 			userselections u1
 			left join transfersin on u1.changeid = transfersin.changeid --and u1.net = transfersin.net
 			left join statuschanges on u1.changeid = statuschanges.changeid --and u1.net = statuschanges.net
@@ -182,7 +182,7 @@ sql = <<-EOS
  	)
 	, trans as
 	(
-		select 
+		select
 			case when coalesce(u1.#{header1}::varchar(200),'') = '' then 'unassigned' else u1.#{header1}::varchar(200) end row_header1
 		, t.memberid
 		, t.changeid
@@ -190,14 +190,14 @@ sql = <<-EOS
 		, sum(case when amount::numeric < 0.0 then amount::numeric else 0.0 end) unposted
 	from
 		transactionfact t
-		--inner join memberfacthelper u1 on 
+		--inner join memberfacthelper u1 on
 		inner join nonstatusselections u1 on
 			u1.net = 1 /* state at time of transaction, -1 would be the members prior state */
 			and u1.changeid = t.changeid
 	where
 		t.creationdate >= #{db.sql_date(@start_date)}
 		and t.creationdate < #{db.sql_date(end_date)}
-	group by 
+	group by
 		case when coalesce(u1.#{db.quote_db(header1)}::varchar(200),'') = '' then 'unassigned' else u1.#{db.quote_db(header1)}::varchar(200) end
 		, t.changeid
 		, t.memberid
@@ -205,11 +205,11 @@ sql = <<-EOS
 	, counts as
 	(
 		-- sum changes, if status doesnt change, then the change is a transfer
-		select 
+		select
 			c.memberid
-			, c.changeid::bigint	
+			, c.changeid::bigint
 			, case when coalesce(#{db.quote_db(header1)}::varchar(50),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(50) end row_header
-			
+
 			, a1pgain::bigint a1p_real_gain
 			, a1ploss::bigint a1p_real_loss
     		, payinggain::bigint paying_real_gain
@@ -225,21 +225,21 @@ sql = <<-EOS
     		, waiverlossbad::bigint waiver_real_loss_bad
     		, membergain::bigint member_real_gain
     		, memberloss::bigint member_real_loss
-      
+
     		, greengain::bigint green_real_gain
     		, greenloss::bigint green_real_loss
     		, greengain_nonmember::bigint green_real_gain_nonmember
     		, greenloss_nonmember::bigint green_real_loss_nonmember
     		, greengain_member::bigint green_real_gain_member
     		, greenloss_member::bigint green_real_loss_member
-      
+
     		, orangegain::bigint orange_real_gain
     		, orangeloss::bigint orange_real_loss
     		, orangegain_nonmember::bigint orange_real_gain_nonmember
     		, orangeloss_nonmember::bigint orange_real_loss_nonmember
     		, orangegain_member::bigint orange_real_gain_member
     		, orangeloss_member::bigint orange_real_loss_member
-      
+
 			, case when coalesce(status, '') = #{a1p_db} then othergain else 0 end::bigint a1p_other_gain
 			, case when coalesce(status, '') = #{a1p_db} then otherloss else 0 end::bigint a1p_other_loss
     		, case when coalesce(status, '') = #{paying_db} then othergain else 0 end::bigint paying_other_gain
@@ -256,8 +256,8 @@ sql = <<-EOS
       		, case when (set_transfer = 1 or group_transfer = 1) then othergreenloss else 0 end green_other_loss
 	  		, case when (set_transfer = 1 or group_transfer = 1) then otherorangegain else 0 end orange_other_gain
       		, case when (set_transfer = 1 or group_transfer = 1) then otherorangeloss else 0 end orange_other_loss
-     
-      
+
+
 			, (a1pgain+a1ploss)::bigint a1p_real_net
     		, (payinggain+payingloss)::bigint paying_real_net
 			, (stoppedgain+stoppedloss)::bigint stopped_real_net
@@ -267,7 +267,7 @@ sql = <<-EOS
 			, (greengain + greenloss)::bigint green_real_net
 			, (orangegain + orangeloss)::bigint orange_real_net
 			, net::bigint
-			
+
 			-- odd columns
 			, case when _changeid is null then a1pgain else 0 end::bigint a1p_unchanged_gain
 			, case when coalesce(_status, '') = '' then a1pgain else 0 end::bigint a1p_newjoin
@@ -276,8 +276,8 @@ sql = <<-EOS
 			, case when coalesce(_status, '') <> #{paying_db} then a1ploss else 0 end::bigint a1p_to_other
 			, case when _changeid is null then stoppedgain else 0 end::bigint stopped_unchanged_gain
 			, case when coalesce(_status,'') = #{paying_db} then stoppedloss else 0 end::bigint stopped_to_paying
-			, case when coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end::bigint stopped_to_other			
-		from  
+			, case when coalesce(_status,'') <> #{paying_db} then stoppedloss else 0 end::bigint stopped_to_other
+		from
 			nonegations c
 		where
 			(
@@ -291,13 +291,13 @@ sql = <<-EOS
 				or c.stoppedloss <> 0
 				or c.waivergain <> 0
 				or c.waiverloss <> 0
-			)			
+			)
 	)
 	, notrans as
 	(
-		select 
+		select
 			*
-		from 
+		from
 			counts c
 	)
 	, withtrans as
@@ -345,7 +345,7 @@ sql = <<-EOS
 		, c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
-    
+
     , c.green_real_gain
 		, c.green_real_gain_nonmember
 		, c.green_real_loss_nonmember
@@ -355,7 +355,7 @@ sql = <<-EOS
 		, c.green_real_net
 		, c.green_other_gain
 		, c.green_other_loss
-    
+
     , c.orange_real_gain
 		, c.orange_real_gain_nonmember
 		, c.orange_real_loss_nonmember
@@ -365,8 +365,8 @@ sql = <<-EOS
 		, c.orange_real_net
 		, c.orange_other_gain
 		, c.orange_other_loss
-    
-    
+
+
 EOS
 
 sql << if with_trans
@@ -433,7 +433,7 @@ if with_trans
     , 0::bigint member_real_net
 		, 0::bigint member_other_gain
 		, 0::bigint member_other_loss
-		
+
 		, 0::bigint green_real_gain
 		, 0::bigint green_real_loss
     , 0::bigint green_real_gain_nonmember
@@ -443,7 +443,7 @@ if with_trans
     , 0::bigint green_real_net
 		, 0::bigint green_other_gain
 		, 0::bigint green_other_loss
-		
+
 		, 0::bigint orange_real_gain
 		, 0::bigint orange_real_loss
     , 0::bigint orange_real_gain_nonmember
@@ -453,7 +453,7 @@ if with_trans
     , 0::bigint orange_real_net
 		, 0::bigint orange_other_gain
 		, 0::bigint orange_other_loss
-		
+
 		, t.posted::numeric posted
 		, t.unposted::numeric unposted
 	from
@@ -509,7 +509,7 @@ sql << <<-EOS
 		, c.member_real_net
 		, c.member_other_gain
 		, c.member_other_loss
-		
+
 		, c.green_real_gain
 		, c.green_real_loss
 		, c.green_real_gain_nonmember
@@ -519,7 +519,7 @@ sql << <<-EOS
 		, c.green_real_net
 		, c.green_other_gain
 		, c.green_other_loss
-		
+
 		, c.orange_real_gain
 		, c.orange_real_loss
 		, c.orange_real_gain_nonmember
@@ -529,7 +529,7 @@ sql << <<-EOS
 		, c.orange_real_net
 		, c.orange_other_gain
 		, c.orange_other_loss
-		
+
 		, c.posted
 		, c.unposted
 	from

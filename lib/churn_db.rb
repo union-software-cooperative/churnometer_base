@@ -25,7 +25,8 @@ class Db
 
   attr_reader :host
   attr_reader :dbname
-  attr_reader :dbpass
+  attr_reader :user
+  attr_reader :pass
 
   def initialize(churn_app)
     element = churn_app.config.get_mandatory('database')
@@ -37,14 +38,15 @@ class Db
 
     @host = element['host'].value
     @dbname = element['dbname'].value
-    @dbpass = element['password'].value
+    @user = element['user'].value
+    @pass = element['password'].value
 
     @conn = PGconn.open(
       :host =>      @host,
       :port =>      element['port'].value,
       :dbname =>    @dbname,
-      :user =>      element['user'].value,
-      :password =>  @dbpass
+      :user =>      @user,
+      :password =>  @pass
     )
 
     # ensure_app_state_table() # TODO Why isn't this created in db manager
@@ -170,8 +172,12 @@ class ChurnDB
     db.dbname
   end
 
-  def dbpass
-    db.dbpass
+  def user
+    db.user
+  end
+
+  def pass
+    db.pass
   end
 
   def initialize(app)

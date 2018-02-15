@@ -265,7 +265,7 @@ class ImportPresenter
   end
 
   def member_import_command(file)
-    cmd = "psql #{@db.dbname} -c \"\\copy membersource (memberid, status"
+    cmd = "psql #{@db.dbname} -h #{@db.host} -U #{@db.user} -c \"\\copy membersource (memberid, status"
 
     dimensions.each do |d|
       cmd << ", #{d.column_base_name}"
@@ -275,14 +275,25 @@ class ImportPresenter
   end
 
   def displaytext_import_command(file)
-    cmd = "psql #{@db.dbname} -c \""
+    cmd = "psql #{@db.dbname} -h #{@db.host} -U #{@db.user} -c \""
     cmd << "\\copy displaytextsource (attribute, id, displaytext) "
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
   end
 
+
+
+
+
+
+
+
+
+
+
+
   def transaction_import_command(file)
-    cmd = "psql #{@db.dbname} -c \""
+    cmd = "psql #{@db.dbname} -h #{@db.host} -U #{@db.user} -c \""
     cmd << "\\copy transactionsource (id, creationdate, memberid, userid, amount) "
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
@@ -290,7 +301,7 @@ class ImportPresenter
 
   def backup_command(file)
     data_file = "backup/#{@db.dbname}_db_backup.sql"
-    cmd = "pg_dump #{@db.dbname} > #{data_file}"
+    cmd = "pg_dump #{@db.dbname} -h #{@db.host} -U #{@db.user} > #{data_file}"
     cmd << "; rm -Rf #{file}"
     cmd << "; zip -q -r #{file} . -x \"backup\/backup.zip\" -x \"uploads\/*\" -x \"tmp\/*\" -x \".sass-cache\/*\"  -x \"pids\/*\" "
     cmd << "; rm #{data_file}"

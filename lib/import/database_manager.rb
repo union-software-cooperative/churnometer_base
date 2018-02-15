@@ -1653,4 +1653,201 @@ EOS
 
     true
   end
+
+  def backdate_sql(columns, back_to)
+    dn = dimensions().collect { |d| d.column_base_name }
+    <<-SQL
+      <PRE>
+      -- Back dating #{columns} to #{back_to}
+
+      begin transaction;
+
+      --select * from bd_current;
+      update memberfact set newunionid = 'nuw' where not newstatus is NULL;
+      update memberfact set oldunionid = 'nuw' where not oldstatus is NULL;
+
+      DROP TABLE IF EXISTS bd_current;
+      SELECT distinct
+        lower(companyid) companyid
+        , #{columns.collect{|d| "lower(#{d}) #{d}"}.join("\n        , ")}
+      INTO
+        bd_current
+      FROM
+        membersource
+      where
+        lower(branchid) in ('nv', 'ng', 'na')
+      order by
+        companyid;
+
+
+      INSERT INTO
+        memberfact
+        (
+          changedate
+          , memberid
+          , userid
+          , oldstatus
+          , newstatus
+          #{dn.collect{|d|<<-D}.join("")}
+          , old#{d}
+          , new#{d}
+          D
+        )
+      SELECT
+        (select max(changedate) + interval '1 second' from memberfact where changedate::date = '#{back_to}'::date )
+        , m.memberid
+        , m.userid
+        , m.oldstatus
+        , m.newstatus
+        #{dn.collect{|d|<<-D}.join("")}
+        , m.old#{d}
+        , #{columns.include?(d) ? "c.#{d}" : "m.new#{d}" }
+        D
+      FROM
+        memberfact m
+        inner join bd_current c on m.newcompanyid = c.companyid
+      where
+        coalesce(m.newcompanyid, '') <> ''
+        and m.changeid in (select max(changeid) from memberfact where changedate < '#{back_to}'::date + interval '1 day' group by memberid)
+        and (#{columns.collect {|d| "coalesce(c.#{d},'') <> coalesce(m.new#{d},'') "}.join(" OR ")})
+      ;
+
+      update
+        memberfact
+      set
+        #{columns.collect{|d| "new#{d} = c.#{d}" }.join("\n        , ")}
+      from
+        bd_current c
+      where
+        memberfact.newcompanyid = c.companyid
+        and memberfact.changedate > '#{back_to}'::date + interval '1 day';
+
+      update
+        memberfact
+      set
+        #{columns.collect{|d| "old#{d} = c.#{d}" }.join("\n        , ")}
+      from
+        bd_current c
+      where
+        memberfact.oldcompanyid = c.companyid
+        and memberfact.changedate > '#{back_to}'::date + interval '1 day';
+
+
+
+
+      alter table memberfact add column initial_changeid bigint;
+
+      with redundant as (
+        select
+          *
+        from
+          memberfact m
+        where
+          coalesce(m.oldstatus,'') = coalesce(m.newstatus,'')
+          AND #{dn.collect {|d| "coalesce(m.old#{d},'') = coalesce(m.new#{d},'') "}.join("\n        AND ")}
+      --  limit 3
+      )
+      update
+        memberfact
+      set
+        initial_changeid = r3.changeid
+      --select
+        --r1.memberid
+        --, r1.changedate
+        --, r1.changeid
+        --, r3.changedate
+        --, r3.changeid
+      from
+        memberfact r1
+        left join lateral (
+          select
+            *
+          from
+            memberfact r2
+          where
+            not r2.changeid in (select changeid from redundant)
+            and r2.changedate <= r1.changedate
+            and r2.memberid = r1.memberid
+          order by
+            changedate desc
+          limit 1
+        ) r3 on true
+      where
+        r1.memberid in (select memberid from redundant)
+        and r1.changeid <> r3.changeid
+        and r1.changeid = memberfact.changeid
+      ;
+
+      alter table memberfact add column old_changeid bigint;
+      update memberfact set old_changeid = changeid;
+      select * into bd_memberfact from memberfact;
+      delete from memberfact;
+      alter sequence memberfact_changeid_seq restart with 1;
+
+      INSERT INTO
+        memberfact
+        (
+          changedate
+          , old_changeid
+          , memberid
+          , userid
+          , oldstatus
+          , newstatus
+          #{dn.collect{|d|<<-D}.join("")}
+          , old#{d}
+          , new#{d}
+          D
+        )
+      select
+        changedate
+        , old_changeid
+        , memberid
+        , userid
+        , oldstatus
+        , newstatus
+        #{dn.collect{|d|<<-D}.join("")}
+        , old#{d}
+        , new#{d}
+        D
+      from
+        bd_memberfact
+      where
+        initial_changeid is null -- remove redundant changes
+      order by
+        changedate;
+
+      update
+        transactionfact
+      set
+        changeid = m.initial_changeid
+      FROM
+        bd_memberfact m
+      where
+        m.changeid = transactionfact.changeid
+        and not m.initial_change is null;
+
+      update
+        transactionfact
+      set
+        changeid = m.changeid
+      FROM
+        memberfact m
+      where
+        m.old_changeid = transactionfact.changeid;
+
+      alter table memberfact drop column inital_changeid, drop column old_changeid;
+      vacuum memberfact;
+      analyse memberfact;
+
+      vacuum transactionfact;
+      analyse transactionfact;
+
+      delete from memberfacthelper;
+      select updatememberfacthelper();
+
+      rollback transaction
+
+      </PRE>
+    SQL
+  end
 end
