@@ -1620,12 +1620,12 @@ class DatabaseManager
     db.set_app_state('memberfacthelperquery_source', memberfacthelperquery_sql())
 
     finalisation_statements =
-      ["vacuum memberfact",
-       "vacuum membersourceprev",
-       "vacuum transactionfact",
-       "vacuum transactionsourceprev",
-       "vacuum displaytext",
-       "vacuum memberfacthelper",
+      ["vacuum full memberfact",
+       "vacuum full membersourceprev",
+       "vacuum full transactionfact",
+       "vacuum full transactionsourceprev",
+       "vacuum full displaytext",
+       "vacuum full memberfacthelper",
 
        "analyse memberfact",
        "analyse membersourceprev",
@@ -1659,12 +1659,20 @@ EOS
     <<-SQL
       <PRE>
       -- Back dating #{columns} to #{back_to}
+      -- I was hoping to make a generic backdating script, except
+      -- instead this can only backdate columns that a functionally
+      -- dependent of companyid. e.g. lead, io, team, industryid
 
       begin transaction;
 
-      --select * from bd_current;
+      -- set new dimensions to the back_to
+      update dimstart set startdate = '#{back_to}'::date where startdate = current_date;
+
+      -- manual backdate of unionid
       update memberfact set newunionid = 'nuw' where not newstatus is NULL;
       update memberfact set oldunionid = 'nuw' where not oldstatus is NULL;
+      update dimstart set startdate = '2017-12-31' where dimension = 'unionid';
+
 
       DROP TABLE IF EXISTS bd_current;
       SELECT distinct
@@ -1679,7 +1687,16 @@ EOS
       order by
         companyid;
 
+      commit transaction;
 
+      select count(*) from bd_current; -- did you import the latest member.txt into membersource?
+      select * from bd_current; -- do you have all columns functionally dependent on companyid?
+
+      select count(*) from memberfact where changedate::date = '#{back_to}'::date; -- take note
+      select count(*) from memberfact where changedate > '#{back_to}'::date + interval '1 day'; -- take note
+      select count(*) from transactionfact where changeid not in (select changeid from memberfact); -- take note
+
+      begin transaction;
       INSERT INTO
         memberfact
         (
@@ -1694,13 +1711,13 @@ EOS
           D
         )
       SELECT
-        (select max(changedate) + interval '1 second' from memberfact where changedate::date = '#{back_to}'::date )
+        coalesce((select max(changedate) from memberfact where changedate::date = '#{back_to}'::date ), '#{back_to}'::timestamp) + interval '1 second'
         , m.memberid
         , m.userid
-        , m.oldstatus
+        , m.newstatus
         , m.newstatus
         #{dn.collect{|d|<<-D}.join("")}
-        , m.old#{d}
+        , m.new#{d}
         , #{columns.include?(d) ? "c.#{d}" : "m.new#{d}" }
         D
       FROM
@@ -1824,7 +1841,7 @@ EOS
         bd_memberfact m
       where
         m.changeid = transactionfact.changeid
-        and not m.initial_change is null;
+        and not m.initial_changeid is null;
 
       update
         transactionfact
@@ -1835,17 +1852,22 @@ EOS
       where
         m.old_changeid = transactionfact.changeid;
 
-      alter table memberfact drop column inital_changeid, drop column old_changeid;
-      vacuum memberfact;
-      analyse memberfact;
+      commit transaction;
 
-      vacuum transactionfact;
-      analyse transactionfact;
+      /*
+      select count(*) from memberfact where changedate::date = '#{back_to}'::date; -- is this about the number of members that have companyids?
+      select count(*) from memberfact where changedate > '#{back_to}'::date + interval '1 day'; -- is this the right amount lower to get rid of redundant changes
+      select count(*) from transactionfact where changeid not in (select changeid from memberfact); -- is this still about the same?
+
+      alter table memberfact drop column initial_changeid, drop column old_changeid;
+
+      vacuum full analyse memberfact;
+      vacuum full analyse transactionfact;
 
       delete from memberfacthelper;
       select updatememberfacthelper();
-
-      rollback transaction
+      vacuum full analyse memberfacthelper;
+      */
 
       </PRE>
     SQL

@@ -17,7 +17,7 @@ services:
       - bundle_ubuntu_2.3.3
     volumes:
       - churnometer-www-sync:/app:nocopy # sync source into app, need to run docker-sync
-      - ../churnometer130218.sql.gz:/app/config/seed.sql.gz
+      - ../churnometer160218.sql.gz:/app/config/seed.sql.gz
     links:
       - db
     ports:

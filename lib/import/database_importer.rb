@@ -30,11 +30,11 @@ class Importer
   def import(date)
 
     raise "Aleady importing!" if self.state == 'running'
-    
+
     self.progress="Starting import for '#{date}'..."
     self.import_date = date
     self.state='running' # The background loop could begin, any instant after it is set
-    Thread.new do 
+    Thread.new do
       begin
 	@importing = true
 	go
@@ -92,27 +92,21 @@ class Importer
 
     self.progress = "Step 1. Inserting member changes"
     db.async_ex("select insertmemberfact('#{self.import_date}')")
-    db.async_ex("vacuum memberfact")
-    db.async_ex("vacuum membersourceprev")
-    db.async_ex("analyse memberfact")
-    db.async_ex("analyse membersourceprev")
-
+    db.async_ex("vacuum full analyse memberfact")
+    db.async_ex("vacuum full analyse membersourceprev")
+    
     self.progress = "Step 2. Inserting new transactions"
     db.async_ex("select inserttransactionfact('#{self.import_date}')")
-    db.async_ex("vacuum transactionfact")
-    db.async_ex("vacuum transactionsourceprev")
-    db.async_ex("analyse transactionfact")
-    db.async_ex("analyse transactionsourceprev")
+    db.async_ex("vacuum full analyse transactionfact")
+    db.async_ex("vacuum full analyse transactionsourceprev")
 
     self.progress = "Step 3. Updating displaytext"
     db.async_ex("select updatedisplaytext()")
-    db.async_ex("vacuum displaytext")
-    db.async_ex("analyse displaytext")
+    db.async_ex("vacuum full analyse displaytext")
 
     self.progress = "Step 4. Precalculating member change data"
     db.async_ex("select updatememberfacthelper()")
-    db.async_ex("vacuum memberfacthelper")
-    db.async_ex("analyse memberfacthelper")
+    db.async_ex("vacuum full analyse memberfacthelper")
 
     db.async_ex("update importing set importing = 0")
     end_time = Time.now
