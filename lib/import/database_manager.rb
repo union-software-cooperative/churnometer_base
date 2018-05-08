@@ -1855,6 +1855,7 @@ EOS
       commit transaction;
 
       /*
+      -- manually step through this stuff
       select count(*) from memberfact where changedate::date = '#{back_to}'::date; -- is this about the number of members that have companyids?
       select count(*) from memberfact where changedate > '#{back_to}'::date + interval '1 day'; -- is this the right amount lower to get rid of redundant changes
       select count(*) from transactionfact where changeid not in (select changeid from memberfact); -- is this still about the same?
@@ -1866,7 +1867,17 @@ EOS
 
       delete from memberfacthelper;
       select updatememberfacthelper();
+
       vacuum full analyse memberfacthelper;
+      select count(*) from memberfacthelper where changedate > '#{back_to}'::date + interval '1 day'; -- is it low?
+
+      drop table bd_current;
+      drop table bd_memberfact;
+
+      drop table memberfact_migration;
+      drop table memberfacthelper_migration;
+      drop table membersourceprev_migration;
+      drop table memberfactbackupfrom13feb;
       */
 
       </PRE>

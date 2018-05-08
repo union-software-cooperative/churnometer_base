@@ -3,15 +3,11 @@
 version: "2"
 services:
   db:
-    env_file:
-      - ./docker.env
     build:
       context: .
       dockerfile: dockerfile-db
     restart: always
   www:
-    env_file:
-      - ./docker.env
     build:
       context: .
       dockerfile: dockerfile-www

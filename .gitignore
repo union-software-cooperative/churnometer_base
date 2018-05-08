@@ -19,3 +19,6 @@ config/config.yaml
 docker.env
 config/seed.sql
 .docker-sync
+docker-sync.yml
+docker-compose.override.yml
+.env
