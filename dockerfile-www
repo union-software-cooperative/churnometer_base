@@ -6,7 +6,7 @@ RUN apt-get -y install postgresql-client libpq-dev git build-essential sendmail 
 ENV APP /app
 RUN mkdir $APP
 WORKDIR $APP
-COPY . $APP
+COPY ./app $APP
 RUN mkdir -p $APP/tmp
 RUN mkdir -p $APP/log
 RUN mkdir -p $APP/backup
