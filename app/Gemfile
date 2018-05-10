@@ -13,6 +13,7 @@ gem 'addressable'
 gem 'pony'
 gem 'puma'
 gem 'nokogiri'
+gem 'oauth2'
 #gem 'rack-auth-kerberos'
 
 gem 'pry-byebug'

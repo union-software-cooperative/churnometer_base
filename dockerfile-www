@@ -1,7 +1,7 @@
 FROM ruby:2.3.3
 
 RUN apt-get update
-RUN apt-get -y install postgresql-client libpq-dev git build-essential sendmail libxml2-dev libxslt-dev zip libreadline-dev
+RUN apt-get -y install postgresql-client libpq-dev git build-essential sendmail libxml2-dev libxslt-dev zip libreadline-dev vim
 
 ENV APP /app
 RUN mkdir $APP
@@ -10,4 +10,4 @@ COPY ./app $APP
 RUN mkdir -p $APP/tmp
 RUN mkdir -p $APP/log
 RUN mkdir -p $APP/backup
-RUN mkdir -p $APP/pids  
+RUN mkdir -p $APP/pids

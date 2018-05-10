@@ -38,7 +38,8 @@ Dir["./lib/import/*.rb"].each { |f| require f }
 Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
-  include Authorization
+  include Oauth2Authorization
+  #register Sinatra::Oauth2Authorization
 
   configure :development do
     register Sinatra::Reloader

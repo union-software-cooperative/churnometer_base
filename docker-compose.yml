@@ -27,6 +27,11 @@ services:
       - CHURN_USER
       - CHURN_PASS
       - PGDATESTYLE
+      - OAUTH2_CLIENT_ID
+      - OAUTH2_CLIENT_SECRET
+      - OAUTH2_CLIENT_REDIRECT_URI
+      - OAUTH2_PROVIDER
+      - LDAP_ADMIN_GROUP
     ports:
       - 9292:9292
     links:
