@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -25,24 +25,24 @@ module Authorization
   def auth
     @auth ||= auth_class().new(app(), Rack::Auth::Basic::Request.new(request.env))
   end
-  
+
   def protected!
     unless auth.authenticated?  && !auth.admin?
       not_authorised
     end
   end
-  
+
   def admin!
     unless auth.authenticated? && auth.admin?
       not_authorised
     end
   end
-  
+
   def not_authorised
     response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
     throw(:halt, [401, "Not authorized\n"])
   end
-  
+
 end
 
 
@@ -54,8 +54,8 @@ class Authorize
   def initialize(churn_app, auth)
     @app = churn_app
     @auth = auth
-    
-    @role = 
+
+    @role =
       if @auth.provided?
         @app.roles[@auth.credentials.first]
       else
@@ -63,20 +63,20 @@ class Authorize
       end
 
     @role ||= @app.unauthenticated_role
-    
+
     @admin = @role.admin?
 
-    @authenticated = 
-      auth.provided? && 
-      auth.basic? && 
-      auth.credentials && 
+    @authenticated =
+      auth.provided? &&
+      auth.basic? &&
+      auth.credentials &&
       @role.password_authenticates?(@auth.credentials.last)
   end
 
   def authenticated?
     @authenticated == true
   end
-  
+
   def admin?
     @admin
   end

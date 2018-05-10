@@ -45,15 +45,11 @@ class Churnobyl < Sinatra::Base
   end
 
   configure :production, :development do
-    #enable :logging
-    #$logger = Logger.new('log/churnometer.log')
-    enable :logging
-    file = File.new("#{settings.root}/log/#{settings.environment}.log", 'a+')
-    file.sync = true
-    use Rack::CommonLogger, file
-    # remarked because this doesn't do anything
-    #set :raise_errors, Proc.new { false }
-    #set :show_exceptions, false
+
+    # enable :logging
+    # file = File.new("#{settings.root}/log/#{settings.environment}.log", 'a+')
+    # file.sync = true
+    # use Rack::CommonLogger, file
 
     enable :sessions
     set :session_secret, "something" # I don't understand what this does but it lets my flash work

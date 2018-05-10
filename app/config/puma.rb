@@ -16,7 +16,7 @@ environment rack_env
 bind "unix://#{app_dir}/pids/puma.sock"
 
 # Logging
-stdout_redirect "#{app_dir}/log/puma.stdout.log", "#{app_dir}/log/puma.stderr.log", true
+# stdout_redirect "#{app_dir}/log/puma.stdout.log", "#{app_dir}/log/puma.stderr.log", true
 
 # Set master PID and state locions
 pidfile "#{app_dir}/pids/puma.pid"
