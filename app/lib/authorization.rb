@@ -16,109 +16,121 @@
 #  along with Churnometer.  If not, see <http://www.gnu.org/licenses/>.
 require "sinatra/base"
 require "oauth2"
-  module Oauth2Authorization
-    # Returns the class that will be instantiated to handle the authorisation functionality. The class
-    # must follow Authorize's interface.
-    def auth_class
-      Oauth2Authorize
-    end
 
-    def oauth2_client(token_method = :post)
-      OAuth2::Client.new(
-        ENV['OAUTH2_CLIENT_ID'],
-        ENV['OAUTH2_CLIENT_SECRET'],
-        :site         => ENV['OAUTH2_PROVIDER'] || "http://doorkeeper-provider.herokuapp.com",
-        :token_method => token_method,
-      )
-    end
 
-    def access_token
-      OAuth2::AccessToken.new(oauth2_client, session[:access_token], :refresh_token => session[:refresh_token])
-    end
+module Oauth2Authorization
+  # Returns the class that will be instantiated to handle the authorisation functionality. The class
+  # must follow Authorize's interface.
+  def auth_class
+    Oauth2Authorize
+  end
 
-    def oauth2_redirect_uri
-      ENV['OAUTH2_CLIENT_REDIRECT_URI']
-    end
+  def oauth2_client(token_method = :post)
+    OAuth2::Client.new(
+      ENV['OAUTH2_CLIENT_ID'],
+      ENV['OAUTH2_CLIENT_SECRET'],
+      :site         => ENV['OAUTH2_PROVIDER'] || "http://doorkeeper-provider.herokuapp.com",
+      :token_method => token_method,
+    )
+  end
 
-    def get_profile
-      begin
-        response = access_token.get("/me.json")
-        @json = JSON.parse(response.body)
-      rescue OAuth2::Error => @error
-        not_authorised
-      end
-    end
+  def access_token
+    OAuth2::AccessToken.new(oauth2_client, session[:access_token], :refresh_token => session[:refresh_token])
+  end
 
-    Sinatra::Base.get '/oauth2-callback' do
-      new_token = oauth2_client.auth_code.get_token(params[:code], :redirect_uri => oauth2_redirect_uri)
-      session[:access_token]  = new_token.token
-      session[:refresh_token] = new_token.refresh_token
-      redirect '/'
-    end
+  def oauth2_redirect_uri
+    ENV['OAUTH2_CLIENT_REDIRECT_URI']
+  end
 
-    Sinatra::Base.get '/logout' do
-      session[:access_token] = nil
-      redirect '/'
-    end
-
-    def auth
-      @auth ||= auth_class().new(app(), get_profile)
-    end
-
-    def protected!
-      unless auth.authenticated?  && !auth.admin?
-        not_authorised
-      end
-    end
-
-    def admin!
-      unless auth.authenticated? && auth.admin?
-        not_authorised
-      end
-    end
-
-    def not_authorised
-      redirect oauth2_client.auth_code.authorize_url(:redirect_uri => oauth2_redirect_uri, :scope => 'profile')
+  def get_profile
+    begin
+      response = access_token.get("/me.json")
+      @json = JSON.parse(response.body)
+    rescue OAuth2::Error => @error
+      not_authorised
     end
   end
 
+  Sinatra::Base.get '/oauth2-callback' do
+    redirect_url = URI.join(oauth2_redirect_uri, "?return_to=#{CGI::escape(params['return_to'])}").to_s
+    puts "CALLBACK: " + redirect_url
+    new_token = oauth2_client.auth_code.get_token(params[:code], :redirect_uri => redirect_url)
+    session[:access_token]  = new_token.token
+    session[:refresh_token] = new_token.refresh_token
+    redirect params['return_to'] ? CGI::unescape(params['return_to']) : '/'
+  end
 
-  class Oauth2Authorize
-    attr_accessor :auth
-    attr_reader :role
-    attr_reader :admin
+  Sinatra::Base.get '/logout' do
+    session[:access_token] = nil
+    redirect ENV['OAUTH2_PROVIDER'] + "/logout"
+  end
 
-    def initialize(churn_app, auth)
-      @app = churn_app
-      @auth = auth['ldap']
-      @groups = @auth.dig(:groups) || []
+  def auth
+    @auth ||= auth_class().new(app(), get_profile)
+  end
 
-      @role =
-        if @auth
-          @app.roles[:lead]
-        else
-          nil
-        end
-
-      @role ||= @app.unauthenticated_role
-
-      @admin = @role.admin?
-
-      @authenticated = @auth.is_a?(Hash)
-    end
-
-    def is_member?(group)
-      @groups.include?(group) ? true : false
-    end
-
-    def authenticated?
-      @authenticated == true
-    end
-
-    def admin?
-      is_member?(ENV['LDAP_ADMIN_GROUP'])
+  def protected!
+    unless auth.authenticated?
+      not_authorised
     end
   end
+
+  def admin!
+    unless auth.authenticated? && auth.admin?
+      not_authorised
+    end
+  end
+
+  def not_authorised
+    return_to = "?return_to=#{CGI::escape(request.path + "?" + request.query_string)}"
+    redirect_url = URI.join(oauth2_redirect_uri, return_to).to_s
+    puts "NOT AUTHORISED: " + redirect_url
+    response['Cache-Control'] = "no-cache" #"public, max-age=0, must-revalidate"
+    redirect oauth2_client.auth_code.authorize_url(:redirect_uri => redirect_url, :scope => 'profile')
+  end
+end
+
+
+class Oauth2Authorize
+  attr_accessor :auth
+  attr_reader :role
+  attr_reader :admin
+
+  def initialize(churn_app, auth)
+    @app = churn_app
+    @auth = auth['ldap']
+    @groups = @auth.dig('groups') || []
+
+    @role =
+      if @auth
+        @app.roles['user']
+      else
+        nil
+      end
+
+    @role ||= @app.unauthenticated_role
+
+    @admin = @role.admin?
+
+    @authenticated = @auth.is_a?(Hash)
+  end
+
+  def is_member?(group)
+    @groups.include?(group) ? true : false
+  end
+
+  def authenticated?
+    @authenticated == true
+  end
+
+  def admin?
+    is_member?(ENV['LDAP_ADMIN_GROUP'])
+  end
+
+  def name
+    @auth['name']
+  end
+end
 
 
 module BasicAuthorization
