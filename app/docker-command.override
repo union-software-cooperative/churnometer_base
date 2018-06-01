@@ -5,7 +5,7 @@ bundle check || bundle install --jobs 4 --retry 3
 #echo "Starting shotgun"
 #bundle exec shotgun -p 9292 -o 0.0.0.0
 
-echo $(/sbin/ip route|awk '/default/ { print $3 }') nuwad >> /etc/hosts
+#echo $(/sbin/ip route|awk '/default/ { print $3 }') nuwid >> /etc/hosts
 
 echo waiting for you to shell in and do something like;
 echo $ docker-compose exec www /bin/bash
