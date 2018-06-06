@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -18,7 +18,8 @@
 require './lib/churn_presenters/helpers.rb'
 
 class ChurnPresenter_Diags
-  
+  include ChurnPresenter_Helpers
+
   attr_reader :sql
   attr_reader :url
   attr_reader :transfer_math
@@ -27,9 +28,7 @@ class ChurnPresenter_Diags
   attr_reader :rows
   attr_reader :filter
   attr_reader :filter_xml
-  
-  include ChurnPresenter_Helpers
-  
+
   def initialize(request, transfer_math)
     @sql = request.sql
     @url = request.url
@@ -42,5 +41,4 @@ class ChurnPresenter_Diags
     @filter = request.query_filterterms.terms #request.parsed_params()[Filter]
     @filter_xml = request.xml
   end
-  
 end

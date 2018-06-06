@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -20,8 +20,8 @@ require 'json'
 
 class ServiceRequestHandlerAutocomplete
   def initialize(churnobyl_app_class)
-  # TODO make these services configuration or enumerate a directory  
-  services = { 
+  # TODO make these services configuration or enumerate a directory
+  services = {
       'displaytext' => ServiceAutocompleteDisplaytext,
       #'nswjoins' => ServiceNSWJoins,
       'ddretention' => ServiceDDRetention,
@@ -39,10 +39,9 @@ class ServiceRequestHandlerAutocomplete
         service.execute
       end
     end
-    
+
     churnobyl_app_class.after "/services/autocomplete/:handler_name" do |handler_name|
-      @cr.close_db() if !@cr.nil? 
+      @cr.close_db() if !@cr.nil?
     end
   end
 end
-

@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -18,13 +18,10 @@
 require 'spreadsheet'
 
 module ChurnPresenter_Helpers
-  
   include Rack::Utils
   alias_method :h, :escape_html # needed for build_url - refactor
-  
-  
+
   # common totals
-  
   def paying_start_total
     # group_by is used so only the first row of running total is summed
     t=0
@@ -42,7 +39,7 @@ module ChurnPresenter_Helpers
     end
     t
   end
-  
+
   def paying_transfers_total
     # group_by is used so only the first row of running totals is summed
     t=0
@@ -52,62 +49,62 @@ module ChurnPresenter_Helpers
     t
   end
 
-  
-  
+
+
   # common drill downs
-  
+
   def drill_down_header(row, churnometer_app)
     groupby_column_id = @request.groupby_column_id
 
     {
-      "#{Filter}[#{groupby_column_id}]" => row['row_header1_id'], 
+      "#{Filter}[#{groupby_column_id}]" => row['row_header1_id'],
       "group_by" => @app.next_drilldown_dimension(@request.groupby_dimension).id
     }
-  end   
-  
+  end
+
   def build_url(query_hashes)
     #TODO refactor out params if possible, or put this function somewhere better, with params maybe
-    
+
     # build uri from params - rejecting filters & lock because they need special treatment
     query = @request.parsed_params.reject{ |k,v| v.empty? }.reject{ |k, v| k == Filter}.reject{ |k, v| k == "lock"}
-    
+
     # flatten filters, rejecting status - TODO get rid of status
     (@request.parsed_params[Filter] || {}).reject{ |k,v| v.empty? }.reject{ |k,v| k == 'status'}.each do |k, vs|
       Array(vs).each_with_index do |v, x|
         if (query_hashes || {}).has_key?("#{Filter}[#{k}]")
           if v != query_hashes["#{Filter}[#{k}]"]
             # when drilling down, disable any item of the same filter type with a different value
-            query["#{Filter}!#{x}[#{k}]"] = '-' + v 
+            query["#{Filter}!#{x}[#{k}]"] = '-' + v
           else
             # when drilling down, remove any item of the same filter type and value because it'll be merged back later
-          end 
-          
+          end
+
         else
           query["#{Filter}!#{x}[#{k}]"] = v
-        end    
+        end
       end
     end
-    
+
     # flatten lock
     (@request.parsed_params["lock"] || {}).reject{ |k,v| v.empty? }.each do |k, v|
       query["lock[#{k}]"] = v
     end
-    
+
     # merge new items
     query.merge! (query_hashes || {})
-    
+
     # remove any empty/blanked-out items
     query = query.reject{ |k,v| v.nil? }
-    
+
     # make uri string
     uri = '/?'
     query.each do |key, value|
-      uri += "&#{h key}=#{h value}" 
+      uri += "&#{h key}=#{h value}"
     end
-    
+
     uri.sub('/?&', '?')
   end
-  
+
   def format_date(date)
     if date.nil? || date == '1900-01-01'
       ''
@@ -115,7 +112,7 @@ module ChurnPresenter_Helpers
       Date.parse(date).strftime(DateFormatDisplay)
     end
   end
-  
+
   # exporting - expects an array of hash
   def excel(data)
      # todo refactor this and ChurnPresenter_table.to_excel - consider common table format
@@ -130,11 +127,11 @@ module ChurnPresenter_Helpers
      # Add data
      data.each_with_index do |row, y|
        row.each_with_index do |hash,x|
-         if filter_columns.include?(hash.last) 
+         if filter_columns.include?(hash.last)
            sheet[y + 1, x] = hash.last.to_f
          else
            sheet[y + 1, x] = hash.last
-         end  
+         end
        end
      end
 
@@ -143,10 +140,10 @@ module ChurnPresenter_Helpers
 
      path
    end
-   
+
    def browser
-    user_agent =  request.env['HTTP_USER_AGENT'].downcase 
-    
+    user_agent =  request.env['HTTP_USER_AGENT'].downcase
+
     @browser ||= begin
       if user_agent.index('msie') && !user_agent.index('opera') && !user_agent.index('webtv')
         'ie'+user_agent[user_agent.index('msie')+5].chr
@@ -182,8 +179,4 @@ module ChurnPresenter_Helpers
 
     return @browser
   end
-  
 end
-
-
-

@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -17,14 +17,14 @@
 
 module HashRecursiveMerge
   def rmerge!(other_hash)
-    merge!(other_hash) do |key, oldval, newval| 
+    merge!(other_hash) do |key, oldval, newval|
         oldval.class == self.class ? oldval.rmerge!(newval) : newval
     end
   end
 
   def rmerge(other_hash)
     r = {}
-    merge(other_hash)  do |key, oldval, newval| 
+    merge(other_hash)  do |key, oldval, newval|
       r[key] = oldval.class == self.class ? oldval.rmerge(newval) : newval
     end
   end

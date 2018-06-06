@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ class ServiceAutocompleteDisplaytext < ServiceAutocomplete
     @query = sql_text(churn_db, dimension.column_base_name, search)
   end
 
-protected
+  protected
   def json_to_db_column_mapping
     {
       'id' => 'id',
@@ -48,20 +48,19 @@ protected
   def sql_text(db, attribute, search_string)
     # tokenise search string
     search_array = search_string.split(' ')
-    
+
     where_clause = ""
     search_array.each do | item |
-      if (!where_clause.empty?) 
+      if (!where_clause.empty?)
         where_clause += ' AND '
       end
       where_clause += "(lower(displaytext || ' (' || id || ')') like lower(#{db.db.quote('%'+item+'%')}))"
-    end 
-    
-    if (where_clause.empty?) 
+    end
+
+    if (where_clause.empty?)
       where_clause = ' 1=1 '
     end
-    
+
     "select id, displaytext, displaytext || ' (' || id || ')' as dropdown from displaytext where attribute = #{db.db.quote(attribute)} and (#{where_clause}) order by displaytext"
   end
 end
-

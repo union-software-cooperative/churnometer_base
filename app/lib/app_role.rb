@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ class AppRoles
   end
 
   # summary_data_tables: A UserDataTables instance containing all of the possible UserDataTables defined
-  # 	for 'summary' queries.
+  #   for 'summary' queries.
   # detail_data_tables: As above, for 'detail' queries.
   def from_config_element(config_element, summary_data_tables, detail_data_tables, default_password)
     config_element.ensure_kindof(Hash)
@@ -61,7 +61,7 @@ class AppRole
   attr_reader :summary_data_tables
   attr_reader :detail_data_tables
   attr_reader :admin
-  
+
   def self.config_forbidden_ids
     ['all', 'none']
   end
@@ -74,7 +74,7 @@ class AppRole
     if config_forbidden_ids().include?(id)
       raise BadConfigDataFormatException.new(config_element, "The role id '#{id}' is reserved and can't be used in the config file.")
     end
-    
+
     hash = config_element
 
     new(id,
@@ -87,14 +87,14 @@ class AppRole
   end
 
   # id: a string identifier
-  # password: password string for the role. Pass 'nil' if no password is required (any given password 
+  # password: password string for the role. Pass 'nil' if no password is required (any given password
   #   will satisfy authentication in this case.)
   # summary_data_tables: UserDataTable instances describing those tables shown to the user in response
-  #		to 'summary' queries.
+  #    to 'summary' queries.
   # detail_data_tables: As above, but for 'detail' queries.
   # allow_transactions: True if the expensive transaction queries are run for this role.
   # allow_target_calculation_display: True if the growth targets are displayed for users of this role.
-  def initialize(id, 
+  def initialize(id,
                  password,
                  summary_data_tables,
                  detail_data_tables,
@@ -122,15 +122,15 @@ class AppRole
   def password_authenticates?(password)
     @password.nil? || password == @password
   end
-  
+
   def admin?
     @admin
   end
 
-protected
+  protected
   def self.resolve_data_tables(table_id_elements, data_tables, config_element)
     if table_id_elements
-      table_id_elements.value.collect do |table_id_element| 
+      table_id_elements.value.collect do |table_id_element|
         table = data_tables[table_id_element.value]
 
         raise ConfigBadDataFormatException.new(config_element, "No such data table '#{table_id_element.value}'.)") if table.nil?

@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -93,21 +93,21 @@ class ConfigElement
     @id = id
 
     # Convert child Hash and Array elements into ConfigElements.
-    @value = 
+    @value =
       if value.kind_of?(Hash)
         result = {}
 
         value.each do |hash_key, hash_value|
-        	result[hash_key] = ConfigElement.new("#{id}/#{hash_key}", hash_value, config_file)
-	      end
+          result[hash_key] = ConfigElement.new("#{id}/#{hash_key}", hash_value, config_file)
+        end
 
         result
       elsif value.kind_of?(Array)
         result = []
 
         value.each_with_index do |array_value, index|
-        	result << ConfigElement.new("#{id} (index #{index})", array_value, config_file)
-	      end
+          result << ConfigElement.new("#{id} (index #{index})", array_value, config_file)
+        end
 
         result
       else
@@ -148,7 +148,7 @@ class ConfigElement
     @value[key]
   end
 
-  # If the element has child ConfigElements, then return the value (not the element) of the child for 
+  # If the element has child ConfigElements, then return the value (not the element) of the child for
   # the given key.
   # Return 'nil' if the child isn't present.
   # Raises a BadConfigDataFormatException if this element has no children.
@@ -171,27 +171,25 @@ class ConfigFile
 
   # file: A stream or the filename of the config file
   # file_description: If a filename was not given for 'file', then this parameter must describe
-  #		the source of the config data.
+  #    the source of the config data.
   def initialize(file, file_description=nil)
-    
-    @io = 
-      if file.is_a?(String)
-        @filename = file
-        
-        if !File.exists?(@filename)
-          raise ConfigFileMissingException.new(@filename)
-        end
-        
-        if !File.readable?(@filename)
-          raise ConfigFileUnreadableException.new(@filename)
-        end
+    @io = if file.is_a?(String)
+      @filename = file
 
-        File.new(@filename)
-      else
-        raise "file_description must be provided if not supplying a filename." if file_description.nil?
-        @filename = file_description
-        file
+      if !File.exists?(@filename)
+        raise ConfigFileMissingException.new(@filename)
       end
+
+      if !File.readable?(@filename)
+        raise ConfigFileUnreadableException.new(@filename)
+      end
+
+      File.new(@filename)
+    else
+      raise "file_description must be provided if not supplying a filename." if file_description.nil?
+      @filename = file_description
+      file
+    end
 
     yaml = @io.read
 
@@ -199,7 +197,7 @@ class ConfigFile
 
     # Convert tabs to spaces so there's one less thing for users to get wrong.
     yaml.gsub!("\t", '    ')
-    
+
     config_hash = YAML.load(yaml)
 
     # This will be true in the case of an empty file.
@@ -208,7 +206,7 @@ class ConfigFile
     end
 
     raise BadConfigDataFormatException.new("The config file definition must result in a hash, but the type is '#{config_hash.class}'", self) if !config_hash.kind_of?(Hash)
-    
+
     @values = {}
 
     config_hash.each do |element_id, value|
@@ -243,7 +241,7 @@ class ConfigFileSet
   def add(config_file)
     @config_files.insert(0, config_file)
   end
-  
+
   def filenames
     @config_files.collect{ |config_file| config_file.filename }
   end
@@ -265,7 +263,7 @@ class ConfigFileSet
     end
   end
 
-  # Returns a ConfigElement instance for the given element id, or nil if no element with that id 
+  # Returns a ConfigElement instance for the given element id, or nil if no element with that id
   # exists.
   def element(element_id)
     @config_files.each do |config_file|
@@ -273,7 +271,7 @@ class ConfigFileSet
         return config_file[element_id]
       end
     end
-    
+
     nil
   end
 
@@ -294,7 +292,7 @@ class ConfigFileSet
     if !has_element?(element_id)
       raise MissingConfigDataException.new(element_id)
     end
-    
+
     element(element_id)
   end
 

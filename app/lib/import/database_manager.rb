@@ -19,7 +19,6 @@ require './lib/churn_db'
 require 'open3.rb'
 
 class DatabaseManager
-
   def db
     @db
   end

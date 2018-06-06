@@ -21,10 +21,10 @@ require 'csv'
 require './lib/settings.rb'
 
 class ChurnPresenter_Tables
-  attr_accessor :tables
-
   include Enumerable
   include Settings
+
+  attr_accessor :tables
 
   def initialize(app, request)
     @app = app
@@ -195,7 +195,6 @@ class ChurnPresenter_Table
   end
 
   def display_footer(column_name, total)
-
     if !no_total.include?(column_name)
       if can_detail_cell?(column_name, total)
         content = "<a href=\"#{build_url(drill_down_footer(column_name))}\">#{total}</a>"
@@ -220,7 +219,6 @@ class ChurnPresenter_Table
   def tooltips
     tips.reject{ |k,v| !@columns.include?(k)}
   end
-
 
   # Wrappers
   def [](index)
@@ -277,20 +275,15 @@ class ChurnPresenter_Table
 
   private
   def drill_down_footer(column_name)
-    {
-      'column' => column_name
-    }
+    { 'column' => column_name }
   end
 
   def drill_down_interval(row)
-    drill_down_header(row, @app)
-      .merge!(
-        {
-          'period' => 'custom',
-          'startDate' => row['period_start'],
-          'endDate' => row['period_end']
-        }
-      )
+    drill_down_header(row, @app).merge!({
+      'period' => 'custom',
+      'startDate' => row['period_start'],
+      'endDate' => row['period_end']
+    })
   end
 
   def can_detail_cell?(column_name, value)
@@ -312,5 +305,4 @@ class ChurnPresenter_Table
       a.to_i + b.to_i
     end
   end
-
 end

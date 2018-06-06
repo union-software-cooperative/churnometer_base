@@ -1,7 +1,7 @@
 <% if !@flash.nil? %>
-    <div class="flash">
-      <%= @flash %>
-    </div>
+  <div class="flash">
+    <%= @flash %>
+  </div>
 <% end %>
 
 <div class="container">
@@ -20,56 +20,48 @@
 <section id="data" class="ui-widget-content">
 
 <% if @model.importing? %>
-  
   <%= @model.import_status %>
-  
+
   <script>
     $(document).ready(function() {
       setTimeout("location.reload()", 10000);
     });
   </script>
-
 <% else %>
-	
   <%= @model.staging_status %>
   <form method="post" enctype="multipart/form-data">
     <input type="file" name="myfile">
     <br>
     <input type="submit" value="Upload">
   </form>
-  
+
   <form method="post">
     <input type="submit" name="action" value="reset">
   </form>
-  
+
   <!-- This is exceptionally dangerous (rewrites database without confirmation)
   <form method="post">
     <input type="submit" name="action" value="rebuild">
   </form>
   -->
-  
+
   <form method="post">
     <input type="submit" name="action" value="diags">
   </form>
-  
+
   <form method="post">
     <input type="submit" name="action" value="empty_cache">
   </form>
-  
+
   <% if @model.import_ready? %>
     <form method="post">
       <input type="text" name="import_date" value="<%=Time.now%>">
       <input type="submit" name="action" value="import">
     </form>
   <% end %>
-  
+
   <br/>
 
   <%= @model.import_history %>
-
 <% end %>
-
-  
-
 </section>
-

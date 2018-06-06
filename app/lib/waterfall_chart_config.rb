@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -50,6 +50,7 @@ class WaterfallChartConfig
     result.loss_label = config_element.ensure_hashkey('loss_label').ensure_kindof(String, NilClass)
     result.other_gain_label = config_element.ensure_hashkey('other_gain_label').ensure_kindof(String, NilClass)
     result.other_loss_label = config_element.ensure_hashkey('other_loss_label').ensure_kindof(String, NilClass)
+
     result
   end
 end

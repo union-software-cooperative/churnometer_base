@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -48,13 +48,13 @@ class ServiceAutocomplete
     JSON[result]
   end
 
-protected
+  protected
   def db_hash_to_json_hash(db_row_hash)
     result = {}
 
     json_to_db_column_mapping().each do |json_column, db_column|
       db_value = db_row_hash[db_column]
-      
+
       if db_value.nil?
         raise "Database column '#{db_column}' for json result column '#{json_column}' wasn't returned in the query result."
       end
@@ -68,4 +68,3 @@ protected
   def json_to_db_column_mapping
   end
 end
-

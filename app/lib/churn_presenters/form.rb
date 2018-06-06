@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -18,7 +18,6 @@
 require './lib/settings.rb'
 
 class ChurnPresenter_Form
-  
   include ChurnPresenter_Helpers
   include Settings
 
@@ -27,15 +26,15 @@ class ChurnPresenter_Form
     @request = request
     @group_dimensions = group_dimensions
   end
-  
+
   def [](index)
     @request.params[index]
   end
-  
+
   def filters
     if @filters.nil?
       @filters = Array.new
-      
+
       f1 = @request.parsed_params[Filter].reject{ |column_name, id | id.empty? }
       f1 = f1.reject{ |column_name, id | column_name == 'status' }
 
@@ -55,12 +54,12 @@ class ChurnPresenter_Form
             end
           end
         end
-      end 
+      end
     end
-    
+
     @filters
   end
-  
+
   def row_header_id_list
     @request.data.group_by{ |row| row['row_header1_id'] }.collect{ | rh | rh[0] }.join(",")
   end
@@ -69,24 +68,24 @@ class ChurnPresenter_Form
     output = "<select name='#{control_name}' id='#{control_id}'>"
 
     @group_dimensions.sort_by { | d | d.name }.each do |dimension|
-      attributes = 
+      attributes =
         if dimension.id == selected_group_id
           "selected='selected'"
         else
           ""
         end
-      
+
       output << "<option value='#{h dimension.id}' #{attributes}>#{h dimension.name}</option>"
     end
 
     output << "</select>"
     output
   end
-  
+
   def output_period_selector(selected_period_id)
     selected = {}
     selected[selected_period_id] = "selected='selected'"
-    
+
     output = "<select id='period' name='period' onchange='period_changed()'>"
     output << <<-HTML
       <option value='today' #{selected['today']}>Today</option>
@@ -99,23 +98,21 @@ class ChurnPresenter_Form
       <option value='last_year' #{selected['last_year']}>Last Year</option>
       <option value='custom' #{selected['custom']}>Custom...</option>
     HTML
-    
+
     output << "</select>"
     output
   end
 
   def output_filter_group_search_term_editor
-    <<-EOS
-			<input type=text id=search_term_add_text onfocus='$("#search_term_add_text").autocomplete("search");'/>
-			<input type=hidden id=search_term_add_id_hidden />
-		  <input type=hidden id=search_term_filter_count_hidden value=#{filters.count} />
+    <<~EOS
+      <input type=text id=search_term_add_text onfocus='$("#search_term_add_text").autocomplete("search");'/>
+      <input type=hidden id=search_term_add_id_hidden />
+      <input type=hidden id=search_term_filter_count_hidden value=#{filters.count} />
     EOS
   end
 
   private
-
   def filter_value(value)
     value.sub('!','').sub('-','')
   end
-  
 end

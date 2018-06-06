@@ -18,7 +18,6 @@
 require './lib/churn_db'
 
 class Importer
-
   def db
     @db ||= Db.new(@app)
   end
@@ -28,7 +27,6 @@ class Importer
   end
 
   def import(date)
-
     raise "Aleady importing!" if self.state == 'running'
 
     self.progress="Starting import for '#{date}'..."
@@ -36,11 +34,11 @@ class Importer
     self.state='running' # The background loop could begin, any instant after it is set
     Thread.new do
       begin
-	@importing = true
-	go
+        @importing = true
+        go
         self.state = 'idle'
         @importing = false
-	self.close_db()
+        self.close_db()
       rescue StandardError => err
         self.progress += ". An error occurred - " + err.message
         self.state = 'broken'
@@ -94,7 +92,7 @@ class Importer
     db.async_ex("select insertmemberfact('#{self.import_date}')")
     db.async_ex("vacuum full analyse memberfact")
     db.async_ex("vacuum full analyse membersourceprev")
-    
+
     self.progress = "Step 2. Inserting new transactions"
     db.async_ex("select inserttransactionfact('#{self.import_date}')")
     db.async_ex("vacuum full analyse transactionfact")

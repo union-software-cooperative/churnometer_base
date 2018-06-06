@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -43,7 +43,7 @@ class UserDataTables
 end
 
 # Defines how data returned from database queries should be presented to the user in table form.
-# Different UserRole instances may make use of different data table definitions to include or omit 
+# Different UserRole instances may make use of different data table definitions to include or omit
 # query result columns for the roles they define, for example, showing financial information only to
 # the 'leader' role.
 class UserDataTable
@@ -56,8 +56,8 @@ class UserDataTable
   # The description of the data table as displayed to the user. Currently displayed above the table in the
   # Churnometer main interface.
   attr_reader :description
-  
-  # A list of column names that should be applied to the returned data. The valid column names are 
+
+  # A list of column names that should be applied to the returned data. The valid column names are
   # determined by the query that this UserDataTable is expected to apply to (summary or detail query.)
   attr_reader :column_names
 
@@ -72,7 +72,7 @@ class UserDataTable
       array_element.ensure_kindof(String)
       array_element.value
     end
-    
+
     description = ""
     description = config_element['description'].value unless config_element['description'].nil?
 

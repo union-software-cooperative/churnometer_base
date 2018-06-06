@@ -1,77 +1,78 @@
 <h2 class="print_only">Graph</h2>
 <div id="chart">
-	ERROR: LINE CHART SHOULD REPLACE THIS DIV
+  ERROR: LINE CHART SHOULD REPLACE THIS DIV
 </div>
 <script type='text/javascript'>
 
-	var chart;
-	function setupchart() {
-	   chart = new Highcharts.Chart({
-	      chart: {
-	         renderTo: 'chart',
-	         defaultSeriesType: 'line',
-	         marginRight: 130,
-	         marginBottom: 130,
-			 height: 500
-	      },
-	      title: {
-	         text: 'Net Paying',
-	         x: -20 //center
-	      },
-	      subtitle: {
-	         text: 'Gain and Decline',
-	         x: -20
-	      },
-	      xAxis: {
-	         categories: [
-				<%= model.lineCategories %>
-			] ,
-			labels: {
-			            rotation: -45,
-			            align: 'right',
-			         }
-	      },
-	      yAxis: {
-	         title: {
-	            text: "<%= model.lineHeader %>"
-	         },
-	         plotLines: [{
-	            value: 0,
-	            width: 1,
-	            color: '#808080'
-	         }]
-	      },
-	
-		plotOptions: {
-	         series: {
-	            cursor: 'pointer',
-	            point: {
-	               events: {
-	                  click: function() {
-					  	window.location = this.id;
-	                  }
-	               }
-	            }
-	         }},
-	      tooltip: {
-	         formatter: function() {
-	                   return '<b>'+ this.series.name +'</b><br/>'+
-	               this.x +': '+ this.y;
-	         }
-	      },
-	      legend: {
-	         layout: 'vertical',
-	         align: 'right',
-	         verticalAlign: 'top',
-	         x: -10,
-	         y: 100,
-	         borderWidth: 0
-	      },
-		  series: [
-			<%= model.lineSeries%>
-			]
-	   });
-	};
+  var chart;
+  function setupchart() {
+    chart = new Highcharts.Chart({
+      chart: {
+        renderTo: 'chart',
+        defaultSeriesType: 'line',
+        marginRight: 130,
+        marginBottom: 130,
+        height: 500
+      },
+      title: {
+        text: 'Net Paying',
+        x: -20 //center
+      },
+      subtitle: {
+        text: 'Gain and Decline',
+        x: -20
+      },
+      xAxis: {
+        categories: [
+          <%= model.lineCategories %>
+        ] ,
+        labels: {
+          rotation: -45,
+          align: 'right',
+        }
+      },
+      yAxis: {
+        title: {
+          text: "<%= model.lineHeader %>"
+        },
+        plotLines: [{
+          value: 0,
+          width: 1,
+          color: '#808080'
+        }]
+      },
 
-	setupchart();
+      plotOptions: {
+        series: {
+          cursor: 'pointer',
+          point: {
+            events: {
+              click: function() {
+                window.location = this.id;
+              }
+            }
+          }
+        }
+      },
+      tooltip: {
+        formatter: function() {
+          return '<b>'+ this.series.name +'</b><br/>'+
+          this.x +': '+ this.y;
+        }
+      },
+      legend: {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'top',
+        x: -10,
+        y: 100,
+        borderWidth: 0
+      },
+      series: [
+        <%= model.lineSeries%>
+      ]
+    });
+  };
+
+  setupchart();
 </script>

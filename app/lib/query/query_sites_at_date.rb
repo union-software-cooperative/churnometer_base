@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -42,35 +42,34 @@ class QuerySitesAtDate < QueryFilter
     db = @churn_db.db
 
     sql = <<-EOS
-	with last_change as
-	(
-		-- get the last change prior to the sample date for each member
-		-- this tell us the state of each member at the sample date
-		select
-			max(changeid) changeid
-		from
-			#{db.quote_db(@source)}
-		where
-			changedate < #{db.sql_date(@date)}
-		group by 
-			memberid
-	)
+      with last_change as
+      (
+        -- get the last change prior to the sample date for each member
+        -- this tell us the state of each member at the sample date
+        select
+          max(changeid) changeid
+        from
+          #{db.quote_db(@source)}
+        where
+          changedate < #{db.sql_date(@date)}
+        group by
+          memberid
+      )
 
-	, selections as
-	(
-		-- finds all changes matching user criteria
-		select 
-			* 
-		from
-			#{db.quote_db(@source)}
-		where
-			net = 1
-			and changeid in (select changeid from last_change)
-			#{sql_for_filter_terms(@filter_terms, true)}
- 	)
-	select distinct #{@work_site_dimension.column_base_name} from selections;
-
-EOS
+      , selections as
+      (
+        -- finds all changes matching user criteria
+        select
+          *
+        from
+          #{db.quote_db(@source)}
+        where
+          net = 1
+          and changeid in (select changeid from last_change)
+          #{sql_for_filter_terms(@filter_terms, true)}
+       )
+      select distinct #{@work_site_dimension.column_base_name} from selections;
+    EOS
 
     sql
   end

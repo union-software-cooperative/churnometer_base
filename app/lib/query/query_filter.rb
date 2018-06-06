@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@ class QueryFilter < QueryMemberfact
 protected
   attr_reader :filter_terms
 
-  # Generates a string of blocks of SQL text, expressing WHERE clauses that can be used to filter 
+  # Generates a string of blocks of SQL text, expressing WHERE clauses that can be used to filter
   # Churnometer data.
   # The clauses are connected with 'and' terms.
   #
@@ -42,34 +42,34 @@ protected
     filter_terms.terms.each do |term|
       if !term.values.empty?
         # Transform 'unassigned' term values to the empty string.
-        values = 
+        values =
           term.values.collect do |value|
-          	if value == 'unassigned'
+            if value == 'unassigned'
               ''
             else
               value
             end
-        	end
+          end
 
         #result = "coalesce(#{db().quote_db(term.db_column)},'') = any (#{db().sql_array(values, 'varchar')})"
         result = "#{db().quote_db(term.db_column)} = any (#{db().sql_array(values, 'varchar')})"
-        
+
         term_sqls << result
       end
 
       if !term.exclude_values.empty?
         # Transform 'unassigned' term values to the empty string.
-        values = 
+        values =
           term.exclude_values.collect do |value|
-          	if value == 'unassigned'
+            if value == 'unassigned'
               ''
             else
               value
             end
-        	end
+          end
 
         result = "not #{db().quote_db(term.db_column)} = any (#{db().sql_array(values, 'varchar')})"
-        
+
         term_sqls << result
       end
     end
@@ -81,15 +81,15 @@ protected
     else
       result_string
     end
-	end
+  end
 
   # Returns filter terms modified as appropriate given the supplied site constraint.
   # site_constraint should be empty, 'start' or 'end'.
   # start_date, end_date are the start and end date under consideration for the current query.
   def modified_filter_for_site_constraint(
-     filter_terms, 
-     site_constraint, 
-     start_date, 
+     filter_terms,
+     site_constraint,
+     start_date,
      end_date)
 
     if site_constraint.empty?
@@ -100,13 +100,13 @@ protected
       # return the results for sites found at either the end of the beginning of this selection
       # this is a way of ruling out the effect of transfers, to determine what the targets should be
       # for sites as currently held (end_date) or held at the start (start_date)
-      dte = 
+      dte =
         if site_constraint == 'start'
           start_date
         else
           end_date + 1
         end
-      
+
       # override the filter to be sites as at the start or end
       work_site_dimension = @app.work_site_dimension
 
@@ -116,14 +116,14 @@ protected
       if site_results.num_tuples == 0
         modified_filter.append(work_site_dimension, 'none', false)
       else
-        site_results.each do |record| 
+        site_results.each do |record|
           modified_filter.append(work_site_dimension, record[work_site_dimension.column_base_name], false)
         end
       end
 
       # keep original status filter
       modified_filter.set_term(filter_terms()['status'])
-      
+
       modified_filter
     end
   end
@@ -157,7 +157,7 @@ class FilterTerm
 
   # The database column that the filter refers to.
   def db_column
-    if @db_column_override 
+    if @db_column_override
       @db_column_override
     else
       @dimension.column_base_name
@@ -208,7 +208,7 @@ class FilterTerms
     @undefined_term ||= FilterTerm.new(undefined_dimension()).freeze
   end
 
-  # Returns a FilterTerm instance for the given dimension, or nil if a term for the dimension 
+  # Returns a FilterTerm instance for the given dimension, or nil if a term for the dimension
   # isn't available.
   # For convenience, a dimension id can be specified instead of a Dimension instance.
   def [] (dimension_or_string)
@@ -274,7 +274,7 @@ class FilterTerms
   def _from_request_params(parameter_hash, locks, dimensions)
     parameter_hash.each do |key, values|
       values = Array(values)
-      
+
       values.each do |value|
         # Skip empty strings.
         next if value == ''
@@ -288,14 +288,14 @@ class FilterTerms
           value_parse = /^([-!]?)(.+)/.match(value)
 
           raise "Error parsing query string value: #{value}" if value_parse.nil?
-          
+
           value_modifier = value_parse[1]
-          
+
           # values starting with '-' should be ignored.
           next if value_modifier == '-'
-          
+
           is_exclude = value_modifier == '!'
-          
+
           value = value_parse[2]
         else
           is_exclude = false
@@ -304,16 +304,16 @@ class FilterTerms
         dimension = dimensions.dimension_for_id(key)
 
         raise "Unknown dimension '#{key}' given for filter term." if dimension.nil?
-        
+
         append(dimension, value, is_exclude)
       end
-      
+
       locks.each do | key, csv|
         csv.split(',').each do | value |
           dimension = dimensions.dimension_for_id(key)
-  
+
           raise "Unknown dimension '#{key}' given for filter term." if dimension.nil?
-          
+
           append(dimension, value, false)
         end
       end

@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ class QueryDetailBase < QueryFilter
     @filter_column = filter_column
   end
 
-  # Returns a map of filter column names to sql 'where' clause text, defining the clause to be used 
+  # Returns a map of filter column names to sql 'where' clause text, defining the clause to be used
   # when the filter column is supplied to the object.
   def self.filter_column_to_where_clause
     {}

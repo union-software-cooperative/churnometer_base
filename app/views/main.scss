@@ -33,8 +33,8 @@ $tab-inactive-fg: #1C94C4;
   label {
     display:block;
     padding:0.5em;
-	font-size:120%;
-	color:#ffd;
+  font-size:120%;
+  color:#ffd;
   }
 
   ul {
@@ -46,18 +46,18 @@ $tab-inactive-fg: #1C94C4;
   }
 
   input[type=text], select {
-	color: #333;
-	padding: 0.5em;
-	border-radius: 5px;
-	-webkit-appearance:none;
-	background:ivory;
-	width: 120px;
+  color: #333;
+  padding: 0.5em;
+  border-radius: 5px;
+  -webkit-appearance:none;
+  background:ivory;
+  width: 120px;
     border-color: #666;
   }
 
   td {
-	color:#ffe !important;
-	font-weight: bold !important;
+  color:#ffe !important;
+  font-weight: bold !important;
   }
 
 }
@@ -117,22 +117,22 @@ $tab-inactive-fg: #1C94C4;
 table.tablesorter {
 }
 table.tablesorter thead tr th  {
-	background-color: #e6EEEE;
-	border: 1px solid #FFF;
-	font-size: 8pt;
-	padding: 4px;
+  background-color: #e6EEEE;
+  border: 1px solid #FFF;
+  font-size: 8pt;
+  padding: 4px;
 }
 table.tablesorter thead tr .header {
-	background-image: url(/images/bg.gif);
-	background-repeat: no-repeat;
-	background-position: center right;
-	cursor: pointer;
+  background-image: url(/images/bg.gif);
+  background-repeat: no-repeat;
+  background-position: center right;
+  cursor: pointer;
 }
 table.tablesorter thead tr .headerSortUp {
-	background-image: url(/images/asc.gif);
+  background-image: url(/images/asc.gif);
 }
 table.tablesorter thead tr .headerSortDown {
-	background-image: url(/images/desc.gif);
+  background-image: url(/images/desc.gif);
 }
 table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
 background-color: #8dbdd8;
@@ -140,44 +140,44 @@ background-color: #8dbdd8;
 
 /* tooltip styling */
 .tooltip {
-	display:none;
-	#background:url(/images/tooltip/black_arrow.png);
-	font-size:12px;
-	width:200px;
-	padding:25px;
-	color:#aaa;
-	background-color:#222;
-	padding:10px;
-	font-size:12px;
-	-moz-border-radius-bottomright: 50px 25px;
-	border-bottom-right-radius: 50px 25px;
+  display:none;
+  #background:url(/images/tooltip/black_arrow.png);
+  font-size:12px;
+  width:200px;
+  padding:25px;
+  color:#aaa;
+  background-color:#222;
+  padding:10px;
+  font-size:12px;
+  -moz-border-radius-bottomright: 50px 25px;
+  border-bottom-right-radius: 50px 25px;
 
 }
 
 input.selections {
-	display:inline;
+  display:inline;
 }
 
 body {
-	background-color: $bg;
+  background-color: $bg;
 }
 
 h1, h2, h3, h4 {
-	color: #ffd;
-	padding-left: 18px;
+  color: #ffd;
+  padding-left: 18px;
 }
 
 h1 a {
-	color: #ffd;
-	text-decoration:none;
-	padding-left: 18px;
+  color: #ffd;
+  text-decoration:none;
+  padding-left: 18px;
 
 }
 
 h1 a:hover {
-		color: $highlight-bg !important;
-		#text-decoration:underline !important;
-	}
+    color: $highlight-bg !important;
+    #text-decoration:underline !important;
+  }
 
 .menu {
 
@@ -197,7 +197,7 @@ h1 a:hover {
     background-position: right;
     padding-right: 32px;
     padding-left: 18px;
-	  display: block;
+    display: block;
     line-height: 80px;
     text-decoration: none;
     font-size: 21px;
@@ -221,8 +221,8 @@ h1 a:hover {
   border-top-width: 1px !important;
   border-left-width: 1px !important;
   border-right-width: 1px !important;
-	background:$tab-inactive-bg !important;
-	a {
+  background:$tab-inactive-bg !important;
+  a {
     color: $tab-inactive-fg !important;
   }
 }
@@ -246,20 +246,20 @@ h1 a:hover {
 }
 
 .ui-widget-header {
-	background:$highlight-bg;
-	border:#ffe;
+  background:$highlight-bg;
+  border:#ffe;
 }
 
 .ui-widget-content {
-	background: $tab-active-bg;
-	color: #ffe;
+  background: $tab-active-bg;
+  color: #ffe;
 
-	tbody tr:nth-child(odd) td, tbody tr.even td{
-		background: #ffe;
-	}
+  tbody tr:nth-child(odd) td, tbody tr.even td{
+    background: #ffe;
+  }
 
-	a {
-	  color: #ffe;
+  a {
+    color: #ffe;
   }
 }
 
@@ -269,27 +269,27 @@ h1 a:hover {
 
 
 table a {
-	color: #333 !important ;
+  color: #333 !important ;
 
-	:hover {
-		color: light-blue !important;
-	}
+  :hover {
+    color: light-blue !important;
+  }
 
 }
 
 td.filters{
-	background: transparent !important;
+  background: transparent !important;
 }
 
 
 tfoot {
-	background: #ffe !important;
+  background: #ffe !important;
 }
 
 #card_target {
-	color: #ffe;
-	font-weight: strong;
-	font-size:140%;
+  color: #ffe;
+  font-weight: strong;
+  font-size:140%;
 }
 
 #error-page {
@@ -321,10 +321,10 @@ pre {
   }
 
 .bold_col {
-	color:red !important;
-	a {
-		color: red !important;
-	}
+  color:red !important;
+  a {
+    color: red !important;
+  }
 }
 
 #footer {

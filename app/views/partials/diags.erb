@@ -1,43 +1,40 @@
- <a class="printer screen_only" href="javascript:print_diagnostics('diags');"><img src="images/printer32.png" title="print diagnostics" alt="print diagnostics"/></a>
- <h2 class="print_only">Diagnostics</h2>
- 
- 
+<a class="printer screen_only" href="javascript:print_diagnostics('diags');"><img src="images/printer32.png" title="print diagnostics" alt="print diagnostics"/></a>
+<h2 class="print_only">Diagnostics</h2>
+
 <h3>PROJECT STATUS</h3>
- Report bugs and suggest improvements
- <ul>
-   <li>
-       <a href="mailto:lukerohde@freechange.com.au?subject=Churnometer Help" target="_top">lukerohde@freechange.com.au</a>
-   </li>
-  </ul>
-  
- <h3 class="screen_only">Data</h3>
- <ul>
-<!-- TODO fix export for entire sheet -->
-<li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'summary'}) %>" class="button">Export All Summary Data</a></li>
-<li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'detail'}) %>" class="button">Export All Member Details</a></li>
-<li><%= model.rows %> rows </li>
- </ul>
- 
+Report bugs and suggest improvements
+<ul>
+  <li>
+    <a href="mailto:lukerohde@freechange.com.au?subject=Churnometer Help" target="_top">lukerohde@freechange.com.au</a>
+  </li>
+</ul>
 
-  
- <h3>LOGGED ON AS</h3>
- <pre><%= h model.role.id %></pre>
+<h3 class="screen_only">Data</h3>
+<ul>
+  <!-- TODO fix export for entire sheet -->
+  <li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'summary'}) %>" class="button">Export All Summary Data</a></li>
+  <li class="nav screen_only"><a href="/export_all<%= model.build_url({'export' => 'detail'}) %>" class="button">Export All Member Details</a></li>
+  <li><%= model.rows %> rows </li>
+</ul>
 
- <h3>FILTER</h3>
- <pre><%= h model.filter %></pre>
- <pre><%= h model.filter_xml %></pre>
+<h3>LOGGED ON AS</h3>
+<pre><%= h model.role.id %></pre>
 
-  <h3>URL</h3>
- <pre><%=h model.url %></pre>
+<h3>FILTER</h3>
+<pre><%= h model.filter %></pre>
+<pre><%= h model.filter_xml %></pre>
 
- <h3>CACHE</h3>
- <pre><%= h model.cache_status %></pre>
+<h3>URL</h3>
+<pre><%=h model.url %></pre>
 
- <h3>SQL</h3>
- <pre><%= h model.sql %></pre>
+<h3>CACHE</h3>
+<pre><%= h model.cache_status %></pre>
 
- <h3>Transfers</h3>
- Warning threshold = <pre><%= model.transfer_math %></pre>
+<h3>SQL</h3>
+<pre><%= h model.sql %></pre>
+
+<h3>Transfers</h3>
+Warning threshold = <pre><%= model.transfer_math %></pre>
 
 <!--
  <h3>MONITORING</h3>
@@ -47,11 +44,11 @@
 -->
 
 <script type="text/javascript">
-	function print_diagnostics(index)
-	{
-	    $("#tab-diags").removeClass("screen_only") ;
-	    print_tab(index);
-	    // remarked so old firefox (union machines) can print diags 
-		//$("#tab-diags").addClass("screen_only") ;
-	}
+  function print_diagnostics(index)
+  {
+      $("#tab-diags").removeClass("screen_only") ;
+      print_tab(index);
+      // remarked so old firefox (union machines) can print diags
+    //$("#tab-diags").addClass("screen_only") ;
+  }
 </script>

@@ -148,9 +148,10 @@ class Db
 
 protected
   def ensure_app_state_table
-    sql = <<SQL
-create table if not exists appstate (key varchar, value varchar)
-SQL
+    sql = <<~SQL
+      create table if not exists appstate (key varchar, value varchar)
+    SQL
+
     ex(sql)
   end
 end
@@ -222,7 +223,7 @@ class ChurnDB
 
       @sql = query_class.new(@app, self, groupby_dimension, start_date, end_date, transactions, site_constraint, filter_terms).query_string
     else
-      <<-SQL
+      <<~SQL
         select *
         from summary(
           '#{fact_table()}',
@@ -263,7 +264,7 @@ class ChurnDB
           #{transactions.to_s},
           '#{site_constraint}',
           '#{filter_xml}'
-          )
+        )
       SQL
     end
   end
@@ -315,17 +316,17 @@ class ChurnDB
 
           QueryDetailStaticFriendly.new(@app, self, groupby_dimension, filter_column, member_date, site_date_for_query, filter_terms).query_string
         else
-          <<-SQL
-	        select *
-  	      from detail_static_friendly(
-    	      '#{fact_table()}',
-      	    '#{header1}',
-        	  '#{filter_column}',
-          	'#{member_date}',
-          	#{site_date_for_query},
-          	'#{filter_xml}'
-         	 )
-      	SQL
+          <<~SQL
+            select *
+            from detail_static_friendly(
+              '#{fact_table()}',
+              '#{header1}',
+              '#{filter_column}',
+              '#{member_date}',
+              #{site_date_for_query},
+              '#{filter_xml}'
+            )
+          SQL
         end
       else
         if @app.use_new_query_generation_method?()
@@ -336,7 +337,7 @@ class ChurnDB
 
           QueryDetailFriendly.new(@app, self, groupby_dimension, start_date, end_date, transactions, site_constraint, filter_column, filter_terms).query_string
         else
-          <<-SQL
+          <<~SQL
             select *
             from detail_friendly(
               '#{fact_table()}',
@@ -347,7 +348,7 @@ class ChurnDB
               #{transactions.to_s},
               '#{site_constraint}',
               '#{filter_xml}'
-              )
+            )
           SQL
         end
       end
@@ -362,12 +363,12 @@ class ChurnDB
 
   def transfer_sql(start_date, end_date, site_constraint, filter_xml, filter_terms = nil)
 
-    sql = <<-SQL
+    sql = <<~SQL
       select
         changedate
         , sum(a1p_other_gain + paying_other_gain) transfer_in
         , sum(-a1p_other_loss - paying_other_loss) transfer_out
-        from
+      from
     SQL
 
     sql << if @app.use_new_query_generation_method?()
@@ -378,30 +379,30 @@ class ChurnDB
       detail_friendly_sql = QueryDetailFriendly.new(@app, self, groupby_dimension, start_date, end_date, false, site_constraint, '', filter_terms).query_string
       "(#{detail_friendly_sql}) as detail_friendly"
     else
-      <<-SQL
-          detail_friendly(
-            '#{fact_table()}',
-            'status',
-            '',
-            '#{start_date.strftime(DateFormatDB)}',
-            '#{(end_date+1).strftime(DateFormatDB)}',
-            false,
-            '#{site_constraint}',
-            '#{filter_xml}'
-          )
+      <<~SQL
+        detail_friendly(
+          '#{fact_table()}',
+          'status',
+          '',
+          '#{start_date.strftime(DateFormatDB)}',
+          '#{(end_date+1).strftime(DateFormatDB)}',
+          false,
+          '#{site_constraint}',
+          '#{filter_xml}'
+        )
       SQL
     end
 
-    sql << <<-SQL
-        where
-          paying_other_gain <> 0
-          or paying_other_loss <> 0
-          or a1p_other_gain <> 0
-          or a1p_other_loss <> 0
-        group by
-          changedate
-        order by
-          changedate
+    sql << <<~SQL
+      where
+        paying_other_gain <> 0
+        or paying_other_loss <> 0
+        or a1p_other_gain <> 0
+        or a1p_other_loss <> 0
+      group by
+        changedate
+      order by
+        changedate
     SQL
 
     sql
@@ -417,7 +418,7 @@ class ChurnDB
       group_by = @app.groupby_default_dimension.id
     end
 
-    <<-SQL
+    <<~SQL
       select startdate getdimstart from dimstart where dimension = '#{group_by}'
     SQL
   end
@@ -427,9 +428,9 @@ class ChurnDB
   end
 
   def get_display_text_sql(column, id)
-     <<-SQL
-       select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
-     SQL
+    <<~SQL
+      select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
+    SQL
   end
 
   def get_display_text(dimension, id)
@@ -464,10 +465,10 @@ class ChurnDB
       'paying_end_count',
       'paying_start_count',
       'waiver_start_count',
-   	  'waiver_end_count',
+       'waiver_end_count',
       'member_start_count',
-   	  'member_end_count',
-   	  'nonpaying_start_count',
+       'member_end_count',
+       'nonpaying_start_count',
       'nonpaying_end_count',
       'stopped_start_count',
       'stopped_end_count',
@@ -482,7 +483,6 @@ end
 
 
 class ChurnDBDiskCache < ChurnDB
-
   @@cache_file = 'tmp/cache.Marshal'
   @@cache_status = "Not in use."
   @@mtime = Time.parse('1900-01-01')
@@ -528,48 +528,47 @@ class ChurnDBDiskCache < ChurnDB
   end
 
   def ex(sql)
+    filename = ChurnDBDiskCache.cache[sql]
 
-     filename = ChurnDBDiskCache.cache[sql]
+    if filename.nil? || !File.exists?(filename)
+      @cache_hit = false
+      ChurnDBDiskCache.cache_status += 'cache miss. '
 
-     if filename.nil? || !File.exists?(filename)
-       @cache_hit = false
-       ChurnDBDiskCache.cache_status += 'cache miss. '
+      # load data from database
+      data = db.ex(sql)
 
-       # load data from database
-       data = db.ex(sql)
+      # convert data into serializable form
+      result = Array.new
+      data.each do |r|
+        result << r
+      end
 
-       # convert data into serializable form
-       result = Array.new
-       data.each do |r|
-         result << r
-       end
+      ChurnDBDiskCache.update_cache(sql, result)
+    else
+      @cache_hit = true
+      ChurnDBDiskCache.cache_status += "cache hit (#{filename}). "
 
-       ChurnDBDiskCache.update_cache(sql, result)
-     else
-       @cache_hit = true
-       ChurnDBDiskCache.cache_status += "cache hit (#{filename}). "
+      # load data from cache file
+      data = ""
+      File.open(filename, 'r') do |f|
+        while line=f.gets
+          data+=line
+        end
+      end
 
-       # load data from cache file
-       data = ""
-       File.open(filename, 'r') do |f|
-         while line=f.gets
-           data+=line
-         end
-       end
+      result = Marshal::load(data)
 
-       result = Marshal::load(data)
+    end
 
-     end
+    # dbeswick: add a 'num_tuples' method to the cache results, so code that relies on the
+    # pgruby interface will continue to work.
+    # tbd: forbid the use of num_tuples, and instead always use length. pgruby result classes should
+    # provide a 'length' reader.
+    def result.num_tuples
+      length()
+    end
 
-     # dbeswick: add a 'num_tuples' method to the cache results, so code that relies on the
-     # pgruby interface will continue to work.
-     # tbd: forbid the use of num_tuples, and instead always use length. pgruby result classes should
-     # provide a 'length' reader.
-     def result.num_tuples
-       length()
-     end
-
-     result
+    result
   end
 
 
@@ -614,26 +613,25 @@ class ChurnDBDiskCache < ChurnDB
     ChurnDBDiskCache.regeneration_status = "inactive - an error occurred: #{err.message}"
   end
 
-private
-
+  private
   def self.load_cache
-      begin
-        data = ""
-        File.open(@@cache_file, 'r') do |f|
-          while line=f.gets
-            data+=line
-          end
-
-          @@mtime = File.mtime(@@cache_file) # set modification time, so we can tell if we need to reload
+    begin
+      data = ""
+      File.open(@@cache_file, 'r') do |f|
+        while line=f.gets
+          data+=line
         end
 
-        @@cache = Marshal::load(data)
-        ChurnDBDiskCache.cache_status += "cache reloaded. "
-      rescue
-        @@cache = Hash.new
-        #throw "failed to load cache"
-        ChurnDBDiskCache.cache_status += "failed to load cache. "
+        @@mtime = File.mtime(@@cache_file) # set modification time, so we can tell if we need to reload
       end
+
+      @@cache = Marshal::load(data)
+      ChurnDBDiskCache.cache_status += "cache reloaded. "
+    rescue
+      @@cache = Hash.new
+      #throw "failed to load cache"
+      ChurnDBDiskCache.cache_status += "failed to load cache. "
+    end
   end
 
   def self.update_cache(sql, result)
@@ -669,7 +667,4 @@ private
       end
     end
   end
-
-
-
 end

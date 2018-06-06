@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -24,13 +24,13 @@ end
 
 class Dimensions2
   include Enumerable
-  
+
   attr_accessor :dimension_count
-  
+
   def initialize
     @dimension_count = 25
   end
-  
+
   def each(&block)
     @dimension_count.times do |i|
       d = Dimension.new
@@ -38,5 +38,4 @@ class Dimensions2
       yield d
     end
   end
-  
 end

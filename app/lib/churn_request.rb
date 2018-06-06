@@ -1,5 +1,5 @@
 #  Churnometer - A dashboard for exploring a membership organisations turn-over/churn
-#  Copyright (C) 2012-2013 Lucas Rohde (freeChange) 
+#  Copyright (C) 2012-2013 Lucas Rohde (freeChange)
 #  lukerohde@gmail.com
 #
 #  Churnometer is free software: you can redistribute it and/or modify
@@ -20,7 +20,6 @@ require './lib/query/query_summary'
 require 'cgi'
 
 class ChurnRequest
-
   attr_reader :url
   attr_reader :params
   attr_reader :warnings
@@ -32,17 +31,17 @@ class ChurnRequest
   attr_reader :xml
   attr_reader :query_filterterms
   attr_reader :interval
-  
+
   include Settings
-  
+
   def db
     @db
   end
- 
+
   def close_db
     @db.close_db()
   end
- 
+
   def initialize(url, query_string, auth, params, app, churndb)
     # interpret request
     @app = app
@@ -51,7 +50,7 @@ class ChurnRequest
     @auth = auth
     @params = query_defaults.rmerge(params)
     @db = churndb
-    
+
     # set private members
     @header1 = @params['group_by'].to_s
     @interval = @params['interval'].to_s
@@ -62,21 +61,21 @@ class ChurnRequest
       @params['startDate'] = period_start(@period).strftime(DateFormatDisplay)
       @params['endDate'] = period_end(@period).strftime(DateFormatDisplay)
     end
-    
+
     @warnings = validate_params(@params)
-        
+
     @start_date = Date.parse(@params['startDate'])
     @end_date = Date.parse(@params['endDate'])
-    
+
     @transactions = auth.role.allow_transactions?
     @site_constraint = @params['site_constraint'].to_s
     @xml = self.class.filter_xml parsed_params()[Filter], locks(@params['lock'])
-    
+
     # load data and public members
     @type = :summary if @filter_column == ''
     @type = :detail if @filter_column != '' or @export_type=='detail'
 
-    @query_filterterms = 
+    @query_filterterms =
       if @app.use_new_query_generation_method?()
         FilterTerms.from_request_params(parsed_params()[Filter], locks(@params['lock']), @app.dimensions)
       else
@@ -86,9 +85,9 @@ class ChurnRequest
     @sql = case @type
     when :summary
       if @interval == 'none'
-        db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)  
+        db.summary_sql(@header1, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)
       else
-        db.summary_running_sql(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)  
+        db.summary_running_sql(@header1, @interval, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)
       end
     when :detail
       db.detail_sql(@header1, @filter_column, @start_date, @end_date, @transactions, @site_constraint, @xml, @query_filterterms)
@@ -96,7 +95,7 @@ class ChurnRequest
       raise "Cannot load data - unknown query type (#{@type.to_s})"
     end
 
-    
+
     @data = db.ex(@sql)
     @warnings += cross_check(@data)
     @cache_hit = db.cache_hit
@@ -113,7 +112,7 @@ class ChurnRequest
     when "last_week"
       Date.today - Date.today.wday - 7
     when "this_month"
-      Date.today - Date.today.mday + 1 
+      Date.today - Date.today.mday + 1
     when "last_month"
       (Date.today - Date.today.mday) - (Date.today - Date.today.mday).mday + 1 # cumbersome???
     when "this_year"
@@ -122,7 +121,7 @@ class ChurnRequest
       Date.new(Date.today.year - 1, 1 , 1)
     end
   end
-  
+
   def period_end(period)
   case period
     when "today"
@@ -140,15 +139,15 @@ class ChurnRequest
     when "this_year"
       Date.today
     when "last_year"
-        Date.new(Date.today.year - 1, 12, 31)  
+      Date.new(Date.today.year - 1, 12, 31)
     end
   end
-  
+
 
   def has_data?
     @data && @data.count > 0
   end
-  
+
   def cross_check(data)
     warning = ""
     if has_data? && @type == :summary
@@ -159,10 +158,10 @@ class ChurnRequest
       end
     end
     warning
-  end 
- 
+  end
+
   # When multiple parameters of the same name are passed in the query string, Sinatra only uses the last
-  # one. To fix that, this method mirrors Sinatra's usual parsing but also makes arrays from 
+  # one. To fix that, this method mirrors Sinatra's usual parsing but also makes arrays from
   # duplicate parameter keys in the query string.
   #
   # Also, query parameters in the format "param_name!text[key]=value" have the "!text" portion removed,
@@ -171,30 +170,30 @@ class ChurnRequest
   #
   # tbd: make all code use this method, replace "params" method with this method.
   def parsed_params
-    @parsed_params ||= 
+    @parsed_params ||=
       begin
         result = {}
 
         CGI::parse(@query_string).each do |key, val|
-        	# Expand arrays that have only one element
-        	val = if val.length == 1
+          # Expand arrays that have only one element
+          val = if val.length == 1
             val.first
           else
             val
           end
 
-					# Handle parameters that should be encoded in a hash, of the format "?param_name[key]=value".
-        	
-        	# Extract param_name and key, and strip "!text" from the param_name.
-        	match = /^([^\[!]+)(?:[^\[]*)\[([^\]]+)\]/.match(key)
-         	is_hash_param = !match.nil?
+          # Handle parameters that should be encoded in a hash, of the format "?param_name[key]=value".
+
+          # Extract param_name and key, and strip "!text" from the param_name.
+          match = /^([^\[!]+)(?:[^\[]*)\[([^\]]+)\]/.match(key)
+           is_hash_param = !match.nil?
 
           if is_hash_param
             param_name = match[1]
             param_key_name = match[2]
 
             hash = result[param_name] ||= {}
-            
+
             # If the parameter is already in the hash, create an array, otherwise just set
             # the value. This handles duplicate instances of hash format parameters in the
             # query string.
@@ -209,9 +208,9 @@ class ChurnRequest
             # The value is not a hash format value, so just set it as normal.
             result[key] = val
           end
-      	end
+        end
 
-      	query_defaults.rmerge(result)
+        query_defaults.rmerge(result)
       end
   end
 
@@ -220,7 +219,7 @@ class ChurnRequest
     if params['group_by'].nil? || params['group_by'].empty?
       @app.groupby_default_dimension
     else
-      param_dimension = @app.dimensions[params['group_by']] 
+      param_dimension = @app.dimensions[params['group_by']]
 
       if param_dimension
         param_dimension
@@ -241,7 +240,7 @@ class ChurnRequest
   def get_transfers
     db.get_transfers(@start_date, @end_date, @site_constraint, @xml, @query_filterterms)
   end
-  
+
   private
 
   def validate_params(params)
@@ -318,7 +317,7 @@ class ChurnRequest
 
     warning
   end
-  
+
   def self.filter_xml(filters, locks)
     # Example XML
     # <search><branchid>NG</branchid><org>dpegg</org><status>1</status><status>14</status><status>11</status></search>
@@ -338,24 +337,23 @@ class ChurnRequest
         result += filter_xml_node(k,item)
       end
     end
-    
+
     result += "</search>"
     result
   end
-  
+
   def self.filter_xml_node(k,v)
     case v[0]
-      when '!' 
-        "<not_#{k}>#{v.sub('!','')}</not_#{k}>" 
-      when '-' 
-        "<ignore_#{k}>#{v.sub('!','')}</ignore_#{k}>" 
-      else 
+      when '!'
+        "<not_#{k}>#{v.sub('!','')}</not_#{k}>"
+      when '-'
+        "<ignore_#{k}>#{v.sub('!','')}</ignore_#{k}>"
+      else
         "<#{k}>#{v}</#{k}>"
       end
   end
-            
+
   def locks(lock)
     (lock || []).reject{ |column_name, value | value.empty? }
   end
-  
 end

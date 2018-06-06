@@ -1,65 +1,63 @@
 <a class="printer screen_only" href="javascript:print_tab('<%= model.id%>');"><img src="images/printer32.png" title="print <%=model.name.downcase %> table" alt="print <%=model.name.downcase %> table"/></a>
 
 <a class="download screen_only" href="/export_table<%= model.build_url({ 'table' => model.id }) %>" >
-	<img src="images/download32.png" title="export <%=model.name.downcase %> table to excel" alt="export <%=model.name.downcase %> table to excel"/>
+  <img src="images/download32.png" title="export <%=model.name.downcase %> table to excel" alt="export <%=model.name.downcase %> table to excel"/>
 </a>
-    
+
 <h2 class="print_only"><%=model.id %></h2>
 <strong>
-	<%=model.description%>
-</string> 
+  <%=model.description%>
+</string>
 <table class="tablesorter" id='table-<%=model.id %>'>
-   <thead>
-     <tr>
-       <% model.header.each do |column_name, v| %>
-       	<th id="<%=model.id%><%=column_name %>" <%= model.date_col(column_name) %>>
-     		<%= model.display_header(column_name) %>
-   		</th>
-       <% end %>
-     </tr>
-   </thead>
-   <tbody>
-     <% model.each do |row| %>
-       <tr>
-         <% model.columns.each do |column_name| %>
-		 <td>
-			<%= model.display_cell(column_name, row) %>
-		 </td>
-         <% end %>
-       </tr>
-     <% end %>
-   </tbody>
-   <% if !model.footer.nil? %>
-     <tfoot>
-       <tr>
-         <% model.footer.each do |column_name, total| %>
-           <td>
-             <%= model.display_footer(column_name, total) %>
- 	        </td>
-         <% end %>
-       </tr>
-     </tfoot>
- 	<% end %>
- </table>
+  <thead>
+    <tr>
+      <% model.header.each do |column_name, v| %>
+        <th id="<%=model.id%><%=column_name %>" <%= model.date_col(column_name) %>>
+          <%= model.display_header(column_name) %>
+        </th>
+      <% end %>
+    </tr>
+  </thead>
+  <tbody>
+    <% model.each do |row| %>
+      <tr>
+        <% model.columns.each do |column_name| %>
+          <td>
+            <%= model.display_cell(column_name, row) %>
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+  <% if !model.footer.nil? %>
+    <tfoot>
+      <tr>
+        <% model.footer.each do |column_name, total| %>
+          <td>
+            <%= model.display_footer(column_name, total) %>
+          </td>
+        <% end %>
+      </tr>
+    </tfoot>
+  <% end %>
+</table>
 
 <% model.tooltips.each do |column_name, tip| %>
-	<div id="<%=model.id %><%=column_name %>tip" class="tooltip">
-	    <%=tip%>
-	</div>
+  <div id="<%=model.id %><%=column_name %>tip" class="tooltip">
+    <%=tip%>
+  </div>
 <% end %>
 
 <script type="text/javascript">
+  <% model.tooltips.each do |column_name, tip| %>
+    $("#<%=model.id%><%=column_name %>").tooltip({
+      tip: '#<%=model.id %><%=column_name %>tip',
+      position: 'top center',
+      offset: [-25, -25],
+      delay: 0,
+      relative: true
+    });
+  <% end %>
 
-    <% model.tooltips.each do |column_name, tip| %>
-		$("#<%=model.id%><%=column_name %>").tooltip({
-	        tip: '#<%=model.id %><%=column_name %>tip',
-	        position: 'top center',
-	        offset: [-25, -25],
-	        delay: 0,
-	        relative: true
-	    });
-	<% end %>
-	
-	$('#table-<%=model.id %>').floatHeader( { recalculate: true, fadeIn:0 }); // recalculate is needed to work with tabs but causes high cpu
-	
+  $('#table-<%=model.id %>').floatHeader( { recalculate: true, fadeIn:0 }); // recalculate is needed to work with tabs but causes high cpu
 </script>

@@ -20,7 +20,6 @@ require './lib/churn_db'
 require 'open3.rb'
 
 class ImportPresenter
-
   def initialize(app, importer, db)
     @dbm = DatabaseManager.new(app)
     @dimensions = app.custom_dimensions
@@ -280,17 +279,6 @@ class ImportPresenter
     cmd << "from '#{file}' with delimiter as E'\\t' null as '' CSV HEADER"
     cmd << "\""
   end
-
-
-
-
-
-
-
-
-
-
-
 
   def transaction_import_command(file)
     cmd = "PGPASSWORD=\"#{@db.pass}\" psql #{@db.dbname} -h #{@db.host} -U #{@db.user} -c \""
