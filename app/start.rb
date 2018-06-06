@@ -190,7 +190,8 @@ class Churnobyl < Sinatra::Base
     end
 
     if allow_http_caching?
-      cache_control :public, :max_age => 28800
+      # cache_control :public, :max_age => 28800
+      cache_control :no_cache
     end
 
     protected!

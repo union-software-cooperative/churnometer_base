@@ -60,16 +60,17 @@ module Oauth2Authorization
     session[:access_token]  = new_token.token
     session[:refresh_token] = new_token.refresh_token
     response['Cache-Control'] = "no-cache"
+
     redirect params['return_to'] ? CGI::unescape(params['return_to']) : '/'
   end
 
   Sinatra::Base.get '/logout' do
-    session[:access_token] = nil
+    session.clear
     redirect ENV['OAUTH2_PROVIDER'] + "/logout"
   end
 
   Sinatra::Base.get '/account' do
-    session[:access_token] = nil
+    session.clear
     redirect ENV['OAUTH2_PROVIDER']
   end
 
