@@ -7,7 +7,8 @@ ENV APP /app
 RUN mkdir $APP
 WORKDIR $APP
 COPY ./app $APP
-RUN mkdir -p $APP/tmp
-RUN mkdir -p $APP/log
-RUN mkdir -p $APP/backup
-RUN mkdir -p $APP/pids
+#Using .keep files for these dirs
+#RUN mkdir -p $APP/tmp
+#RUN mkdir -p $APP/log
+#RUN mkdir -p $APP/backup
+#RUN mkdir -p $APP/pids

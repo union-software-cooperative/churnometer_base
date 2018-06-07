@@ -5,3 +5,4 @@ docker-sync.yml
 docker-compose.override.yml
 *.sql.gz
 *.sql
+bundle

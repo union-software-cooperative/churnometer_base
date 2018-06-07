@@ -1,19 +1,29 @@
+# Ignore logs, tempfiles, etc.
 tmp/*
-config.yaml
+!tmp/.keep
+backup/*
+!backup/.keep
+log/*
+!log/.keep
+pids/*
+!pids/.keep
+uploads/*
+.sass-cache/*
+
+# Development junk
 TODOS.txt
-log
 doc
-config/config_site.yaml
 *.old
 *.orig
 *.bak
-uploads/*
-backup/*
-.sass-cache/*
 .DS_Store
 ._.*
-pids/*
+!.keep
+
+# Config
 uploads/reimport
 uploads/batch_reimport
+config/config_site.yaml
 config/config.yaml
 config/seed.sql
+config.yaml
