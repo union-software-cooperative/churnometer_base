@@ -39,6 +39,7 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
 class Churnobyl < Sinatra::Base
   include Oauth2Authorization
+  include BasicAuthorization
   #register Sinatra::Oauth2Authorization
 
   configure :development do
@@ -238,7 +239,7 @@ class Churnobyl < Sinatra::Base
   end
 
   get "/import" do
-    admin!
+    basic_admin!
 
     @flash = session[:flash]
     session[:flash] = nil
@@ -276,7 +277,7 @@ class Churnobyl < Sinatra::Base
   end
 
   get "/backup" do
-    admin!
+    basic_admin!
 
     @flash = session[:flash]
     session[:flash] = nil
@@ -295,7 +296,7 @@ class Churnobyl < Sinatra::Base
   end
 
   get "/restart" do
-    admin!
+    basic_admin!
 
     @flash = session[:flash]
     session[:flash] = nil
@@ -303,7 +304,7 @@ class Churnobyl < Sinatra::Base
   end
 
   post "/restart" do
-    admin!
+    basic_admin!
 
     @model = ip()
     @model.restart
@@ -333,7 +334,7 @@ class Churnobyl < Sinatra::Base
   end
 
   post "/import" do
-    admin!
+    basic_admin!
     session[:flash] = nil
     @model = ip()
 
@@ -445,7 +446,7 @@ class Churnobyl < Sinatra::Base
   end
 
   get '/config' do
-    admin!
+    basic_admin!
 
     @flash = session[:flash]
     session[:flash] = nil
@@ -463,7 +464,7 @@ class Churnobyl < Sinatra::Base
   end
 
   post '/config' do
-    admin!
+    basic_admin!
 
     @flash = nil
     @config = params['config']
