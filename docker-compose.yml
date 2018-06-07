@@ -8,6 +8,7 @@ services:
       dockerfile: dockerfile-db
     restart: always
     volumes:
+      - ./db-setup:/docker-entrypoint-initdb.d/db-setup.sql
       - pgdata:/pgdata
     environment:
       - PGDATA=/pgdata
