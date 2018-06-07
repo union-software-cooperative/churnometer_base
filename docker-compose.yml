@@ -33,7 +33,7 @@ services:
       - OAUTH2_CLIENT_REDIRECT_URI
       - OAUTH2_PROVIDER
       - LDAP_ADMIN_GROUP
-      - CHURNOMETER_PORT
+      - CHURN_PORT
     links:
       - db
     command: ./docker-command
