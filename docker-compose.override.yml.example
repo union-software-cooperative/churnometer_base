@@ -2,20 +2,8 @@ version: "3"
 services:
   db:
     volumes:
-      - pgdata:/pgdata
       - ./churnometer160218.sql.gz:/seed.sql.gz
-    ports:
-      - 5432:5432
   www:
     volumes:
-      - churnometer-www-sync:/app:nocopy # sync source into app, need to run docker-sync
       - ./churnometer160218.sql.gz:/app/config/seed.sql.gz
-      - bundle:/usr/local/bundle
-    links:
-      - db
     command: ./docker-command.override
-volumes:
-  churnometer-www-sync:
-    external: true
-  bundle:
-  pgdata:

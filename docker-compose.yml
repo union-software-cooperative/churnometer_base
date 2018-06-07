@@ -8,7 +8,9 @@ services:
       dockerfile: dockerfile-db
     restart: always
     volumes:
-      - ./pgdata:/pgdata
+      - pgdata:/pgdata
+    ports:
+      - 5432:5432
     environment:
       - PGDATA=/pgdata
       - CHURN_USER
@@ -19,7 +21,7 @@ services:
       context: .
       dockerfile: dockerfile-www
     volumes:
-      - ./bundle:/usr/local/bundle
+      - bundle:/usr/local/bundle
       - ./app:/app
     environment:
       - BUNDLE_PATH=/usr/local/bundle
@@ -38,3 +40,6 @@ services:
     links:
       - db
     command: ./docker-command
+volumes:
+  bundle:
+  pgdata:
