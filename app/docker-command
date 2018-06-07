@@ -2,5 +2,9 @@
 echo "Bundling gems"
 bundle check || bundle install --jobs 4 --retry 3
 
+echo "Removing old Puma and temp files"
+rm pids/*
+rm tmp/*
+
 echo "Starting puma"
 bundle exec puma
