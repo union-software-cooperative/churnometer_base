@@ -54,14 +54,16 @@ module Oauth2Authorization
   # ?client_id=8052fa6780844bc36b816f1d077fc54c15b678c9322ed747b1f4d38a336754db&redirect_uri=http%3A%2F%2Fwww%3A9292%2Foauth2-callback&response_type=code&scope=profile
   # http://www:9292/oauth2-callback?code=04cc6aaeae6d3cae7577c7394b64964b2ce3b8f7b714a0f4c5f95fc88b91db48
   Sinatra::Base.get '/oauth2-callback' do
-    redirect_url = URI.join(oauth2_redirect_uri, "?return_to=#{CGI::escape(params['return_to'])}").to_s
+    return_to = params['return_to'] ? params['return_to'] : '/'
+
+    redirect_url = URI.join(oauth2_redirect_uri, "?return_to=#{CGI::escape(return_to)}").to_s
     puts "CALLBACK: " + redirect_url
     new_token = oauth2_client.auth_code.get_token(params[:code], :redirect_uri => redirect_url)
     session[:access_token]  = new_token.token
     session[:refresh_token] = new_token.refresh_token
     response['Cache-Control'] = "no-cache"
 
-    redirect params['return_to'] ? CGI::unescape(params['return_to']) : '/'
+    redirect CGI::unescape(return_to)
   end
 
   Sinatra::Base.get '/logout' do
