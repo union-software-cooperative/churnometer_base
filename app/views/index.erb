@@ -7,7 +7,8 @@
 <div class="container">
   <div id="nav"><ul>
     <li class='right'><a href="/account">your nuwID</a></li>
-    <li class='right'>Hi <%= @auth.name %></li></ul><div>
+    <li class='right'>Hi <%= @auth.name %></li></ul>
+  </div>
   <h1><a href="/"><%= "churnometer" %></a></h1>
   <%= erb :'partials/form', :locals => {:model => model.form, :group_names => model.request_group_names} %>
 </div>

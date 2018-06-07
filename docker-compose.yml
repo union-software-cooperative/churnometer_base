@@ -34,8 +34,6 @@ services:
       - OAUTH2_PROVIDER
       - LDAP_ADMIN_GROUP
       - CHURNOMETER_PORT
-    ports:
-      - "$CHURNOMETER_PORT:9292"
     links:
       - db
     command: ./docker-command
