@@ -42,14 +42,14 @@ class ServiceDDRetention < ServiceAutocomplete
 
   def sql_text(periodstartdate, periodenddate, branchid)
     unless branchid.nil?
-      where = <<~WHERE
+      where = <<-WHERE
         branchid = '#{branchid}'
       WHERE
     else
       where = "1=1"
     end
 
-    <<~SQL
+    <<-SQL
       with userselections as (
         select
           *

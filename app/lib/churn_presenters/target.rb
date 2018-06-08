@@ -152,7 +152,7 @@ class ChurnPresenter_Target
 
   def getmath_get_cards_in_target
     #"#{cards.round(0)} cards needed (#{stopped} #{col_names['paying_real_loss']} + #{failed} #{col_names['a1p_to_other']} - #{resume} resumed paying without a card (#{paying_real_gain} #{col_names['paying_real_gain']} - #{-a1p_to_paying} #{col_names['a1p_to_paying']}) ) / #{periods.round(1)} periods = #{cards_per_period}  cards per period.  We add #{growth_per_period} cards per period for 10% growth (10% = #{growth} )"
-    <<~HTML
+    <<-HTML
       <pre>
         CARDS_NEEDED_TO_HOLD_OUR_GROUND_PER_#{@period_desc.upcase} (#{@cards_hold_per_period.round(1)}) = cards_needed_to_hold_our_ground (#{@cards_hold_display}) / days_duration (#{@days_duration.round(0)}) * #{@period}
         cards_needed_to_hold_our_ground (#{@cards_hold_display}) = losses (#{@real_losses.round(0)}) / rough_conversion_rate (#{(@conversion_rate * 100).round(1)}%)

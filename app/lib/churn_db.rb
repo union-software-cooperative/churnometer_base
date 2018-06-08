@@ -148,7 +148,7 @@ class Db
 
 protected
   def ensure_app_state_table
-    sql = <<~SQL
+    sql = <<-SQL
       create table if not exists appstate (key varchar, value varchar)
     SQL
 
@@ -223,7 +223,7 @@ class ChurnDB
 
       @sql = query_class.new(@app, self, groupby_dimension, start_date, end_date, transactions, site_constraint, filter_terms).query_string
     else
-      <<~SQL
+      <<-SQL
         select *
         from summary(
           '#{fact_table()}',
@@ -316,7 +316,7 @@ class ChurnDB
 
           QueryDetailStaticFriendly.new(@app, self, groupby_dimension, filter_column, member_date, site_date_for_query, filter_terms).query_string
         else
-          <<~SQL
+          <<-SQL
             select *
             from detail_static_friendly(
               '#{fact_table()}',
@@ -337,7 +337,7 @@ class ChurnDB
 
           QueryDetailFriendly.new(@app, self, groupby_dimension, start_date, end_date, transactions, site_constraint, filter_column, filter_terms).query_string
         else
-          <<~SQL
+          <<-SQL
             select *
             from detail_friendly(
               '#{fact_table()}',
@@ -363,7 +363,7 @@ class ChurnDB
 
   def transfer_sql(start_date, end_date, site_constraint, filter_xml, filter_terms = nil)
 
-    sql = <<~SQL
+    sql = <<-SQL
       select
         changedate
         , sum(a1p_other_gain + paying_other_gain) transfer_in
@@ -379,7 +379,7 @@ class ChurnDB
       detail_friendly_sql = QueryDetailFriendly.new(@app, self, groupby_dimension, start_date, end_date, false, site_constraint, '', filter_terms).query_string
       "(#{detail_friendly_sql}) as detail_friendly"
     else
-      <<~SQL
+      <<-SQL
         detail_friendly(
           '#{fact_table()}',
           'status',
@@ -393,7 +393,7 @@ class ChurnDB
       SQL
     end
 
-    sql << <<~SQL
+    sql << <<-SQL
       where
         paying_other_gain <> 0
         or paying_other_loss <> 0
@@ -418,7 +418,7 @@ class ChurnDB
       group_by = @app.groupby_default_dimension.id
     end
 
-    <<~SQL
+    <<-SQL
       select startdate getdimstart from dimstart where dimension = '#{group_by}'
     SQL
   end
@@ -428,7 +428,7 @@ class ChurnDB
   end
 
   def get_display_text_sql(column, id)
-    <<~SQL
+    <<-SQL
       select displaytext from displaytext where attribute = '#{column}' and id = '#{id}' limit 1
     SQL
   end

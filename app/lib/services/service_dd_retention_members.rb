@@ -33,7 +33,7 @@ class ServiceDDRetentionMembers < ServiceAutocomplete
       branch_where = "1=1"
     end
 
-    <<~SQL
+    <<-SQL
       with userselections as (
         select
           *
