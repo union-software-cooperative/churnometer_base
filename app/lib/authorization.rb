@@ -145,27 +145,27 @@ end
 module BasicAuthorization
   # Returns the class that will be instantiated to handle the authorisation functionality. The class
   # must follow Authorize's interface.
-  def basic_auth_class
+  def auth_class
     BasicAuthorize
   end
 
-  def basic_auth
-    @basic_auth ||= basic_auth_class().new(app(), Rack::Auth::Basic::Request.new(request.env))
+  def auth
+    @auth ||= auth_class().new(app(), Rack::Auth::Basic::Request.new(request.env))
   end
 
-  def basic_protected!
-    unless basic_auth.authenticated?  && !basic_auth.admin?
-      basic_not_authorised
+  def protected!
+    unless auth.authenticated?  && !auth.admin?
+      not_authorised
     end
   end
 
-  def basic_admin!
-    unless basic_auth.authenticated? && basic_auth.admin?
-      basic_not_authorised
+  def admin!
+    unless auth.authenticated? && auth.admin?
+      not_authorised
     end
   end
 
-  def basic_not_authorised
+  def not_authorised
     response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
     throw(:halt, [401, "Not authorized\n"])
   end

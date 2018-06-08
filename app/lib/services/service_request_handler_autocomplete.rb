@@ -20,12 +20,12 @@ require 'json'
 
 class ServiceRequestHandlerAutocomplete
   def initialize(churnobyl_app_class)
-  # TODO make these services configuration or enumerate a directory
-  services = {
+    # TODO make these services configuration or enumerate a directory
+    services = {
       'displaytext' => ServiceAutocompleteDisplaytext,
       #'nswjoins' => ServiceNSWJoins,
       'ddretention' => ServiceDDRetention,
-      'ddretentionmembers' =>ServiceDDRetentionMembers
+      'ddretentionmembers' => ServiceDDRetentionMembers
     }
 
     churnobyl_app_class.get "/services/autocomplete/:handler_name" do |handler_name|

@@ -37,10 +37,8 @@ Dir["./lib/query/*.rb"].each { |f| require f }
 Dir["./lib/import/*.rb"].each { |f| require f }
 Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
-class Churnobyl < Sinatra::Base
-  include Oauth2Authorization
-  include BasicAuthorization
-  #register Sinatra::Oauth2Authorization
+class ApplicationController < Sinatra::Base
+  include ChurnLogger
 
   configure :development do
     register Sinatra::Reloader
@@ -65,6 +63,11 @@ class Churnobyl < Sinatra::Base
     @churn_app ||= self.class.server_lifetime_churnometer_app
   end
 
+  # Halt processing and redirect to the URI provided.
+  def redirect(uri, *args)
+    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} 302 Found, redirecting to #{uri}"
+    super
+  end
 
   def churn_db_class
     if app().use_database_cache?
@@ -154,35 +157,25 @@ class Churnobyl < Sinatra::Base
     alias_method :h, :escape_html
   end
 
+  helpers Sinatra::Streaming
+
   before do
     #cache_control :public, :must_revalidate, :max_age => 60
     @start_time = Time.new
+    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Started  #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for #{request.user_agent} #{request.env['REMOTE_ADDR']}"
+  end
+end
+
+class OAuthController < ApplicationController
+  include Oauth2Authorization
+
+  after do
+    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for user #{@auth.name}"
   end
 
   after '/' do
-    log
     @cr.close_db() if !@cr.nil?
     @cr = nil if testing?
-  end
-
-  after '/import' do
-    log
-    @ip.close_db() unless @ip.nil?
-  end
-
-  def log
-
-    #cache_control :public, :must_revalidate, :max_age => 60
-    if app().config['demo']
-      Pony.mail({
-                :to   => app().config.element('email_errors').value['to'].value,
-                :from => app().config.element('email_errors').value['from'].value,
-                :subject => "[Demo] #{request.env['HTTP_X_FORWARDED_FOR']}",
-                :body => erb(:'demo_email', layout: false)
-              })
-    end
-
-    logger.info "\t #{ request.env['HTTP_X_FORWARDED_FOR'] } \t #{ request.user_agent } \t #{ request.url } \t #{ ((Time.new - @start_time) * 1000).to_s }"
   end
 
   get '/' do
@@ -238,52 +231,6 @@ class Churnobyl < Sinatra::Base
     send_file(path, :disposition => 'attachment', :filename => File.basename(path))
   end
 
-  get "/import" do
-    basic_admin!
-
-    @flash = session[:flash]
-    session[:flash] = nil
-
-    @model = ip()
-
-    if params['action'] == "diags"
-      response.write @model.diags
-      return
-    end
-
-    #if params['action'] == "rebuild"
-    #  @model.rebuild
-    #end
-
-    if params['scripted'] == 'true'
-      if @model.importing?
-        return response.write @model.import_status
-      else
-        state = ( @model.import_ready? ? "ready to import" : "data not staged" )
-        return response.write state + @model.importer_status
-      end
-    else
-      erb :import
-    end
-  end
-
-  get "/source" do
-    @model = ip()
-    file = "source_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
-    path = "tmp/source"
-    @model.download_source(path)
-    send_file("#{path}.zip", :disposition => 'attachment', :filename => file)
-    @model.close_db()
-  end
-
-  get "/backup" do
-    basic_admin!
-
-    @flash = session[:flash]
-    session[:flash] = nil
-    erb :backup
-  end
-
   get "/backup_download" do
     admin!
 
@@ -294,23 +241,6 @@ class Churnobyl < Sinatra::Base
     send_file(path, :disposition => 'attachment', :filename => file)
     @model.close_db()
   end
-
-  get "/restart" do
-    basic_admin!
-
-    @flash = session[:flash]
-    session[:flash] = nil
-    erb :restart
-  end
-
-  post "/restart" do
-    basic_admin!
-
-    @model = ip()
-    @model.restart
-  end
-
-  helpers Sinatra::Streaming
 
   get "/regenerate_cache", provides: 'text/event-stream'  do
     admin!
@@ -331,179 +261,6 @@ class Churnobyl < Sinatra::Base
       out.write "Cache regeneration started\n"
       out.flush
     end
-  end
-
-  post "/import" do
-    basic_admin!
-    session[:flash] = nil
-    @model = ip()
-
-    if params['action'] == "reset"
-      @model.reset
-      session[:flash] = "Successfully emptied staging tables"
-      redirect '/import'
-    end
-
-    if params['action'] == "import"
-      if @model.import_ready?
-        @model.go(Time.parse(params['import_date']))
-        session[:flash] = "Successfully commenced import of staged data"
-
-        if params['scripted'] == 'true'
-          return response.write session[:flash]
-        else
-          redirect '/import'
-        end
-      else
-        session[:flash] = "Data not staged for import"
-
-        if params['scripted'] == 'true'
-          return response.write session[:flash]
-        else
-          redirect '/import'
-        end
-      end
-    end
-
-
-    if params['action'] == "empty_cache"
-      begin
-        @model.empty_cache()
-      rescue StandardError => err
-        raise err if ! (err.message == 'rm: tmp/*.Marshal: No such file or directory')
-      end
-
-      session[:flash] = "Successfully emptied cache"
-      if params['scripted'] == 'true'
-        return response.write session[:flash]
-      else
-        redirect '/import'
-      end
-    end
-
-    #if params['action'] == "rebuild"
-    #  @model.rebuild
-    #  redirect '/import'
-    #end
-
-    if params['action'] == "diags"
-      response.write @model.diags
-      return
-    end
-
-    if params['myfile'].nil?
-      session[:flash]="No file uploaded"
-      redirect '/import'
-    end
-
-    file = params['myfile'][:tempfile]
-    filename = params['myfile'][:filename]
-
-    begin
-      full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
-
-      File.open(full_filename, "w") do |f|
-        f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
-      end
-
-      if app().database_import_encoding && app().database_import_encoding != 'utf-8'
-        iconv_filename = "#{full_filename}-utf8"
-        iconv_result = `iconv -f '#{app().database_import_encoding}' -t 'utf-8' -o "#{iconv_filename}" "#{full_filename}"`
-        $stderr.puts iconv_result
-        raise "Failed to convert file to utf-8: #{iconv_result}" if $? != 0
-        File.delete(full_filename)
-        full_filename += "-utf8"
-      end
-
-      if filename.start_with?("members.txt") then
-        @model.member_import(full_filename)
-      end
-
-      if filename.start_with?("displaytext.txt") then
-        @model.displaytext_import(full_filename)
-      end
-
-      if filename.start_with?("transactions.txt") then
-        @model.transaction_import(full_filename)
-      end
-
-    rescue StandardError => err
-      session[:flash] = "File upload failed: " + err.message
-    end
-
-    if session[:flash].nil?
-      session[:flash] = "#{filename} was successfully uploaded"
-    end
-
-    # write flash to stderr in case something goes wrong with presenting the flash.
-    $stderr.puts session[:flash]
-
-    if params['scripted']=='true'
-      response.write session[:flash] # so CURL doesn't have to redirect to get
-    else
-      redirect '/import'
-    end
-  end
-
-  get '/config' do
-    basic_admin!
-
-    @flash = session[:flash]
-    session[:flash] = nil
-
-    filename = app().active_master_config_filename
-
-    @config = ""
-    File.open(filename, 'r') do |f|
-      while line=f.gets
-        @config+=line
-      end
-    end
-
-    erb :config, :locals => {:filename => filename}
-  end
-
-  post '/config' do
-    basic_admin!
-
-    @flash = nil
-    @config = params['config']
-
-    filename = app().active_master_config_filename
-
-    begin
-
-      if ! (@config.nil? || @config.empty?)
-
-        testConfig = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
-        testConfig.validate
-        dbm = DatabaseManager.new(testConfig)
-        @yaml_spec = dbm.migration_yaml_spec
-        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
-          File.open(filename, 'w') do |f|
-            f.write @config
-          end
-        else
-          flash_text = "Need to restructure data before saving #{filename}"
-          flash_text += " (memberfacthelper requires update)" if dbm.memberfacthelper_migration_required?
-
-          session[:flash] = flash_text
-          session[:new_config] = params['config']
-          redirect :migrate
-        end
-      else
-        raise "empty config!"
-      end
-    rescue StandardError => err
-      @flash = "Failed to save #{filename}: " + err.message
-    rescue Psych::SyntaxError => err
-      @flash = "Failed to save #{filename}: " + err.message
-    end
-
-    return erb :config, :locals => {:filename => filename} if !@flash.nil?
-
-    session[:flash] = "Successfully saved #{filename}"
-    redirect '/restart?redirect=/config'
   end
 
   get '/migrate' do
@@ -651,14 +408,265 @@ class Churnobyl < Sinatra::Base
       end
     end
   end
+end
+
+class BasicAuthController < ApplicationController
+  include BasicAuthorization
+
+  after do
+    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for role #{@auth.role.id}"
+  end
+
+  after '/import' do
+    # log
+    @ip.close_db() unless @ip.nil?
+  end
+
+  get "/import" do
+    admin!
+
+    @flash = session[:flash]
+    session[:flash] = nil
+
+    @model = ip()
+
+    if params['action'] == "diags"
+      response.write @model.diags
+      return
+    end
+
+    #if params['action'] == "rebuild"
+    #  @model.rebuild
+    #end
+
+    if params['scripted'] == 'true'
+      if @model.importing?
+        return response.write @model.import_status
+      else
+        state = ( @model.import_ready? ? "ready to import" : "data not staged" )
+        return response.write state + @model.importer_status
+      end
+    else
+      erb :import
+    end
+  end
+
+  get "/backup" do
+    admin!
+
+    @flash = session[:flash]
+    session[:flash] = nil
+    erb :backup
+  end
+
+  get "/restart" do
+    admin!
+
+    @flash = session[:flash]
+    session[:flash] = nil
+    erb :restart
+  end
+
+  post "/restart" do
+    admin!
+
+    @model = ip()
+    @model.restart
+  end
+
+  post "/import" do
+    admin!
+    session[:flash] = nil
+    @model = ip()
+
+    if params['action'] == "reset"
+      @model.reset
+      session[:flash] = "Successfully emptied staging tables"
+      redirect '/import'
+    end
+
+    if params['action'] == "import"
+      if @model.import_ready?
+        @model.go(Time.parse(params['import_date']))
+        session[:flash] = "Successfully commenced import of staged data"
+
+        if params['scripted'] == 'true'
+          return response.write session[:flash]
+        else
+          redirect '/import'
+        end
+      else
+        session[:flash] = "Data not staged for import"
+
+        if params['scripted'] == 'true'
+          return response.write session[:flash]
+        else
+          redirect '/import'
+        end
+      end
+    end
+
+    if params['action'] == "empty_cache"
+      begin
+        @model.empty_cache()
+      rescue StandardError => err
+        raise err if ! (err.message == 'rm: tmp/*.Marshal: No such file or directory')
+      end
+
+      session[:flash] = "Successfully emptied cache"
+      if params['scripted'] == 'true'
+        return response.write session[:flash]
+      else
+        redirect '/import'
+      end
+    end
+
+    #if params['action'] == "rebuild"
+    #  @model.rebuild
+    #  redirect '/import'
+    #end
+
+    if params['action'] == "diags"
+      response.write @model.diags
+      return
+    end
+
+    if params['myfile'].nil?
+      session[:flash]="No file uploaded"
+      redirect '/import'
+    end
+
+    file = params['myfile'][:tempfile]
+    filename = params['myfile'][:filename]
+
+    begin
+      full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
+
+      File.open(full_filename, "w") do |f|
+        f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
+      end
+
+      if app().database_import_encoding && app().database_import_encoding != 'utf-8'
+        iconv_filename = "#{full_filename}-utf8"
+        iconv_result = `iconv -f '#{app().database_import_encoding}' -t 'utf-8' -o "#{iconv_filename}" "#{full_filename}"`
+        $stderr.puts iconv_result
+        raise "Failed to convert file to utf-8: #{iconv_result}" if $? != 0
+        File.delete(full_filename)
+        full_filename += "-utf8"
+      end
+
+      if filename.start_with?("members.txt") then
+        @model.member_import(full_filename)
+      end
+
+      if filename.start_with?("displaytext.txt") then
+        @model.displaytext_import(full_filename)
+      end
+
+      if filename.start_with?("transactions.txt") then
+        @model.transaction_import(full_filename)
+      end
+
+    rescue StandardError => err
+      session[:flash] = "File upload failed: " + err.message
+    end
+
+    if session[:flash].nil?
+      session[:flash] = "#{filename} was successfully uploaded"
+    end
+
+    # write flash to stderr in case something goes wrong with presenting the flash.
+    $stderr.puts session[:flash]
+
+    if params['scripted']=='true'
+      response.write session[:flash] # so CURL doesn't have to redirect to get
+    else
+      redirect '/import'
+    end
+  end
+
+  get '/config' do
+    admin!
+
+    @flash = session[:flash]
+    session[:flash] = nil
+
+    filename = app().active_master_config_filename
+
+    @config = ""
+    File.open(filename, 'r') do |f|
+      while line=f.gets
+        @config+=line
+      end
+    end
+
+    erb :config, :locals => {:filename => filename}
+  end
+
+  post '/config' do
+    admin!
+
+    @flash = nil
+    @config = params['config']
+
+    filename = app().active_master_config_filename
+
+    begin
+      if ! (@config.nil? || @config.empty?)
+
+        testConfig = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
+        testConfig.validate
+        dbm = DatabaseManager.new(testConfig)
+        @yaml_spec = dbm.migration_yaml_spec
+        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
+          File.open(filename, 'w') do |f|
+            f.write @config
+          end
+        else
+          flash_text = "Need to restructure data before saving #{filename}"
+          flash_text += " (memberfacthelper requires update)" if dbm.memberfacthelper_migration_required?
+
+          session[:flash] = flash_text
+          session[:new_config] = params['config']
+          redirect :migrate
+        end
+      else
+        raise "empty config!"
+      end
+    rescue StandardError => err
+      @flash = "Failed to save #{filename}: " + err.message
+    rescue Psych::SyntaxError => err
+      @flash = "Failed to save #{filename}: " + err.message
+    end
+
+    return erb :config, :locals => {:filename => filename} if !@flash.nil?
+
+    session[:flash] = "Successfully saved #{filename}"
+    redirect '/restart?redirect=/config'
+  end
+end
+
+class PublicController < ApplicationController
+  after do
+    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} anonymously"
+  end
+
+  get "/source" do
+    @model = ip()
+    file = "source_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
+    path = "tmp/source"
+    @model.download_source(path)
+    send_file("#{path}.zip", :disposition => 'attachment', :filename => file)
+    @model.close_db()
+  end
 
   get '/scss/:name.css' do |name|
     scss name.to_sym, :style => :expanded
   end
 
   ServiceRequestHandlerAutocomplete.new(self)
-
-
-  run! if app_file == $0
-
 end
+#
+# class Churnobyl < Sinatra::Base
+#   run! if app_file == $0
+# end
