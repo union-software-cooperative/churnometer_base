@@ -377,7 +377,7 @@ class ChurnDB
       groupby_dimension = @app.dimensions.dimension_for_id_mandatory('status')
 
       detail_friendly_sql = QueryDetailFriendly.new(@app, self, groupby_dimension, start_date, end_date, false, site_constraint, '', filter_terms).query_string
-      "(#{detail_friendly_sql}) as detail_friendly"
+      "(#{detail_friendly_sql}) as detail_friendly "
     else
       <<-SQL
         detail_friendly(
