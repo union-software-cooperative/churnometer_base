@@ -178,6 +178,31 @@ class OAuthController < ApplicationController
     @cr = nil if testing?
   end
 
+  # ?client_id=8052fa6780844bc36b816f1d077fc54c15b678c9322ed747b1f4d38a336754db&redirect_uri=http%3A%2F%2Fwww%3A9292%2Foauth2-callback&response_type=code&scope=profile
+  # http://www:9292/oauth2-callback?code=04cc6aaeae6d3cae7577c7394b64964b2ce3b8f7b714a0f4c5f95fc88b91db48
+  get '/oauth2-callback' do
+    return_to = params['return_to'] ? params['return_to'] : '/'
+
+    redirect_url = URI.join(oauth2_redirect_uri, "?return_to=#{CGI::escape(return_to)}").to_s
+    puts "CALLBACK: " + redirect_url
+    new_token = oauth2_client.auth_code.get_token(params[:code], :redirect_uri => redirect_url)
+    session[:access_token]  = new_token.token
+    session[:refresh_token] = new_token.refresh_token
+    response['Cache-Control'] = "no-cache"
+
+    redirect CGI::unescape(return_to)
+  end
+
+  get '/logout' do
+    session.clear
+    redirect ENV['OAUTH2_PROVIDER'] + "/logout"
+  end
+
+  get '/account' do
+    session.clear
+    redirect ENV['OAUTH2_PROVIDER']
+  end
+
   get '/' do
     if reload_config_on_every_request?
       app().reload_config(self.class.churnometer_app_site_config_io(), self.class.churnometer_app_config_io())
