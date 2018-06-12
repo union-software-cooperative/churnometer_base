@@ -25,8 +25,12 @@ server {
   error_log REPLACEME_WWW_PATH/log/nginx_error.log;
 
   location / {
-    if (-f REPLACEME_WWW_PATH/maintenance_on.html) {
+    if (-f REPLACEME_WWW_PATH/maintenance.html) {
       return 503;
+    }
+
+    if (-f REPLACEME_WWW_PATH/import.html) {
+      return 423;
     }
 
     proxy_pass http://churnometer/;
@@ -36,8 +40,13 @@ server {
   }
 
   # Rename maintenance_off.html to maintenance_on.html for maintenance mode.
-  error_page 503 maintenance_on.html;
-  location /maintenace_on.html {
+  error_page 503 maintenance.html;
+  location /maintenace.html {
+    root REPLACEME_WWW_PATH;
+  }
+
+  error_page 423 import.html;
+  location /import.html {
     root REPLACEME_WWW_PATH;
   }
 }

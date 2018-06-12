@@ -83,9 +83,15 @@ class Importer
     db.set_app_state('import_date', v)
   end
 
-
   def go
     start_time = Time.now
+    # Create import HTML file to trigger Nginx failover
+    import_template = "import_off.html"
+    import_file = "import.html"
+    if File.exists?(import_template)
+      File.open(import_file, "w") { |f| f.write File.read(import_template) }
+    end
+
     db.async_ex("update importing set importing = 1")
 
     self.progress = "Step 1. Inserting member changes"
@@ -107,6 +113,9 @@ class Importer
     db.async_ex("vacuum full analyse memberfacthelper")
 
     db.async_ex("update importing set importing = 0")
+
+    # Remove import HTML to restore business as usual
+    File.delete(import_file) if File.exists?(import_file)
     end_time = Time.now
 
     self.progress = "Import successfully finished at #{end_time} and took #{(end_time - start_time)/60} minutes."
