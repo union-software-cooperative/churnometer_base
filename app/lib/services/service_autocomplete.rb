@@ -48,6 +48,10 @@ class ServiceAutocomplete
     JSON[result]
   end
 
+  def close_db
+    @db.close_db()
+  end
+
   protected
   def db_hash_to_json_hash(db_row_hash)
     result = {}

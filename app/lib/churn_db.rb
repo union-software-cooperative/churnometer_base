@@ -22,7 +22,6 @@ require 'pg'
 # This class should abstract database calls at as high a level as possible.
 # Currently, the target database is postgresql.
 class Db
-
   attr_reader :host
   attr_reader :dbname
   attr_reader :user
