@@ -19,6 +19,7 @@ services:
     build:
       context: .
       dockerfile: dockerfile-www
+    restart: unless-stopped
     volumes:
       - bundle:/usr/local/bundle
       - ./app:/app
