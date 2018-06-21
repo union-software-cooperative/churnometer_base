@@ -30,3 +30,4 @@ config.yaml
 celebration/*.yaml
 celebration/*.gif
 celebration/*.done
+celebration/*.celebrating
