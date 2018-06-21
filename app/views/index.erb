@@ -10,6 +10,14 @@
     <li class='right'>Hi <%= @auth.name %></li></ul>
   </div>
   <h1><a href="/"><%= "churnometer" %></a></h1>
+  
+  <% if File.exists?("public/celebration.txt") && File.exists?("public/images/celebration.gif") %>
+    <figure class="right">
+      <img src="images/celebration.gif">
+      <figcaption style="font-weight:bold;color:white;"><%= "#{File.read("public/celebration.txt")}" %></figcaption>
+    </figure>
+  <% end %>
+  
   <%= erb :'partials/form', :locals => {:model => model.form, :group_names => model.request_group_names} %>
 </div>
 
