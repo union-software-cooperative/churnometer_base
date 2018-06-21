@@ -13,7 +13,7 @@ config.each do |k,c|
   fc = "#{k}.celebrating"
   unless File.exist?(fd) || File.exists?(fc)
     result = db.exec(c['sql']).first
-    if result['target_met']
+    if result['target_met'] == "t"
       puts "celebrating #{k} since #{result['progress']} of #{result['target']} has been achieved."
       `cp #{c['image']} ../public/images/celebration.gif`
       `echo '#{c['caption']}' > ../public/celebration.txt`
@@ -23,7 +23,7 @@ config.each do |k,c|
       end
       `touch "#{fc}"`
     else 
-      puts "skipping #{k} since only #{result['progress']} of #{result['target']} hasn't been met."
+      puts "skipping #{k} since only #{result['progress']} of #{result['target']} has been met."
     end
   else
     if File.exists?(fc)
