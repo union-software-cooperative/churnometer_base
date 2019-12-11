@@ -336,10 +336,15 @@ class OAuthController < ApplicationController
   post '/migrate' do
     admin!
 
+    temp_filename = app().active_master_config_filename + ".tmp"
+
     @flash = nil
     session[:flash] = nil
+
     @yaml_spec = params['yaml_spec']
-    @config = session[:new_config]
+
+    #@config = session[:new_config]
+    @config = File.read(temp_filename)
 
     if @config.nil?
       session[:flash] = "Can't migrate without new config.  Make sure cookies are enabled."
