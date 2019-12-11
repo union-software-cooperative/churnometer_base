@@ -1,0 +1,16 @@
+---
+  -
+      name: qld5000
+      sql: |
+        select
+            case when COUNT(*) > 4500 then true else false end target_met
+        FROM 
+          MEMBERFACT
+        WHERE 
+            NEWSTATUS = '1'
+            AND NEWSTATE = 'qld'
+            AND CHANGEID IN 
+            ( select max(changeid) from memberfact  group by memberid )
+      caption: QLD HITS 5000! CRAB TIME!
+      image: swordcrab.gif
+      duration_days: 0

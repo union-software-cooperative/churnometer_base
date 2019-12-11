@@ -27,3 +27,9 @@ config/config_site.yaml
 config/config.yaml
 config/seed.sql
 config.yaml
+celebration/*.yaml
+celebration/*.gif
+celebration/*.done
+celebration/*.celebrating
+public/celebration.txt
+public/images/celebration.gif
