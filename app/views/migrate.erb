@@ -39,9 +39,7 @@
     <form method="post">
       <input type="submit" name="action" value="restructure and restart">
       <input type="checkbox" name="script_only" value="true"> Script only (do not execute)
-      <textarea name="yaml_spec" style="width:100%;height:90%">
-      <%= @yaml_spec%>
-      </textarea>
+      <textarea name="yaml_spec" style="width:100%;height:90%"><%= @yaml_spec%></textarea>
     </form>
   </section>
 <% end %>

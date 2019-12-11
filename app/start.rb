@@ -291,8 +291,11 @@ class OAuthController < ApplicationController
   get '/migrate' do
     admin!
 
+    temp_filename = app().active_master_config_filename + ".tmp"
+
     @flash = session[:flash]
-    @config = session[:new_config]
+    #@config = session[:new_config]
+    @config = File.read(temp_filename)
 
     if @config.nil?
       session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
@@ -635,6 +638,7 @@ class BasicAuthController < ApplicationController
     @config = params['config']
 
     filename = app().active_master_config_filename
+    temp_filename = app().active_master_config_filename + ".tmp"
 
     begin
       if ! (@config.nil? || @config.empty?)
@@ -652,7 +656,9 @@ class BasicAuthController < ApplicationController
           flash_text += " (memberfacthelper requires update)" if dbm.memberfacthelper_migration_required?
 
           session[:flash] = flash_text
-          session[:new_config] = params['config']
+          #session[:new_config] = params['config']
+          File.open(temp_filename, 'w') { |f| f.write params['config'] }
+
           redirect :migrate
         end
       else
