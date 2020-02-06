@@ -1173,6 +1173,14 @@ class DatabaseManager
           left join transactionSource t on p.id = t.id
         where
           t.id is null
+          and (
+            select
+              max(changeid) changeid
+            from
+              transactionfact
+            where
+              transactionfact.id = p.id
+          ) is not null
         ;
 
         -- finalise import, so running this again won't do anything

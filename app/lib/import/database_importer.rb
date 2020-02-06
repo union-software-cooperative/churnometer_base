@@ -32,7 +32,7 @@ class Importer
     self.progress="Starting import for '#{date}'..."
     self.import_date = date
     self.state='running' # The background loop could begin, any instant after it is set
-    Thread.new do
+    # Thread.new do
       begin
         @importing = true
         go
@@ -44,7 +44,7 @@ class Importer
         self.state = 'broken'
         @db = nil # if a connection is lost or terminated during import, this will force a new connection next time
       end
-    end
+    # end
   end
 
   def close_db()
