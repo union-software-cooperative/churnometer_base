@@ -9,7 +9,8 @@ services:
     restart: always
     volumes:
       - ./db-setup:/docker-entrypoint-initdb.d/db-setup.sql
-      - pgdata:/pgdata
+      - pgdata:/pgdata:delegated
+      - ./scripts/db:/scripts
     environment:
       - PGDATA=/pgdata
       - CHURN_USER

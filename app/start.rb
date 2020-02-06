@@ -372,7 +372,7 @@ class OAuthController < ApplicationController
       #migration_sql = dbm.migrate_asu_sql(dbm.parse_migration(dbm.migration_spec_all.to_yaml))
 
       if params['script_only'] == 'true'
-        "<html><head><pre>User specified script only\n\n#{migration_sql.join($/)}</pre></head></html>"
+        "<html><body><pre>-- User specified script only\n\n#{migration_sql.join($/)}</pre></body></html>"
       else
         stream do |io|
           thread = nil
@@ -588,15 +588,15 @@ class BasicAuthController < ApplicationController
         full_filename += "-utf8"
       end
 
-      if filename.start_with?("members.txt") then
+      if filename.end_with?("members.txt") then
         @model.member_import(full_filename)
       end
 
-      if filename.start_with?("displaytext.txt") then
+      if filename.end_with?("displaytext.txt") then
         @model.displaytext_import(full_filename)
       end
 
-      if filename.start_with?("transactions.txt") then
+      if filename.end_with?("transactions.txt") then
         @model.transaction_import(full_filename)
       end
 
