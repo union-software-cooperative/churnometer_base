@@ -458,11 +458,11 @@ class DatabaseManager
           -- if all values for the member's last change are null
           --, then the member has already been inserted as missing
           -- and doesn't need to be inserted again
-          old.status is null
+          old.status IS NULL
     SQL
 
     dimensions.each { |d| sql << <<-REPEAT }
-          AND old.#{d.column_base_name} is null
+          AND old.#{d.column_base_name} IS NULL
     REPEAT
 
     sql << <<-SQL
@@ -1113,22 +1113,22 @@ class DatabaseManager
       AS $BODY$begin
 
         -- don't run the import if nothing has been imported for comparison
-        if 0 = (select count(*) from transactionsource) then
+        if 0 = (SELECT count(*) FROM transactionsource) THEN
           return;
-        end if;
-
-        insert into
+        END if;
+        
+        INSERT INTO
           transactionfact (
-              id
-              , creationdate
-              , memberid
-              , userid
-              , amount
-              , changeid
-            )
-
+            id
+            , creationdate
+            , memberid
+            , userid
+            , amount
+            , changeid
+          );
+      
         -- insert any transactions that have appeared since last comparison
-        select
+        SELECT
           t.id
           , import_date
           , t.memberid
@@ -1136,24 +1136,24 @@ class DatabaseManager
           , t.amount
           , (
             -- assign dimensions of latest change to the transaction
-            select
-              max(changeid) changeid
-            from
+            SELECT
+              MAX(changeid) changeid
+            FROM
               memberfact m
-            where
+            WHERE
               m.memberid = t.memberid
           ) changeid
-        from
+        FROM
           transactionSource t
-          left join transactionSourcePrev p on t.id = p.id
-        where
-          p.id is null
-          and t.memberid in (select memberid from memberfact) -- TODO we really should handle transactions that have no member attached, rather than excluding them
+          LEFT JOIN transactionSourcePrev p ON t.id = p.id
+        WHERE
+          p.id IS NULL
+          AND t.memberid in (SELECT memberid FROM memberfact) -- TODO we really should handle transactions that have no member attached, rather than excluding them
 
-        union all
+        UNION ALL
 
         -- insert negations for any transactions that have been deleted since last comparison
-        select
+        SELECT
           p.id
           , import_date
           , p.memberid
@@ -1161,35 +1161,28 @@ class DatabaseManager
           , 0::money-p.amount
           , (
             -- assign dimensions of deleted transaction to the negated transaction
-            select
+            SELECT
               max(changeid) changeid
-            from
+            FROM
               transactionfact
-            where
+            WHERE
               transactionfact.id = p.id
           ) changeid
-        from
+        FROM
           transactionSourcePrev p
-          left join transactionSource t on p.id = t.id
-        where
-          t.id is null
-          and (
-            select
-              max(changeid) changeid
-            from
-              transactionfact
-            where
-              transactionfact.id = p.id
-          ) is not null
-        ;
+          LEFT JOIN transactionSource t ON p.id = t.id
+        WHERE
+          t.id IS NULL
+          -- Can only negate a transaction that we've recorded.
+          AND p.id IN (SELECT id FROM transactionfact)
 
         -- finalise import, so running this again won't do anything
-        delete from transactionSourcePrev;
-        insert into transactionSourcePrev select * from transactionSource;
-        delete from transactionSource;
+        DELETE FROM transactionSourcePrev;
+        INSERT INTO transactionSourcePrev SELECT * FROM transactionSource;
+        DELETE FROM transactionSource;
         analyse transactionsourceprev;
 
-      end;$BODY$
+      END;$BODY$
         LANGUAGE plpgsql
         COST 100
         CALLED ON NULL INPUT
@@ -1836,7 +1829,7 @@ EOS
       from
         bd_memberfact
       where
-        initial_changeid is null -- remove redundant changes
+        initial_changeid IS NULL -- remove redundant changes
       order by
         changedate;
 
@@ -1848,7 +1841,7 @@ EOS
         bd_memberfact m
       where
         m.changeid = transactionfact.changeid
-        and not m.initial_changeid is null;
+        and not m.initial_changeid IS NULL;
 
       update
         transactionfact
