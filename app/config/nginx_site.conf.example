@@ -39,7 +39,7 @@ server {
     proxy_intercept_errors on;
   }
 
-  # Rename maintenance_off.html to maintenance_on.html for maintenance mode.
+  # Rename maintenance_off.html to maintenance.html for maintenance mode.
   error_page 503 maintenance.html;
   location /maintenace.html {
     root REPLACEME_WWW_PATH;

@@ -1,12 +1,15 @@
 $line: 18px;
 
-$bg: #C60C30;
-$highlight-bg: #DFDF00;
+//$bg: #C60C30;
+$bg: #c5203a; //UWU colour - very similar!
+$highlight-bg: #fff;
 $highlight-fg: $bg;
 $tab-active-bg: #777;
 $tab-active-fg: ivory;
 $tab-inactive-bg: ivory;
 $tab-inactive-fg: #1C94C4;
+
+
 
 #nav {
   margin-top: $line;
@@ -33,8 +36,8 @@ $tab-inactive-fg: #1C94C4;
   label {
     display:block;
     padding:0.5em;
-  font-size:120%;
-  color:#ffd;
+    font-size:120%;
+    color:#ffd;
   }
 
   ul {
@@ -158,9 +161,7 @@ input.selections {
   display:inline;
 }
 
-body {
-  background-color: $bg;
-}
+body { background-color: $bg; }
 
 h1, h2, h3, h4 {
   color: #ffd;
@@ -188,9 +189,7 @@ h1 a:hover {
     height: 80px;
     }
 
-  li {
-    float: left;
-  }
+  li { float: left; }
 
   ul a {
     background-repeat: no-repeat;
@@ -204,14 +203,8 @@ h1 a:hover {
     color: $highlight-bg;
   }
 
-  ul a:hover {
-    color: ivory;
-  }
-
-  .selected {
-    color: ivory;
-  }
-
+  ul a:hover { color: ivory; }
+  .selected { color: ivory; }
 }
 
 .ui-state-default {
