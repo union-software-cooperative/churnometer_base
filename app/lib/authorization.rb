@@ -83,7 +83,7 @@ class Oauth2Authorize
 
   def initialize(churn_app, auth)
     @app = churn_app
-    @auth = auth['ldap']
+    @auth = auth['profile']
     @authenticated = @auth.is_a?(Hash)
     @groups = @auth.dig('groups') || []
     @admin = admin?
