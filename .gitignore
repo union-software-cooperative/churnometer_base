@@ -7,3 +7,5 @@ docker-compose.override.yml
 *.sql
 bundle
 app/config/config.yaml.tmp
+db-setup
+!*.example*
