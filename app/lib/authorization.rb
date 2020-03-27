@@ -113,7 +113,7 @@ class Oauth2Authorize
   end
 
   def name
-    @auth['name']
+    @auth['given_name']
   end
 end
 
