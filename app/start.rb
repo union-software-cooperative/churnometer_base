@@ -20,6 +20,7 @@ require 'rubygems'
 require 'sinatra/base'
 require 'sinatra/reloader'
 require 'sinatra/json'
+require 'sinatra/namespace'
 require 'bundler/setup'
 require 'pg'
 require 'sass'
@@ -39,6 +40,7 @@ Dir["./lib/churn_presenters/*.rb"].each { |f| require f }
 
 class ApplicationController < Sinatra::Base
   include ChurnLogger
+  register Sinatra::Namespace
 
   configure :development do
     register Sinatra::Reloader
@@ -317,6 +319,21 @@ class BasicAuthController < ApplicationController
     log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for role #{@auth.role.id}"
   end
 
+  namespace '/api/1.0' do
+    get '/import_status' do
+      admin!
+
+      @model = ip()
+
+      if @model.importing?
+        return response.write @model.import_status
+      else
+        state = ( @model.import_ready? ? "ready to import" : "data not staged" )
+        return response.write state + @model.importer_status
+      end
+    end
+  end
+
   after '/import' do
     # log
     @ip.close_db() unless @ip.nil?
@@ -547,7 +564,7 @@ class BasicAuthController < ApplicationController
     session[:flash] = "Successfully saved #{filename}"
     redirect '/restart?redirect=/config'
   end
-  
+
   get '/migrate' do
     admin!
 
@@ -571,7 +588,7 @@ class BasicAuthController < ApplicationController
     @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required?
     erb :migrate
   end
-  
+
   post '/migrate' do
     admin!
 
