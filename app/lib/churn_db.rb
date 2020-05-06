@@ -453,26 +453,20 @@ class ChurnDB
 
   def static_cols
     [
-      'a1p_end_count',
-      'a1p_start_count',
-      'paying_end_count',
       'paying_start_count',
       'stopped_start_count',
-      'stopped_end_count',
-      'a1p_end_count',
       'a1p_start_count',
-      'paying_end_count',
-      'paying_start_count',
       'waiver_start_count',
-       'waiver_end_count',
       'member_start_count',
-       'member_end_count',
-       'nonpaying_start_count',
-      'nonpaying_end_count',
-      'stopped_start_count',
-      'stopped_end_count',
+      'nonpaying_start_count',
       'green_start_count',
       'orange_start_count',
+      'paying_end_count',
+      'stopped_end_count',
+      'a1p_end_count',
+      'waiver_end_count',
+      'member_end_count',
+      'nonpaying_end_count',
       'green_end_count',
       'orange_end_count'
     ]
