@@ -566,62 +566,74 @@ class DatabaseManager
     <<-SQL
     CREATE OR REPLACE FUNCTION updatememberfacthelper() RETURNS void
       AS $BODY$begin
+
+        CREATE TEMPORARY TABLE mfhq AS SELECT * FROM memberfacthelperquery;
+        CREATE INDEX idx_mfhq_memberid ON mfhq(memberid);
+        CREATE INDEX idx_mfhq_changeid ON mfhq(changeid);
+
         -- update memberfacthelper with new facts (helper is designed for fast aggregration)
-        insert into memberfacthelper
-        select
+        INSERT INTO memberfacthelper
+        SELECT
           *
-        from
-          memberfacthelperquery h
-        where
+        FROM
+          mfhq h
+        WHERE
           -- only insert facts we haven't already inserted
-          changeid not in (select changeid from memberfacthelper)
-          and       (
-        -- only include people who've been an interesting status
-        exists (
-          select
-            1
-          from
-            memberfact mf
-          where
-            mf.memberid = h.memberid
-            and (
-              oldstatus = ANY (#{@member_db})
-              or newstatus = ANY (#{@member_db})
+          NOT EXISTS (
+            SELECT
+              1
+            FROM
+              memberfacthelper mf
+            WHERE
+              mf.changeid = h.changeid
+            LIMIT 1
+          ) AND (
+            -- only include people who've been an interesting status
+            EXISTS (
+              SELECT
+                1
+              FROM
+                memberfact mf
+              WHERE
+                mf.memberid = h.memberid
+              AND (
+                oldstatus = ANY (#{@member_db})
+                OR newstatus = ANY (#{@member_db})
+              )
             )
-        )
-        -- or have paid something since tracking begun
-        or exists (
-          select
-            1
-          from
-            transactionfact tf
-          where
-            tf.memberid = h.memberid
-        )
-      );
+            -- or have paid something since tracking begun
+            OR EXISTS (
+              SELECT
+                1
+              FROM
+                transactionfact tf
+              WHERE
+                tf.memberid = h.memberid
+            )
+          );
 
         -- as new status changes happen, next status changes need to be updated
-        update
+        UPDATE
           memberfacthelper
-        set
+        SET
           duration = h.duration
           , _changeid = h._changeid
           , _changedate = h._changedate
           , nextchangeid = h.nextchangeid
           , nextchangedate = h.nextchangedate
           , changeduration = h.changeduration
-        from
-          memberfacthelperquery h
-        where
+        FROM
+          mfhq h
+        WHERE
           memberfacthelper.changeid = h.changeid
-          and memberfacthelper.net = h.net
-          and (
+          AND memberfacthelper.net = h.net
+          AND (
             coalesce(memberfacthelper.duration,0) <> coalesce(h.duration,0)
-            or coalesce(memberfacthelper._changeid,0) <> coalesce(h._changeid,0)
-            or coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900')
-            or coalesce(memberfacthelper.changeduration,0) <> coalesce(h.changeduration,0)
-            or coalesce(memberfacthelper.nextchangeid,0) <> coalesce(h.nextchangeid,0)
-            or coalesce(memberfacthelper.nextchangedate, '1/1/1900') <> coalesce(h.nextchangedate, '1/1/1900')
+            OR coalesce(memberfacthelper._changeid,0) <> coalesce(h._changeid,0)
+            OR coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900')
+            OR coalesce(memberfacthelper.changeduration,0) <> coalesce(h.changeduration,0)
+            OR coalesce(memberfacthelper.nextchangeid,0) <> coalesce(h.nextchangeid,0)
+            OR coalesce(memberfacthelper.nextchangedate, '1/1/1900') <> coalesce(h.nextchangedate, '1/1/1900')
           );
 
       end$BODY$
@@ -635,7 +647,6 @@ class DatabaseManager
 
 
   def memberfacthelperquery_sql
-
     sql = <<-SQL
       create or replace view memberfacthelperquery as
       with mfnextstatuschange as
