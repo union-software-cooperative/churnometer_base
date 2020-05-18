@@ -74,9 +74,12 @@ class QueryDetailStatic < QueryDetailBase
 
     db = @churn_db.db
 
-    paying_db = db.quote(@app.member_paying_status_code)
-    a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
-    stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
+    # paying_db = db.quote(@app.member_paying_status_code)
+    # a1p_db = db.quote(@app.member_awaiting_first_payment_status_code)
+    # stoppedpay_db = db.quote(@app.member_stopped_paying_status_code)
+    paying_db = db.sql_array(@app.paying_statuses)
+    a1p_db = db.sql_array(@app.a1p_statuses)
+    stoppedpay_db = db.sql_array(@app.stopped_statuses)
 
     sql = <<-EOS
       -- static detail query
@@ -111,14 +114,14 @@ class QueryDetailStatic < QueryDetailBase
           c.memberid
           , c.changeid::bigint
           , case when coalesce(#{db.quote_db(header1)}::varchar(50),'') = '' then 'unassigned' else #{db.quote_db(header1)}::varchar(50) end row_header
-          , case when coalesce(status, '') = #{paying_db} then 1 else 0 end::bigint paying
-          , case when coalesce(status, '') = #{a1p_db} then 1 else 0 end::bigint a1p
-          , case when coalesce(status, '') = #{stoppedpay_db} then 1 else 0 end::bigint stopped
+          , case when coalesce(status, '') = ANY (#{paying_db}) then 1 else 0 end::bigint paying
+          , case when coalesce(status, '') = ANY (#{a1p_db}) then 1 else 0 end::bigint a1p
+          , case when coalesce(status, '') = ANY (#{stoppedpay_db}) then 1 else 0 end::bigint stopped
           , case when waivernet <> 0 then 1 else 0 end::bigint waiver
           , case when membernet <> 0 then 1 else 0 end::bigint member
           , case when greennet <> 0 then 1 else 0 end::bigint green
           , case when orangenet <> 0 then 1 else 0 end::bigint orange
-          , case when not (coalesce(status, '') = #{paying_db} or coalesce(status, '') = #{a1p_db} or coalesce(status, '') = #{stoppedpay_db} or waivernet <> 0) then 1 else 0 end::bigint other
+          , case when not (coalesce(status, '') = ANY (#{paying_db}) or coalesce(status, '') = ANY (#{a1p_db}) or coalesce(status, '') = ANY (#{stoppedpay_db}) or waivernet <> 0) then 1 else 0 end::bigint other
         from
           userselections c
       )

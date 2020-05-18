@@ -29,15 +29,21 @@ class DatabaseManager
     @app = app
 
     member_statuses = @app.all_member_statuses
-
     nonwaiver_statuses = member_statuses - @app.waiver_statuses
+
+    paying_statuses = @app.paying_statuses
+    a1p_statuses = @app.a1p_statuses
+    stopped_statuses = @app.stopped_statuses
 
     green_statuses = @app.green_member_statuses
     orange_statuses = member_statuses - green_statuses
 
-    @paying_db = @db.quote(@app.member_paying_status_code)
-    @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
-    @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
+    # @paying_db = @db.quote(@app.member_paying_status_code)
+    # @a1p_db = @db.quote(@app.member_awaiting_first_payment_status_code)
+    # @stopped_db = @db.quote(@app.member_stopped_paying_status_code)
+    @paying_db = @db.sql_array(@app.paying_statuses, 'varchar')
+    @a1p_db = @db.sql_array(@app.a1p_statuses, 'varchar')
+    @stopped_db = @db.sql_array(@app.stopped_statuses, 'varchar')
     @waiver_db = @db.sql_array(@app.waiver_statuses, 'varchar') # "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
     @member_db = @db.sql_array(member_statuses, 'varchar')
     @nonwaiver_db = @db.sql_array(nonwaiver_statuses, 'varchar')
@@ -708,19 +714,19 @@ class DatabaseManager
             )
             then -1 else 0 end as statusdelta
         , 0 as a1pgain
-        , case when coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db}
+        , case when coalesce(oldstatus, '') = ANY (#{@a1p_db}) and not coalesce(newstatus, '') = ANY (#{@a1p_db})
             then -1 else 0 end as a1ploss
-        , case when coalesce(oldstatus, '') = #{@a1p_db}
+        , case when coalesce(oldstatus, '') = ANY (#{@a1p_db})
           then -1 else 0 end as a1pnet
         , 0 as payinggain
-        , case when coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db}
+        , case when coalesce(oldstatus, '') = ANY (#{@paying_db}) and not coalesce(newstatus, '') = ANY (#{@paying_db})
           then -1 else 0 end as payingloss
-        , case when coalesce(oldstatus, '') = #{@paying_db}
+        , case when coalesce(oldstatus, '') = ANY (#{@paying_db})
           then -1 else 0 end as payingnet
         , 0 as stoppedgain
-        , case when coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db}
+        , case when coalesce(oldstatus, '') = ANY (#{@stopped_db}) and not coalesce(newstatus, '') = ANY (#{@stopped_db})
             then -1 else 0 end as stoppedloss
-        , case when coalesce(oldstatus, '') = #{@stopped_db}
+        , case when coalesce(oldstatus, '') = ANY (#{@stopped_db})
           then -1 else 0 end as stoppednet
 
         , 0 as waivergain
@@ -738,15 +744,15 @@ class DatabaseManager
 
         , 0 as othergain
         , case when
-            NOT (coalesce(oldstatus, '') = #{@a1p_db} and coalesce(newstatus, '') <> #{@a1p_db})
-            AND NOT (coalesce(oldstatus, '') = #{@paying_db} and coalesce(newstatus, '') <> #{@paying_db})
-            AND NOT (coalesce(oldstatus, '') = #{@stopped_db} and coalesce(newstatus, '') <> #{@stopped_db})
+            NOT (coalesce(oldstatus, '') = ANY (#{@a1p_db}) and not coalesce(newstatus, '') = ANY (#{@a1p_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@paying_db}) and not coalesce(newstatus, '') = ANY (#{@paying_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@stopped_db}) and not coalesce(newstatus, '') = ANY (#{@stopped_db}))
             AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as otherloss
         , case when
-            NOT (coalesce(oldstatus, '') = #{@a1p_db})
-            AND NOT (coalesce(oldstatus, '') = #{@paying_db})
-            AND NOT (coalesce(oldstatus, '') = #{@stopped_db})
+            NOT (coalesce(oldstatus, '') = ANY (#{@a1p_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@paying_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@stopped_db}))
             AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as othernet
 
@@ -870,20 +876,20 @@ class DatabaseManager
             )
           )
           then 1 else 0 end as statusdelta
-        , case when coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db}
+        , case when not coalesce(oldstatus, '') = ANY (#{@a1p_db}) and coalesce(newstatus, '') = ANY (#{@a1p_db})
             then 1 else 0 end as a1pgain
         , 0 as a1ploss
-        , case when coalesce(newstatus, '') = #{@a1p_db}
+        , case when coalesce(newstatus, '') = ANY (#{@a1p_db})
             then 1 else 0 end as a1pnet
-        , case when coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db}
+        , case when not coalesce(oldstatus, '') = ANY (#{@paying_db}) and coalesce(newstatus, '') = ANY (#{@paying_db})
           then 1 else 0 end as payinggain
         , 0 as payingloss
-        , case when coalesce(newstatus, '') = #{@paying_db}
+        , case when coalesce(newstatus, '') = ANY (#{@paying_db})
           then 1 else 0 end as payingnet
-        , case when coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db}
+        , case when not coalesce(oldstatus, '') = ANY (#{@stopped_db}) and coalesce(newstatus, '') = ANY (#{@stopped_db})
             then 1 else 0 end as stoppedgain
         , 0 as stoppedloss
-        , case when coalesce(newstatus, '') = #{@stopped_db}
+        , case when coalesce(newstatus, '') = ANY (#{@stopped_db})
             then 1 else 0 end as stoppednet
 
         , case when not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
@@ -898,16 +904,16 @@ class DatabaseManager
         , case when coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivernet
         , case when
-            NOT (coalesce(oldstatus, '') <> #{@a1p_db} and coalesce(newstatus, '') = #{@a1p_db})
-            AND NOT (coalesce(oldstatus, '') <> #{@paying_db} and coalesce(newstatus, '') = #{@paying_db})
-            AND NOT (coalesce(oldstatus, '') <> #{@stopped_db} and coalesce(newstatus, '') = #{@stopped_db})
+            NOT (not coalesce(oldstatus, '') = ANY (#{@a1p_db}) and coalesce(newstatus, '') = ANY (#{@a1p_db}))
+            AND NOT (not coalesce(oldstatus, '') = ANY (#{@paying_db}) and coalesce(newstatus, '') = ANY (#{@paying_db}))
+            AND NOT (not coalesce(oldstatus, '') = ANY (#{@stopped_db}) and coalesce(newstatus, '') = ANY (#{@stopped_db}))
             AND NOT (not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othergain
         , 0 as otherloss
         , case when
-            NOT (coalesce(newstatus, '') = #{@a1p_db})
-            AND NOT (coalesce(newstatus, '') = #{@paying_db})
-            AND NOT (coalesce(newstatus, '') = #{@stopped_db})
+            NOT (coalesce(newstatus, '') = ANY (#{@a1p_db}))
+            AND NOT (coalesce(newstatus, '') = ANY (#{@paying_db}))
+            AND NOT (coalesce(newstatus, '') = ANY (#{@stopped_db}))
             AND NOT (coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othernet
 
@@ -1116,7 +1122,7 @@ class DatabaseManager
         if 0 = (SELECT count(*) FROM transactionsource) THEN
           return;
         END if;
-        
+
         INSERT INTO
           transactionfact (
             id
@@ -1126,7 +1132,7 @@ class DatabaseManager
             , amount
             , changeid
           );
-      
+
         -- insert any transactions that have appeared since last comparison
         SELECT
           t.id

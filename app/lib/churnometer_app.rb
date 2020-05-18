@@ -41,7 +41,7 @@ class ChurnometerApp
   # Descriptions of all possible summary tables (only used to get data entry dimension)
   attr_reader :summary_user_data_tables
 
-  attr_reader :waiver_statuses
+  attr_reader :waiver_statuses, :paying_statuses, :a1p_statuses, :stopped_statuses
 
   # application_environment: either ':production' or ':development'
   # config_io:  general config filename or stream.  If nil, will load general config
@@ -103,6 +103,9 @@ class ChurnometerApp
     make_drilldown_order()
     make_col_names()
     make_col_desc()
+    make_paying_statuses()
+    make_a1p_statuses()
+    make_stopped_statuses()
     make_waiver_statuses()
     validate()
   end
@@ -256,10 +259,11 @@ class ChurnometerApp
 
   # Returns a list of every valid status code that a member can be assigned.
   def all_member_statuses
-    result = [member_paying_status_code(),
-              member_awaiting_first_payment_status_code(),
-              member_stopped_paying_status_code()]
-    result = result | waiver_statuses()
+    result = paying_statuses() | a1p_statuses() | stopped_statuses() | waiver_statuses()
+    # result = [member_paying_status_code(),
+    #           member_awaiting_first_payment_status_code(),
+    #           member_stopped_paying_status_code()]
+    # result = result | waiver_statuses()
     #result = result | green_member_statuses()
     result
   end
@@ -269,7 +273,7 @@ class ChurnometerApp
     if config().element('green_member_statuses').value.nil? == false
       config().element('green_member_statuses').value.collect { |e| e.value }
     else
-      [member_paying_status_code, member_awaiting_first_payment_status_code]
+      paying_statuses() | a1p_statuses()
     end
   end
 
@@ -454,19 +458,38 @@ protected
     @col_descriptions
   end
 
+  def make_paying_statuses()
+    make_statuses('member_paying_statuses', '@paying_statuses')
+  end
+
+  def make_a1p_statuses()
+    make_statuses('member_awaiting_first_payment_statuses', '@a1p_statuses')
+  end
+
+  def make_stopped_statuses()
+    make_statuses('member_stopped_paying_statuses', '@stopped_statuses')
+  end
+
   def make_waiver_statuses()
-    element = config().get_mandatory('waiver_statuses')
+    make_statuses('waiver_statuses')
+  end
+
+  def make_statuses(config_key, var_name = nil)
+    var_name ||= "@#{config_key}"
+
+    element = config().get_mandatory(config_key)
     element.ensure_kindof(Array, NilClass)
 
-    @waiver_statuses =
-      if element.value.nil?
-        []
-      else
-        element.value.collect do |element|
-          element.ensure_kindof(String)
-          element.value
-        end
+    value = if element.value.nil?
+      []
+    else
+      element.value.collect do |element|
+        element.ensure_kindof(String)
+        element.value
       end
+    end
+
+    self.instance_variable_set(var_name, value)
   end
 
   def validate_email
