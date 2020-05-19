@@ -74,7 +74,7 @@ class Importer
   end
 
   def progress=(v)
-    puts "SETTINGS IMPORT PROGRESS TO '#{v}''"
+    puts "SETTING IMPORT PROGRESS TO '#{v}''"
     db.set_app_state('import_progress', v)
   end
 
