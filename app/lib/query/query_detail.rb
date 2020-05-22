@@ -273,19 +273,13 @@ class QueryDetail < QueryDetailBase
 
           -- odd columns
           --, case when _changeid is null then a1pgain else 0 end::bigint a1p_unchanged_gain
-          , CASE WHEN (
-            _changeid IS NULL
-            OR (SELECT array_agg(DISTINCT newstatus) FROM memberfact WHERE memberid = c.memberid AND changeid > c.changeid) <@ #{a1p_db}::character varying[]
-          ) THEN a1pgain ELSE 0 END::bigint a1p_unchanged_gain
+          , CASE WHEN _categorychangeid IS NULL THEN a1pgain ELSE 0 END::bigint a1p_unchanged_gain
           , case when coalesce(_status, '') = '' then a1pgain else 0 end::bigint a1p_newjoin
           , case when coalesce(_status, '') <> '' then a1pgain else 0 end::bigint a1p_rejoin
           , case when coalesce(_status, '') = ANY (#{paying_db}) then a1ploss else 0 end::bigint a1p_to_paying
           , case when not coalesce(_status, '') = ANY (#{paying_db}) then a1ploss else 0 end::bigint a1p_to_other
           --, case when _changeid is null then stoppedgain else 0 end::bigint stopped_unchanged_gain
-          , CASE WHEN (
-            _changeid IS NULL
-            OR (SELECT array_agg(DISTINCT newstatus) FROM memberfact WHERE memberid = c.memberid AND changeid > c.changeid) <@ #{stoppedpay_db}::character varying[]
-          ) THEN stoppedgain ELSE 0 END::bigint stopped_unchanged_gain
+          , CASE WHEN _categorychangeid IS NULL THEN stoppedgain ELSE 0 END::bigint stopped_unchanged_gain
           , case when coalesce(_status, '') = ANY (#{paying_db}) then stoppedloss else 0 end::bigint stopped_to_paying
           , case when not coalesce(_status, '') = ANY (#{paying_db}) then stoppedloss else 0 end::bigint stopped_to_other
         from

@@ -619,6 +619,8 @@ class DatabaseManager
           duration = h.duration
           , _changeid = h._changeid
           , _changedate = h._changedate
+          , _categorychangeid = h._categorychangeid
+          , _categorychangedate = h._categorychangedate
           , nextchangeid = h.nextchangeid
           , nextchangedate = h.nextchangedate
           , changeduration = h.changeduration
@@ -631,6 +633,8 @@ class DatabaseManager
             coalesce(memberfacthelper.duration,0) <> coalesce(h.duration,0)
             OR coalesce(memberfacthelper._changeid,0) <> coalesce(h._changeid,0)
             OR coalesce(memberfacthelper._changedate, '1/1/1900') <> coalesce(h._changedate, '1/1/1900')
+            OR COALESCE(memberfacthelper._categorychangeid,0) <> COALESCE(h._categorychangeid,0)
+            OR COALESCE(memberfacthelper._categorychangedate, '1/1/1900') <> COALESCE(h._categorychangedate, '1/1/1900')
             OR coalesce(memberfacthelper.changeduration,0) <> coalesce(h.changeduration,0)
             OR coalesce(memberfacthelper.nextchangeid,0) <> coalesce(h.nextchangeid,0)
             OR coalesce(memberfacthelper.nextchangedate, '1/1/1900') <> coalesce(h.nextchangedate, '1/1/1900')
@@ -644,7 +648,6 @@ class DatabaseManager
         VOLATILE;
     SQL
   end
-
 
   def memberfacthelperquery_sql
     sql = <<-SQL
@@ -670,8 +673,8 @@ class DatabaseManager
         from
           mfnextstatuschange c
           left join memberfact n on c.nextstatuschangeid = n.changeid
-      ), mfnextchange as
-      (
+      )
+      , mfnextchange as (
         -- find the next status change for each statuschange
         select
           lead(changeid)  over (partition by memberid order by changeid) nextchangeid
@@ -689,6 +692,59 @@ class DatabaseManager
         from
           mfnextchange c
           left join memberfact n on c.nextchangeid = n.changeid
+      )
+      , mfnextstatuscategorychange AS (
+        -- find the next change from one status category to another, for each statuschange
+        SELECT
+          (
+            SELECT
+              changeid
+            FROM
+              memberfact
+            WHERE memberid = mf.memberid
+            AND changeid > mf.changeid
+            AND (
+              --moved into paying, from not paying
+              NOT COALESCE(oldstatus,'') = ANY(#{@paying_db})
+              AND COALESCE(newstatus,'') = ANY(#{@paying_db})
+              OR
+              -- moved into A1P, from not A1P
+              NOT COALESCE(oldstatus,'') = ANY(#{@a1p_db})
+              AND COALESCE(newstatus,'') = ANY(#{@a1p_db})
+              OR
+              -- moved into stopped, from not stopped
+              NOT COALESCE(oldstatus,'') = ANY(#{@stopped_db})
+              AND COALESCE(newstatus,'') = ANY(#{@stopped_db})
+              OR
+              -- moved into waiver, from not waiver
+              NOT COALESCE(oldstatus,'') = ANY(#{@waiver_db})
+              AND COALESCE(newstatus,'') = ANY(#{@waiver_db})
+              OR
+              -- had a membership status, and no longer has a membership status
+              COALESCE(oldstatus,'') = ANY(#{@member_db})
+              AND NOT COALESCE(newstatus,'') = ANY(#{@member_db})
+            )
+            ORDER BY changeid
+            LIMIT 1
+          ) AS nextstatuscategorychangeid
+          , mf.*
+        FROM
+          memberfact mf
+        WHERE
+          COALESCE(mf.oldstatus,'') <> COALESCE(mf.newstatus,'')
+        ORDER BY
+          mf.changedate ASC
+      )
+      , nextstatuscategorychange AS (
+        SELECT
+          c.changeid
+          , n.changeid nextchangeid
+          , n.changedate nextchangedate
+          , n.newstatus nextstatus
+          , (COALESCE(n.changedate::date, current_date) - c.changedate::date)::int nextduration
+        FROM
+          mfnextstatuscategorychange c
+          LEFT JOIN memberfact n ON c.nextstatuscategorychangeid = n.changeid
       )
       select
         memberfact.changeid
@@ -874,10 +930,13 @@ class DatabaseManager
         , nextchange.nextchangeid nextchangeid
         , nextchange.nextchangedate nextchangedate
         , nextchange.nextduration changeduration
+        , nextstatuscategorychange.nextchangeid _categorychangeid
+        , nextstatuscategorychange.nextchangedate _categorychangedate
       from
         memberfact
         left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
         left join nextchange on memberfact.changeid = nextchange.changeid
+        left join nextstatuscategorychange on memberfact.changeid = nextstatuscategorychange.changeid
 
       UNION ALL
 
@@ -1065,10 +1124,13 @@ class DatabaseManager
         , nextchange.nextchangeid nextchangeid
         , nextchange.nextchangedate nextchangedate
         , nextchange.nextduration changeduration
+        , nextstatuscategorychange.nextchangeid _categorychangeid
+        , nextstatuscategorychange.nextchangedate _categorychangedate
       from
         memberfact
-       left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
-       left join nextchange on memberfact.changeid = nextchange.changeid
+        left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
+        left join nextchange on memberfact.changeid = nextchange.changeid
+        left join nextstatuscategorychange on memberfact.changeid = nextstatuscategorychange.changeid
 
     SQL
   end
