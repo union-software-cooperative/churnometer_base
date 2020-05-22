@@ -212,14 +212,30 @@ class QuerySummaryRunning < QueryFilter
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then coalesce(c.net,0) else 0 end) net
 
           -- Odd non standard columns
-          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then a1pgain else 0 end) a1p_unchanged_gain
+          --, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then a1pgain else 0 end) a1p_unchanged_gain
+          , SUM(CASE WHEN
+            changedate >= #{db.sql_date(@start_date)}
+            AND changedate < #{db.sql_date(end_date)}
+            AND (
+              _changeid IS NULL
+              OR (SELECT array_agg(DISTINCT newstatus) FROM memberfact WHERE memberid = c.memberid AND changeid > c.changeid) <@ #{a1p_db}::character varying[]
+            ) THEN a1pgain ELSE 0 END) a1p_unchanged_gain
+
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') = '' then a1pgain else 0 end) a1p_newjoin
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status, '') <>'' then a1pgain else 0 end) a1p_rejoin
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = ANY (#{paying_db}) then a1ploss else 0 end) a1p_to_paying
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not coalesce(_status,'') = ANY (#{paying_db}) then a1ploss else 0 end) a1p_to_other
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = ANY (#{paying_db}) then stoppedloss else 0 end) stopped_to_paying
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not coalesce(_status,'') = ANY (#{paying_db}) then stoppedloss else 0 end) stopped_to_other
-          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
+          --, sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _changeid is null then stoppedgain else 0 end) stopped_unchanged_gain
+          , SUM(CASE WHEN
+            changedate >= #{db.sql_date(@start_date)}
+            AND changedate < #{db.sql_date(end_date)}
+            AND (
+              _changeid IS NULL
+              OR (SELECT array_agg(DISTINCT newstatus) FROM memberfact WHERE memberid = c.memberid AND changeid > c.changeid) <@ #{stoppedpay_db}::character varying[]
+            ) THEN stoppedgain ELSE 0 END) stopped_unchanged_gain
+
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
           /* EO SHARED BETWEEEN SUMMARY AND RUNNING SUMMARY - TODO REFACTOR */

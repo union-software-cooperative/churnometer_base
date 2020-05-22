@@ -703,13 +703,38 @@ class DatabaseManager
         , case when
             (
               (
-                coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
-                or coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
+                coalesce(oldstatus, '') = ANY (#{@paying_db})
+                and not coalesce(newstatus, '') = ANY (#{@paying_db})
               )
-              -- This assumes only one status code for paying, one code for stopped and one code for a1p
-              -- If there was more than one code for each of these we'd need a more verbose method for
-              -- checking changes between these statii, like is used for waiver_db
-              and coalesce(oldstatus, '') <> coalesce(newstatus, '') -- when changing between a1p, paying and stopped
+              or
+              (
+                not coalesce(oldstatus, '') = ANY (#{@paying_db})
+                and coalesce(newstatus, '') = ANY (#{@paying_db})
+              )
+            )
+            or
+            (
+              (
+                coalesce(oldstatus, '') = ANY (#{@a1p_db})
+                and not coalesce(newstatus, '') = ANY (#{@a1p_db})
+              )
+              or
+              (
+                not coalesce(oldstatus, '') = ANY (#{@a1p_db})
+                and coalesce(newstatus, '') = ANY (#{@a1p_db})
+              )
+            )
+            or
+            (
+              (
+                coalesce(oldstatus, '') = ANY (#{@stopped_db})
+                and not coalesce(newstatus, '') = ANY (#{@stopped_db})
+              )
+              or
+              (
+                not coalesce(oldstatus, '') = ANY (#{@stopped_db})
+                and coalesce(newstatus, '') = ANY (#{@stopped_db})
+              )
             )
             or
             (
@@ -869,10 +894,38 @@ class DatabaseManager
         , case when
           (
             (
-              coalesce(oldstatus, '') = ANY (#{@nonwaiver_db})
-              or coalesce(newstatus, '') = ANY (#{@nonwaiver_db})
+              coalesce(oldstatus, '') = ANY (#{@paying_db})
+              and not coalesce(newstatus, '') = ANY (#{@paying_db})
             )
-            and coalesce(oldstatus, '') <> coalesce(newstatus, '') -- when changing between a1p, paying and stopped
+            or
+            (
+              not coalesce(oldstatus, '') = ANY (#{@paying_db})
+              and coalesce(newstatus, '') = ANY (#{@paying_db})
+            )
+          )
+          or
+          (
+            (
+              coalesce(oldstatus, '') = ANY (#{@a1p_db})
+              and not coalesce(newstatus, '') = ANY (#{@a1p_db})
+            )
+            or
+            (
+              not coalesce(oldstatus, '') = ANY (#{@a1p_db})
+              and coalesce(newstatus, '') = ANY (#{@a1p_db})
+            )
+          )
+          or
+          (
+            (
+              coalesce(oldstatus, '') = ANY (#{@stopped_db})
+              and not coalesce(newstatus, '') = ANY (#{@stopped_db})
+            )
+            or
+            (
+              not coalesce(oldstatus, '') = ANY (#{@stopped_db})
+              and coalesce(newstatus, '') = ANY (#{@stopped_db})
+            )
           )
           or
           (
