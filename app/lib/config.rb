@@ -161,6 +161,20 @@ class ConfigElement
       nil
     end
   end
+
+  # Currently unused except for debugging in console. May be used in building
+  # status arrays from singletons and ranges, rather than explicit arrays.
+  def simple_value
+    if has_children?
+      if @value.kind_of?(Array)
+        @value.map(&:simple_value)
+      elsif @value.kind_of?(Hash)
+        @value.keys.zip(@value.values.map(&:simple_value)).to_h
+      end
+    else
+      @value
+    end
+  end
 end
 
 # Contains mappings from element ids to ConfigElement instances.

@@ -17,6 +17,8 @@
 
 require './lib/dimension'
 require './lib/waterfall_chart_config'
+require './lib/app_role'
+require './lib/user_data_table'
 
 class ChurnometerApp
   # A Dimensions instance containing both custom and inbuilt dimensions.
@@ -472,6 +474,21 @@ protected
 
   def make_waiver_statuses()
     make_statuses('waiver_statuses')
+  end
+
+  # Currently unused. With status arrays replacing singular statuses, this is an
+  # experiment in building status arrays from singletons and ranges.
+  def make_status_array(config_key)
+    element = config().get_mandatory(config_key)
+    element.ensure_kindof(Array, NilClass)
+
+    # All values are range arrays.
+    # element.simple_value.map { |r| Range.new(*r).to_a }.flatten
+
+    # Some values are singular.
+    element.simple_value.to_a.map do |val|
+      val.kind_of?(Array) ? Range.new(*val).to_a : val
+    end.flatten
   end
 
   def make_statuses(config_key, var_name = nil)
