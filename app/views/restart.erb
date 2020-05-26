@@ -10,10 +10,10 @@
 
 <div class="menu container">
   <ul>
-    <li><a href="/config">config</a></li>
-    <li><a href="/backup">backup</a></li>
-    <li><a class="selected" href="/restart?redirect=/">restart</a></li>
-    <li><a href="/import">import</a></li>
+    <li><a href="/admin/config">config</a></li>
+    <li><a href="/admin/backup">backup</a></li>
+    <li><a class="selected" href="/admin/restart?redirect=/">restart</a></li>
+    <li><a href="/admin/import">import</a></li>
   </ul>
   <h3><span id="count_down">Restarting...</span></h3>
   <form method="post" name="restart">
@@ -35,7 +35,7 @@
     // restart in background so shutdown crash doesn't show to user
     $.ajax({
       type: 'POST',
-      url: '/restart'
+      url: '/admin/restart'
     });
 
     // add x dots a second at a time, then redirect

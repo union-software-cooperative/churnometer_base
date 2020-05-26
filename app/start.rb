@@ -298,12 +298,12 @@ class OAuthController < ApplicationController
 
     if @dimensions == []
       session[:flash] = "you must provide a comma separated set of 'dimensions'"
-      redirect :config
+      redirect '/admin/config'
     end
 
     if @back_to.nil?
       session[:flash] = "you must provide a 'back_to' date to backdate to"
-      redirect :config
+      redirect '/admin/config'
     end
 
     # get new config and dimensions
@@ -334,368 +334,390 @@ class BasicAuthController < ApplicationController
     end
   end
 
-  after '/import' do
-    # log
-    @ip.close_db() unless @ip.nil?
-  end
-
-  get "/import" do
-    admin!
-
-    @flash = session[:flash]
-    session[:flash] = nil
-
-    @model = ip()
-
-    if params['action'] == "diags"
-      response.write @model.diags
-      return
+  namespace '/admin' do
+    after '/import' do
+      # log
+      @ip.close_db() unless @ip.nil?
     end
 
-    #if params['action'] == "rebuild"
-    #  @model.rebuild
-    #end
+    get "/import" do
+      admin!
 
-    if params['scripted'] == 'true'
-      if @model.importing?
-        return response.write @model.import_status
-      else
-        state = ( @model.import_ready? ? "ready to import" : "data not staged" )
-        return response.write state + @model.importer_status
-      end
-    else
-      erb :import
-    end
-  end
+      @flash = session[:flash]
+      session[:flash] = nil
 
-  get "/backup" do
-    admin!
+      @model = ip()
 
-    @flash = session[:flash]
-    session[:flash] = nil
-    erb :backup
-  end
-
-  get "/restart" do
-    admin!
-
-    @flash = session[:flash]
-    session[:flash] = nil
-    erb :restart
-  end
-
-  post "/restart" do
-    admin!
-
-    @model = ip()
-    @model.restart
-  end
-
-  post "/import" do
-    admin!
-    session[:flash] = nil
-    @model = ip()
-
-    if params['action'] == "reset"
-      @model.reset
-      session[:flash] = "Successfully emptied staging tables"
-      redirect '/import'
-    end
-
-    if params['action'] == "import"
-      if @model.import_ready?
-        @model.go(Time.parse(params['import_date']))
-        session[:flash] = "Successfully commenced import of staged data"
-
-        if params['scripted'] == 'true'
-          return response.write session[:flash]
-        else
-          redirect '/import'
-        end
-      else
-        session[:flash] = "Data not staged for import"
-
-        if params['scripted'] == 'true'
-          return response.write session[:flash]
-        else
-          redirect '/import'
-        end
-      end
-    end
-
-    if params['action'] == "empty_cache"
-      begin
-        @model.empty_cache()
-      rescue StandardError => err
-        raise err if ! (err.message == 'rm: tmp/*.Marshal: No such file or directory')
+      if params['action'] == "diags"
+        response.write @model.diags
+        return
       end
 
-      session[:flash] = "Successfully emptied cache"
+      #if params['action'] == "rebuild"
+      #  @model.rebuild
+      #end
+
       if params['scripted'] == 'true'
-        return response.write session[:flash]
+        if @model.importing?
+          return response.write @model.import_status
+        else
+          state = ( @model.import_ready? ? "ready to import" : "data not staged" )
+          return response.write state + @model.importer_status
+        end
       else
-        redirect '/import'
+        erb :import
       end
     end
 
-    #if params['action'] == "rebuild"
-    #  @model.rebuild
-    #  redirect '/import'
-    #end
+    get "/backup" do
+      admin!
 
-    if params['action'] == "diags"
-      response.write @model.diags
-      return
+      @flash = session[:flash]
+      session[:flash] = nil
+      erb :backup
     end
 
-    if params['myfile'].nil?
-      session[:flash]="No file uploaded"
-      redirect '/import'
+    get "/restart" do
+      admin!
+
+      @flash = session[:flash]
+      session[:flash] = nil
+      erb :restart
     end
 
-    file = params['myfile'][:tempfile]
-    filename = params['myfile'][:filename]
+    post "/restart" do
+      admin!
 
-    begin
-      full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
-
-      File.open(full_filename, "w") do |f|
-        f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
-      end
-
-      if app().database_import_encoding && app().database_import_encoding != 'utf-8'
-        iconv_filename = "#{full_filename}-utf8"
-        iconv_result = `iconv -f '#{app().database_import_encoding}' -t 'utf-8' -o "#{iconv_filename}" "#{full_filename}"`
-        $stderr.puts iconv_result
-        raise "Failed to convert file to utf-8: #{iconv_result}" if $? != 0
-        File.delete(full_filename)
-        full_filename += "-utf8"
-      end
-
-      if filename.end_with?("members.txt") then
-        @model.member_import(full_filename)
-      end
-
-      if filename.end_with?("displaytext.txt") then
-        @model.displaytext_import(full_filename)
-      end
-
-      if filename.end_with?("transactions.txt") then
-        @model.transaction_import(full_filename)
-      end
-
-    rescue StandardError => err
-      session[:flash] = "File upload failed: " + err.message
+      @model = ip()
+      @model.restart
     end
 
-    if session[:flash].nil?
-      session[:flash] = "#{filename} was successfully uploaded"
-    end
+    post "/import" do
+      admin!
+      session[:flash] = nil
+      @model = ip()
 
-    # write flash to stderr in case something goes wrong with presenting the flash.
-    $stderr.puts session[:flash]
-
-    if params['scripted']=='true'
-      response.write session[:flash] # so CURL doesn't have to redirect to get
-    else
-      redirect '/import'
-    end
-  end
-
-  get '/config' do
-    admin!
-
-    @flash = session[:flash]
-    session[:flash] = nil
-
-    filename = app().active_master_config_filename
-
-    @config = ""
-    File.open(filename, 'r') do |f|
-      while line=f.gets
-        @config+=line
+      if params['action'] == "reset"
+        @model.reset
+        session[:flash] = "Successfully emptied staging tables"
+        redirect '/admin/import'
       end
-    end
 
-    erb :config, :locals => {:filename => filename}
-  end
+      if params['action'] == "import"
+        if @model.import_ready?
+          @model.go(Time.parse(params['import_date']))
+          session[:flash] = "Successfully commenced import of staged data"
 
-  post '/config' do
-    admin!
-
-    @flash = nil
-    @config = params['config']
-
-    filename = app().active_master_config_filename
-    temp_filename = app().active_master_config_filename + ".tmp"
-
-    begin
-      if ! (@config.nil? || @config.empty?)
-
-        testConfig = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
-        testConfig.validate
-        dbm = DatabaseManager.new(testConfig)
-        @yaml_spec = dbm.migration_yaml_spec
-        if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
-          File.open(filename, 'w') do |f|
-            f.write @config
+          if params['scripted'] == 'true'
+            return response.write session[:flash]
+          else
+            redirect '/admin/import'
           end
         else
-          flash_text = "Need to restructure data before saving #{filename}"
-          flash_text += " (memberfacthelper requires update)" if dbm.memberfacthelper_migration_required?
+          session[:flash] = "Data not staged for import"
 
-          session[:flash] = flash_text
-          #session[:new_config] = params['config']
-          File.open(temp_filename, 'w') { |f| f.write params['config'] }
-
-          redirect :migrate
+          if params['scripted'] == 'true'
+            return response.write session[:flash]
+          else
+            redirect '/admin/import'
+          end
         end
-      else
-        raise "empty config!"
       end
-    rescue StandardError => err
-      @flash = "Failed to save #{filename}: " + err.message
-    rescue Psych::SyntaxError => err
-      @flash = "Failed to save #{filename}: " + err.message
+
+      if params['action'] == "empty_cache"
+        begin
+          @model.empty_cache()
+        rescue StandardError => err
+          raise err if ! (err.message == 'rm: tmp/*.Marshal: No such file or directory')
+        end
+
+        session[:flash] = "Successfully emptied cache"
+        if params['scripted'] == 'true'
+          return response.write session[:flash]
+        else
+          redirect '/admin/import'
+        end
+      end
+
+      #if params['action'] == "rebuild"
+      #  @model.rebuild
+      #  redirect '/import'
+      #end
+
+      if params['action'] == "diags"
+        response.write @model.diags
+        return
+      end
+
+      if params['myfile'].nil?
+        session[:flash]="No file uploaded"
+        redirect '/admin/import'
+      end
+
+      file = params['myfile'][:tempfile]
+      filename = params['myfile'][:filename]
+
+      begin
+        full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
+
+        File.open(full_filename, "w") do |f|
+          f.write(file.read.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '?'))
+        end
+
+        if app().database_import_encoding && app().database_import_encoding != 'utf-8'
+          iconv_filename = "#{full_filename}-utf8"
+          iconv_result = `iconv -f '#{app().database_import_encoding}' -t 'utf-8' -o "#{iconv_filename}" "#{full_filename}"`
+          $stderr.puts iconv_result
+          raise "Failed to convert file to utf-8: #{iconv_result}" if $? != 0
+          File.delete(full_filename)
+          full_filename += "-utf8"
+        end
+
+        if filename.end_with?("members.txt") then
+          @model.member_import(full_filename)
+        end
+
+        if filename.end_with?("displaytext.txt") then
+          @model.displaytext_import(full_filename)
+        end
+
+        if filename.end_with?("transactions.txt") then
+          @model.transaction_import(full_filename)
+        end
+
+      rescue StandardError => err
+        session[:flash] = "File upload failed: " + err.message
+      end
+
+      if session[:flash].nil?
+        session[:flash] = "#{filename} was successfully uploaded"
+      end
+
+      # write flash to stderr in case something goes wrong with presenting the flash.
+      $stderr.puts session[:flash]
+
+      if params['scripted']=='true'
+        response.write session[:flash] # so CURL doesn't have to redirect to get
+      else
+        redirect '/admin/import'
+      end
     end
 
-    return erb :config, :locals => {:filename => filename} if !@flash.nil?
+    get '/config' do
+      admin!
 
-    session[:flash] = "Successfully saved #{filename}"
-    redirect '/restart?redirect=/config'
-  end
+      @flash = session[:flash]
+      session[:flash] = nil
 
-  get '/migrate' do
-    admin!
+      filename = app().active_master_config_filename
 
-    temp_filename = app().active_master_config_filename + ".tmp"
+      @config = ""
+      File.open(filename, 'r') do |f|
+        while line=f.gets
+          @config+=line
+        end
+      end
 
-    @flash = session[:flash]
-    #@config = session[:new_config]
-    @config = File.read(temp_filename)
-
-    if @config.nil?
-      session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
-      redirect :config
+      erb :config, :locals => {:filename => filename}
     end
 
-    # get new config and dimensions
-    new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
-    dbm = DatabaseManager.new(new_config)
+    post '/config' do
+      admin!
 
-    # get the proposed migration, and return it to the user to allow intervention
-    @yaml_spec = dbm.migration_yaml_spec
-    @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required?
-    erb :migrate
-  end
+      @flash = nil
+      @config = params['config']
 
-  post '/migrate' do
-    admin!
+      filename = app().active_master_config_filename
+      temp_filename = app().active_master_config_filename + ".tmp"
 
-    temp_filename = app().active_master_config_filename + ".tmp"
+      begin
+        if ! (@config.nil? || @config.empty?)
 
-    @flash = nil
-    session[:flash] = nil
+          testConfig = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
+          testConfig.validate
+          dbm = DatabaseManager.new(testConfig)
+          @yaml_spec = dbm.migration_yaml_spec
+          if @yaml_spec.nil? && dbm.memberfacthelper_migration_required? == false
+            File.open(filename, 'w') do |f|
+              f.write @config
+            end
+          else
+            flash_text = "Need to restructure data before saving #{filename}"
+            flash_text += " (memberfacthelper requires update)" if dbm.memberfacthelper_migration_required?
 
-    @yaml_spec = params['yaml_spec']
+            session[:flash] = flash_text
+            #session[:new_config] = params['config']
+            File.open(temp_filename, 'w') { |f| f.write params['config'] }
 
-    #@config = session[:new_config]
-    @config = File.read(temp_filename)
+            redirect '/admin/migrate'
+          end
+        else
+          raise "empty config!"
+        end
+      rescue StandardError => err
+        @flash = "Failed to save #{filename}: " + err.message
+      rescue Psych::SyntaxError => err
+        @flash = "Failed to save #{filename}: " + err.message
+      end
 
-    if @config.nil?
-      session[:flash] = "Can't migrate without new config.  Make sure cookies are enabled."
-      redirect :config
+      return erb :config, :locals => {:filename => filename} if !@flash.nil?
+
+      session[:flash] = "Successfully saved #{filename}"
+      redirect '/admin/restart?redirect=/config'
     end
 
-    need_full_migration = @yaml_spec.nil? == false
+    get '/migrate' do
+      admin!
 
-    # attempt migration using user supplied spec
-    begin
+      temp_filename = app().active_master_config_filename + ".tmp"
+
+      @flash = session[:flash]
+      #@config = session[:new_config]
+      @config = File.read(temp_filename)
+
+      if @config.nil?
+        session[:flash] = "Can't migrate with out new config.  Make sure cookies are enabled."
+        redirect '/admin/config'
+      end
+
+      # get new config and dimensions
       new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
-
       dbm = DatabaseManager.new(new_config)
 
-      migration_sql =
-        if need_full_migration
-          migration_spec = dbm.parse_migration(@yaml_spec)
+      # get the proposed migration, and return it to the user to allow intervention
+      @yaml_spec = dbm.migration_yaml_spec
+      @memberfacthelper_migration_required = dbm.memberfacthelper_migration_required?
+      erb :migrate
+    end
 
-          #dbm.migrate_nuw_sql(migration_spec) # use this line in place of the one below when migrating from NUW
-          dbm.migrate_sql(migration_spec)
-        else
-          dbm.rebuild_memberfacthelper_sql_ary
-        end
+    post '/migrate' do
+      admin!
 
-      #migration_sql = dbm.migrate_asu_sql(dbm.parse_migration(dbm.migration_spec_all.to_yaml))
+      temp_filename = app().active_master_config_filename + ".tmp"
 
-      if params['script_only'] == 'true'
-        "<html><body><pre>-- User specified script only\n\n#{migration_sql.join($/)}</pre></body></html>"
-      else
-        stream do |io|
-          thread = nil
-          error = nil
+      @flash = nil
+      session[:flash] = nil
 
-          io << "<html><head><title>Churnometer migration in progress.</title></head><body>"
+      @yaml_spec = params['yaml_spec']
 
-          thread = Thread.new do
-            io << "<div><span>Please wait</span></span>"
-            begin
-              io << " . "
-              sleep 1
-            end while !Thread.current[:finished]
-            io << "</span>"
-          end.run
+      #@config = session[:new_config]
+      @config = File.read(temp_filename)
 
-          migrate_result = true
+      if @config.nil?
+        session[:flash] = "Can't migrate without new config.  Make sure cookies are enabled."
+        redirect '/admin/config'
+      end
 
-          begin
-            migrate_result = dbm.migrate(migration_sql, need_full_migration == true) # this can take some serious time
-          rescue StandardError => err
-            error = err.message + ". Diagnostic sql: #{migration_sql.join($/)}"
-          rescue Psych::SyntaxError => err
-            error = err.message
-          ensure
-            thread[:finished] = true if !thread.nil?
-          end
+      need_full_migration = @yaml_spec.nil? == false
 
-          io << "</div>"
+      # attempt migration using user supplied spec
+      begin
+        new_config = ChurnometerApp.new(settings.environment, nil, StringIO.new(@config))
 
-          if migrate_result != true
-            io << "<div>A non-fatal error occurred during the migration:</div>"
-            io << "<pre>#{h(migrate_result).gsub('\n', '</br>')}</pre>"
-          end
+        dbm = DatabaseManager.new(new_config)
 
-          if !error.nil?
-            io << "<div>The migration failed with the following error:</div>"
-            io << "<pre>#{h(error).gsub('\n', '</br>')}</pre>"
-            io << "<div><a href='/migrate'>Back to migration page.</a></div>"
+        migration_sql =
+          if need_full_migration
+            migration_spec = dbm.parse_migration(@yaml_spec)
+
+            #dbm.migrate_nuw_sql(migration_spec) # use this line in place of the one below when migrating from NUW
+            dbm.migrate_sql(migration_spec)
           else
-            io << "<div>Migration successful.</div>\n"
+            dbm.rebuild_memberfacthelper_sql_ary
+          end
 
-            # If we made it this far, save the new config
+        #migration_sql = dbm.migrate_asu_sql(dbm.parse_migration(dbm.migration_spec_all.to_yaml))
+
+        if params['script_only'] == 'true'
+          "<html><body><pre>-- User specified script only\n\n#{migration_sql.join($/)}</pre></body></html>"
+        else
+          stream do |io|
+            thread = nil
+            error = nil
+
+            io << "<html><head><title>Churnometer migration in progress.</title></head><body>"
+
+            thread = Thread.new do
+              io << "<div><span>Please wait</span></span>"
+              begin
+                io << " . "
+                sleep 1
+              end while !Thread.current[:finished]
+              io << "</span>"
+            end.run
+
+            migrate_result = true
+
             begin
-              File.open(app().active_master_config_filename, 'w') do |f|
-                f.write @config
-              end
+              migrate_result = dbm.migrate(migration_sql, need_full_migration == true) # this can take some serious time
             rescue StandardError => err
-              error = "Successfully migrated database but failed to save #{app().active_master_config_filename}: " + err.message
+              error = err.message + ". Diagnostic sql: #{migration_sql.join($/)}"
+            rescue Psych::SyntaxError => err
+              error = err.message
+            ensure
+              thread[:finished] = true if !thread.nil?
+            end
+
+            io << "</div>"
+
+            if migrate_result != true
+              io << "<div>A non-fatal error occurred during the migration:</div>"
+              io << "<pre>#{h(migrate_result).gsub('\n', '</br>')}</pre>"
             end
 
             if !error.nil?
-              io << "<div>An error occurred while writing the config file: <pre>#{h(error).gsub('\n', '</br>')}</pre></div>"
-              io << "<div>Please record (copy and paste) the following config data before leaving this page:</div>"
-              io << "<pre>#{h @config}</pre>"
-              io << "<a href='/migrate'>Back to config page.</a>"
+              io << "<div>The migration failed with the following error:</div>"
+              io << "<pre>#{h(error).gsub('\n', '</br>')}</pre>"
+              io << "<div><a href='/admin/migrate'>Back to migration page.</a></div>"
             else
-              io << "<div>Successfully restructured database and saved config/config.yaml</div>"
-              io << "<div>The server must be restarted now.</div>"
-              io << "<div><a href='/restart?redirect=/config'>Click here to restart server.</a></div>"
-            end
-          end
+              io << "<div>Migration successful.</div>\n"
 
-          io << "</body></html>"
+              # If we made it this far, save the new config
+              begin
+                File.open(app().active_master_config_filename, 'w') do |f|
+                  f.write @config
+                end
+              rescue StandardError => err
+                error = "Successfully migrated database but failed to save #{app().active_master_config_filename}: " + err.message
+              end
+
+              if !error.nil?
+                io << "<div>An error occurred while writing the config file: <pre>#{h(error).gsub('\n', '</br>')}</pre></div>"
+                io << "<div>Please record (copy and paste) the following config data before leaving this page:</div>"
+                io << "<pre>#{h @config}</pre>"
+                io << "<a href='/admin/migrate'>Back to config page.</a>"
+              else
+                io << "<div>Successfully restructured database and saved config/config.yaml</div>"
+                io << "<div>The server must be restarted now.</div>"
+                io << "<div><a href='/admin/restart?redirect=/config'>Click here to restart server.</a></div>"
+              end
+            end
+
+            io << "</body></html>"
+          end
         end
       end
     end
+  end
+
+  get "/import" do
+    redirect '/admin/import'
+  end
+
+  get "/backup" do
+    redirect '/admin/backup'
+  end
+
+  get "/restart" do
+    redirect '/admin/restart'
+  end
+
+  get '/config' do
+    redirect '/admin/config'
+  end
+
+  get '/migrate' do
+    redirect '/admin/migrate'
   end
 end
 

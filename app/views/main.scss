@@ -9,7 +9,8 @@ $tab-active-fg: ivory;
 $tab-inactive-bg: ivory;
 $tab-inactive-fg: #1C94C4;
 
-
+//date picker header fix
+#ui-datepicker-div .ui-datepicker-header { background-color: $bg; }
 
 #nav {
   margin-top: $line;
