@@ -188,7 +188,7 @@ class ChurnPresenter_Table
     end
 
     if bold_col?(column_name)
-        bold(content)
+      bold(content)
     else
       content
     end
@@ -295,7 +295,7 @@ class ChurnPresenter_Table
   def can_export_cell?(column_name, value)
     (
       filter_columns.include? column_name
-    ) && (value.to_i != 0)
+    ) && (value.to_i != 0 && value.to_i.abs < ENV["EXPORT_CUTOFF"].to_i)
   end
 
   def safe_add(a, b)
