@@ -1131,7 +1131,7 @@ class DatabaseManager
         left join nextstatuschange on memberfact.changeid = nextstatuschange.changeid
         left join nextchange on memberfact.changeid = nextchange.changeid
         left join nextstatuscategorychange on memberfact.changeid = nextstatuscategorychange.changeid
-
+      ;
     SQL
   end
 
