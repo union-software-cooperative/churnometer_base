@@ -44,7 +44,7 @@ module Settings
       'endDate' => end_date,
       'column' => '',
       'interval' => 'none',
-      'period' => 'this_week',
+      'period' => Date.today.monday? ? 'last_week' : 'this_week',
       Filter => {
         'status' => app().paying_statuses | app().a1p_statuses | app().stopped_statuses | app().waiver_statuses
         # 'status' => [
