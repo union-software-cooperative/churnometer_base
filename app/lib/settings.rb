@@ -37,6 +37,7 @@ module Settings
   def query_defaults
     start_date = app.application_start_date.strftime(DateFormatDisplay)
     end_date = Time.now.strftime(DateFormatDisplay)
+    period = Date.today.wday <= 1 ? 'last_week' : 'this_week'
 
     defaults = {
       'group_by' => app().groupby_default_dimension.id,
@@ -44,7 +45,7 @@ module Settings
       'endDate' => end_date,
       'column' => '',
       'interval' => 'none',
-      'period' => Date.today.monday? ? 'last_week' : 'this_week',
+      'period' => period,
       Filter => {
         'status' => app().paying_statuses | app().a1p_statuses | app().stopped_statuses | app().waiver_statuses
         # 'status' => [
