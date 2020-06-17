@@ -7,4 +7,4 @@ BKP_NAME=${3:-$(date +%Y%m%d%H%M%S)}
 cd "${0%/*}/../.."
 mkdir -p ./app/backup/cache
 ssh $GT_HOST $GT_PATH/scripts/cache/backup.sh $BKP_NAME
-scp "${GT_HOST}:${GT_PATH}/app/backup/cache/${BKP_NAME}.sql.gz" ./app/backup/cache
+scp "${GT_HOST}:${GT_PATH}/app/backup/cache/${BKP_NAME}.tar.gz" ./app/backup/cache
