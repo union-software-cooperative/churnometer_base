@@ -7,6 +7,11 @@ services:
       context: .
       dockerfile: dockerfile-db
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "50"
+        max-size: "10m"
     volumes:
       - ./db-setup:/docker-entrypoint-initdb.d/db-setup.sql
       - pgdata:/pgdata:delegated
@@ -21,6 +26,11 @@ services:
       context: .
       dockerfile: dockerfile-www
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "50"
+        max-size: "10m"
     volumes:
       - bundle:/usr/local/bundle
       - ./app:/app
