@@ -310,6 +310,8 @@ class OAuthController < ApplicationController
     dbm = DatabaseManager.new(app())
     dbm.backdate_sql(@dimensions, @back_to)
   end
+
+  ServiceRequestHandlerAutocomplete.new(self)
 end
 
 class BasicAuthController < ApplicationController
@@ -738,8 +740,6 @@ class PublicController < ApplicationController
   get '/scss/:name.css' do |name|
     scss name.to_sym, :style => :expanded
   end
-
-  ServiceRequestHandlerAutocomplete.new(self)
 end
 #
 # class Churnobyl < Sinatra::Base
