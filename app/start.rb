@@ -171,8 +171,9 @@ end
 class OAuthController < ApplicationController
   include Oauth2Authorization
 
-  after do
-    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for user #{@auth.name}"
+  # Regexp.union(OAuthController.routes["GET"].map(&:first))
+  after /(?-mix:\A\/oauth2(?:\-|%2[Dd])callback\z)|(?-mix:\A\/logout\z)|(?-mix:\A\/account\z)|(?-mix:\A\/\z)|(?-mix:\A\/export_table\z)|(?-mix:\A\/export_target\z)|(?-mix:\A\/export_all\z)|(?-mix:\A\/backup_download\z)|(?-mix:\A\/regenerate_cache\z)|(?-mix:\A\/backdate\z)|(?-mix:\A\/services\/autocomplete\/([^\/?#]+)\z)/ do
+    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for user #{auth.name}"
   end
 
   after '/' do
@@ -317,7 +318,8 @@ end
 class BasicAuthController < ApplicationController
   include BasicAuthorization
 
-  after do
+  # Regexp.union((BasicAuthController.routes["GET"] | BasicAuthController.routes["POST"]).map(&:first))
+  after /(?-mix:\A\/api\/1(?:\.|%2[Ee])0\/import_status\z)|(?-mix:\A\/admin\/import\z)|(?-mix:\A\/admin\/backup\z)|(?-mix:\A\/admin\/restart\z)|(?-mix:\A\/admin\/config\z)|(?-mix:\A\/admin\/migrate\z)|(?-mix:\A\/import\z)|(?-mix:\A\/backup\z)|(?-mix:\A\/restart\z)|(?-mix:\A\/config\z)|(?-mix:\A\/migrate\z)|(?-mix:\A\/admin\/restart\z)|(?-mix:\A\/admin\/import\z)|(?-mix:\A\/admin\/config\z)|(?-mix:\A\/admin\/migrate\z)/ do
     log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for role #{@auth.role.id}"
   end
 
@@ -724,7 +726,8 @@ class BasicAuthController < ApplicationController
 end
 
 class PublicController < ApplicationController
-  after do
+  # Regexp.union(PublicController.routes["GET"].map(&:first))
+  after /(?-mix:\A\/source\z)|(?-mix:\A\/scss\/((?:[^\/?#%]|(?:%[^2].|%[2][^Ee]))+)(?:\.|%2[Ee])css\z)/ do
     log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} anonymously"
   end
 
