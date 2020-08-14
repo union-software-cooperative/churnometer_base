@@ -1,3 +1,6 @@
 FROM postgres:9.6.8
 COPY ./app/config/seed.sql.gz ./seed.sql.gz
 COPY ./docker-seed /docker-entrypoint-initdb.d/10-seed.sh
+COPY ./pg_hba.conf /pg_hba.conf
+
+CMD ["postgres", "-c", "hba_file=/pg_hba.conf"]
