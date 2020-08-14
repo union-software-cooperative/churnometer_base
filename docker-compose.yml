@@ -16,6 +16,7 @@ services:
       - ./db-setup:/docker-entrypoint-initdb.d/db-setup.sql
       - pgdata:/pgdata:delegated
       - ./scripts/db:/scripts
+      - ./pg_hba.conf:/pgdata/pg_hba.conf
     environment:
       - PGDATA=/pgdata
       - CHURN_USER

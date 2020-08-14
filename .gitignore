@@ -9,3 +9,4 @@ bundle
 app/config/config.yaml.tmp
 db-setup
 !*.example*
+pg_hba.conf
