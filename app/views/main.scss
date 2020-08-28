@@ -11,8 +11,9 @@ $tab-inactive-fg: #1C94C4;
 
 .data-notices {
   font-size: 150%;
-  background-color: white;
-  padding: 5px;
+  background-color: ivory;
+  padding: 5px 10px;
+  border-radius: 0 0 3px 3px;
 }
 
 .data-notice + .data-notice {
