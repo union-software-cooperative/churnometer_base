@@ -25,6 +25,7 @@ uploads/reimport
 uploads/batch_reimport
 config/config_site.yaml
 config/config.yaml
+config/notices.yaml
 config/seed.sql
 config.yaml
 celebration/*.yaml

@@ -24,6 +24,7 @@ class ChurnPresenter
   include ChurnPresenter_Helpers
 
   attr_reader :transfers
+  attr_reader :notices
   attr_reader :target
   attr_reader :form
   attr_reader :tables
@@ -37,6 +38,7 @@ class ChurnPresenter
 
     @warnings = @request.warnings
     @transfers = ChurnPresenter_Transfers.new app, request
+    @notices = ChurnPresenter_Notices.new app, request
     @diags = ChurnPresenter_Diags.new request, @transfers.getmath_transfers?
 
     @form = ChurnPresenter_Form.new(

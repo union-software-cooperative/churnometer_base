@@ -4,20 +4,30 @@
   </div>
 <% end %>
 
+<% if !model.notices.for_display.empty? %>
+  <div class="container">
+    <div class="data-notices">
+      <% model.notices.for_display.each do | n | %>
+        <div class="data-notice"><strong>Notice, <%= n.date %></strong><br/><%= n.message %></div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
 <div class="container">
   <div id="nav"><ul>
     <li class='right'><a href="/account">Your UnitedID</a></li>
     <li class='right'>Hi <%= @auth.name %> |</li></ul>
   </div>
   <h1><a href="/"><%= "growth tracker" %></a></h1>
-  
+
   <% if File.exists?("public/celebration.txt") && File.exists?("public/images/celebration.gif") %>
     <figure class="right">
       <img src="images/celebration.gif">
       <figcaption style="font-weight:bold;color:white;"><%= "#{File.read("public/celebration.txt")}" %></figcaption>
     </figure>
   <% end %>
-  
+
   <%= erb :'partials/form', :locals => {:model => model.form, :group_names => model.request_group_names} %>
 </div>
 

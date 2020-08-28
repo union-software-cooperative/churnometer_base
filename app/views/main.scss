@@ -9,6 +9,16 @@ $tab-active-fg: ivory;
 $tab-inactive-bg: ivory;
 $tab-inactive-fg: #1C94C4;
 
+.data-notices {
+  font-size: 150%;
+  background-color: white;
+  padding: 5px;
+}
+
+.data-notice + .data-notice {
+  padding-top: 10px;
+}
+
 //date picker header fix
 #ui-datepicker-div .ui-datepicker-header { background-color: $bg; }
 
