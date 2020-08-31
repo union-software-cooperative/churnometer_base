@@ -92,7 +92,7 @@ class QueryDetailFriendly < QueryDetail
         , sum(d.posted::numeric) posted
         , sum(d.unposted::numeric) unposted
         , c.changedate::date AS changedate
-        , ((coalesce(d17.displaytext,'No Name') || ' ('::text) || c.memberid::text) || ')'::text AS member
+        , coalesce(d17.displaytext,'No Name')::text AS member
         , d1.displaytext AS oldstatus
         , d2.displaytext AS newstatus
         , n.currentstatus
