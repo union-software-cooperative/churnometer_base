@@ -83,13 +83,15 @@ class Oauth2Authorize
 
   def initialize(churn_app, auth)
     @app = churn_app
-    @auth = auth['profile']
+    @auth = auth
     @authenticated = @auth.is_a?(Hash)
     @groups = @auth.dig('groups') || []
     @admin = admin?
 
+    leadership_list = churn_app.config().element('leadership_list')&.simple_value || []
+
     @role =
-      if is_member?("CN=Churnometer_Leadership,CN=Users,DC=nuw,DC=org,DC=au")
+      if leadership_list.include?(email)
         @app.roles['leadership']
       elsif @auth
         @app.roles['lead']
@@ -112,8 +114,16 @@ class Oauth2Authorize
     is_member?(ENV['LDAP_ADMIN_GROUP'])
   end
 
+  def profile
+    auth['profile']
+  end
+
   def name
-    @auth['given_name']
+    profile['given_name']
+  end
+
+  def email
+    auth['email']
   end
 end
 
