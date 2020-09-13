@@ -69,6 +69,7 @@ class DatabaseManager
       select 0 as importing into importing;
 
       drop function if exists insertmemberfact() cascade;
+      drop function if exists updatememberfact_categorychangedate() cascade;
       drop function if exists updatememberfacthelper() cascade;
 
       drop view if exists memberchangefromlastchange cascade;
@@ -97,6 +98,7 @@ class DatabaseManager
 
       #{updatememberfacthelper_sql};
       #{insertmemberfact_sql};
+      #{updatememberfact_categorychangedate_sql};
     SQL
   end
 
@@ -151,6 +153,7 @@ class DatabaseManager
 
       #{updatememberfacthelper_sql};
       #{insertmemberfact_sql};
+      #{updatememberfact_categorychangedate_sql};
       #{updatedisplaytext_sql};
       #{inserttransactionfact_sql};
     SQL
@@ -312,6 +315,7 @@ class DatabaseManager
       create table memberfact
       (
         changeid BIGSERIAL PRIMARY KEY
+        , categorychangedate timestamp null
         , changedate timestamp not null
         , memberid varchar(255) not null
         , userid varchar(255) null
@@ -360,7 +364,6 @@ class DatabaseManager
     SQL
   end
 
-
   def fix_out_of_sequence_changes_sql
     sql = <<-SQL
       with laggy as (
@@ -404,7 +407,6 @@ class DatabaseManager
 
 
   def memberchangefromlastchange_sql
-
     sql = <<-SQL
       -- find changes, adds and deletions in latest data
       create or replace view memberchangefromlastchange as
@@ -506,7 +508,6 @@ class DatabaseManager
   end
 
   def insertmemberfact_sql
-
     sql = <<-SQL
       CREATE OR REPLACE FUNCTION insertmemberfact(import_date timestamp) RETURNS void
       AS $BODY$begin
@@ -552,6 +553,8 @@ class DatabaseManager
         delete from memberSourcePrev;
         insert into memberSourcePrev select * from memberSource;
         delete from memberSource;
+        -- update "calculated column(s)"
+        select updatememberfact_categorychangedate();
 
       end$BODY$
         LANGUAGE plpgsql
@@ -561,6 +564,59 @@ class DatabaseManager
         VOLATILE;
     SQL
   end
+
+  #ALTER TABLE memberfact ADD COLUMN categorychangedate timestamp null;
+  def updatememberfact_categorychangedate_sql
+    # Update every row with a categorychangedate
+    sql = <<-SQL
+      CREATE OR REPLACE FUNCTION updatememberfact_categorychangedate() RETURNS void
+      AS $BODY$begin
+        UPDATE memberfact mf
+        SET categorychangedate = (
+          SELECT changedate
+          FROM memberfact
+          WHERE changeid <= mf.changeid
+          AND memberid = mf.memberid
+          AND (
+            -- if oldstatus is null and newstatus isn't, we always want to record a categorychange
+            oldstatus IS NULL AND newstatus IS NOT NULL
+            OR
+            --moved into paying, from not paying
+            NOT COALESCE(oldstatus,'') = ANY(#{@paying_db})
+            AND COALESCE(newstatus,'') = ANY(#{@paying_db})
+            OR
+            -- moved into A1P, from not A1P
+            NOT COALESCE(oldstatus,'') = ANY(#{@a1p_db})
+            AND COALESCE(newstatus,'') = ANY(#{@a1p_db})
+            OR
+            -- moved into stopped, from not stopped
+            NOT COALESCE(oldstatus,'') = ANY(#{@stopped_db})
+            AND COALESCE(newstatus,'') = ANY(#{@stopped_db})
+            OR
+            -- moved into waiver, from not waiver
+            NOT COALESCE(oldstatus,'') = ANY(#{@waiver_db})
+            AND COALESCE(newstatus,'') = ANY(#{@waiver_db})
+            OR
+            -- had a membership status, and no longer has a membership status
+            COALESCE(oldstatus,'') = ANY(#{@member_db})
+            AND NOT COALESCE(newstatus,'') = ANY(#{@member_db})
+          )
+          ORDER BY changeid DESC
+          LIMIT 1
+        );
+      end$BODY$
+        LANGUAGE plpgsql
+        COST 100
+        CALLED ON NULL INPUT
+        SECURITY INVOKER
+        VOLATILE;
+    SQL
+  end
+
+  def updatememberfact_categorychangedate
+    db.ex(updatememberfact_categorychangedate_sql)
+  end
+
 
   def updatememberfacthelper_sql
     <<-SQL
@@ -748,6 +804,7 @@ class DatabaseManager
       )
       select
         memberfact.changeid
+        , categorychangedate
         , changedate
         , memberid
         , userid
@@ -942,6 +999,7 @@ class DatabaseManager
 
       select
         memberfact.changeid
+        , categorychangedate
         , changedate
         , memberid
         , userid
@@ -1423,6 +1481,7 @@ class DatabaseManager
 
       CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);
+      CREATE INDEX "memberfacthelper_categorychangedate_idx" ON "memberfacthelper" USING btree(categorychangedate ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_changedate_idx" ON "memberfacthelper" USING btree(changedate ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_nextchangedate_idx" ON "memberfacthelper" USING btree(nextchangedate ASC NULLS LAST);
     SQL

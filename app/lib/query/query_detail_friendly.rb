@@ -92,6 +92,7 @@ class QueryDetailFriendly < QueryDetail
         , sum(d.posted::numeric) posted
         , sum(d.unposted::numeric) unposted
         , c.changedate::date AS changedate
+        , c.categorychangedate::date AS categorychangedate
         , coalesce(d17.displaytext,'No Name')::text AS member
         , d1.displaytext AS oldstatus
         , d2.displaytext AS newstatus
@@ -129,6 +130,7 @@ class QueryDetailFriendly < QueryDetail
       GROUP BY
         d.row_header
         , c.changedate::date
+        , c.categorychangedate::date
         , d.memberid
         , d1.displaytext
         , d2.displaytext

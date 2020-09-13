@@ -123,7 +123,19 @@ class QuerySummaryRunning < QueryFilter
         , sum(amount::numeric) income_net
         , count(distinct t.memberid) contributors
         , sum(amount::numeric) / count(distinct t.memberid) avgContribution
-        , ( sum(amount::numeric) / count(distinct t.memberid)::numeric ) / (#{db.sql_date(end_date)}::date - #{db.sql_date(@start_date)}::date) * 365::numeric annualizedAvgContribution
+        , ( sum(amount::numeric) / count(distinct t.memberid)::numeric )
+          -- I would like to use this divisor but I get GROUP BY errors that I can't deal with rn.
+          --/ ((date_trunc(#{db.quote(@header2)}, creationdate) + interval '1 #{@header2}')::date - date_trunc(#{db.quote(@header2)}, creationdate)::date)
+          -- Instead, use average time period length.
+          / CASE
+            -- Gregorian time units have finite but untidy averages. Sue me.
+            WHEN #{db.quote(@header2)} = 'year' THEN 365.2425
+            WHEN #{db.quote(@header2)} = 'quarter' THEN 91.310625
+            WHEN #{db.quote(@header2)} = 'month' THEN 30.436875
+            -- Non-Gregorian time units lead a simpler life.
+            WHEN #{db.quote(@header2)} = 'week' THEN 7
+            END
+          * 365::numeric annualizedAvgContribution
         , count(*) transactions
       from
         transactionfact t

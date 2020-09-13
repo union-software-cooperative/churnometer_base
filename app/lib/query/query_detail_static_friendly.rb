@@ -77,6 +77,7 @@ class QueryDetailStaticFriendly < QueryDetailStatic
         , d.paying
         , d.a1p
         , d.other
+        , c.categorychangedate::date AS categorychangedate
         , c.changedate::date AS changedate
         , coalesce(d17.displaytext,'No Name')::text AS member
         , d1.displaytext AS oldstatus

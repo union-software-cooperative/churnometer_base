@@ -118,9 +118,9 @@ class ChurnometerApp
   # Throws an exception if any problem occurs.
   def validate
     application_start_date()
-    config().ensure_kindof('waiver_statuses', Array, NilClass)
+    config().ensure_kindof('member_waiver_status_ranges', Array, NilClass)
     validate_email()
-    config().ensure_kindof('green_member_statuses', Array, NilClass)
+    config().ensure_kindof('green_member_status_ranges', Array, NilClass)
 
     # Construction will raise an exception if there's an issue.
     WaterfallChartConfig.from_config_element(config().get_mandatory('waterfall_chart_config'))
@@ -272,8 +272,9 @@ class ChurnometerApp
 
   # Returns the statuses that are used to construct the green bar in the waterfall chart.
   def green_member_statuses
-    if config().element('green_member_statuses').value.nil? == false
-      config().element('green_member_statuses').value.collect { |e| e.value }
+    if config().element('green_member_status_ranges').value.nil? == false
+      expand_array_from_singletons_and_ranges(config().element('green_member_status_ranges'))
+      # config().element('green_member_statuses').value.collect { |e| e.value }
     else
       paying_statuses() | a1p_statuses()
     end
@@ -461,32 +462,42 @@ protected
   end
 
   def make_paying_statuses()
-    make_statuses('member_paying_statuses', '@paying_statuses')
+    # make_statuses('member_paying_statuses', '@paying_statuses')
+    make_status_array('member_paying_status_ranges', '@paying_statuses')
   end
 
   def make_a1p_statuses()
-    make_statuses('member_awaiting_first_payment_statuses', '@a1p_statuses')
+    # make_statuses('member_awaiting_first_payment_statuses', '@a1p_statuses')
+    make_status_array('member_a1p_status_ranges', '@a1p_statuses')
   end
 
   def make_stopped_statuses()
-    make_statuses('member_stopped_paying_statuses', '@stopped_statuses')
+    # make_statuses('member_stopped_paying_statuses', '@stopped_statuses')
+    make_status_array('member_stopped_status_ranges', '@stopped_statuses')
   end
 
   def make_waiver_statuses()
-    make_statuses('waiver_statuses')
+    # make_statuses('waiver_statuses')
+    make_status_array('member_waiver_status_ranges', '@waiver_statuses')
   end
 
   # Currently unused. With status arrays replacing singular statuses, this is an
   # experiment in building status arrays from singletons and ranges.
-  def make_status_array(config_key)
+  def make_status_array(config_key, var_name = nil)
+    var_name ||= "@#{config_key}"
+
     element = config().get_mandatory(config_key)
     element.ensure_kindof(Array, NilClass)
 
-    # All values are range arrays.
-    # element.simple_value.map { |r| Range.new(*r).to_a }.flatten
+    ary = expand_array_from_singletons_and_ranges(element)
 
-    # Some values are singular.
-    element.simple_value.to_a.map do |val|
+    self.instance_variable_set(var_name, ary)
+  end
+
+  # Takes a config element
+  # Config element should be an array of singletons and range pairs
+  def expand_array_from_singletons_and_ranges(element)
+    return element.simple_value.to_a.map do |val|
       val.kind_of?(Array) ? Range.new(*val).to_a : val
     end.flatten
   end

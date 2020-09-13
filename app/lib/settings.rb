@@ -282,7 +282,8 @@ module Settings
     [
       'period_header',
       'paidto',
-      'changedate'
+      'changedate',
+      'categorychangedate'
     ]
   end
 
