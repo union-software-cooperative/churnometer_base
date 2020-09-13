@@ -332,7 +332,7 @@ class ChurnRequest
       end
     end
 
-    locks.each do | k, csv|
+    locks.each do |k, csv|
       csv.split(',').each do | item |
         result += filter_xml_node(k,item)
       end
@@ -353,7 +353,11 @@ class ChurnRequest
       end
   end
 
+  # lock[companyid]= comes through as {"companyid"=>""}
+  # lock[companyid] comes through as {"companyid"=>nil}
+  # Outlook strips the = sign off the end of links!
+  # Fix with (value || "")
   def locks(lock)
-    (lock || []).reject{ |column_name, value | value.empty? }
+    (lock || []).reject{ |column_name, value| (value || "").empty? }
   end
 end
