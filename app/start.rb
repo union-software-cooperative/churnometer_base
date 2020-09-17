@@ -460,6 +460,7 @@ class BasicAuthController < ApplicationController
 
       file = params['myfile'][:tempfile]
       filename = params['myfile'][:filename]
+      file = filename.end_with?(".gz") ? Zlib::GzipReader.new(file) : file
 
       begin
         full_filename = 'uploads/' + filename + '.' + Time.now.strftime("%Y-%m-%d_%H.%M.%S")
@@ -477,15 +478,15 @@ class BasicAuthController < ApplicationController
           full_filename += "-utf8"
         end
 
-        if filename.end_with?("members.txt") then
+        if filename =~ /members\.txt(\.gz)?$/ then
           @model.member_import(full_filename)
         end
 
-        if filename.end_with?("displaytext.txt") then
+        if filename =~ /displaytext\.txt(\.gz)?$/ then
           @model.displaytext_import(full_filename)
         end
 
-        if filename.end_with?("transactions.txt") then
+        if filename =~ /transactions\.txt(\.gz)?$/ then
           @model.transaction_import(full_filename)
         end
 
