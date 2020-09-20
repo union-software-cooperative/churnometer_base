@@ -553,8 +553,9 @@ class DatabaseManager
         delete from memberSourcePrev;
         insert into memberSourcePrev select * from memberSource;
         delete from memberSource;
-        -- update "calculated column(s)"
-        select updatememberfact_categorychangedate();
+        -- this doesn't work here because it doesn't set a categorychangedate
+        -- on the rows that have just been inserted
+        -- select updatememberfact_categorychangedate();
 
       end$BODY$
         LANGUAGE plpgsql

@@ -96,6 +96,7 @@ class Importer
 
     self.progress = "Step 1. Inserting member changes"
     db.async_ex("select insertmemberfact('#{self.import_date}')")
+    db.async_ex("select updatememberfact_categorychangedate()")
     db.async_ex("vacuum full analyse memberfact")
     db.async_ex("vacuum full analyse membersourceprev")
 
