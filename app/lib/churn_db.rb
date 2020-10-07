@@ -474,42 +474,13 @@ class ChurnDB
 
 end
 
-
 class ChurnDBDiskCache < ChurnDB
-  @@cache_file = 'tmp/cache.Marshal'
-  @@cache_status = "Not in use."
-  @@mtime = Time.parse('1900-01-01')
-
   def self.cache_status
     @@cache_status
   end
 
   def self.cache_status=(status)
     @@cache_status = status
-  end
-
-  def self.mtime
-    mtime = Time.parse('1900-01-01')
-    begin
-      mtime = File.mtime(@@cache_file)
-    rescue
-      # file doesn't exist or couldn't be read
-    end
-    mtime
-  end
-
-  def self.cache
-    if !defined? @@cache
-      load_cache
-    else
-      # reload if the modification date is greater (because it was updated by another server)
-      if @@mtime < mtime
-        @@cache_status += "cache has been updated. "
-        load_cache
-      end
-    end
-
-    @@cache
   end
 
   def initialize(app)
@@ -521,9 +492,17 @@ class ChurnDBDiskCache < ChurnDB
   end
 
   def ex(sql)
-    filename = ChurnDBDiskCache.cache[sql]
+    filename = ChurnDBDiskCache.cache_file(sql)
 
-    if filename.nil? || !File.exists?(filename)
+    result = nil
+    # CACHE HIT
+    if File.exists?(filename)
+      @cache_hit = true
+      ChurnDBDiskCache.cache_status += "cache hit (#{filename}). "
+
+      result = Marshal::load(File.read(filename))
+    # CACHE MISS
+    else
       @cache_hit = false
       ChurnDBDiskCache.cache_status += 'cache miss. '
 
@@ -537,20 +516,6 @@ class ChurnDBDiskCache < ChurnDB
       end
 
       ChurnDBDiskCache.update_cache(sql, result)
-    else
-      @cache_hit = true
-      ChurnDBDiskCache.cache_status += "cache hit (#{filename}). "
-
-      # load data from cache file
-      data = ""
-      File.open(filename, 'r') do |f|
-        while line=f.gets
-          data+=line
-        end
-      end
-
-      result = Marshal::load(data)
-
     end
 
     # dbeswick: add a 'num_tuples' method to the cache results, so code that relies on the
@@ -564,92 +529,25 @@ class ChurnDBDiskCache < ChurnDB
     result
   end
 
-
-  # TODO Consider putting cache regeneration in its own class
-  def self.regeneration_status
-    @@regeneration_status
-  end
-
-  def self.regeneration_status=(status)
-    puts "cache regeneration #{status}"
-    @@regeneration_status = status
-  end
-
-  @@regeneration_status = "inactive"
-
-  # After import the cache can be invalid, and typically we delete the cache
-  # Instead lets recalcuate it.
-  def regenerate_cache(options = {})
-    working_cache = ChurnDBDiskCache.cache.clone
-
-    start_time = Time.now
-
-    if options[:files_only]
-      working_cache.delete_if { |sql, filename| !File.exist?(filename) }
-    end
-
-    if options[:since]
-      working_cache.delete_if { |sql, filename| File.mtime(filename) < Time.parse(options[:since]) }
-    end
-
-    i = 0
-    working_cache.each do |sql, filename|
-      ChurnDBDiskCache.regeneration_status = "in progress - #{i} of #{working_cache.length} calculations complete"
-      File.delete(filename)
-      self.ex(sql)
-      i+=1
-    end
-
-    mins = ((Time.now - start_time)/60).round(1)
-    ChurnDBDiskCache.regeneration_status = "inactive - finished #{working_cache.length} calculations in #{mins} minutes"
-  rescue StandardError => err
-    ChurnDBDiskCache.regeneration_status = "inactive - an error occurred: #{err.message}"
-  end
+  ## CACHE REGENERATION IS UNUSED AS OF OCTOBER 2020.
+  ## A rebuild of regeneration logic should store the original sql in the cache
+  ## files so it can be re-run.
+  ## Each cache file should also timestamp the last cache hit so we can age out
+  ## cache files that go unused for X amount of time. (Probably a week.)
 
   private
-  def self.load_cache
-    begin
-      data = ""
-      File.open(@@cache_file, 'r') do |f|
-        while line=f.gets
-          data+=line
-        end
-
-        @@mtime = File.mtime(@@cache_file) # set modification time, so we can tell if we need to reload
-      end
-
-      @@cache = Marshal::load(data)
-      ChurnDBDiskCache.cache_status += "cache reloaded. "
-    rescue
-      @@cache = Hash.new
-      #throw "failed to load cache"
-      ChurnDBDiskCache.cache_status += "failed to load cache. "
-    end
+  def self.cache_file(sql)
+    "tmp/cache-#{Digest::MD5.hexdigest(sql)}.Marshal"
   end
 
   def self.update_cache(sql, result)
-    filename = ChurnDBDiskCache.cache[sql]
-
-    # if we aren't replacing a missing file, a new key will be appended to the hash,
-    # so the size of the hash will map to the index of this new value which will
-    # be new, so use this index as a unique file name (works as long as the no keys
-    # are removed)
-    filename = "tmp/cache-#{self.cache.size.to_s}.Marshal" if filename.nil?
+    filename = ChurnDBDiskCache.cache_file(sql)
 
     begin
       #write data to file - only if data file write succeeds will index file be updated
       File.open(filename, 'w') do |f|
         f.puts Marshal::dump(result)
-
-        #update index
-        @@cache[sql] = filename
-        File.open(@@cache_file, 'w') do |f|
-          f.puts Marshal::dump(@@cache)
-        end
-
-        @@mtime = File.mtime(@@cache_file) # set modification time, so we can tell if we need to reload
       end
-
     rescue
       ChurnDBDiskCache.cache_status += "Failed to write to cache. Deleting cached data in case of inconsistency."
       # remove cache file, so whatever ended up in the index gets reloaded next time

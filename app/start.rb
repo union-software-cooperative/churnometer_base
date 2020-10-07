@@ -172,7 +172,7 @@ class OAuthController < ApplicationController
   include Oauth2Authorization
 
   # Regexp.union(OAuthController.routes["GET"].map(&:first))
-  after /(?-mix:\A\/oauth2(?:\-|%2[Dd])callback\z)|(?-mix:\A\/logout\z)|(?-mix:\A\/account\z)|(?-mix:\A\/\z)|(?-mix:\A\/export_table\z)|(?-mix:\A\/export_target\z)|(?-mix:\A\/export_all\z)|(?-mix:\A\/backup_download\z)|(?-mix:\A\/regenerate_cache\z)|(?-mix:\A\/backdate\z)|(?-mix:\A\/services\/autocomplete\/([^\/?#]+)\z)/ do
+  after /(?-mix:\A\/oauth2(?:\-|%2[Dd])callback\z)|(?-mix:\A\/logout\z)|(?-mix:\A\/account\z)|(?-mix:\A\/\z)|(?-mix:\A\/export_table\z)|(?-mix:\A\/export_target\z)|(?-mix:\A\/export_all\z)|(?-mix:\A\/backup_download\z)|(?-mix:\A\/backdate\z)|(?-mix:\A\/services\/autocomplete\/([^\/?#]+)\z)/ do
     log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for user #{auth.name}"
   end
 
@@ -268,27 +268,6 @@ class OAuthController < ApplicationController
     @model.backup(path)
     send_file(path, :disposition => 'attachment', :filename => file)
     @model.close_db()
-  end
-
-  get "/regenerate_cache", provides: 'text/event-stream'  do
-    admin!
-
-    #TODO make this stream
-    stream do |out|
-      out.write "Cache regeneration started\n"
-      db = ChurnDBDiskCache.new(app())
-      Thread.new do
-        db.regenerate_cache(files_only: true, since: '2017-01-01')
-      end
-
-      begin
-        out.write ChurnDBDiskCache.regeneration_status + "\n"
-        out.flush
-        sleep 1
-      end while ChurnDBDiskCache.regeneration_status.start_with?('in progress')
-      out.write "Cache regeneration started\n"
-      out.flush
-    end
   end
 
   get '/backdate' do
