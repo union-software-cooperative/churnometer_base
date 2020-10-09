@@ -163,7 +163,7 @@ class QueryDetail < QueryDetailBase
       )
       , statuschanges as
       (
-        select distinct changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or waivergain <> 0 or waivergain <> 0
+        select distinct changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or waivergain <> 0 or waiverloss <> 0
       )
       , nonegations as
       (
@@ -173,7 +173,7 @@ class QueryDetail < QueryDetailBase
           , case when transfersin.changeid is not null then 1 else 0 end set_transfer
           , case when transfersin.changeid is not null then false else true end internaltransfer
           , case when statuschanges.changeid is not null then 1 else 0 end statuschange
-          , case when #{header1 == 'userid' ? '' : "u1.#{header1}delta <> 0" } then 1 else 0 end  group_transfer
+          , case when #{"u1.#{header1}delta <> 0" } then 1 else 0 end  group_transfer
         from
           userselections u1
           left join transfersin on u1.changeid = transfersin.changeid --and u1.net = transfersin.net
@@ -181,7 +181,7 @@ class QueryDetail < QueryDetailBase
         where
           transfersin.changeid is not null
           or statuschanges.changeid is not null
-          #{header1 == 'userid' ? '' : "or u1.#{header1}delta <> 0" }
+          #{"or u1.#{header1}delta <> 0" }
        )
       , trans as
       (
@@ -253,8 +253,8 @@ class QueryDetail < QueryDetailBase
             , case when waivernet <> 0 then otherloss else 0 end waiver_other_loss
             , case when not (status = ANY (#{paying_db}) or status = ANY (#{a1p_db}) or status = ANY (#{stoppedpay_db}) or waivernet <> 0) then othergain else 0 end::bigint other_other_gain
             , case when not (status = ANY (#{paying_db}) or status = ANY (#{a1p_db}) or status = ANY (#{stoppedpay_db}) or waivernet <> 0) then otherloss else 0 end::bigint other_other_loss
-            , case when (set_transfer = 1 or group_transfer = 1) then othergain else 0 end member_other_gain
-            , case when (set_transfer = 1 or group_transfer = 1) then otherloss else 0 end member_other_loss
+            , case when (set_transfer = 1 or group_transfer = 1) then othermembergain else 0 end member_other_gain
+            , case when (set_transfer = 1 or group_transfer = 1) then othermemberloss else 0 end member_other_loss
             , case when (set_transfer = 1 or group_transfer = 1) then othergreengain else 0 end green_other_gain
               , case when (set_transfer = 1 or group_transfer = 1) then othergreenloss else 0 end green_other_loss
             , case when (set_transfer = 1 or group_transfer = 1) then otherorangegain else 0 end orange_other_gain
