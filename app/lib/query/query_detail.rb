@@ -215,54 +215,54 @@ class QueryDetail < QueryDetailBase
 
           , a1pgain::bigint a1p_real_gain
           , a1ploss::bigint a1p_real_loss
-            , payinggain::bigint paying_real_gain
+          , payinggain::bigint paying_real_gain
           , payingloss::bigint paying_real_loss
           , stoppedgain::bigint stopped_real_gain
-            , stoppedloss::bigint stopped_real_loss
+          , stoppedloss::bigint stopped_real_loss
 
           , waivergain::bigint waiver_real_gain
-            , waiverloss::bigint waiver_real_loss
-            , waivergaingood::bigint waiver_real_gain_good
-            , waivergainbad::bigint waiver_real_gain_bad
-            , waiverlossgood::bigint waiver_real_loss_good
-            , waiverlossbad::bigint waiver_real_loss_bad
-            , membergain::bigint member_real_gain
-            , memberloss::bigint member_real_loss
+          , waiverloss::bigint waiver_real_loss
+          , waivergaingood::bigint waiver_real_gain_good
+          , waivergainbad::bigint waiver_real_gain_bad
+          , waiverlossgood::bigint waiver_real_loss_good
+          , waiverlossbad::bigint waiver_real_loss_bad
+          , membergain::bigint member_real_gain
+          , memberloss::bigint member_real_loss
 
-            , greengain::bigint green_real_gain
-            , greenloss::bigint green_real_loss
-            , greengain_nonmember::bigint green_real_gain_nonmember
-            , greenloss_nonmember::bigint green_real_loss_nonmember
-            , greengain_member::bigint green_real_gain_member
-            , greenloss_member::bigint green_real_loss_member
+          , greengain::bigint green_real_gain
+          , greenloss::bigint green_real_loss
+          , greengain_nonmember::bigint green_real_gain_nonmember
+          , greenloss_nonmember::bigint green_real_loss_nonmember
+          , greengain_member::bigint green_real_gain_member
+          , greenloss_member::bigint green_real_loss_member
 
-            , orangegain::bigint orange_real_gain
-            , orangeloss::bigint orange_real_loss
-            , orangegain_nonmember::bigint orange_real_gain_nonmember
-            , orangeloss_nonmember::bigint orange_real_loss_nonmember
-            , orangegain_member::bigint orange_real_gain_member
-            , orangeloss_member::bigint orange_real_loss_member
+          , orangegain::bigint orange_real_gain
+          , orangeloss::bigint orange_real_loss
+          , orangegain_nonmember::bigint orange_real_gain_nonmember
+          , orangeloss_nonmember::bigint orange_real_loss_nonmember
+          , orangegain_member::bigint orange_real_gain_member
+          , orangeloss_member::bigint orange_real_loss_member
 
           , case when coalesce(status, '') = ANY (#{a1p_db}) then othergain else 0 end::bigint a1p_other_gain
           , case when coalesce(status, '') = ANY (#{a1p_db}) then otherloss else 0 end::bigint a1p_other_loss
-            , case when coalesce(status, '') = ANY (#{paying_db}) then othergain else 0 end::bigint paying_other_gain
+          , case when coalesce(status, '') = ANY (#{paying_db}) then othergain else 0 end::bigint paying_other_gain
           , case when coalesce(status, '') = ANY (#{paying_db}) then otherloss else 0 end::bigint paying_other_loss
           , case when coalesce(status, '') = ANY (#{stoppedpay_db}) then othergain else 0 end::bigint stopped_other_gain
           , case when coalesce(status, '') = ANY (#{stoppedpay_db}) then otherloss else 0 end::bigint stopped_other_loss
           , case when waivernet <> 0 then othergain else 0 end waiver_other_gain
-            , case when waivernet <> 0 then otherloss else 0 end waiver_other_loss
-            , case when not (status = ANY (#{paying_db}) or status = ANY (#{a1p_db}) or status = ANY (#{stoppedpay_db}) or waivernet <> 0) then othergain else 0 end::bigint other_other_gain
-            , case when not (status = ANY (#{paying_db}) or status = ANY (#{a1p_db}) or status = ANY (#{stoppedpay_db}) or waivernet <> 0) then otherloss else 0 end::bigint other_other_loss
-            , case when (set_transfer = 1 or group_transfer = 1) then othermembergain else 0 end member_other_gain
-            , case when (set_transfer = 1 or group_transfer = 1) then othermemberloss else 0 end member_other_loss
-            , case when (set_transfer = 1 or group_transfer = 1) then othergreengain else 0 end green_other_gain
-              , case when (set_transfer = 1 or group_transfer = 1) then othergreenloss else 0 end green_other_loss
-            , case when (set_transfer = 1 or group_transfer = 1) then otherorangegain else 0 end orange_other_gain
-              , case when (set_transfer = 1 or group_transfer = 1) then otherorangeloss else 0 end orange_other_loss
+          , case when waivernet <> 0 then otherloss else 0 end waiver_other_loss
+          , case when not (coalesce(status, '') = ANY (#{paying_db}) or coalesce(status, '') = ANY (#{a1p_db}) or coalesce(status, '') = ANY (#{stoppedpay_db}) or waivernet <> 0) then othergain else 0 end::bigint other_other_gain
+          , case when not (coalesce(status, '') = ANY (#{paying_db}) or coalesce(status, '') = ANY (#{a1p_db}) or coalesce(status, '') = ANY (#{stoppedpay_db}) or waivernet <> 0) then otherloss else 0 end::bigint other_other_loss
+          , case when (set_transfer = 1 or group_transfer = 1) then othermembergain else 0 end member_other_gain
+          , case when (set_transfer = 1 or group_transfer = 1) then othermemberloss else 0 end member_other_loss
+          , case when (set_transfer = 1 or group_transfer = 1) then othergreengain else 0 end green_other_gain
+          , case when (set_transfer = 1 or group_transfer = 1) then othergreenloss else 0 end green_other_loss
+          , case when (set_transfer = 1 or group_transfer = 1) then otherorangegain else 0 end orange_other_gain
+          , case when (set_transfer = 1 or group_transfer = 1) then otherorangeloss else 0 end orange_other_loss
 
 
           , (a1pgain+a1ploss)::bigint a1p_real_net
-            , (payinggain+payingloss)::bigint paying_real_net
+          , (payinggain+payingloss)::bigint paying_real_net
           , (stoppedgain+stoppedloss)::bigint stopped_real_net
           , (waivergain + waiverloss)::bigint waiver_real_net
           , (othergain+otherloss)::bigint other_real_net
@@ -282,6 +282,8 @@ class QueryDetail < QueryDetailBase
           , CASE WHEN _categorychangeid IS NULL THEN stoppedgain ELSE 0 END::bigint stopped_unchanged_gain
           , case when coalesce(_status, '') = ANY (#{paying_db}) then stoppedloss else 0 end::bigint stopped_to_paying
           , case when not coalesce(_status, '') = ANY (#{paying_db}) then stoppedloss else 0 end::bigint stopped_to_other
+          , case when (coalesce(status, '') = ANY (#{paying_db}) OR coalesce(status, '') = ANY (#{a1p_db})) and not internalTransfer then othermembergain else 0 end external_gain
+          , case when (coalesce(status, '') = ANY (#{paying_db}) OR coalesce(status, '') = ANY (#{a1p_db})) and not internalTransfer then othermemberloss else 0 end external_loss
         from
           nonegations c
         where
@@ -370,6 +372,9 @@ class QueryDetail < QueryDetailBase
         , c.orange_real_net
         , c.orange_other_gain
         , c.orange_other_loss
+
+        , c.external_gain
+        , c.external_loss
 
 
     EOS
@@ -537,6 +542,8 @@ class QueryDetail < QueryDetailBase
 
         , c.posted
         , c.unposted
+        , c.external_gain
+        , c.external_loss
       from
         withtrans c
         left join displaytext d1 on d1.attribute = #{db.quote(header1)} and d1.id = c.row_header

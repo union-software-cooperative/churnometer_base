@@ -38,8 +38,8 @@ class ChurnPresenter_Transfers
       t += row['external_gain'].to_i - row['external_loss'].to_i
     end
 
-    startcnt =  paying_start_total
-    endcnt = paying_end_total
+    startcnt = paying_a1p_start_total
+    endcnt = paying_a1p_end_total
 
     threshold = ((startcnt + endcnt)/2 * (MonthlyTransferWarningThreshold * months))
     t > threshold ? true : false

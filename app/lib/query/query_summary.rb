@@ -80,7 +80,7 @@ class QuerySummary < QueryFilter
       )
       , statuschanges as
       (
-        select distinct changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or waivergain <> 0 or waivergain <> 0
+        select distinct changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or waivergain <> 0 or waiverloss <> 0
       )
       , nonegations as
       (
@@ -90,7 +90,7 @@ class QuerySummary < QueryFilter
           , case when transfersin.changeid is not null then 1 else 0 end set_transfer
           , case when transfersin.changeid is not null then false else true end internaltransfer
           , case when statuschanges.changeid is not null then 1 else 0 end statuschange
-          , case when #{header1 == 'userid' ? '1=0' : "u1.#{header1}delta <> 0" } then 1 else 0 end  group_transfer
+          , case when #{"u1.#{header1}delta <> 0"} then 1 else 0 end group_transfer
         from
           userselections u1
           left join transfersin on u1.changeid = transfersin.changeid --and u1.net = transfersin.net
@@ -98,7 +98,7 @@ class QuerySummary < QueryFilter
         where
           transfersin.changeid is not null
           or statuschanges.changeid is not null
-          #{header1 == 'userid' ? '' : "or u1.#{header1}delta <> 0" }
+          #{"or u1.#{header1}delta <> 0"}
        )
        /*
       , nonegations as
@@ -111,7 +111,7 @@ class QuerySummary < QueryFilter
         where
           u1.changeid in (select changeid from userselections u group by changeid having sum(u.net) <> 0) -- any change who has only side in the user selection
           or u1.changeid in (select changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain<>0 or stoppedloss<>0 or waivergain <> 0 or waiverloss <> 0) -- both sides (if in user selection) if one side is an interesting status and there was a status change
-           #{header1 == 'userid' ? '' : "or u1.#{header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items" }
+           #{"or u1.#{header1}delta <> 0 -- unless the changes that cancel out but are transfers between grouped items" }
        )
        */
       , trans as
@@ -228,8 +228,8 @@ class QuerySummary < QueryFilter
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = ANY (#{paying_db}) then stoppedloss else 0 end) stopped_to_paying
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not coalesce(_status,'') = ANY (#{paying_db}) then stoppedloss else 0 end) stopped_to_other
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _categorychangeid is null then stoppedgain else 0 end) stopped_unchanged_gain
-          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
-          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (status = ANY (#{paying_db}) OR status = ANY (#{a1p_db})) and not internalTransfer then othergain else 0 end) external_gain
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and (status = ANY (#{paying_db}) OR status = ANY (#{a1p_db})) and not internalTransfer then otherloss else 0 end) external_loss
         /* EO SHARED BETWEEEN SUMMARY AND RUNNING SUMMARY - TODO REFACTOR */
 
         from

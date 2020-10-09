@@ -97,6 +97,8 @@ class QueryDetailFriendly < QueryDetail
         , d1.displaytext AS oldstatus
         , d2.displaytext AS newstatus
         , n.currentstatus
+        , d.external_gain
+        , d.external_loss
     EOS
 
     sql << "\n, " + friendly_generators.collect{ |g| g.final_select_clause }.join("\n, ")
@@ -141,6 +143,8 @@ class QueryDetailFriendly < QueryDetail
         --, m.followupnotes
         --, m.paymenttypeid
         , n.currentstatus
+        , d.external_gain
+        , d.external_loss
     EOS
 
     sql << "\n\t, " + friendly_generators.collect{ |g| g.groupby_displaytext_clause }.join("\n\t, ")

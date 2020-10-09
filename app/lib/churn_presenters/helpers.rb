@@ -40,6 +40,41 @@ module ChurnPresenter_Helpers
     t
   end
 
+  def paying_a1p_start_total
+    t=0
+    @request.data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += (v[0]['paying_start_count'].to_i + v[0]['a1p_start_count'].to_i)
+    end
+    t
+  end
+
+  def paying_a1p_end_total
+    # group_by is used so only the first row of running totals is summed
+    t=0
+    @request.data.group_by{ |row| row['row_header1'] }.each do | row, v |
+      t += (v[v.count - 1]['paying_end_count'].to_i + v[v.count - 1]['a1p_end_count'].to_i)
+    end
+    t
+  end
+
+  def member_start_total
+    t = 0
+    @request.data.group_by { |row| row['row_header1'] }.each do |row, v|
+      t += v[0]['member_start_count'].to_i
+    end
+
+    t
+  end
+
+  def member_end_total
+    t = 0
+    @request.data.group_by { |row| row['row_header1'] }.each do |row, v|
+      t += v[0]['member_end_count'].to_i
+    end
+
+    t
+  end
+
   def paying_transfers_total
     # group_by is used so only the first row of running totals is summed
     t=0

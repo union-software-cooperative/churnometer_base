@@ -365,8 +365,8 @@ class ChurnDB
     sql = <<-SQL
       select
         changedate
-        , sum(a1p_other_gain + paying_other_gain) transfer_in
-        , sum(-a1p_other_loss - paying_other_loss) transfer_out
+        , sum(external_gain) transfer_in
+        , sum(-external_loss) transfer_out
       from
     SQL
 
@@ -394,10 +394,8 @@ class ChurnDB
 
     sql << <<-SQL
       where
-        paying_other_gain <> 0
-        or paying_other_loss <> 0
-        or a1p_other_gain <> 0
-        or a1p_other_loss <> 0
+        external_gain <> 0
+        or external_loss <> 0
       group by
         changedate
       order by
