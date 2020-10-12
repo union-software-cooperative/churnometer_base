@@ -464,6 +464,9 @@ class QueryDetail < QueryDetailBase
         , 0::bigint orange_other_gain
         , 0::bigint orange_other_loss
 
+        , 0::bigint external_gain
+        , 0::bigint external_loss
+
         , t.posted::numeric posted
         , t.unposted::numeric unposted
       from
