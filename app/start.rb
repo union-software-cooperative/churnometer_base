@@ -712,12 +712,14 @@ class PublicController < ApplicationController
   end
 
   get "/source" do
-    @model = ip()
-    file = "source_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
-    path = "tmp/source"
-    @model.download_source(path)
-    send_file("#{path}.zip", :disposition => 'attachment', :filename => file)
-    @model.close_db()
+    redirect app().config['source_archive']
+
+    # @model = ip()
+    # file = "source_#{Time.now.strftime("%Y-%m-%d_%H.%M.%S")}.zip"
+    # path = "tmp/source"
+    # @model.download_source(path)
+    # send_file("#{path}.zip", :disposition => 'attachment', :filename => file)
+    # @model.close_db()
   end
 
   get '/scss/:name.css' do |name|
