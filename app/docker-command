@@ -1,4 +1,7 @@
 #!/bin/sh
+echo "Ensuring bundler installed"
+gem install bundler:1.14.6
+
 echo "Bundling gems"
 bundle check || bundle install --jobs 4 --retry 3
 

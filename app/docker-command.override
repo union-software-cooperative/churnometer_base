@@ -1,4 +1,7 @@
 #!/bin/sh
+echo "Ensuring bundler installed"
+gem install bundler:1.14.6
+
 echo "Bundling gems"
 bundle check || bundle install --jobs 4 --retry 3
 
@@ -7,7 +10,7 @@ bundle check || bundle install --jobs 4 --retry 3
 
 #echo $(/sbin/ip route|awk '/default/ { print $3 }') nuwid >> /etc/hosts
 
-echo waiting for you to shell in and do something like;
+echo waiting for you to shell in and do something;
 echo $ docker-compose exec www /bin/bash
 echo $ bundle exec shotgun -p 9292 -o 0.0.0.0
 tail -f /dev/null # hang doing nothing

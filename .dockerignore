@@ -1,1 +1,13 @@
-
+*.crt
+*.key
+*.md
+*.sql.gz
+app/uploads/*
+app/tmp/*
+app/backup/*
+app/pids/*
+!app/uploads/batch_rename
+!app/uploads/.keep
+!app/tmp/.keep
+!app/backup/.keep
+!app/pids/.keep

@@ -1,4 +1,4 @@
-FROM ruby:2.3.3
+FROM ruby:2.7.4
 
 RUN apt-get update
 RUN apt-get -y install postgresql-client libpq-dev git build-essential sendmail libxml2-dev libxslt-dev zip libreadline-dev vim
