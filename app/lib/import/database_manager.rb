@@ -34,6 +34,7 @@ class DatabaseManager
     paying_statuses = @app.paying_statuses
     a1p_statuses = @app.a1p_statuses
     stopped_statuses = @app.stopped_statuses
+    exiting_statuses = @app.exiting_statuses
 
     green_statuses = @app.green_member_statuses
     orange_statuses = member_statuses - green_statuses
@@ -44,6 +45,7 @@ class DatabaseManager
     @paying_db = @db.sql_array(@app.paying_statuses, 'varchar')
     @a1p_db = @db.sql_array(@app.a1p_statuses, 'varchar')
     @stopped_db = @db.sql_array(@app.stopped_statuses, 'varchar')
+    @exiting_db = @db.sql_array(@app.exiting_statuses, 'varchar')
     @waiver_db = @db.sql_array(@app.waiver_statuses, 'varchar') # "'pat', 'anbs', 'assoc', 'fhardship', 'trainee', 'fam', 'half pay', 'leave', 'life', 'lsl', 'mat', 'o/s', 'pend', 'res', 'stu', 'study', 'waiv', 'work', 'unemployed', 'emp unkn', 'mid career', 'nofee'"
     @member_db = @db.sql_array(member_statuses, 'varchar')
     @nonwaiver_db = @db.sql_array(nonwaiver_statuses, 'varchar')
@@ -159,6 +161,7 @@ class DatabaseManager
     SQL
   end
 
+  # NOTE unused by rebuild()
   def rebuild_sql
     <<-SQL
       #{rebuild_from_scratch_without_indexes_sql}
@@ -230,6 +233,10 @@ class DatabaseManager
 
     str.split("\n").each { |cmd| db.ex(cmd) }
   end
+  
+  def restore_from_migration_tables_sql
+    
+  end
 
   def rebuild_displaytextsource_sql
     sql = <<-SQL
@@ -274,7 +281,7 @@ class DatabaseManager
         , status varchar(255) not null
         -- this could also work? -kbuckley, 2017-03-15
         , #{dimensions.map(&:column_base_name).join(" varchar(255) null\n        , ")} varchar(255) null
-      )
+      );
     SQL
 
     # dimensions.each { |d| sql << <<-REPEAT }
@@ -594,6 +601,10 @@ class DatabaseManager
             NOT COALESCE(oldstatus,'') = ANY(#{@stopped_db})
             AND COALESCE(newstatus,'') = ANY(#{@stopped_db})
             OR
+            -- moved into exiting, from not exiting
+            NOT COALESCE(oldstatus,'') = ANY(#{@exiting_db})
+            AND COALESCE(newstatus,'') = ANY(#{@exiting_db})
+            OR
             -- moved into waiver, from not waiver
             NOT COALESCE(oldstatus,'') = ANY(#{@waiver_db})
             AND COALESCE(newstatus,'') = ANY(#{@waiver_db})
@@ -773,6 +784,10 @@ class DatabaseManager
               NOT COALESCE(oldstatus,'') = ANY(#{@stopped_db})
               AND COALESCE(newstatus,'') = ANY(#{@stopped_db})
               OR
+              -- moved into exiting, from not exiting
+              NOT COALESCE(oldstatus,'') = ANY(#{@exiting_db})
+              AND COALESCE(newstatus,'') = ANY(#{@exiting_db})
+              OR
               -- moved into waiver, from not waiver
               NOT COALESCE(oldstatus,'') = ANY(#{@waiver_db})
               AND COALESCE(newstatus,'') = ANY(#{@waiver_db})
@@ -853,6 +868,18 @@ class DatabaseManager
             or
             (
               (
+                coalesce(oldstatus, '') = ANY (#{@exiting_db})
+                and not coalesce(newstatus, '') = ANY (#{@exiting_db})
+              )
+              or
+              (
+                not coalesce(oldstatus, '') = ANY (#{@exiting_db})
+                and coalesce(newstatus, '') = ANY (#{@exiting_db})
+              )
+            )
+            or
+            (
+              (
                 coalesce(oldstatus, '') = ANY (#{@waiver_db})
                 and not coalesce(newstatus, '') = ANY (#{@waiver_db})
               )
@@ -878,6 +905,11 @@ class DatabaseManager
             then -1 else 0 end as stoppedloss
         , case when coalesce(oldstatus, '') = ANY (#{@stopped_db})
           then -1 else 0 end as stoppednet
+        , 0 as exitinggain
+        , case when coalesce(oldstatus, '') = ANY (#{@exiting_db}) and not coalesce(newstatus, '') = ANY (#{@exiting_db})
+            then -1 else 0 end as exitingloss
+        , case when coalesce(oldstatus, '') = ANY (#{@exiting_db})
+          then -1 else 0 end as exitingnet
 
         , 0 as waivergain
         , 0 as waivergaingood
@@ -894,16 +926,18 @@ class DatabaseManager
 
         , 0 as othergain
         , case when
-            NOT (coalesce(oldstatus, '') = ANY (#{@a1p_db}) and not coalesce(newstatus, '') = ANY (#{@a1p_db}))
-            AND NOT (coalesce(oldstatus, '') = ANY (#{@paying_db}) and not coalesce(newstatus, '') = ANY (#{@paying_db}))
-            AND NOT (coalesce(oldstatus, '') = ANY (#{@stopped_db}) and not coalesce(newstatus, '') = ANY (#{@stopped_db}))
-            AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}) and not coalesce(newstatus, '') = ANY (#{@waiver_db}))
+            NOT (coalesce(oldstatus, '') = ANY (#{@a1p_db}) AND NOT COALESCE(newstatus, '') = ANY (#{@a1p_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@paying_db}) AND NOT COALESCE(newstatus, '') = ANY (#{@paying_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@stopped_db}) AND NOT COALESCE(newstatus, '') = ANY (#{@stopped_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@exiting_db}) AND NOT COALESCE(newstatus, '') = ANY (#{@exiting_db}))
+            AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}) AND NOT COALESCE(newstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as otherloss
         , case when
-            NOT (coalesce(oldstatus, '') = ANY (#{@a1p_db}))
-            AND NOT (coalesce(oldstatus, '') = ANY (#{@paying_db}))
-            AND NOT (coalesce(oldstatus, '') = ANY (#{@stopped_db}))
-            AND NOT (coalesce(oldstatus, '') = ANY (#{@waiver_db}))
+            NOT (COALESCE(oldstatus, '') = ANY (#{@a1p_db}))
+            AND NOT (COALESCE(oldstatus, '') = ANY (#{@paying_db}))
+            AND NOT (COALESCE(oldstatus, '') = ANY (#{@stopped_db}))
+            AND NOT (COALESCE(oldstatus, '') = ANY (#{@exiting_db}))
+            AND NOT (COALESCE(oldstatus, '') = ANY (#{@waiver_db}))
             then -1 else 0 end as othernet
 
         , 0 as membergain
@@ -1048,6 +1082,18 @@ class DatabaseManager
           or
           (
             (
+              coalesce(oldstatus, '') = ANY (#{@exiting_db})
+              and not coalesce(newstatus, '') = ANY (#{@exiting_db})
+            )
+            or
+            (
+              not coalesce(oldstatus, '') = ANY (#{@exiting_db})
+              and coalesce(newstatus, '') = ANY (#{@exiting_db})
+            )
+          )
+          or
+          (
+            (
               coalesce(oldstatus, '') = ANY (#{@waiver_db})
               and not coalesce(newstatus, '') = ANY (#{@waiver_db})
             )
@@ -1073,6 +1119,11 @@ class DatabaseManager
         , 0 as stoppedloss
         , case when coalesce(newstatus, '') = ANY (#{@stopped_db})
             then 1 else 0 end as stoppednet
+        , case when not coalesce(oldstatus, '') = ANY (#{@exiting_db}) and coalesce(newstatus, '') = ANY (#{@exiting_db})
+            then 1 else 0 end as exitinggain
+        , 0 as exitingloss
+        , case when coalesce(newstatus, '') = ANY (#{@exiting_db})
+            then 1 else 0 end as exitingnet
 
         , case when not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db})
             then 1 else 0 end as waivergain
@@ -1089,6 +1140,7 @@ class DatabaseManager
             NOT (not coalesce(oldstatus, '') = ANY (#{@a1p_db}) and coalesce(newstatus, '') = ANY (#{@a1p_db}))
             AND NOT (not coalesce(oldstatus, '') = ANY (#{@paying_db}) and coalesce(newstatus, '') = ANY (#{@paying_db}))
             AND NOT (not coalesce(oldstatus, '') = ANY (#{@stopped_db}) and coalesce(newstatus, '') = ANY (#{@stopped_db}))
+            AND NOT (not coalesce(oldstatus, '') = ANY (#{@exiting_db}) and coalesce(newstatus, '') = ANY (#{@exiting_db}))
             AND NOT (not coalesce(oldstatus, '') = ANY (#{@waiver_db}) and coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othergain
         , 0 as otherloss
@@ -1096,6 +1148,7 @@ class DatabaseManager
             NOT (coalesce(newstatus, '') = ANY (#{@a1p_db}))
             AND NOT (coalesce(newstatus, '') = ANY (#{@paying_db}))
             AND NOT (coalesce(newstatus, '') = ANY (#{@stopped_db}))
+            AND NOT (coalesce(newstatus, '') = ANY (#{@exiting_db}))
             AND NOT (coalesce(newstatus, '') = ANY (#{@waiver_db}))
             then 1 else 0 end as othernet
 
@@ -1272,7 +1325,8 @@ class DatabaseManager
 
   def rebuild_transactionsource_sql
     sql = <<-SQL
-      drop table if exists transactionsource cascade;
+      DROP TABLE IF EXISTS transactionsource CASCADE;
+      DROP INDEX IF EXISTS "idx_transactionsource_memberid";
 
       #{transactionsource_sql}
     SQL
@@ -1308,15 +1362,14 @@ class DatabaseManager
           return;
         END if;
 
-        INSERT INTO
-          transactionfact (
-            id
-            , creationdate
-            , memberid
-            , userid
-            , amount
-            , changeid
-          );
+        INSERT INTO transactionfact (
+          id
+          , creationdate
+          , memberid
+          , userid
+          , amount
+          , changeid
+        )
 
         -- insert any transactions that have appeared since last comparison
         SELECT
@@ -1365,7 +1418,7 @@ class DatabaseManager
         WHERE
           t.id IS NULL
           -- Can only negate a transaction that we've recorded.
-          AND p.id IN (SELECT id FROM transactionfact)
+          AND p.id IN (SELECT id FROM transactionfact);
 
         -- finalise import, so running this again won't do anything
         DELETE FROM transactionSourcePrev;
@@ -1437,17 +1490,17 @@ class DatabaseManager
 
   def rebuild_most_indexes_sql()
     sql = <<-SQL
-      drop index if exists "displaytext_attribute_idx";
-      drop index if exists "displaytext_id_idx";
-      drop index if exists "displaytext_attribute_id_idx";
+      DROP INDEX IF EXISTS "displaytext_attribute_idx";
+      DROP INDEX IF EXISTS "displaytext_id_idx";
+      DROP INDEX IF EXISTS "displaytext_attribute_id_idx";
 
-      drop index if exists "memberfact_changeid_idx";
-      drop index if exists "memberfact_memberid_idx";
-      drop index if exists "memberfact_oldstatus_idx";
-      drop index if exists "memberfact_newstatus_idx";
+      DROP INDEX IF EXISTS "memberfact_changeid_idx";
+      DROP INDEX IF EXISTS "memberfact_memberid_idx";
+      DROP INDEX IF EXISTS "memberfact_oldstatus_idx";
+      DROP INDEX IF EXISTS "memberfact_newstatus_idx";
 
-      drop index if exists "transactionfact_memberid_idx";
-      drop index if exists "transactionfact_changeid_idx";
+      DROP INDEX IF EXISTS "transactionfact_memberid_idx";
+      DROP INDEX IF EXISTS "transactionfact_changeid_idx";
     SQL
 
 
@@ -1475,10 +1528,11 @@ class DatabaseManager
     REPEAT
 
     sql << <<-SQL
-      drop index if exists "memberfacthelper_changeid_idx";
-      drop index if exists "memberfacthelper_memberid_idx";
-      drop index if exists "memberfacthelper_changedate_idx";
-      drop index if exists "memberfacthelper_nextchangedate_idx";
+      DROP INDEX IF EXISTS "memberfacthelper_changeid_idx";
+      DROP INDEX IF EXISTS "memberfacthelper_memberid_idx";
+      DROP INDEX IF EXISTS "memberfacthelper_categorychangedate_idx";
+      DROP INDEX IF EXISTS "memberfacthelper_changedate_idx";
+      DROP INDEX IF EXISTS "memberfacthelper_nextchangedate_idx";
 
       CREATE INDEX "memberfacthelper_changeid_idx" ON "memberfacthelper" USING btree(changeid ASC NULLS LAST);
       CREATE INDEX "memberfacthelper_memberid_idx" ON "memberfacthelper" USING btree(memberid ASC NULLS LAST);

@@ -43,7 +43,7 @@ class ChurnometerApp
   # Descriptions of all possible summary tables (only used to get data entry dimension)
   attr_reader :summary_user_data_tables
 
-  attr_reader :waiver_statuses, :paying_statuses, :a1p_statuses, :stopped_statuses
+  attr_reader :waiver_statuses, :paying_statuses, :a1p_statuses, :stopped_statuses, :exiting_statuses
 
   # application_environment: either ':production' or ':development'
   # config_io:  general config filename or stream.  If nil, will load general config
@@ -108,6 +108,7 @@ class ChurnometerApp
     make_paying_statuses()
     make_a1p_statuses()
     make_stopped_statuses()
+    make_exiting_statuses()
     make_waiver_statuses()
     validate()
   end
@@ -261,7 +262,7 @@ class ChurnometerApp
 
   # Returns a list of every valid status code that a member can be assigned.
   def all_member_statuses
-    result = paying_statuses() | a1p_statuses() | stopped_statuses() | waiver_statuses()
+    result = paying_statuses() | a1p_statuses() | stopped_statuses() | exiting_statuses() | waiver_statuses()
     # result = [member_paying_status_code(),
     #           member_awaiting_first_payment_status_code(),
     #           member_stopped_paying_status_code()]
@@ -475,14 +476,21 @@ protected
     # make_statuses('member_stopped_paying_statuses', '@stopped_statuses')
     make_status_array('member_stopped_status_ranges', '@stopped_statuses')
   end
+  
+  def make_exiting_statuses()
+    make_status_array('member_exiting_status_ranges', '@exiting_statuses')
+  end
 
   def make_waiver_statuses()
     # make_statuses('waiver_statuses')
     make_status_array('member_waiver_status_ranges', '@waiver_statuses')
   end
 
-  # Currently unused. With status arrays replacing singular statuses, this is an
-  # experiment in building status arrays from singletons and ranges.
+  # There used to be a single status per category. Now there are many. In order
+  # to accommodate legacy data, status IDs in a category are not a contiguous
+  # block of numbers. Config can provide a mixture of single IDs and ID ranges
+  # for each category, which are combined into a single flat array using the
+  # below two methods.
   def make_status_array(config_key, var_name = nil)
     var_name ||= "@#{config_key}"
 
@@ -496,6 +504,7 @@ protected
 
   # Takes a config element
   # Config element should be an array of singletons and range pairs
+  # e.g. ['5', '12, '32', ['3000', '3100'], '3500', '3501']
   def expand_array_from_singletons_and_ranges(element)
     return element.simple_value.to_a.map do |val|
       val.kind_of?(Array) ? Range.new(*val).to_a : val

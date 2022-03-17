@@ -47,7 +47,8 @@ module Settings
       'interval' => 'none',
       'period' => period,
       Filter => {
-        'status' => app().paying_statuses | app().a1p_statuses | app().stopped_statuses | app().waiver_statuses
+        'status' => app().all_member_statuses()
+        #'status' => app().paying_statuses | app().a1p_statuses | app().stopped_statuses | app().exiting_statuses | app().waiver_statuses
         # 'status' => [
         #    app().member_paying_status_code,
         #    app().member_awaiting_first_payment_status_code,
