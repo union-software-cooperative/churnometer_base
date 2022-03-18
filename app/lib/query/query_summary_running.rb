@@ -55,8 +55,10 @@ class QuerySummaryRunning < QueryFilter
     paying_db = db.sql_array(@app.paying_statuses)
     a1p_db = db.sql_array(@app.a1p_statuses)
     stoppedpay_db = db.sql_array(@app.stopped_statuses)
+    exiting_db = db.sql_array(@app.exiting_statuses)
     waiver_db = db.sql_in(@app.waiver_statuses)
 
+    # 2022-03-03 Statuschanges used to check waivergain twice, but not waiverloss
     sql = <<-EOS
       -- 'running summary' query
       with daterange as
@@ -93,7 +95,7 @@ class QuerySummaryRunning < QueryFilter
       )
       , statuschanges as
       (
-        select distinct changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or waivergain <> 0 or waivergain <> 0
+        select distinct changeid from userselections u where payinggain <> 0 or payingloss <> 0 or a1pgain <> 0 or a1ploss <> 0 or stoppedgain <> 0 or stoppedloss <> 0 or exitinggain <> 0 or exitingloss <> 0 or waivergain <> 0 or waiverloss <> 0
       )
       , nonegations as
       (
@@ -163,6 +165,8 @@ class QuerySummaryRunning < QueryFilter
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then payingloss else 0 end) paying_loss
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedgain else 0 end) stopped_gain
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedloss else 0 end) stopped_loss
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then exitinggain else 0 end) exiting_gain
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then exitingloss else 0 end) exiting_loss
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergain else 0 end) waiver_gain
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergaingood else 0 end) waiver_gain_good
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergainbad else 0 end) waiver_gain_bad
@@ -192,6 +196,8 @@ class QuerySummaryRunning < QueryFilter
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = ANY (#{paying_db}) then otherloss else 0 end) paying_other_loss
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = ANY (#{stoppedpay_db}) then othergain else 0 end) stopped_other_gain
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = ANY (#{stoppedpay_db}) then otherloss else 0 end) stopped_other_loss
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = ANY (#{exiting_db}) then othergain else 0 end) exiting_other_gain
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and status = ANY (#{exiting_db}) then otherloss else 0 end) exiting_other_loss
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and waivernet <> 0 then othergain else 0 end) waiver_other_gain
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and waivernet <> 0 then otherloss else 0 end) waiver_other_loss
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not (status = ANY (#{paying_db}) or status = ANY (#{a1p_db}) or status = ANY (#{stoppedpay_db}) or waivernet <> 0) then othergain else 0 end) other_other_gain
@@ -206,6 +212,7 @@ class QuerySummaryRunning < QueryFilter
           , sum(a1pnet) as a1p_end_count -- cant use a1pgain + a1ploss because they only count when a status changes, where as we want every a1p value in the selection, even if it is a transfer
           , sum(payingnet) as paying_end_count
           , sum(stoppednet) as stopped_end_count
+          , sum(exitingnet) as exiting_end_count
           , sum(waivernet) as waiver_end_count
           , sum(othernet) as other_end_count
           , sum(membernet) as member_end_count
@@ -216,6 +223,7 @@ class QuerySummaryRunning < QueryFilter
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then a1pgain+a1ploss else 0 end) a1p_net
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then payinggain+payingloss else 0 end) paying_net
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then stoppedgain+stoppedloss else 0 end) stopped_net
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then exitinggain+exitingloss else 0 end) exiting_net
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then waivergain + waiverloss else 0 end) waiver_net
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then othergain+otherloss else 0 end) other_net
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} then membergain + memberloss else 0 end) member_net
@@ -232,6 +240,9 @@ class QuerySummaryRunning < QueryFilter
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = ANY (#{paying_db}) then stoppedloss else 0 end) stopped_to_paying
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not coalesce(_status,'') = ANY (#{paying_db}) then stoppedloss else 0 end) stopped_to_other
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _categorychangeid is null then stoppedgain else 0 end) stopped_unchanged_gain
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and coalesce(_status,'') = ANY (#{paying_db}) then exitingloss else 0 end) exiting_to_paying
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not coalesce(_status,'') = ANY (#{paying_db}) then exitingloss else 0 end) exiting_to_other
+          , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and _categorychangeid is null then exitinggain else 0 end) exiting_unchanged_gain
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then othergain else 0 end) external_gain
           , sum(case when changedate >= #{db.sql_date(@start_date)} and changedate < #{db.sql_date(end_date)} and not internalTransfer then otherloss else 0 end) external_loss
           /* EO SHARED BETWEEEN SUMMARY AND RUNNING SUMMARY - TODO REFACTOR */
@@ -289,6 +300,8 @@ class QuerySummaryRunning < QueryFilter
           , 0 paying_loss
           , 0 stopped_gain
           , 0 stopped_loss
+          , 0 exiting_gain
+          , 0 exiting_loss
           , 0 waiver_gain
           , 0 waiver_loss
           , 0 waiver_gain_good
@@ -318,6 +331,8 @@ class QuerySummaryRunning < QueryFilter
           , 0 paying_other_loss
           , 0 stopped_other_gain
           , 0 stopped_other_loss
+          , 0 exiting_other_gain
+          , 0 exiting_other_loss
           , 0 waiver_other_gain
           , 0 waiver_other_loss
           , 0 other_other_gain
@@ -332,6 +347,7 @@ class QuerySummaryRunning < QueryFilter
           , 0 a1p_end_count
           , 0 paying_end_count
           , 0 stopped_end_count
+          , 0 exiting_end_count
           , 0 waiver_end_count
           , 0 other_end_count
           , 0 member_end_count
@@ -342,6 +358,7 @@ class QuerySummaryRunning < QueryFilter
           , 0 a1p_net
           , 0 paying_net
           , 0 stopped_net
+          , 0 exiting_net
           , 0 waiver_net
           , 0 other_net
           , 0 member_net
@@ -358,6 +375,9 @@ class QuerySummaryRunning < QueryFilter
           , 0 stopped_to_paying
           , 0 stopped_to_other
           , 0 stopped_unchanged_gain
+          , 0 exiting_to_paying
+          , 0 exiting_to_other
+          , 0 exiting_unchanged_gain
           , 0 external_gain
           , 0 external_loss
 
@@ -386,6 +406,7 @@ class QuerySummaryRunning < QueryFilter
           , sum(a1p_end_count) over w as running_a1p_end_count
           , sum(paying_end_count) over w as running_paying_end_count
           , sum(stopped_end_count) over w as running_stopped_end_count
+          , sum(exiting_end_count) over w as running_exiting_end_count
           , sum(waiver_end_count) over w as running_waiver_end_count
           , sum(member_end_count) over w as running_member_end_count
           , sum(green_end_count) over w as running_green_end_count
@@ -394,11 +415,12 @@ class QuerySummaryRunning < QueryFilter
           , sum(a1p_gain + a1p_loss) over w  as running_a1p_net
           , sum(paying_gain + paying_loss) over w  as running_paying_net
           , sum(stopped_gain + stopped_loss) over w  as running_stopped_net
+          , sum(exiting_gain + exiting_loss) over w  as running_exiting_net
           , sum(waiver_gain + waiver_loss) over w  as running_waiver_net
           , sum(member_gain + member_loss) over w  as running_member_net
           , sum(green_gain + green_loss) over w  as running_green_net
           , sum(orange_gain + orange_loss) over w  as running_orange_net
-          , sum(a1p_gain + a1p_loss + paying_gain + paying_loss + stopped_gain + stopped_loss + waiver_gain + waiver_loss) over w  as running_net
+          , sum(a1p_gain + a1p_loss + paying_gain + paying_loss + stopped_gain + stopped_loss + exiting_gain + exiting_loss + waiver_gain + waiver_loss) over w  as running_net
 
         from
           withtrans c
@@ -416,6 +438,7 @@ class QuerySummaryRunning < QueryFilter
           , c.running_a1p_net
           , c.running_paying_net
           , c.running_stopped_net
+          , c.running_exiting_net
           , c.running_waiver_net
           , c.running_member_net
           , c.running_green_net
@@ -454,6 +477,17 @@ class QuerySummaryRunning < QueryFilter
           , c.stopped_other_gain
           , c.stopped_other_loss
           , c.running_stopped_end_count stopped_end_count
+          
+          , c.running_exiting_end_count - c.exiting_gain - c.exiting_loss - c.exiting_other_gain - c.exiting_other_loss as exiting_start_count
+          , c.exiting_gain
+          , c.exiting_unchanged_gain
+          , c.exiting_loss
+          , c.exiting_net
+          , c.exiting_to_paying
+          , c.exiting_to_other
+          , c.exiting_other_gain
+          , c.exiting_other_loss
+          , c.running_exiting_end_count exiting_end_count
 
           , c.running_waiver_end_count - c.waiver_gain - c.waiver_loss - c.waiver_other_gain - c.waiver_other_loss as waiver_start_count
           , c.waiver_gain as waiver_real_gain
@@ -522,6 +556,7 @@ class QuerySummaryRunning < QueryFilter
         , c.running_a1p_net::bigint
         , c.running_paying_net::bigint
         , c.running_stopped_net::bigint
+        , c.running_exiting_net::bigint
         , c.running_waiver_net::bigint
         , c.running_member_net::bigint
         , c.running_green_net::bigint
@@ -562,6 +597,17 @@ class QuerySummaryRunning < QueryFilter
         , c.stopped_other_gain
         , c.stopped_other_loss
         , c.stopped_end_count::bigint
+        
+        , c.exiting_start_count::bigint
+        , c.exiting_gain exiting_real_gain
+        , c.exiting_unchanged_gain
+        , c.exiting_loss exiting_real_loss
+        , c.exiting_net::int as exiting_real_net
+        , c.exiting_to_paying
+        , c.exiting_to_other
+        , c.exiting_other_gain
+        , c.exiting_other_loss
+        , c.exiting_end_count::bigint
 
         , c.waiver_start_count::int
         , c.waiver_real_gain
@@ -619,11 +665,12 @@ class QuerySummaryRunning < QueryFilter
           || ( case when 0 <> c.a1p_start_count + c.a1p_gain + c.a1p_loss + c.a1p_other_gain + c.a1p_other_loss - c.a1p_end_count then ' a1p' else '' end)
           || ( case when 0 <> c.paying_start_count + c.paying_gain + c.paying_loss + c.paying_other_gain + c.paying_other_loss - c.paying_end_count then ' paying' else '' end)
           || ( case when 0 <> c.stopped_start_count + c.stopped_gain + c.stopped_loss + c.stopped_other_gain + c.stopped_other_loss - c.stopped_end_count then ' stopped' else '' end)
+          || ( case when 0 <> c.exiting_start_count + c.exiting_gain + c.exiting_loss + c.exiting_other_gain + c.exiting_other_loss - c.exiting_end_count then ' exiting' else '' end)
           || ( case when 0 <> c.waiver_start_count + c.waiver_real_gain + c.waiver_real_loss + c.waiver_other_gain + c.waiver_other_loss - c.waiver_end_count then ' waiver' else '' end)
           || ( case when 0 <> c.orange_start_count + c.orange_real_gain + c.orange_real_loss + c.orange_other_gain + c.orange_other_loss - c.orange_end_count then ' orange' else '' end)
           || ( case when 0 <> c.green_start_count + c.green_real_gain + c.green_real_loss + c.green_other_gain + c.green_other_loss - c.green_end_count then ' green' else '' end)
-          || ( case when 0 <> c.a1p_start_count + c.paying_start_count + c.stopped_start_count + c.waiver_start_count - c.member_start_count then ' start count' else '' end)
-          || ( case when 0 <> c.a1p_end_count + c.paying_end_count + c.stopped_end_count + c.waiver_end_count - c.member_end_count then ' end count' else '' end)
+          || ( case when 0 <> c.a1p_start_count + c.paying_start_count + c.stopped_start_count + c.exiting_start_count + c.waiver_start_count - c.member_start_count then ' start count' else '' end)
+          || ( case when 0 <> c.a1p_end_count + c.paying_end_count + c.stopped_end_count + c.exiting_end_count + c.waiver_end_count - c.member_end_count then ' end count' else '' end)
           || ( case when 0 <> c.green_start_count + c.orange_start_count - c.member_start_count then ' contributor start count' else '' end)
           || ( case when 0 <> c.green_end_count + c.orange_end_count - c.member_end_count then ' contributor end count' else '' end)
           as cross_check
@@ -649,6 +696,8 @@ class QuerySummaryRunning < QueryFilter
         or c.paying_loss <> 0
         or c.stopped_gain <> 0
         or c.stopped_loss <> 0
+        or c.exiting_gain <> 0
+        or c.exiting_loss <> 0
         or c.waiver_real_gain <> 0
         or c.waiver_real_loss <> 0
         or c.other_other_gain <> 0
