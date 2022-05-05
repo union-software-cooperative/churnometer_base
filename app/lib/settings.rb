@@ -125,6 +125,14 @@ module Settings
       stopped_to_other
       stopped_other_gain
       stopped_other_loss
+      exiting_real_gain
+      exiting_unchanged_gain
+      exiting_real_loss
+      exiting_real_net
+      exiting_to_paying
+      exiting_to_other
+      exiting_other_gain
+      exiting_other_loss
       contributors
       income_net
       posted
