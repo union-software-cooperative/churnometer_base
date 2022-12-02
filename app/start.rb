@@ -173,7 +173,7 @@ class OAuthController < ApplicationController
 
   # Regexp.union(OAuthController.routes["GET"].map(&:first))
   after /(?-mix:\A\/oauth2(?:\-|%2[Dd])callback\z)|(?-mix:\A\/logout\z)|(?-mix:\A\/account\z)|(?-mix:\A\/\z)|(?-mix:\A\/export_table\z)|(?-mix:\A\/export_target\z)|(?-mix:\A\/export_all\z)|(?-mix:\A\/backup_download\z)|(?-mix:\A\/backdate\z)|(?-mix:\A\/services\/autocomplete\/([^\/?#]+)\z)/ do
-    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for user #{auth.name}"
+    log.info "#{request.env['HTTP_X_FORWARDED_FOR']} Finished #{request.env['REQUEST_METHOD']} #{request.env['REQUEST_URI']} for user #{auth.full_name}"
   end
 
   after '/' do

@@ -122,6 +122,14 @@ class Oauth2Authorize
     profile['given_name']
   end
 
+  def full_name
+    if profile['family_name'].to_s.length > 0 
+      "#{profile['given_name']} #{profile['family_name']}"
+    else
+      profile['given_name']
+    end
+  end
+
   def email
     auth['email']
   end
