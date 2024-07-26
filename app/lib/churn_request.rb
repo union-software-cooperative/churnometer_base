@@ -247,8 +247,9 @@ class ChurnRequest
     warning = ''
 
       # override date filters with interval filters
-    startDate = nil;
-    endDate = nil;
+    startDate = nil
+    endDate = nil
+
     if !params['startDate'].nil?
       startDate = Date.parse(params['startDate'])
     end
@@ -278,26 +279,30 @@ class ChurnRequest
       raise "Couldn't find an entry in the 'dimstart' table for the groupby dimension '#{params['group_by']}' (column is '#{dim_start_id}')"
     end
 
-    startdb = Date.parse(dim_start_result[0]['getdimstart'])+1
-    if startdb > startDate
+    enddb = Date.parse(dim_start_result[0]['getdimfinish'])
+    over_upper_bound_text = enddb < Date.today ? "(after we ended tracking of #{groupby_column_id()})" : "(in the future)"
+    start_selection = "You had selected #{params['startDate']}."
+    end_selection = "You had selected #{params['endDate']}."
+
+    if startDate > enddb
+      startDate = enddb
+      warning += "WARNING: Adjusted start date to #{startDate}, as it was out of bounds #{over_upper_bound_text}. #{start_selection}<br/>"
+    end
+
+    # In Ruby, we can assign and compare at once, since assignment returns the assigned value
+    if endDate > enddb
+      endDate = enddb
+      warning += "WARNING: Adjusted end date to #{endDate}, as it was out of bounds #{over_upper_bound_text}. #{end_selection}<br/>"
+    end
+
+    if startDate < (startdb = Date.parse(dim_start_result[0]['getdimstart'])+1)
       startDate = startdb
-      warning += 'WARNING: Adjusted start date to when we first started tracking ' + groupby_column_id() + ' (you had selected ' + params['startDate'] + ')<br/>'
+      warning += "WARNING: Adjusted start date to #{startDate}, as it was out of bounds (before we started tracking #{groupby_column_id()}). #{start_selection}<br/>"
     end
 
-    # make sure endDate isn't in the future or before startDate
-    if Date.today < endDate
-      endDate = Date.today
-      warning += 'WARNING: Adjusted end date to today (you had selected ' + params['endDate'] + ') <br/>'
-    end
-
-    if Date.today < startDate
-      startDate = Date.today
-      warning += 'WARNING: Adjusted start date to today (you had selected ' + params['startDate'] + ')<br/>'
-    end
-
-    if startDate > endDate
+    if endDate < startDate
       endDate = startDate
-      warning += "WARNING: Adjusted end date to #{endDate.strftime(DateFormatDisplay)} (you had selected #{ params['endDate'] })<br/>"
+      warning += "WARNING: Adjusted end date to #{endDate}, as it was out of bounds (before the start date). #{end_selection}<br/>"
     end
 
     if (!params['startDate'].nil? || !params['intervalStart'].nil?)

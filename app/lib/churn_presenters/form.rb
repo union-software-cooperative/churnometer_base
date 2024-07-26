@@ -66,19 +66,30 @@ class ChurnPresenter_Form
 
   def output_group_selector(selected_group_id, control_name, control_id='')
     output = "<select name='#{control_name}' id='#{control_id}'>"
+    output << "<option value=''>Choose a dimension...</option>"
 
-    @group_dimensions.sort_by { | d | d.name }.each do |dimension|
-      attributes =
-        if dimension.id == selected_group_id
-          "selected='selected'"
-        else
-          ""
-        end
+    supported_dimensions = @group_dimensions.reject(&:deprecated?)
+    deprecated_dimensions = @group_dimensions.select(&:deprecated?)
 
-      output << "<option value='#{h dimension.id}' #{attributes}>#{h dimension.name}</option>"
-    end
+    output << output_optgroup(selected_group_id, 'Active', supported_dimensions)
+    output << output_optgroup(selected_group_id, 'Deprecated', deprecated_dimensions)
 
     output << "</select>"
+    output
+  end
+
+  def output_optgroup(selected_id, group_label, options)
+    return '' if options.size.zero?
+
+    output = "<hr /><optgroup label='#{group_label}'>"
+    options.each do |option|
+      selected = "selected='selected'" if option.id == selected_id
+      attributes = ["value='#{h option.id}'", selected].compact.join(' ')
+
+      output << "<option #{attributes}>#{h option.name}</option>"
+    end
+
+    output << "</optgroup>"
     output
   end
 

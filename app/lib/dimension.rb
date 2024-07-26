@@ -231,6 +231,10 @@ class DimensionUser < Dimension
     super(nil)
   end
 
+  def deprecated?
+    !!@deprecated
+  end
+
   # config_hash: mappings from index numbers to hashes defining Dimension columns.
   # The hash format is defined by the Churnometer configuration file scheme.
   # app_roles: The AppRoles instance describing all available roles.
@@ -241,6 +245,7 @@ class DimensionUser < Dimension
 
     @id = config_element['id'].value.downcase
     @name = config_element['name'].value
+    @deprecated = config_element['deprecated']&.value
 
     # 'role' element should be 'none', 'all', or an array of role ids.
     @allowed_roles =
