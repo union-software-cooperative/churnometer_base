@@ -415,8 +415,12 @@ class ChurnDB
       group_by = @app.groupby_default_dimension.id
     end
 
+    # NOTE we coalesce to tomorrow for the end date to offer grace around timezones esp. with respect to our query
+    # caching behaviour. E.g. if someone 2 hours ahead of system time hits us with a request at 1AM, then users IN the
+    # system timezone will be stuck with those results until the next import, even as the date rolls over and they
+    # start getting notices about their period being out of bounds.
     <<-SQL
-      select startdate getdimstart from dimstart where dimension = '#{group_by}'
+      select startdate getdimstart, coalesce(enddate, current_date+1) getdimfinish from dimstart where dimension = '#{group_by}'
     SQL
   end
 

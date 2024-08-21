@@ -247,8 +247,9 @@ class ChurnRequest
     warning = ''
 
       # override date filters with interval filters
-    startDate = nil;
-    endDate = nil;
+    startDate = nil
+    endDate = nil
+
     if !params['startDate'].nil?
       startDate = Date.parse(params['startDate'])
     end
@@ -278,26 +279,39 @@ class ChurnRequest
       raise "Couldn't find an entry in the 'dimstart' table for the groupby dimension '#{params['group_by']}' (column is '#{dim_start_id}')"
     end
 
-    startdb = Date.parse(dim_start_result[0]['getdimstart'])+1
-    if startdb > startDate
+    enddb = Date.parse(dim_start_result[0]['getdimfinish'])
+    over_upper_bound_text = enddb < Date.today ? "after we ended tracking of #{groupby_column_id()}" : "needlessly far in the future"
+    start_selection = "You had selected #{params['startDate']}."
+    end_selection = "You had selected #{params['endDate']}."
+
+    # Cases we need to correct for:
+    # 1a. Period start or b. end before dimstartdate
+    # 2a. Period start or b. end after dimenddate
+    # 3. Period end before period start (or inverse)
+    # 4. Period start [too far] in the future - nothing bad will happen, just trying to save people from themselves??
+
+    # (2a, 4)
+    if startDate > enddb
+      startDate = enddb
+      warning += "WARNING: Adjusted start date to #{startDate.strftime(DateFormatDisplay)}, as it was #{over_upper_bound_text}. #{start_selection}<br/>"
+    end
+
+    # (2b)
+    if endDate > enddb
+      endDate = enddb
+      warning += "WARNING: Adjusted end date to #{endDate.strftime(DateFormatDisplay)}, as it was #{over_upper_bound_text}. #{end_selection}<br/>"
+    end
+
+    # (1a)
+    if startDate < (startdb = Date.parse(dim_start_result[0]['getdimstart'])+1)
       startDate = startdb
-      warning += 'WARNING: Adjusted start date to when we first started tracking ' + groupby_column_id() + ' (you had selected ' + params['startDate'] + ')<br/>'
+      warning += "WARNING: Adjusted start date to #{startDate.strftime(DateFormatDisplay)}, as it was before we started tracking #{groupby_column_id()}. #{start_selection}<br/>"
     end
 
-    # make sure endDate isn't in the future or before startDate
-    if Date.today < endDate
-      endDate = Date.today
-      warning += 'WARNING: Adjusted end date to today (you had selected ' + params['endDate'] + ') <br/>'
-    end
-
-    if Date.today < startDate
-      startDate = Date.today
-      warning += 'WARNING: Adjusted start date to today (you had selected ' + params['startDate'] + ')<br/>'
-    end
-
-    if startDate > endDate
+    # (1b, 3)
+    if endDate < startDate
       endDate = startDate
-      warning += "WARNING: Adjusted end date to #{endDate.strftime(DateFormatDisplay)} (you had selected #{ params['endDate'] })<br/>"
+      warning += "WARNING: Adjusted end date to #{endDate.strftime(DateFormatDisplay)}, as it was before the start date. #{end_selection}<br/>"
     end
 
     if (!params['startDate'].nil? || !params['intervalStart'].nil?)
