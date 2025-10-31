@@ -1,6 +1,5 @@
 # This is our production compose file - not changed for docker-sync or similar
 
-version: "3"
 services:
   db:
     build:
@@ -13,13 +12,12 @@ services:
         max-file: "50"
         max-size: "10m"
     volumes:
-      - pgdata:/pgdata:delegated
-      - $PWD/db-setup.sql:/docker-entrypoint-initdb.d/db-setup.sql
+      - pg18:/var/lib/postgresql/18/docker
+      - $PWD/postgresql.conf:/etc/postgresql.conf
       - $PWD/scripts/db:/scripts
     environment:
-      - PGDATA=/pgdata
-      - CHURN_USER
-      - CHURN_PASS
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
       - PGDATESTYLE
   www:
     build:
@@ -52,4 +50,4 @@ services:
     command: ./docker-command
 volumes:
   bundle:
-  pgdata:
+  pg18:

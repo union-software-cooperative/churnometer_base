@@ -2,7 +2,7 @@
 .DS_Store
 .docker-sync
 docker-sync.yml
-docker-compose.override.yml
+compose.override.yml
 *.sql.gz
 *.sql
 bundle
@@ -10,3 +10,4 @@ app/config/config.yaml.tmp
 db-setup
 !*.example*
 pg_hba.conf
+postgresql.conf

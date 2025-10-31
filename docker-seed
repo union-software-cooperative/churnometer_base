@@ -1,4 +1,4 @@
 #!/bin/bash
-psql -U postgres -c "create user ${CHURN_USER} with password '${CHURN_PASS}'"
-psql -U postgres -c "create database churnometer;"
-zcat /seed.sql.gz | psql -U $CHURN_USER churnometer 
+# psql -U postgres -c "create user ${CHURN_USER} with password '${CHURN_PASS}'"
+psql -U $POSTGRES_USER -c "create database churnometer;"
+zcat /seed.sql.gz | psql -U $POSTGRES_USER churnometer
